@@ -1,0 +1,4 @@
+.*.swp
+etc/*.conf
+var/*
+log/*
