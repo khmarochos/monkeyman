@@ -13,7 +13,7 @@ use MonkeyMan::CloudStack::API;
 
 use Getopt::Long;
 use Config::General qw(ParseConfig);
-#use Text::Glob qw(match_glob); $Text::Glob::strict_wildcard_slash = 0;
+use Text::Glob qw(match_glob); $Text::Glob::strict_wildcard_slash = 0;
 #use File::Basename;
 
 
@@ -26,7 +26,7 @@ my $res = GetOptions(
     'c|config'      => \$opts{'config'},
     'v|verbose+'    => \$opts{'verbose'},
     'q|quiet'       => \$opts{'quiet'},
-    'schedule=s'    => \$opts{'schedule'}
+    's|schedule=s'  => \$opts{'schedule'}
 );
 unless($res) {
     die("Can't GetOptions()");
@@ -35,7 +35,7 @@ unless($res) {
 if($opts{'help'})       { MonkeyMan::Show::help('makesnapshots');   exit; };
 if($opts{'version'})    { MonkeyMan::Show::version;                 exit; };
 unless(defined($opts{'schedule'})) {
-    $log->logdie("The schedule hasn't been defined, see --help for more information");
+    die("The schedule hasn't been defined, see --help for more information");
 }
 
 my $mm = eval { MonkeyMan->new(
@@ -69,7 +69,8 @@ THE_LOOP: while (1) {
 
     # Reload everything If the schedule hasn't been loaded or has been reset
 
-    unless(defined(%schedule)) {
+    unless(%schedule) {
+
         %schedule = eval {
             ParseConfig(
                 -ConfigFile         => $opts{'schedule'},
@@ -79,12 +80,18 @@ THE_LOOP: while (1) {
         if($@) {
             $log->logdie("Can't Config::General::ParseConfig(): $@");
         }
+
         $log->debug("The schedule has been loaded");
+
+        # We shall forget all configuration elements as we obviously need
+        # to reload them all
+
         undef(%conf_timeperiods);
         undef(%conf_storages);
         undef(%conf_hosts);
         undef(%conf_domains);
         undef(%queue);
+
     }
 
     # Dealing with all configuration sections (reloading them if needed)
@@ -98,16 +105,20 @@ THE_LOOP: while (1) {
         unless(defined(%{ $section->{'hash'}})) {
             $log->trace("Some $section->{'type'}s definitely need to be defined");
             my $elements_loaded = eval {
-                load_element(
+                load_elements(
                     \%schedule,
                     $section->{'type'},
                     $section->{'hash'}
                 );
             };
             if($@) { $log->die("Can't load_element(): $@"); };
-            $log->trace("$elements_loaded $section->{'type'}s loaded");
+            $log->trace("$elements_loaded $section->{'type'}s have been loaded");
         }
     }
+
+
+
+    last;
 
 
 
@@ -116,7 +127,7 @@ THE_LOOP: while (1) {
     # by SIGHUP or some shit like that. And SIGUSR1 shall rebuild the queue.
     # So that's why there's a separate condition for this task.
 
-    unless(defined(%queue)) {
+    unless(%queue) {
 
         # For every configured domain...
 
@@ -124,7 +135,7 @@ THE_LOOP: while (1) {
 
             # Getting the information about the domain
 
-            my $domain = $cloudstack->runcmd(
+            my $domain = $api->runcmd(
                 parameters  => {
                     command     => 'listDomains',
                     keyword     => basename($domain_path)
@@ -135,14 +146,14 @@ THE_LOOP: while (1) {
                 }
             )->pop();
             unless(defined($domain)) {
-                $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $cloudstack->{'errstr'}");
+                $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
             }
             $info_domains{$domain->findvalue('id')} = $domain;
             $log->debug("The domain $domain_path has been identified as " . $domain->findvalue('id'));
 
             # Getting the list of instances in the domain
 
-            my $instances_list = $cloudstack->runcmd(
+            my $instances_list = $api->runcmd(
                 parameters  => {
                     command     => 'listVirtualMachines',
                     listall     => 'true',
@@ -154,7 +165,7 @@ THE_LOOP: while (1) {
                 }
             );
             unless(defined($instances_list)) {
-                $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $cloudstack->{'errstr'}");
+                $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
             }
 
             # For every instance...
@@ -166,7 +177,7 @@ THE_LOOP: while (1) {
 
                 # Getting the list of volumes
 
-                my $volumes_list = $cloudstack->runcmd(
+                my $volumes_list = $api->runcmd(
                     parameters  => {
                         command             => 'listVolumes',
                         listall             => 'true',
@@ -178,14 +189,14 @@ THE_LOOP: while (1) {
                     }
                 );
                 unless(defined($instances_list)) {
-                    $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $cloudstack->{'errstr'}");
+                    $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
                 }
 
                 # Getting the information about the host (if needed)
 
                 unless(defined($info_hosts{$instance->findvalue('hostid')})) {
 
-                    my $host = $cloudstack->runcmd(
+                    my $host = $api->runcmd(
                         parameters  => {
                             command     => 'listHosts',
                             id          => $instance->findvalue('hostid')
@@ -196,7 +207,7 @@ THE_LOOP: while (1) {
                         }
                     )->pop();
                     unless(defined($host)) {
-                        $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $cloudstack->{'errstr'}");
+                        $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
                     }
 
                     $info_hosts{$host->findvalue('id')} = $host;
@@ -220,7 +231,7 @@ THE_LOOP: while (1) {
                         }
                     }) {
 
-                        my $storage = $cloudstack->runcmd(
+                        my $storage = $api->runcmd(
                             parameters  => {
                                 command     => 'listStoragePools',
                                 name        => $volume->findvalue('storage')
@@ -231,7 +242,7 @@ THE_LOOP: while (1) {
                             }
                         )->pop();
                         unless(defined($storage)) {
-                            $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $cloudstack->{'errstr'}");
+                            $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
                         }
 
                         $info_storages{$storage->findvalue('id')} = $storage;
@@ -259,66 +270,77 @@ THE_LOOP: while (1) {
 }
 
 
-sub load_element {
+
+sub load_elements {
     
-    my($schedule, $name, $set) = @_;
+    my($schedule, $elements_type, $elements_set) = @_;
+
     unless(
         ref($schedule) eq 'HASH' &&
-        defined($name) &&
-        ref($set) eq 'HASH'
+        defined($elements_type) &&
+        ref($elements_set) eq 'HASH'
     ) {
-        die("Required parameters haven't been defined");
+        $log->logdie("Required parameters haven't been defined");
     }
 
-    # Loding templates
+    # Loading templates
 
-    foreach my $element (grep( /\*/, keys(%{ $schedule{$name} }))) {
-        $set->{$element} = $schedule->{$name}->{$element};
-        $log->trace("The $name template $element has been loaded");
+    foreach my $template_name (grep( /\*/, keys(%{ $schedule{$elements_type} }))) {
+        $elements_set->{$template_name} = $schedule->{$elements_type}->{$template_name};
+        $log->trace("The ${elements_type}'s template $template_name has been loaded");
     }
-
-    my $elements_loaded = 0;
 
     # Loading elements
 
-    foreach my $element (grep(!/\*/, keys(%{ $schedule{$name} }))) {
+    my $elements_loaded = 0;
 
-        $log->trace("Configuring the $name $element");
+    foreach my $element_name (grep(!/\*/, keys(%{ $schedule{$elements_type} }))) {
 
-        # Getting the new element from the schedule
-        $set->{$element} = $schedule->{$name}->{$element};
+        $log->trace("Configuring the $elements_type: $element_name");
 
-        # Configuring the new element, implementing templates
+        # Getting the configuration of the new element from the schedule
+        $elements_set->{$element_name} = $schedule->{$elements_type}->{$element_name};
+
+        # Configuring the new element, adding configuration templates
+ 
         my %element_configured;
-        my $layers_loaded = eval{
+        my $layers_loaded = eval {
             configure_element(
-                $set,
-                $element,
-                \%element_configured
+                $elements_set,
+                $element_name,
+               \%element_configured
             );
         };
-        if($@) { $log->logdie("Can't configure_element(): $@"); };
-        $set->{$element} = \%element_configured;
+        $log->logdie("Can't configure_element(): $@") if($@);
+        $elements_set->{$element_name} = \%element_configured;
         $elements_loaded++;
-        $log->debug("The $name $element with $layers_loaded configuration layers loaded");
-        foreach my $parameter (keys(%{ $set->{$element} })) {
-            $log->debug("The $name has $parameter = $set->{$element}->{$parameter}");
+
+        $log->debug("The $elements_type $element_name with $layers_loaded configuration layers has been loaded");
+        foreach my $parameter (keys(%{ $elements_set->{$element_name} })) {
+            $log->debug(
+                "The $elements_type $element_name has $parameter = " .
+                $elements_set->{$element_name}->{$parameter}
+            );
         }
+
     }
 
     return($elements_loaded);
 
 };
 
+
+
 sub configure_element {
 
-    my($set, $name, $element) = @_;
+    my($elements_set, $element_name, $element_configured) = @_;
+
     unless(
-        ref($set) eq 'HASH' &&
-        defined($name) &&
-        ref($element) eq 'HASH'
+        ref($elements_set) eq 'HASH' &&
+        defined($element_name) &&
+        ref($element_configured) eq 'HASH'
     ) {
-        die("Required parameters haven't been defined");
+        $log->logdie("Required parameters haven't been defined");
     }
 
     # Will try to compare every pattern to the given name,
@@ -327,12 +349,12 @@ sub configure_element {
 
     my $matched_patterns = 0;
 
-    foreach my $pattern (sort(keys(%{ $set }))) {
-        if(match_glob($pattern, $name)) {
-            $log->trace("The pattern $pattern matched the name $name");
-            foreach (keys(%{ $set->{$pattern} })) {
-                $element->{$_} = $set->{$pattern}->{$_};
-                $log->trace("$_ = $element->{$_}");
+    foreach my $pattern (sort(keys(%{ $elements_set }))) {
+        if(match_glob($pattern, $element_name)) {
+            $log->trace("The pattern $pattern matched the element's name $element_name");
+            foreach (keys(%{ $elements_set->{$pattern} })) {
+                $element_configured->{$_} = $elements_set->{$pattern}->{$_};
+                $log->trace("The element $element_name has $_ = $element_configured->{$_}");
             }
             $matched_patterns++;
         }

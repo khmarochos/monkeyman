@@ -57,7 +57,7 @@ my $result = $api->run_command(
         wait => $opts{'wait'}
     }
 );
-$log->die($api->error_message) unless(defined($result));
+$log->logdie($api->error_message) unless(defined($result));
 
 
 
