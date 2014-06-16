@@ -71,7 +71,7 @@ sub BUILD {
         $self->_set_configuration(\%configuration);
     }
 
-    # Initializing the logger
+    # Initializing the logger if it haven't been defined yet
 
     unless($self->has_logger) {
         if($self->_has_verbosity) {
@@ -151,9 +151,11 @@ sub init_cloudstack_api {
 
     my $self = shift;
 
-    my $cloudstack_api = eval { MonkeyMan::CloudStack::API->new(
-        mm  => $self
-    ); };
+    my $cloudstack_api = eval {
+        $self->_set_cloudstack_api(
+            MonkeyMan::CloudStack::API->new(mm => $self)
+        );
+    };
 
     return($@ ?
         $self->error("Can't MonkeyMan::CloudStack::API::new(): $@") :

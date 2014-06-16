@@ -10,11 +10,12 @@ use lib("$Bin/../lib");
 use MonkeyMan;
 use MonkeyMan::Show;
 use MonkeyMan::CloudStack::API;
+use MonkeyMan::CloudStack::Elements::Domain;
 
 use Getopt::Long;
 use Config::General qw(ParseConfig);
 use Text::Glob qw(match_glob); $Text::Glob::strict_wildcard_slash = 0;
-#use File::Basename;
+use File::Basename;
 
 
 
@@ -118,14 +119,10 @@ THE_LOOP: while (1) {
 
 
 
-    last;
-
-
-
     # Checking if there's anything in the queue and does it need to be set up.
     # I want to be able to reload the configuration without reloading the queue,
-    # by SIGHUP or some shit like that. And SIGUSR1 shall rebuild the queue.
-    # So that's why there's a separate condition for this task.
+    # by SIGHUP or some shit like that. And SIGUSR1 shall be a signal to
+    # rebuild the queue. That's why there's a separate condition for this task.
 
     unless(%queue) {
 
@@ -133,23 +130,15 @@ THE_LOOP: while (1) {
 
         foreach my $domain_path (grep(!/\*/, keys(%conf_domains))) {
 
-            # Getting the information about the domain
+            my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(mm => $mm); };
+            if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain::new(): $@"); next; }
 
-            my $domain = $api->runcmd(
-                parameters  => {
-                    command     => 'listDomains',
-                    keyword     => basename($domain_path)
-                },
-                options     => {
-                    xpath       => "/listdomainsresponse/domain[path='$domain_path']",
-                    result      => 'node'
-                }
-            )->pop();
-            unless(defined($domain)) {
-                $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
-            }
-            $info_domains{$domain->findvalue('id')} = $domain;
-            $log->debug("The domain $domain_path has been identified as " . $domain->findvalue('id'));
+            my $domain_dom = $domain->load_dom(
+                path    => $domain_path
+            );
+            unless(defined($domain_dom)) { $log->warn($domain->error_message); next; }
+
+            next;
 
             # Getting the list of instances in the domain
 
@@ -257,11 +246,13 @@ THE_LOOP: while (1) {
                         domain      => $domain
                     }
 
-               }
-            }
+                } # The end of volumes' loop
 
-        }
-    }
+            } # The end of instances' loop
+
+        } # The end of domains' loop
+
+    } # Okay, the queue has been loaded
 
 
 

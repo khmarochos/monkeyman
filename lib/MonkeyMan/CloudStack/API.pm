@@ -14,12 +14,12 @@ $api = MonkeyMan::CloudStack::API->new(
     mm => $mm
 );
 
-$api->craft_url(
+$url = $api->craft_url(
     command     => 'destroyEverythingYouCanReach',
     sure        => 1
 );
 
-$api->run_command(
+$dom = $api->run_command(
     url         => 'https://localhost:13666/?fuck=off',
     parameters  => {
         command     => 'makeEverythingGood',
@@ -67,7 +67,7 @@ sub BUILD {
 
     my $self = shift;
 
-    $self->mm->logger->trace("MonkeyMan's API connector has been initialized");
+    $self->mm->logger->trace("CloudStack's API connector has been initialized");
 
 }
 
@@ -228,7 +228,7 @@ sub DEMOLISH {
 
     my $self = shift;
 
-    $self->mm->logger->trace("MonkeyMan's API connector is being demolished");
+    $self->mm->logger->trace("CloudStack's API connector is being demolished");
 
 }
 

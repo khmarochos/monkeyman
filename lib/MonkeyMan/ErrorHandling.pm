@@ -105,8 +105,7 @@ sub error_message {
     return(
         "Can't " .
         $caller->{'package'} . "::" .
-        $caller->{'subroutine'} . "(): at the line #" .
-        $caller->{'line'} . " I've got the following: " .
+        $caller->{'subroutine'} . "(): " .
         $error->text
     );
     
