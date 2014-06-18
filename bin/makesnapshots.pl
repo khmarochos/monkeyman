@@ -16,6 +16,7 @@ use Getopt::Long;
 use Config::General qw(ParseConfig);
 use Text::Glob qw(match_glob); $Text::Glob::strict_wildcard_slash = 0;
 use File::Basename;
+use Data::Dumper;
 
 
 
@@ -138,24 +139,28 @@ THE_LOOP: while (1) {
             );
             unless(defined($domain_dom)) { $log->warn($domain->error_message); next; }
 
-            next;
-
             # Getting the list of instances in the domain
 
-            my $instances_list = $api->runcmd(
+            my $domain_id = $api->query_xpath($domain->dom, '/domain/id');
+            unless(defined($domain_id)) { $log->warn($api->error_message); next; }
+
+            $domain_id = ${$domain_id}[0];
+            unless(defined($domain_id)) { $log->warn("Can't determine the ID of the domain"); next; }
+
+            $domain_id = eval { $domain_id->textContent; };
+            if($@) { $log->warn("Can't XML::LibXML::Element::textContent(): $@"); next; }
+
+            my $instances_list = $api->run_command(
                 parameters  => {
                     command     => 'listVirtualMachines',
                     listall     => 'true',
-                    domainid    => $domain->findvalue('id')
-                },
-                options     => {
-                    xpath       => '//listvirtualmachinesresponse/virtualmachine',
-                    result      => 'node'
+                    domainid    => $domain_id
                 }
             );
-            unless(defined($instances_list)) {
-                $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
-            }
+            $log->logdie($api->error_message)
+                unless(defined($instances_list));
+
+            next;
 
             # For every instance...
 

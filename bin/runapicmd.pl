@@ -64,12 +64,16 @@ $log->logdie($api->error_message) unless(defined($result));
 if(defined($opts{'xpath'})) {
     foreach my $xpath (@{ $opts{'xpath'} }) {
         my $should_i_be_short = defined($opts{'short'}) ? $opts{'short'} : 0;
-        my @nodes = $api->query_xpath($result, $xpath);
-        foreach my $node (@nodes) {
+        my $nodes = $api->query_xpath($result, $xpath);
+        unless(defined($nodes)) {
+            $log->warn($api->error_message);
+            next;
+        }
+        foreach my $node (@{$nodes}) {
             print(
-                ($should_i_be_short > 0 ? "" : "$xpath = ") .
-                $node->textContent .
-                ($should_i_be_short < 2 ? "\n" : " ")
+                (($should_i_be_short == 1) ? "$xpath = " : "") .
+                (($should_i_be_short  < 1) ? $node->toString(1) : $node->textContent) .
+                "\n"
             );
         }
     }

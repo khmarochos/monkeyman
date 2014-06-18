@@ -1,38 +1,5 @@
 package MonkeyMan::CloudStack::API;
 
-=pod
-
-=head1 NAME
-
-MonkeyMan::CloudStack::API - a module for accessing CloudStack's API
-
-=head1 SYNOPSIS
-
-use MonkeyMan::CloudStack::API;
-
-$api = MonkeyMan::CloudStack::API->new(
-    mm => $mm
-);
-
-$url = $api->craft_url(
-    command     => 'destroyEverythingYouCanReach',
-    sure        => 1
-);
-
-$dom = $api->run_command(
-    url         => 'https://localhost:13666/?fuck=off',
-    parameters  => {
-        command     => 'makeEverythingGood',
-        world       => $this_world,
-        people      => @these_people
-    },
-    options     => {
-        wait        => 13
-    }
-);
-
-=cut
-
 use strict;
 use warnings;
 
@@ -186,7 +153,7 @@ sub run_command {
 
 sub query_xpath {
 
-    my ($self, $dom, $xpath) = @_;
+    my ($self, $dom, $xpath, $results_to) = @_;
 
     my $mm  = $self->mm;
     my $log = $mm->logger;
@@ -196,7 +163,7 @@ sub query_xpath {
     # First of all, let's find out what they've passed to us - a list or a string
 
     my $queries = [];
-    my @results;
+    my $results = defined($results_to) ? $results_to : [];
 
     if(ref($xpath) eq 'ARRAY') {
         $queries = $xpath;
@@ -208,17 +175,20 @@ sub query_xpath {
 
         $log->trace("Querying $dom for $query");
 
+        $log->trace("$dom contains: " . $dom->toString(1));
+
         my @nodes = eval { $dom->findnodes($query); };
         return($self->error("Can't XML::LibXML::Node::findnodes(): $@")) if($@);
 
         foreach my $node (@nodes) {
             $log->trace("Have got $node");
-            push(@results, $node);
+            $log->trace("$node contains: " . $node->toString(1));
+            push(@{$results}, $node);
         }
 
     }
 
-    return(@results);
+    return($results);
 
 }
 

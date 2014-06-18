@@ -110,7 +110,12 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
     # Getting the list of matched nodes for the condition and adding them to
     # the resulting DOM
 
-    foreach my $node ($api->query_xpath($virtualmachines, $xpath)) {
+    my $nodes = $api->query_xpath($virtualmachines, $xpath);
+    unless(defined($nodes)) {
+        $log->warn($api->error_message);
+        next;
+    }
+    foreach my $node (@{ $nodes }) {
         eval { $result_main_node->addChild($node); };
         if($@) {
             $log->warn("Can't XML::LibXML::Node::addChild(): $@");
@@ -134,11 +139,16 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
 if(defined($opts{'xpath'})) {
     my $should_i_be_short = defined($opts{'short'}) ? $opts{'short'} : 0;
     foreach my $xpath (@{ $opts{'xpath'} }) {
-        foreach my $node ($api->query_xpath($virtualmachines, $xpath)) {
+        my $nodes = $api->query_xpath($virtualmachines, $xpath);
+        unless(defined($nodes)) {
+            $log->warn($api->error_message);
+            next;
+        }
+        foreach my $node (@{ $nodes }) {
             print(
-                ($should_i_be_short > 0 ? "" : "$xpath = ") .
-                $node->textContent .
-                ($should_i_be_short < 2 ? "\n" : " ")
+                (($should_i_be_short == 1) ? "$xpath = " : "") .
+                (($should_i_be_short  < 1) ? $node->toString(1) : $node->textContent) .
+                "\n"
             );
         }
         if($api->has_error) {

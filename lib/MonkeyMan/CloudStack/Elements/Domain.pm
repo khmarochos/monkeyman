@@ -21,12 +21,24 @@ sub _load_full_list_command {
 }
 
 sub _generate_xpath_query {
-    my($self, $cond_parameter, $cond_value) = @_;
 
-    return($self->error("The condition haven't been defined"))
-        unless(defined($cond_parameter) && defined($cond_value));
+    my($self, %parameters) = @_;
 
-    return("/listdomainsresponse/domain[$cond_parameter='$cond_value']");
+    return($self->error("Required parameters haven't been defined"))
+        unless(%parameters);
+
+    if(ref($parameters{'find'}) eq 'HASH') {
+        if($parameters{'find'}->{'attribute'} eq 'RESULT') {
+            return("/listdomainsresponse/domain");
+        } else {
+            return("/listdomainsresponse/domain[" .
+                $parameters{'find'}->{'attribute'} . "='" .
+                $parameters{'find'}->{'value'} . "']"
+            );
+        }
+    }
+
+    return($self->error("I don't understand what you're asking about"));
 
 }
 
