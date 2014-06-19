@@ -27,6 +27,7 @@ sub _generate_xpath_query {
     return($self->error("Required parameters haven't been defined"))
         unless(%parameters);
 
+    # Are they going to find some element?
     if(ref($parameters{'find'}) eq 'HASH') {
         if($parameters{'find'}->{'attribute'} eq 'RESULT') {
             return("/listdomainsresponse/domain");
@@ -36,6 +37,9 @@ sub _generate_xpath_query {
                 $parameters{'find'}->{'value'} . "']"
             );
         }
+    # Are they going to get some info about the element?
+    } elsif(defined($parameters{'get'})) {
+        return("/domain/$parameters{'get'}");
     }
 
     return($self->error("I don't understand what you're asking about"));

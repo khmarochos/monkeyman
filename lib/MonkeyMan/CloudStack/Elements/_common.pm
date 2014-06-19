@@ -39,6 +39,8 @@ sub load_dom {
         unless(%conditions);
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
+    return($self->error("The logger hasn't been initialized"))
+        unless($self->mm->has_logger);
     return($self->error("CloudStack's API connector hasn't been initialized"))
         unless($self->mm->has_cloudstack_api);
 
@@ -53,20 +55,35 @@ sub load_dom {
 
     # Load the full list of elements
 
-    my $dom = $api->run_command(parameters => $self->_load_full_list_command);
-    return($self->error($api->error_message)) unless(defined($dom));
+    my $dom_unfiltered = $api->run_command(
+        # FIXME: it's quite dangerous to pass all parameters without any
+        # security checks, so I should consider adding a couple of them here...
+        parameters => $self->_load_full_list_command
+    );
+    return($self->error($api->error_message)) unless(defined($dom_unfiltered));
 
     # Apply filters, checking for matching conditions
 
-    my $results_got;
-    my $resulting_dom;
-    my $resulting_node;
+    my $results_got;            # the counter of results
+    my $dom_filtered;           # results are to be stored here
+    my $node_to_add_children;   # the node to attach all results
 
+    # The last quasi-condition is called "RESULT"!
     foreach my $condition (keys(%conditions), 'RESULT') {
+
+        # Zeroize the counter of last pass' results
 
         $results_got = 0;
 
-        # Do we have an XPath-query for that condition?
+        # Create a new DOM for storing results
+
+        $dom_filtered = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
+        return($self->error("Can't XML::LibXML::Document::createDocument(): $@")) if($@);
+
+        $node_to_add_children = $dom_filtered;
+#        return($self->error("Can't XML::LibXML::Document::documentElement(): $@")) if($@);
+
+        # Do we have the XPath-query for that condition?
 
         my $xpath_query = $self->_generate_xpath_query(
             find    => {
@@ -79,19 +96,12 @@ sub load_dom {
 
         # Okay, let's apply the filter
 
-        my $results = $api->query_xpath(defined($resulting_dom) ? $resulting_dom : $dom, $xpath_query);
+        my $results = $api->query_xpath($dom_unfiltered, $xpath_query);
         return($self->error($api->error_message))
             unless(defined($results));
 
-        # Do we have a place to store results?
-
-        unless(defined($resulting_dom)) {
-            $resulting_dom = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-            return($self->error("Can't XML::LibXML::Document::createDocument(): $@")) if($@);
-            $resulting_node = $resulting_dom;
-        }
-
-        # How many results have we got?
+        # So, how many results have we got? If there are no results, let's
+        # return our empty DOM
 
         if(scalar(@{ $results }) < 1) {
             $log->trace(
@@ -101,7 +111,8 @@ sub load_dom {
             last;
         }
 
-        # Here you are...
+        # If it's not the last pass, we shall create all required parents for
+        # resulting nodes
 
         if($condition ne 'RESULT') {
 
@@ -112,37 +123,42 @@ sub load_dom {
 
                 next unless ($node_name);
 
-                my $node = eval { $resulting_dom->createElement($node_name); };
+                my $node = eval { $dom_filtered->createElement($node_name); };
                 return($self->error("Can't XML::LibXML::Document::createElement(): $@")) if($@);
 
-                eval { $resulting_node->addChild($node); };
+                eval { $node_to_add_children->addChild($node); };
                 return($self->error("Can't XML::LibXML::Document::addChild(): $@")) if($@);
 
-                $resulting_node = $node;
+                $node_to_add_children = $node;
 
             }
 
         }
 
+        # Okay, now let's attach resulting nodes to the main node
+
         foreach my $result (@{ $results }) {
 
-            my $child = eval { $resulting_node->addChild($result); };
+            my $child = eval { $node_to_add_children->addChild($result); };
             return($self->error("Can't XML::LibXML::Node::addChild() $@")) if ($@);
 
             $results_got++;
 
             if($condition eq 'RESULT') {
-               $resulting_dom->setDocumentElement($child);
+               $dom_filtered->setDocumentElement($child);
+            } else {
+                $dom_unfiltered = $dom_filtered;
             }
 
         }
 
+
     }
 
-    $self->logwarn("$results_got results have been returned, but I expected only one!")
+    $self->logwarn("$results_got results have been returned, but I expected only one")
         if($results_got > 1);
 
-    $self->_set_dom($resulting_dom);
+    $self->_set_dom($dom_filtered);
 
     if($results_got) {
         $log->debug("$self element has been loaded, it's " . $self->dom);
@@ -150,9 +166,56 @@ sub load_dom {
             "Now we've got the following info about $self: " .
             $self->dom->toString(1)
         );
+    } else {
+        $log->debug("$self element hasn't been found");
     }
 
-    return($resulting_dom);
+    return($results_got, $self->dom);
+
+}
+
+
+
+sub get_parameter {
+
+    my($self, $parameter) = @_;
+
+    return($self->error("Searching conditions haven't been defined"))
+        unless(defined($parameter));
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
+    return($self->error("The logger hasn't been initialized"))
+        unless($self->mm->has_logger);
+    return($self->error("CloudStack's API connector hasn't been initialized"))
+        unless($self->mm->has_cloudstack_api);
+
+    my $mm  = $self->mm;
+    my $log = $mm->logger;
+    my $api = $mm->cloudstack_api;
+
+    $log->trace("Getting the parameter $parameter of $self");
+
+    my $xpath_query = $self->_generate_xpath_query(
+        get => $parameter
+    );
+    return($self->error($self->error_message))
+        unless(defined($xpath_query));
+
+    my $results = $api->query_xpath($self->dom, $xpath_query);
+    return($self->error($api->error_message))
+        unless(defined($results));
+
+    my $results_got = scalar(@{ $results });
+
+    $log->logwarn("$results results have been returned, but I expected only one")
+        if($results_got > 1);
+    $log->trace("The parameter haven't been got")
+        if($results_got < 1);
+
+    my $result = eval { $results_got ? ${ $results }[$results_got - 1]->textContent : undef; };
+    return($self->error("Can't XML::LibXML::Element->textContent: $@")) if($@);
+
+    return($results_got, $result);
 
 }
 

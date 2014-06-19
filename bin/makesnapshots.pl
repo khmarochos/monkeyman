@@ -134,21 +134,35 @@ THE_LOOP: while (1) {
             my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(mm => $mm); };
             if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain::new(): $@"); next; }
 
-            my $domain_dom = $domain->load_dom(
+            my(
+                $domains_found,
+                $domain_dom
+            ) = $domain->load_dom(
                 path    => $domain_path
             );
-            unless(defined($domain_dom)) { $log->warn($domain->error_message); next; }
+            unless(defined($domains_found)) {
+                $log->logwarn($domain->error_message);
+                next;
+            }
+            unless($domains_found) {
+                $log->logwarn("The domain hasn't been found");
+                next;
+            }
 
             # Getting the list of instances in the domain
 
-            my $domain_id = $api->query_xpath($domain->dom, '/domain/id');
-            unless(defined($domain_id)) { $log->warn($api->error_message); next; }
-
-            $domain_id = ${$domain_id}[0];
-            unless(defined($domain_id)) { $log->warn("Can't determine the ID of the domain"); next; }
-
-            $domain_id = eval { $domain_id->textContent; };
-            if($@) { $log->warn("Can't XML::LibXML::Element::textContent(): $@"); next; }
+            my(
+                $parameters_found,
+                $domain_id
+            ) = $domain->get_parameter('id');
+            unless(defined($parameters_found)) {
+                $log->logwarn($api->error_message);
+                next;
+            }
+            unless($parameters_found) {
+                $log->logwarn("Can't get the ID of the domain");
+                next;
+            }
 
             my $instances_list = $api->run_command(
                 parameters  => {
@@ -161,99 +175,6 @@ THE_LOOP: while (1) {
                 unless(defined($instances_list));
 
             next;
-
-            # For every instance...
-
-            foreach my $instance ($instances_list->get_nodelist) {
-
-                $info_instances{$instance->findvalue('id')} = $instance;
-                $log->debug("The instance " . $instance->findvalue('id') . " has been identified");
-
-                # Getting the list of volumes
-
-                my $volumes_list = $api->runcmd(
-                    parameters  => {
-                        command             => 'listVolumes',
-                        listall             => 'true',
-                        virtualmachineid    => $instance->findvalue('id')
-                    },
-                    options     => {
-                        xpath       => '//listvolumesresponse/volume',
-                        result      => 'node'
-                    }
-                );
-                unless(defined($instances_list)) {
-                    $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
-                }
-
-                # Getting the information about the host (if needed)
-
-                unless(defined($info_hosts{$instance->findvalue('hostid')})) {
-
-                    my $host = $api->runcmd(
-                        parameters  => {
-                            command     => 'listHosts',
-                            id          => $instance->findvalue('hostid')
-                        },
-                        options     => {
-                            xpath       => '//listhostsresponse/host',
-                            result      => 'node'
-                        }
-                    )->pop();
-                    unless(defined($host)) {
-                        $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
-                    }
-
-                    $info_hosts{$host->findvalue('id')} = $host;
-
-                    $log->debug("The host " . $host->findvalue('id') . " has been identified");
-
-                }
-
-                # For every volume...
-
-                foreach my $volume ($volumes_list->get_nodelist) {
-
-                    $info_volumes{$volume->findvalue('id')} = $volume;
-                    $log->debug("The volume " . $volume->findvalue('id') . " has been identified");
-
-                    # Getting the information about the storage (if needed)
-
-                    unless(eval {
-                        foreach my $storage (valuess(%info_storages)) {
-                            return 1 if($storage->findvalue('name') eq $volume->findvalue('storage'));
-                        }
-                    }) {
-
-                        my $storage = $api->runcmd(
-                            parameters  => {
-                                command     => 'listStoragePools',
-                                name        => $volume->findvalue('storage')
-                            },
-                            options     => {
-                                xpath       => '//liststoragepoolsresponse/storagepool',
-                                result      => 'node'
-                            }
-                        )->pop();
-                        unless(defined($storage)) {
-                            $log->logdie("Can't MonkeyMan::CloudStack::API->runcmd(): $api->{'errstr'}");
-                        }
-
-                        $info_storages{$storage->findvalue('id')} = $storage;
-
-                        $log->debug("The storage " . $storage->findvalue('id') . " has been identified");
-
-                    }
-
-                    $queue{$volume->findvalue('id')} = {
-                        volume      => $volume,
-                        instance    => $instance,
-                        domain      => $domain
-                    }
-
-                } # The end of volumes' loop
-
-            } # The end of instances' loop
 
         } # The end of domains' loop
 
