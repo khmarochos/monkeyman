@@ -66,9 +66,8 @@ sub load_dom {
 
     my $results_got;            # the counter of results
     my $dom_filtered;           # results are to be stored here
-    my $node_to_add_children;   # the node to attach all results
 
-    # The last quasi-condition is called "RESULT"!
+    # The last quasi-condition must be called "RESULT"!
     foreach my $condition (keys(%conditions), 'RESULT') {
 
         # Zeroize the counter of last pass' results
@@ -79,9 +78,6 @@ sub load_dom {
 
         $dom_filtered = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
         return($self->error("Can't XML::LibXML::Document::createDocument(): $@")) if($@);
-
-        $node_to_add_children = $dom_filtered;
-#        return($self->error("Can't XML::LibXML::Document::documentElement(): $@")) if($@);
 
         # Do we have the XPath-query for that condition?
 
@@ -111,47 +107,45 @@ sub load_dom {
             last;
         }
 
-        # If it's not the last pass, we shall create all required parents for
-        # resulting nodes
+        # Building all required parents' nodes
 
-        if($condition ne 'RESULT') {
+        my @node_names = (split('/',
+            ($condition ne 'RESULT') ?
+                eval { ${$results}[0]->parentNode->nodePath; } :
+                '/info'
+        ));
+        return($self->error("Can't XML::LibXML::Element::parentNode() or XML::LibXML::Element::nodePath(): $@")) if($@);
 
-            my @node_names = split('/', eval { ${$results}[0]->parentNode->nodePath; });
-            return($self->error("Can't XML::LibXML::Element::parentNode() or XML::LibXML::Element::nodePath(): $@")) if($@);
+        my $node_to_add_children = $dom_filtered;
 
-            foreach my $node_name (@node_names) {
+        foreach my $node_name (@node_names) {
 
-                next unless ($node_name);
+            next unless ($node_name);
 
-                my $node = eval { $dom_filtered->createElement($node_name); };
-                return($self->error("Can't XML::LibXML::Document::createElement(): $@")) if($@);
+            my $node = eval { $dom_filtered->createElement($node_name); };
+            return($self->error("Can't XML::LibXML::Document::createElement(): $@")) if($@);
 
-                eval { $node_to_add_children->addChild($node); };
-                return($self->error("Can't XML::LibXML::Document::addChild(): $@")) if($@);
+            eval { $node_to_add_children->addChild($node); };
+            return($self->error("Can't XML::LibXML::Document::addChild(): $@")) if($@);
 
-                $node_to_add_children = $node;
-
-            }
+            $node_to_add_children = $node;
 
         }
 
-        # Okay, now let's attach resulting nodes to the main node
+        # Okay, now let's attach nodes containing results to the main node
+
+        my $child_last;
 
         foreach my $result (@{ $results }) {
 
-            my $child = eval { $node_to_add_children->addChild($result); };
+            my $child_last = eval { $node_to_add_children->addChild($result); };
             return($self->error("Can't XML::LibXML::Node::addChild() $@")) if ($@);
 
             $results_got++;
 
-            if($condition eq 'RESULT') {
-               $dom_filtered->setDocumentElement($child);
-            } else {
-                $dom_unfiltered = $dom_filtered;
-            }
-
         }
 
+        $dom_unfiltered = $dom_filtered;
 
     }
 
@@ -212,7 +206,7 @@ sub get_parameter {
     $log->trace("The parameter haven't been got")
         if($results_got < 1);
 
-    my $result = eval { $results_got ? ${ $results }[$results_got - 1]->textContent : undef; };
+    my $result = eval { $results_got ? ${ $results }[0]->textContent : undef; };
     return($self->error("Can't XML::LibXML::Element->textContent: $@")) if($@);
 
     return($results_got, $result);

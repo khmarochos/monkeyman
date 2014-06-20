@@ -134,11 +134,14 @@ THE_LOOP: while (1) {
             my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(mm => $mm); };
             if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain::new(): $@"); next; }
 
+            # Find and load the domain
+
             my(
                 $domains_found,
                 $domain_dom
             ) = $domain->load_dom(
-                path    => $domain_path
+                path    => $domain_path,
+                level   => 1
             );
             unless(defined($domains_found)) {
                 $log->logwarn($domain->error_message);
@@ -149,7 +152,7 @@ THE_LOOP: while (1) {
                 next;
             }
 
-            # Getting the list of instances in the domain
+            # Get domain's ID
 
             my(
                 $parameters_found,
@@ -164,15 +167,7 @@ THE_LOOP: while (1) {
                 next;
             }
 
-            my $instances_list = $api->run_command(
-                parameters  => {
-                    command     => 'listVirtualMachines',
-                    listall     => 'true',
-                    domainid    => $domain_id
-                }
-            );
-            $log->logdie($api->error_message)
-                unless(defined($instances_list));
+            # Getting the list of instances in the domain
 
             next;
 
@@ -185,6 +180,10 @@ THE_LOOP: while (1) {
     last(THE_LOOP);
 
 }
+
+
+
+exit;
 
 
 

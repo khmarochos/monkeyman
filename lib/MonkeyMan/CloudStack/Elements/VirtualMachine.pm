@@ -1,4 +1,4 @@
-package MonkeyMan::CloudStack::Elements::Domain;
+package MonkeyMan::CloudStack::Elements::VirtualMachine;
 
 use strict;
 use warnings;
@@ -15,7 +15,7 @@ with 'MonkeyMan::CloudStack::Elements::_common';
 
 sub _load_full_list_command {
     return({
-        command => 'listDomains',
+        command => 'listVirtualMachines',
         listall => 'true'
     });
 }
@@ -30,16 +30,16 @@ sub _generate_xpath_query {
     # Are they going to find some element?
     if(ref($parameters{'find'}) eq 'HASH') {
         if($parameters{'find'}->{'attribute'} eq 'RESULT') {
-            return("/listdomainsresponse/domain");
+            return("/listvirtualmachinesresponse/virtualmachine");
         } else {
-            return("/listdomainsresponse/domain[" .
+            return("/listvirtualmachinesresponse/virtualmachine[" .
                 $parameters{'find'}->{'attribute'} . "='" .
                 $parameters{'find'}->{'value'} . "']"
             );
         }
     # Are they going to get some info about the element?
     } elsif(defined($parameters{'get'})) {
-        return("/info/domain/$parameters{'get'}");
+        return("/virtualmachine/$parameters{'get'}");
     }
 
     return($self->error("I don't understand what you're asking about"));
