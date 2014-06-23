@@ -9,7 +9,7 @@ use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
 
-with 'MonkeyMan::CloudStack::Elements::_common';
+with 'MonkeyMan::CloudStack::Element';
 
 
 
@@ -29,7 +29,7 @@ sub _generate_xpath_query {
 
     # Are they going to find some element?
     if(ref($parameters{'find'}) eq 'HASH') {
-        if($parameters{'find'}->{'attribute'} eq 'RESULT') {
+        if($parameters{'find'}->{'attribute'} eq 'FINAL') {
             return("/listvirtualmachinesresponse/virtualmachine");
         } else {
             return("/listvirtualmachinesresponse/virtualmachine[" .

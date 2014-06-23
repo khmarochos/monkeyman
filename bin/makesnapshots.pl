@@ -131,45 +131,31 @@ THE_LOOP: while (1) {
 
         foreach my $domain_path (grep(!/\*/, keys(%conf_domains))) {
 
-            my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(mm => $mm); };
+            my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
+                mm          => $mm,
+                load_dom    => { path => $domain_path }
+            )};
             if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain::new(): $@"); next; }
-
-            # Find and load the domain
-
-            my(
-                $domains_found,
-                $domain_dom
-            ) = $domain->load_dom(
-                path    => $domain_path,
-                level   => 1
-            );
-            unless(defined($domains_found)) {
-                $log->logwarn($domain->error_message);
-                next;
-            }
-            unless($domains_found) {
-                $log->logwarn("The domain hasn't been found");
-                next;
-            }
 
             # Get domain's ID
 
-            my(
-                $parameters_found,
-                $domain_id
-            ) = $domain->get_parameter('id');
-            unless(defined($parameters_found)) {
-                $log->logwarn($api->error_message);
-                next;
-            }
-            unless($parameters_found) {
-                $log->logwarn("Can't get the ID of the domain");
+            my $domain_id = $domain->get_parameter('id');
+            unless(defined($domain_id)) {
+                $log->warn("Can't get the ID of the domain" .
+                    ($domain->has_error ? (": " . $domain->error_message) : undef)
+                );
                 next;
             }
 
-            # Getting the list of instances in the domain
+            # Getting the list of virtual machines in the domain
+            
+            my $virtualmachines = $domain->find_related("virtualmachine");
+            unless(defined($virtualmachines)) {
+                $log->warn($domain->error_message);
+                next;
+            }
 
-            next;
+            $log->trace("!!! $virtualmachines !!!");
 
         } # The end of domains' loop
 
@@ -180,7 +166,6 @@ THE_LOOP: while (1) {
     last(THE_LOOP);
 
 }
-
 
 
 exit;
@@ -203,7 +188,7 @@ sub load_elements {
 
     foreach my $template_name (grep( /\*/, keys(%{ $schedule{$elements_type} }))) {
         $elements_set->{$template_name} = $schedule->{$elements_type}->{$template_name};
-        $log->trace("The ${elements_type}'s template $template_name has been loaded");
+        $log->trace("The $template_name ${elements_type}'s template has been loaded");
     }
 
     # Loading elements
@@ -212,7 +197,7 @@ sub load_elements {
 
     foreach my $element_name (grep(!/\*/, keys(%{ $schedule{$elements_type} }))) {
 
-        $log->trace("Configuring the $elements_type: $element_name");
+        $log->trace("Configuring the $element_name $elements_type");
 
         # Getting the configuration of the new element from the schedule
         $elements_set->{$element_name} = $schedule->{$elements_type}->{$element_name};
@@ -231,10 +216,10 @@ sub load_elements {
         $elements_set->{$element_name} = \%element_configured;
         $elements_loaded++;
 
-        $log->debug("The $elements_type $element_name with $layers_loaded configuration layers has been loaded");
+        $log->debug("The $element_name $elements_type with $layers_loaded configuration layers has been loaded");
         foreach my $parameter (keys(%{ $elements_set->{$element_name} })) {
             $log->debug(
-                "The $elements_type $element_name has $parameter = " .
+                "The $element_name $elements_type has $parameter = " .
                 $elements_set->{$element_name}->{$parameter}
             );
         }
@@ -267,10 +252,10 @@ sub configure_element {
 
     foreach my $pattern (sort(keys(%{ $elements_set }))) {
         if(match_glob($pattern, $element_name)) {
-            $log->trace("The pattern $pattern matched the element's name $element_name");
+            $log->trace("The $pattern pattern matched the $element_name element");
             foreach (keys(%{ $elements_set->{$pattern} })) {
                 $element_configured->{$_} = $elements_set->{$pattern}->{$_};
-                $log->trace("The element $element_name has $_ = $element_configured->{$_}");
+                $log->trace("The $element_name element has $_ = $element_configured->{$_}");
             }
             $matched_patterns++;
         }

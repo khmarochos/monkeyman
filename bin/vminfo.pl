@@ -103,7 +103,7 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
             $opts{'conditions'}->{'has_state'} .
             "']"
     } else {
-        $log->warn("The condition $condition isn't valid");
+        $log->warn("The $condition condition isn't valid");
         next;
     }
 
