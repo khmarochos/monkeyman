@@ -149,13 +149,17 @@ THE_LOOP: while (1) {
 
             # Getting the list of virtual machines in the domain
             
-            my $virtualmachines = $domain->find_related("virtualmachine");
+            my $virtualmachines = $domain->find_related_to_me("virtualmachine");
             unless(defined($virtualmachines)) {
-                $log->warn($domain->error_message);
+                $log->warn(
+                    ($domain->has_error ? ($domain->error_message) : "The domain doesn't have any virtualmachines")
+                );
                 next;
             }
 
-            $log->trace("!!! $virtualmachines !!!");
+            # For every virtual machine...
+            #
+            #
 
         } # The end of domains' loop
 

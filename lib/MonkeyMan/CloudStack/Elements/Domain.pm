@@ -13,6 +13,12 @@ with 'MonkeyMan::CloudStack::Element';
 
 
 
+sub element_type {
+    return('domain');
+}
+
+
+
 sub _load_full_list_command {
     return({
         command => 'listDomains',
@@ -27,8 +33,10 @@ sub _generate_xpath_query {
     return($self->error("Required parameters haven't been defined"))
         unless(%parameters);
 
-    # Are they going to find some element?
-    if(ref($parameters{'find'}) eq 'HASH') {
+    if(defined($parameters{'find'})) {
+
+        # Are they going to find some element?
+
         if($parameters{'find'}->{'attribute'} eq 'FINAL') {
             return("/listdomainsresponse/domain");
         } else {
@@ -37,9 +45,13 @@ sub _generate_xpath_query {
                 $parameters{'find'}->{'value'} . "']"
             );
         }
-    # Are they going to get some info about the element?
+
     } elsif(defined($parameters{'get'})) {
+
+        # Are they going to get some info about the element?
+
         return("/domain/$parameters{'get'}");
+
     }
 
     return($self->error("I don't understand what you're asking about"));

@@ -73,9 +73,12 @@ sub load_dom {
     my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
 
-    $log->trace(
+    $log->debug(
         "Have got a request for a " . ref($self) .
-        ", it shall match following conditions: " . Dumper(\%conditions)
+        ", it shall match following conditions: " .
+        join(" && ",
+            map { "'$_' eq '$conditions{$_}'" } (keys(%conditions))
+        )
     );
 
     # Load the full list of elements
@@ -123,7 +126,7 @@ sub load_dom {
         if(scalar(@{ $nodes }) < 1) {
             $log->trace(
                 "Nothing matches the condition: " .
-                "$condition eq $conditions{$condition}"
+                "$condition == $conditions{$condition}"
             );
             last;
         }
@@ -195,7 +198,7 @@ sub load_dom {
 
     if(wantarray) {
 
-        $log->debug("$results_got results have been found");
+        $log->debug("$results_got result(s) has or have been found");
 
         return(@results);
 
@@ -228,7 +231,7 @@ sub get_parameter {
 
     my($self, $parameter) = @_;
 
-    return($self->error("Searching conditions haven't been defined"))
+    return($self->error("The soaked parameter hasn't been defined"))
         unless(defined($parameter));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
@@ -280,12 +283,16 @@ sub get_parameter {
 
 
 
-sub find_related {
+sub find_related_to_me {
 
     my($self, $what_to_find) = @_;
 
-    return($self->error("The type hasn't been defined"))
+    return($self->error("The type of soaked elements hasn't been defined"))
         unless(defined($what_to_find));
+    return($self->error("The element's information haven't been loaded"))
+        unless($self->has_dom);
+    return($self->error($self->has_error) ? $self->error_message : "The ID of the element is unknown")
+        unless(scalar($self->get_parameter('id')));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
     return($self->error("The logger hasn't been initialized"))
@@ -297,28 +304,63 @@ sub find_related {
     my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
 
-    $log->trace("Looking for ${what_to_find}s related to $self");
+    $log->trace("Going to look for ${what_to_find}s related to $self");
+
+    my $module_name = eval {
+        given($what_to_find) {
+            when('virtualmachine')  { return('VirtualMachine'); }
+            when('domain')          { return('Domain'); }
+            default {
+                die("I'm not able to look for related ${what_to_find}s yet");
+            }
+        };
+    };
+    return($self->error($@)) if($@);
 
     my $quasi_object = eval {
-        given($what_to_find) {
-            when('virtualmachine')  {
-                require MonkeyMan::CloudStack::Elements::VirtualMachine;
-                        MonkeyMan::CloudStack::Elements::VirtualMachine->new(mm => $mm);
-            }
-            when('domain') {
-                require MonkeyMan::CloudStack::Elements::Domain;
-                        MonkeyMan::CloudStack::Elements::Domain->new(mm => $mm);
-            }
-            default {
-                die("Can't manipulate ${what_to_find}s yet");
-            }
-        }
+        require "MonkeyMan//CloudStack//Elements//$module_name.pm";
+         return("MonkeyMan::CloudStack::Elements::$module_name"->new(mm => $mm));
     };
-    return($self->error("Can't MonkeyMan::CloudStack::Elements::${what_to_find}::new(): $@")) if($@);
+    return($self->error("Can't MonkeyMan::CloudStack::Elements::${module_name}::new(): $@")) if($@);
 
+    my @objects = $quasi_object->find_related_to_given($self);
+    return($quasi_object->error_message) if((! @objects) && ($quasi_object->has_error));
 
 }
 
+
+
+sub find_related_to_given {
+
+    my($self, $key_element) = @_;
+
+    return($self->error("The key element hasn't been defined"))
+        unless(defined($key_element));
+    return($self->error("The key element's information haven't been loaded"))
+        unless($key_element->has_dom);
+    return($self->error($self->has_error) ? $self->error_message : "The ID of the element is unknown")
+        unless(scalar($key_element->get_parameter('id')));
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
+    return($self->error("The logger hasn't been initialized"))
+        unless($self->mm->has_logger);
+    return($self->error("CloudStack's API connector hasn't been initialized"))
+        unless($self->mm->has_cloudstack_api);
+
+    my $mm  = $self->mm;
+    my $log = $mm->logger;
+    my $api = $mm->cloudstack_api;
+
+    $log->trace("Looking for " . $self->element_type . "s related to $key_element");
+
+    my @objects = $self->load_dom(
+        $key_element->element_type . "id" => scalar($key_element->get_parameter('id'))
+    );
+    return($self->error_message) if((! @objects) && ($self->has_error));
+
+    return(@objects);
+
+}
 
 
 1;

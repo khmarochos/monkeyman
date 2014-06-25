@@ -2,6 +2,7 @@ package MonkeyMan::CloudStack::Elements::VirtualMachine;
 
 use strict;
 use warnings;
+use feature "switch";
 
 use MonkeyMan::Constants;
 
@@ -10,6 +11,12 @@ use MooseX::UndefTolerant;
 use namespace::autoclean;
 
 with 'MonkeyMan::CloudStack::Element';
+
+
+
+sub element_type {
+    return('virtualmachine');
+}
 
 
 
@@ -27,8 +34,10 @@ sub _generate_xpath_query {
     return($self->error("Required parameters haven't been defined"))
         unless(%parameters);
 
-    # Are they going to find some element?
-    if(ref($parameters{'find'}) eq 'HASH') {
+    if(defined($parameters{'find'})) {
+
+        # Are they going to find some element?
+ 
         if($parameters{'find'}->{'attribute'} eq 'FINAL') {
             return("/listvirtualmachinesresponse/virtualmachine");
         } else {
@@ -37,9 +46,13 @@ sub _generate_xpath_query {
                 $parameters{'find'}->{'value'} . "']"
             );
         }
-    # Are they going to get some info about the element?
+
     } elsif(defined($parameters{'get'})) {
+
+        # Are they going to get some info about the element?
+
         return("/virtualmachine/$parameters{'get'}");
+
     }
 
     return($self->error("I don't understand what you're asking about"));
