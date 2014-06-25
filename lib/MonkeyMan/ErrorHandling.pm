@@ -53,7 +53,7 @@ sub error {
             text    => $error_text,
             caller  => \%caller_info
         ); };
-        warn("Can't MonkeyMan::Error::new(): $@") if($@);
+        warn("Can't MonkeyMan::Error->new(): $@") if($@);
 
         $self->_set_error($error) if(defined($error));
 
@@ -104,7 +104,7 @@ sub error_message {
     my $caller = $error->caller;
     return(
         "Can't " .
-        $caller->{'package'} . "::" .
+        $caller->{'package'} . "->" .
         $caller->{'subroutine'} . "(): " .
         $error->text
     );

@@ -42,7 +42,7 @@ my $mm = eval { MonkeyMan->new(
     config_file => $opts{'config'},
     verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
 ); };
-die("Can't MonkeyMan::new(): $@") if($@);
+die("Can't MonkeyMan->new(): $@") if($@);
 
 my $log = $mm->logger;
 die($mm->error_message) unless(defined($log));
@@ -67,13 +67,13 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
     $log->trace("Checking for a condition: $condition = $opts{'conditions'}->{$condition}");
 
     my $result = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-    $log->logdie("Can't XML::LibXML::Document::createDocument(): $@") if($@);
+    $log->logdie("Can't XML::LibXML::Document->createDocument(): $@") if($@);
 
     my $result_main_node = eval { $result->createElement("listvirtualmachinesresponse"); };
-    $log->logdie("Can't XML::LibXML::Document::createElement(): $@") if($@);
+    $log->logdie("Can't $result->createElement(): $@") if($@);
 
     eval { $result->addChild($result_main_node); };
-    $log->logdie("Can't XML::LibXML::Document::addChild(): $@") if($@);
+    $log->logdie("Can't $result->addChild(): $@") if($@);
 
     # Analyzing the condition
 
@@ -118,7 +118,7 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
     foreach my $node (@{ $nodes }) {
         eval { $result_main_node->addChild($node); };
         if($@) {
-            $log->warn("Can't XML::LibXML::Node::addChild(): $@");
+            $log->warn("Can't $result_main_node->addChild(): $@");
             next;
         }
     }

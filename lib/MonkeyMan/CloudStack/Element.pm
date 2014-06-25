@@ -58,10 +58,10 @@ sub BUILD {
 
 sub load_dom {
     
-    my($self, %conditions) = @_;
+    my($self, %input) = @_;
 
-    return($self->error("Searching conditions haven't been defined"))
-        unless(%conditions);
+    return($self->error("Required parameters haven't been defined"))
+        unless(%input);
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
     return($self->error("The logger hasn't been initialized"))
@@ -73,42 +73,59 @@ sub load_dom {
     my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
 
-    $log->debug(
-        "Have got a request for a " . ref($self) .
-        ", it shall match following conditions: " .
-        join(" && ",
-            map { "'$_' eq '$conditions{$_}'" } (keys(%conditions))
-        )
-    );
+    my $nodes = [];             # resulting nodes are to be stored here
+    my $dom_unfiltered;         # the source DOM
+    my $dom_filtered;           # the resulting DOM
 
-    # Load the full list of elements
+    # Load the predetermined DOM (if given) or the full list of elements
 
-    my $dom_unfiltered = $api->run_command(
-        # FIXME: it's quite dangerous to pass all parameters without any
-        # security checks, so I should consider adding a couple of them here...
-        parameters => $self->_load_full_list_command
-    );
-    return($self->error($api->error_message)) unless(defined($dom_unfiltered));
+    if(ref($input{'dom'}) eq 'XML::LibXML::Document') {
+
+        $log->debug("Loading $self with the prederermined DOM: $input{'dom'}");
+
+        push(@{ $nodes }, eval {   $input{'dom'}->documentElement });
+        return($self->error("Can't $input{'dom'}->documentElement(): $@")) if($@);
+
+    } else {
+
+        $log->debug(
+            "Have got a request for a " . ref($self) .
+            ", it shall match following conditions: " .
+            join(" && ",
+                map { "'$_' eq '$input{'conditions'}->{$_}'" } (
+                    keys(%{ $input{'conditions'} })
+                )
+            )
+        );
+
+        $dom_unfiltered = $api->run_command(
+            # FIXME: it's quite dangerous to pass all parameters without any
+            # security checks, so I should consider adding a couple of them here...
+            parameters => $self->_load_full_list_command
+        );
+        return($self->error($api->error_message)) unless(defined($dom_unfiltered));
+
+    }
 
     # Apply filters, checking for matching conditions
 
-    my $nodes;                  # resulting nodes are to be stored here
-    my $dom_filtered;           # the resulting DOM
+    foreach my $condition (keys(%{ $input{'conditions'} }), 'FINAL') {
 
-    # The last quasi-condition must be called "FINAL"!
-    foreach my $condition (keys(%conditions), 'FINAL') {
+        # Don't do anything if we already have some predetermined DOM
+
+        last if(ref($input{'dom'}) eq 'XML::LibXML::Document');
 
         # Create a new DOM for storing resulting nodes
 
-        $dom_filtered = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-        return($self->error("Can't XML::LibXML::Document::createDocument(): $@")) if($@);
+        $dom_filtered = eval {     XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
+        return($self->error("Can't XML::LibXML::Document->createDocument(): $@")) if($@);
 
         # Do we have the XPath-query for that condition?
 
         my $xpath_query = $self->_generate_xpath_query(
             find    => {
                 attribute   => $condition,
-                value       => $conditions{$condition}
+                value       => $input{'conditions'}->{$condition}
             }
         );
         return($self->error($self->error_message))
@@ -126,7 +143,7 @@ sub load_dom {
         if(scalar(@{ $nodes }) < 1) {
             $log->trace(
                 "Nothing matches the condition: " .
-                "$condition == $conditions{$condition}"
+                "$condition == $input{'conditions'}->{$condition}"
             );
             last;
         }
@@ -139,7 +156,7 @@ sub load_dom {
             # Building all required parents' nodes
         
             my @node_names = (split('/', eval { ${ $nodes }[0]->parentNode->nodePath; }));
-            return($self->error("Can't XML::LibXML::Element::parentNode() or XML::LibXML::Element::nodePath(): $@")) if($@);
+            return($self->error("Can't ${ $nodes }[0]->parentNode()->nodePath(): $@")) if($@);
 
             my $node_to_add_children = $dom_filtered;
 
@@ -147,11 +164,11 @@ sub load_dom {
 
                 next unless ($node_name);
 
-                my $node = eval { $dom_filtered->createElement($node_name); };
-                return($self->error("Can't XML::LibXML::Document::createElement(): $@")) if($@);
+                my $node = eval {          $dom_filtered->createElement($node_name); };
+                return($self->error("Can't $dom_filtered->createElement(): $@")) if($@);
 
-                eval { $node_to_add_children->addChild($node); };
-                return($self->error("Can't XML::LibXML::Document::addChild(): $@")) if($@);
+                eval {                     $node_to_add_children->addChild($node); };
+                return($self->error("Can't $node_to_add_children->addChild(): $@")) if($@);
 
                 $node_to_add_children = $node;
 
@@ -163,13 +180,13 @@ sub load_dom {
 
             foreach my $node (@{ $nodes }) {
 
-                my $child_last = eval { $node_to_add_children->addChild($node); };
-                return($self->error("Can't XML::LibXML::Node::addChild() $@")) if ($@);
+                my $child_last = eval {    $node_to_add_children->addChild($node); };
+                return($self->error("Can't $node_to_add_children->addChild() $@")) if ($@);
 
             }
 
             eval { $node_to_add_children->setAttribute("count", scalar(@{ $nodes })); };
-            return(self->error("Can't XML::LibXML::Element::setAttribute(): $@")) if($@);
+            return(self->error("Can't $node_to_add_children->setAttribute(): $@")) if($@);
 
             $dom_unfiltered = $dom_filtered;
 
@@ -184,11 +201,11 @@ sub load_dom {
 
     foreach my $node (@{ $nodes }) {
 
-        my $dom = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-        return($self->error("Can't XML::LibXML::Document::createDocument(): $@")) if($@);
+        my $dom = eval {           XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
+        return($self->error("Can't XML::LibXML::Document->createDocument(): $@")) if($@);
 
-        eval { $dom->addChild($node); };
-        return($self->error("Can't XML::LibXML::Element::addChild(): $@")) if($@);
+        eval {                     $dom->addChild($node); };
+        return($self->error("Can't $dom->addChild(): $@")) if($@);
 
         push(@results, $dom);
 
@@ -274,7 +291,7 @@ sub get_parameter {
             if($results_got > 1);
 
         my $result = eval { $results_got ? ${ $results }[0]->textContent : undef; };
-        return($self->error("Can't XML::LibXML::Element->textContent: $@")) if($@);
+        return($self->error("Can't ${ $results }[0]->textContent(): $@")) if($@);
 
         return($result);
     }
@@ -321,10 +338,11 @@ sub find_related_to_me {
         require "MonkeyMan//CloudStack//Elements//$module_name.pm";
          return("MonkeyMan::CloudStack::Elements::$module_name"->new(mm => $mm));
     };
-    return($self->error("Can't MonkeyMan::CloudStack::Elements::${module_name}::new(): $@")) if($@);
+    return($self->error("Can't MonkeyMan::CloudStack::Elements::${module_name}->new(): $@")) if($@);
 
     my @objects = $quasi_object->find_related_to_given($self);
     return($quasi_object->error_message) if((! @objects) && ($quasi_object->has_error));
+    return(@objects);
 
 }
 
@@ -354,10 +372,11 @@ sub find_related_to_given {
     $log->trace("Looking for " . $self->element_type . "s related to $key_element");
 
     my @objects = $self->load_dom(
-        $key_element->element_type . "id" => scalar($key_element->get_parameter('id'))
+        conditions => {
+            $key_element->element_type . "id" => scalar($key_element->get_parameter('id'))
+        }
     );
     return($self->error_message) if((! @objects) && ($self->has_error));
-
     return(@objects);
 
 }

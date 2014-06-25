@@ -91,7 +91,7 @@ sub run_command {
         onerror => undef
     );
     my $response = $mech->get($url);
-    return($self->error('Can\'t WWW::Mechanize->get(): ' . $response->status_line)) unless($response->is_success);
+    return($self->error("Can't $mech->get(): " . $response->status_line)) unless($response->is_success);
 
     $log->trace('Got an HTTP-response: "' . $response->status_line . '"');
 
@@ -177,8 +177,8 @@ sub query_xpath {
 
         $log->trace("$dom contains: " . $dom->toString(1));
 
-        my @nodes = eval { $dom->findnodes($query); };
-        return($self->error("Can't XML::LibXML::Node::findnodes(): $@")) if($@);
+        my @nodes = eval {         $dom->findnodes($query); };
+        return($self->error("Can't $dom->findnodes(): $@")) if($@);
 
         foreach my $node (@nodes) {
             $log->trace("Have got $node");

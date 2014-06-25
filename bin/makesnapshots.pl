@@ -44,7 +44,7 @@ my $mm = eval { MonkeyMan->new(
     config_file => $opts{'config'},
     verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
 ); };
-die("Can't MonkeyMan::new(): $@") if($@);
+die("Can't MonkeyMan->new(): $@") if($@);
 
 my $log = $mm->logger;
 die($mm->error_message) unless(defined($log));
@@ -80,7 +80,7 @@ THE_LOOP: while (1) {
             );
         };
         if($@) {
-            $log->logdie("Can't Config::General::ParseConfig(): $@");
+            $log->logdie("Can't Config::General->ParseConfig(): $@");
         }
 
         $log->debug("The schedule has been loaded");
@@ -133,9 +133,11 @@ THE_LOOP: while (1) {
 
             my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
                 mm          => $mm,
-                load_dom    => { path => $domain_path }
+                load_dom    => {
+                    conditions => { path => $domain_path }
+                }
             )};
-            if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain::new(): $@"); next; }
+            if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain->new(): $@"); next; }
 
             # Get domain's ID
 
@@ -149,7 +151,7 @@ THE_LOOP: while (1) {
 
             # Getting the list of virtual machines in the domain
             
-            my $virtualmachines = $domain->find_related_to_me("virtualmachine");
+            my $virtualmachines = [$domain->find_related_to_me("virtualmachine")];
             unless(defined($virtualmachines)) {
                 $log->warn(
                     ($domain->has_error ? ($domain->error_message) : "The domain doesn't have any virtualmachines")
@@ -158,8 +160,18 @@ THE_LOOP: while (1) {
             }
 
             # For every virtual machine...
-            #
-            #
+
+            foreach my $virtualmachine_dom (@{ $virtualmachines }) {
+
+                my $virtualmachine = eval { MonkeyMan::CloudStack::Elements::VirtualMachine->new(
+                    mm          => $mm,
+                    load_dom    => {
+                        dom         => $virtualmachine_dom
+                    }
+                ); };
+                if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::VirtualMachine->new(): $@"); next; }
+
+            }
 
         } # The end of domains' loop
 

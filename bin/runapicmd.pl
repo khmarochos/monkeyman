@@ -43,7 +43,7 @@ my $mm = eval { MonkeyMan->new(
     config_file => $opts{'config'},
     verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
 ); };
-die("Can't MonkeyMan::new(): $@") if($@);
+die("Can't MonkeyMan->new(): $@") if($@);
 
 my $log = $mm->logger;
 die($mm->error_message) unless(defined($log));
