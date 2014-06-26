@@ -11,6 +11,7 @@ use MonkeyMan;
 use MonkeyMan::Show;
 use MonkeyMan::CloudStack::API;
 use MonkeyMan::CloudStack::Elements::Domain;
+use MonkeyMan::CloudStack::Elements::VirtualMachine;
 
 use Getopt::Long;
 use Config::General qw(ParseConfig);
@@ -151,8 +152,8 @@ THE_LOOP: while (1) {
 
             # Getting the list of virtual machines in the domain
             
-            my $virtualmachines = [$domain->find_related_to_me("virtualmachine")];
-            unless(defined($virtualmachines)) {
+            my @virtualmachines = $domain->find_related_to_me("virtualmachine");
+            unless(@virtualmachines) {
                 $log->warn(
                     ($domain->has_error ? ($domain->error_message) : "The domain doesn't have any virtualmachines")
                 );
@@ -161,7 +162,7 @@ THE_LOOP: while (1) {
 
             # For every virtual machine...
 
-            foreach my $virtualmachine_dom (@{ $virtualmachines }) {
+            foreach my $virtualmachine_dom (@virtualmachines) {
 
                 my $virtualmachine = eval { MonkeyMan::CloudStack::Elements::VirtualMachine->new(
                     mm          => $mm,

@@ -60,6 +60,7 @@ sub _generate_xpath_query {
 }
 
 
+
 __PACKAGE__->meta->make_immutable;
 
 1;
