@@ -186,6 +186,8 @@ sub query_xpath {
             push(@{$results}, $node);
         }
 
+        $log->trace("Have got " . scalar(@{$results}) . " result(s)");
+
     }
 
     return($results);

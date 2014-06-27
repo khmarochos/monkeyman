@@ -11,7 +11,7 @@ use MonkeyMan;
 use MonkeyMan::Show;
 use MonkeyMan::CloudStack::API;
 use MonkeyMan::CloudStack::Elements::Domain;
-use MonkeyMan::CloudStack::Elements::VirtualMachine;
+use MonkeyMan::CloudStack::Elements::Volume;
 
 use Getopt::Long;
 use Config::General qw(ParseConfig);
@@ -150,27 +150,23 @@ THE_LOOP: while (1) {
                 next;
             }
 
-            # Getting the list of virtual machines in the domain
+            # Getting the list of volumes in the domain
             
-            my @virtualmachines = $domain->find_related_to_me("virtualmachine");
-            unless(@virtualmachines) {
-                $log->warn(
-                    ($domain->has_error ? ($domain->error_message) : "The domain doesn't have any virtualmachines")
-                );
-                next;
-            }
+            my $volumes = $domain->find_related_to_me("volume");
+            unless(defined($volumes)) { $log->warn("Skipping the domain: " . $domain->error_message); next; }
+            unless(scalar(@$volumes)) { $log->warn("Skipping the domain as it doesn't have any volumes"); next; }
 
-            # For every virtual machine...
+            # For every volume
 
-            foreach my $virtualmachine_dom (@virtualmachines) {
+            foreach my $volume_dom (@{$volumes}) {
 
-                my $virtualmachine = eval { MonkeyMan::CloudStack::Elements::VirtualMachine->new(
+                my $volume = eval { MonkeyMan::CloudStack::Elements::Volume->new(
                     mm          => $mm,
                     load_dom    => {
-                        dom         => $virtualmachine_dom
+                         dom        => $volume_dom
                     }
                 ); };
-                if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::VirtualMachine->new(): $@"); next; }
+                if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Volume->new(): $@"); next; }
 
             }
 

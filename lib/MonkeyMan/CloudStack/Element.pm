@@ -46,9 +46,10 @@ sub BUILD {
  
     if($self->has_init_load_dom) {
         my $result = $self->load_dom(%{$self->init_load_dom});
-        unless(defined($result)) {
-            die($self->error_message) if($self->has_error);
-            die("Can't load $self: the element haven't been found");
+        given($result) {
+            when(undef)                     { die($self->error_message) }
+            when(scalar(@{ $result }) < 1)  { die("The element hasn't been found") }
+            when(scalar(@{ $result }) > 1)  { die("Too many elements have been found") }
         }
     }
     
@@ -209,36 +210,29 @@ sub load_dom {
 
         push(@results, $dom);
 
+        $log->trace(
+            "The following information have been found: " .
+            $dom->toString(1)
+        );
+
         $results_got++;
 
     }
 
-    if(wantarray) {
-
-        $log->debug("$results_got result(s) has or have been found");
-
-        return(@results);
-
-    } else {
-
-        $log->warn("$results_got results have been got, but the caller is expecting only 1, returning the first one")
-            if($results_got > 1);
-
-        if($results_got) {
-
-            $self->_set_dom($results[0]) if $results_got;
-
+    given($results_got) {
+        when($_ < 1) { $log->debug("The requested parameter haven't been got") }
+        when($_ > 1) { $log->debug("$results_got results have been got") }
+        default {
+            $self->_set_dom($results[0]);
             $log->debug("$self element has been loaded with " . $self->dom);
             $log->trace(
                 "Now we've got the following information about $self: " .
                 $self->dom->toString(1)
             );
-
         }
-
-        return($self->dom);
-
     }
+
+    return(\@results);
 
 }
 
@@ -275,26 +269,15 @@ sub get_parameter {
 
     my $results_got = scalar(@{ $results });
 
-    $log->trace("The requested parameter haven't been got")
-        if($results_got < 1);
-
-    # If the caller expects for an array, we shall return the array of results
-    # or return the first result otherwise
-
-    if(wantarray) {
-
-        return(@{ $results });
-
-    } else {
-
-        $log->warn("$results_got results have been got, but the caller is expecting only 1, returning the first one")
-            if($results_got > 1);
-
-        my $result = eval { $results_got ? ${ $results }[0]->textContent : undef; };
-        return($self->error("Can't ${ $results }[0]->textContent(): $@")) if($@);
-
-        return($result);
+    given($results_got) {
+        when($_ < 1) { $log->trace("The requested parameter haven't been got") }
+        when($_ > 1) { $log->warn("$results_got results have been got, but the caller is expecting only 1, returning the first one") }
     }
+
+    my $result = eval { $results_got ? ${ $results }[0]->textContent : undef; };
+    return($self->error("Can't ${ $results }[0]->textContent(): $@")) if($@);
+
+    return($result);
 
 }
 
@@ -309,7 +292,7 @@ sub find_related_to_me {
     return($self->error("The element's information haven't been loaded"))
         unless($self->has_dom);
     return($self->error($self->has_error) ? $self->error_message : "The ID of the element is unknown")
-        unless(scalar($self->get_parameter('id')));
+        unless($self->get_parameter('id'));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
     return($self->error("The logger hasn't been initialized"))
@@ -325,8 +308,9 @@ sub find_related_to_me {
 
     my $module_name = eval {
         given($what_to_find) {
-            when('virtualmachine')  { return('VirtualMachine'); }
             when('domain')          { return('Domain'); }
+            when('virtualmachine')  { return('VirtualMachine'); }
+            when('volume')          { return('Volume'); }
             default {
                 die("I'm not able to look for related ${what_to_find}s yet");
             }
@@ -335,14 +319,14 @@ sub find_related_to_me {
     return($self->error($@)) if($@);
 
     my $quasi_object = eval {
-        require "MonkeyMan//CloudStack//Elements//$module_name.pm";
+        require "MonkeyMan/CloudStack/Elements/$module_name.pm";
          return("MonkeyMan::CloudStack::Elements::$module_name"->new(mm => $mm));
     };
     return($self->error("Can't MonkeyMan::CloudStack::Elements::${module_name}->new(): $@")) if($@);
 
-    my @objects = $quasi_object->find_related_to_given($self);
-    return($quasi_object->error_message) if((! @objects) && ($quasi_object->has_error));
-    return(@objects);
+    my $objects = $quasi_object->find_related_to_given($self);
+    return($self->error($quasi_object->error_message)) unless(defined($objects));
+    return($objects);
 
 }
 
@@ -357,7 +341,7 @@ sub find_related_to_given {
     return($self->error("The key element's information haven't been loaded"))
         unless($key_element->has_dom);
     return($self->error($self->has_error) ? $self->error_message : "The ID of the element is unknown")
-        unless(scalar($key_element->get_parameter('id')));
+        unless($key_element->get_parameter('id'));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
     return($self->error("The logger hasn't been initialized"))
@@ -371,13 +355,13 @@ sub find_related_to_given {
 
     $log->trace("Looking for " . $self->element_type . "s related to $key_element");
 
-    my @objects = $self->load_dom(
+    my $objects = $self->load_dom(
         conditions => {
-            $key_element->element_type . "id" => scalar($key_element->get_parameter('id'))
+            $key_element->element_type . "id" => $key_element->get_parameter('id')
         }
     );
-    return($self->error_message) if((! @objects) && ($self->has_error));
-    return(@objects);
+    return($self->error($self->error_message)) unless(defined($objects));
+    return($objects);
 
 }
 
