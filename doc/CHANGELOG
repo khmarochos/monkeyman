@@ -1,2 +1,7 @@
 2014-06-30
+==========
+
 Forked the main development branch (dev_melnik13).
+Added help messages for vminfo.pl and runapicmd.pl.
+Written some description.
+Tidied up a lot of things.
