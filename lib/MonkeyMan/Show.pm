@@ -27,7 +27,7 @@ GLOBAL OPTIONS:
         [opt] Prints this message and exit
           --version
         [opt] Prints only verion information and exit
-    -c ?, --config ?      [O] Reads configuration from the specified file
+    -c ?, --config ?
         [opt] The main configuration file
     -v,   --verbose
         [opt] [mul] Increases verbosity
@@ -41,11 +41,11 @@ __END_OF_GLOBAL_HELP_MESSAGE__
         when('runapicmd') {
             print(<<__END_OF_RUNAPICMD_HELP_MESSAGE__
 
-MODULE PURPOURSE:
+MODULE'S PURPOURSE:
 The purpourse of this module is to send commands to CloudStack's API and
 to show their results.
 
-MODULE ($mode) OPTIONS:
+MODULE-SPECIFIC OPTIONS:
     -p ?, --parameters ?
         [req] [mul] The API command and its parameters
     -w ?, --wait ?
@@ -59,30 +59,28 @@ MODULE ($mode) OPTIONS:
 
 __END_OF_RUNAPICMD_HELP_MESSAGE__
             );
-        }
-        when('vminfo') {
-            print(<<__END_OF_RUNAPICMD_HELP_MESSAGE__
+        } when('vminfo') {
+            print(<<__END_OF_VMINFO_HELP_MESSAGE__
 
-MODULE PURPOURSE:
+MODULE'S PURPOURSE:
 The purpourse of this module is to get information about virtual machines
 finding them by multiple criterias.
 
-MODULE ($mode) OPTIONS:
+MODULE-SPECIFIC OPTIONS:
     -o ?, --conditions ?
         [opt] [mul] To find virtual machine(s) by certain conditions. You
         can use anything you wish as a valid condition. Conditions are being
         logically ANDed, so the expression
             -o has_ipaddress=10.1.1.13 -o has_domain=CUSTOMER666
         will find the virtual machine having the given IP-address belonging
-        to the given domain.
+        to the given domain
     -x ?, --xpath ?
         [opt] [mul] To apply some XPath-queries
     -s,   --short
         [opt] [mul] To get the result in a short form
 
-__END_OF_RUNAPICMD_HELP_MESSAGE__
-    
-
+__END_OF_VMINFO_HELP_MESSAGE__
+            );
         }
     }
 }
