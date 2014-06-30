@@ -1,3 +1,6 @@
+Planned
+=======
+
 Finish makesnapshots.pl. :)
 	Added by melnik13 on 11.06.2014
 
@@ -7,7 +10,19 @@ Compose good help-messages for runapicmd, vminfo and makesnapshots tools.
 Make all binaries to change their eUID, as we don't want them to be
 runned as root when root calls it: it's a bit insecure and can lead to
 tons of real shit.
+	Added by melnik13 on 30.06.2014
+
+
+Implemented
+===========
+
 Also consider the developement branch, as every time you're breaking
 something, a lots of things just can't work!
 	Added by melnik13 on 30.06.2014
 	Implemented by melnik13 on the same day :)
+
+Recondireded
+============
+
+To give a bit of shit.
+    Oh, fuck it!

@@ -1,6 +1,8 @@
 monkeyman
 =========
 
+!http://tucha.ua/wp-content/uploads/2013/08/monk.png
+
 > Aye-aye-aye
 > Aye-aye-aye
 > Hugging up the big monkey man!
@@ -134,10 +136,10 @@ volumes:
     if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Volume->new(): $@"); next; }
 ```
 
-Oh, well, too much words... :-)
+Oh, well, too much text... :-)
 
 Would you like to use it? You're strongly welcome:
 https://github.com/melnik13/monkeyman/
 
-Would you like to develop it with me? Feel free to drop me a line:
-v.melnik@tucha.ua
+Would you like to join the project and develop it with me? Feel free to
+drop me a line: v.melnik@tucha.ua
