@@ -1,7 +1,7 @@
 monkeyman
 =========
 
-!http://tucha.ua/wp-content/uploads/2013/08/monk.png
+!(http://tucha.ua/wp-content/uploads/2013/08/monk.png)
 
 > Aye-aye-aye
 > Aye-aye-aye
