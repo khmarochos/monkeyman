@@ -57,10 +57,13 @@ You can reset the VM found by your desired criterias:
 
 ```
 admin> mm_vm_reset has_instancename=i-13-666-VM
+```
 
 Want to listen to someone's network interface? No problem.
 
+```
 admin> mm_vm_tcpdump has_ipaddress=10.1.1.253
+
 tcpdump: WARNING: vnet17: no IPv4 address assigned
 tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
 listening on vnet17, link-type EN10MB (Ethernet), capture size 65535 bytes
