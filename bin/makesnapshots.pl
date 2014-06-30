@@ -135,12 +135,12 @@ THE_LOOP: while (1) {
             my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
                 mm          => $mm,
                 load_dom    => {
-                    conditions => { path => $domain_path }
+                    conditions  => {
+                        path        => $domain_path
+                    }
                 }
             )};
             if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain->new(): $@"); next; }
-
-            # Get domain's ID
 
             my $domain_id = $domain->get_parameter('id');
             unless(defined($domain_id)) {
@@ -149,6 +149,8 @@ THE_LOOP: while (1) {
                 );
                 next;
             }
+
+            $log->info("Analyzing the $domain_id ($domain_path) domain");
 
             # Getting the list of volumes in the domain
             
@@ -167,6 +169,23 @@ THE_LOOP: while (1) {
                     }
                 ); };
                 if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Volume->new(): $@"); next; }
+
+                my $volume_id = $volume->get_parameter('id');
+                unless(defined($volume_id)) {
+                    $log->warn("Can't get the ID of the volume" .
+                        ($volume->has_error ? (": " . $volume->error_message) : undef)
+                    );
+                    next;
+                }
+                my $volume_name = $volume->get_parameter('name');
+                unless(defined($volume_id)) {
+                    $log->warn("Can't get the name of the volume" .
+                        ($volume->has_error ? (": " . $volume->error_message) : undef)
+                    );
+                    next;
+                }
+
+                $log->info("Analyzing the $volume_id ($volume_name) volume");
 
             }
 
