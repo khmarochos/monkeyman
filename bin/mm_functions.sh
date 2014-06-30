@@ -1,5 +1,6 @@
 # You may want to add those functions to your ~/.bashrc,
-# otherwise you can load them for your own shell scripts
+# otherwise you can load them for your own shell scripts:
+# [ -r /opt/monkeyman/bin/mm_functions.sh ] && . /opt/monkeyman/bin/mm_functions.sh
 
 MM_PATH="/opt/monkeyman"
 MM_VMINFO="${MM_PATH}/bin/vminfo.pl"
