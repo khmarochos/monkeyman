@@ -1,8 +1,6 @@
 monkeyman
 =========
 
-![MonkeyMan's image by D.Kolesnichenko for Tucha](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
-
 > Aye-aye-aye
 > Aye-aye-aye
 > Hugging up the big monkey man!
@@ -143,3 +141,6 @@ https://github.com/melnik13/monkeyman/
 
 Would you like to join the project and develop it with me? Feel free to
 drop me a line: v.melnik@tucha.ua
+
+![Nice drawing by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
+
