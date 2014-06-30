@@ -1,11 +1,11 @@
 monkeyman
 =========
 
+```
 Aye-aye-aye
 Aye-aye-aye
 Hugging up the big monkey man!
-
-Dear colleagues,
+```
 
 If you administrating CloudStack installations, you may find it useful.
 If you love Perl5, you may consider it interesting.
@@ -71,16 +71,16 @@ Let's assume you want to find and load all the information about some
 domain:
 
 ```perl
-            my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
-                mm          => $mm,
-                load_dom    => {
-                    conditions  => {
-                        path        => 'ROOT/CUSTOMERS/ZALOOPA'
-                    }
-                }
-            )};
+    my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
+	mm          => $mm,
+	load_dom    => {
+	    conditions  => {
+		path        => 'ROOT/CUSTOMERS/ZALOOPA'
+	    }
+	}
+    )};
 
-            if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain->new(): $@"); next; }
+    if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain->new(): $@"); next; }
 ```
 
 Voila, now you have the corresponding object's reference in the $domain
@@ -88,21 +88,21 @@ variable. You can do some easy tricks with that domain. It's pretty easy
 to get any parameter:
 
 ```perl
-            my $domain_id = $domain->get_parameter('id');
+    my $domain_id = $domain->get_parameter('id');
 
-            unless(defined($domain_id)) {
-                $log->warn("Can't get the ID of the domain" .
-                    ($domain->has_error ? (": " . $domain->error_message) : undef)
-                );
-                next;
-            }
+    unless(defined($domain_id)) {
+	$log->warn("Can't get the ID of the domain" .
+	    ($domain->has_error ? (": " . $domain->error_message) : undef)
+	);
+	next;
+    }
 ```
 
 What if you want to get all volumes belongs to this domain? It's easy:
 
 ```perl
-            my $volumz = $domain->find_related_to_me("volume");
-            $log->logdie($domain->error_message) unless defined($volumz);
+    my $volumz = $domain->find_related_to_me("volume");
+    $log->logdie($domain->error_message) unless defined($volumz);
 ```
 
 No kidding, you have the reference to the list of XML::LibXML documents
@@ -111,23 +111,21 @@ easily initialize them as objects to do other cool things with these
 volumes:
 
 ```perl
-            foreach my $volume_dom (@{ $volumz }) {
+foreach my $volume_dom (@{ $volumz }) {
 
-                my $volume = eval { MonkeyMan::CloudStack::Elements::Volume->new(
-                    mm          => $mm,
-                    load_dom    => {
-                         dom        => $volume_dom   # the XML document
-                    }
-                ); };
-                if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Volume->new(): $@"); next; }
+my $volume = eval { MonkeyMan::CloudStack::Elements::Volume->new(
+    mm          => $mm,
+    load_dom    => {
+	 dom        => $volume_dom   # the XML document
+    }
+); };
+if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Volume->new(): $@"); next; }
 ```
 
 Oh, well, too much words... :-)
 
 Would you like to use it? You're strongly welcome:
-
-        https://github.com/melnik13/monkeyman/
+https://github.com/melnik13/monkeyman/
 
 Would you like to develop it with me? Feel free to drop me a line:
-
-	v.melnik@tucha.ua
+v.melnik@tucha.ua
