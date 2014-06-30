@@ -42,6 +42,17 @@ admin> mm_vm_info has_ipaddress=10.1.1.127 has_domain=A201306 \
 <instancename>i-51-135-VM</instancename>
 ```
 
+Want to get rid of markup to use the result for something else?
+
+```
+admin> ping $(mm_vm_info has_id=99b885d4-70d7-4efc-8a4e-53417893fb19
+        -x //nic/ipaddress -s -s)
+
+PING 10.1.1.127 (10.1.1.127) 56(84) bytes of data.
+	[...]
+
+```
+
 You can reset the VM found by your desired criterias:
 
 ```
