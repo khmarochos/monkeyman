@@ -1,7 +1,7 @@
-include /opt/monkeyman-0.2.x/etc/mysql.conf
+include /opt/monkeyman/etc/mysql.conf
 
 <log>
-    conf         = /opt/monkeyman-0.2.x/etc/log.conf
+    conf         = /opt/monkeyman/etc/log.conf
 </log>
 
 <email>
@@ -9,7 +9,7 @@ include /opt/monkeyman-0.2.x/etc/mysql.conf
 </email>
 
 <cloudstack>
-    include /opt/monkeyman-0.2.x/etc/cloudstack_api.conf
+    include /opt/monkeyman/etc/cloudstack_api.conf
     demo_domain_id = 2
 </cloudstack>
 
