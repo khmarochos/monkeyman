@@ -1,11 +1,9 @@
 monkeyman
 =========
 
-```
-Aye-aye-aye
-Aye-aye-aye
-Hugging up the big monkey man!
-```
+> Aye-aye-aye
+> Aye-aye-aye
+> Hugging up the big monkey man!
 
 If you administrating CloudStack installations, you may find it useful.
 If you love Perl5, you may consider it interesting.
@@ -111,15 +109,15 @@ easily initialize them as objects to do other cool things with these
 volumes:
 
 ```perl
-foreach my $volume_dom (@{ $volumz }) {
-
-my $volume = eval { MonkeyMan::CloudStack::Elements::Volume->new(
-    mm          => $mm,
-    load_dom    => {
-	 dom        => $volume_dom   # the XML document
-    }
-); };
-if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Volume->new(): $@"); next; }
+    foreach my $volume_dom (@{ $volumz }) {
+    
+    my $volume = eval { MonkeyMan::CloudStack::Elements::Volume->new(
+        mm          => $mm,
+        load_dom    => {
+    	 dom        => $volume_dom   # the XML document
+        }
+    ); };
+    if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Volume->new(): $@"); next; }
 ```
 
 Oh, well, too much words... :-)
