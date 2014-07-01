@@ -24,9 +24,9 @@ Usage: $0 [OPTIONS]
 
 GLOBAL OPTIONS:
     -h,   --help
-        [opt] Prints this message and exit
+        [opt] Prints this message and exits
           --version
-        [opt] Prints only verion information and exit
+        [opt] Prints only verion information and exits
     -c ?, --config ?
         [opt] The main configuration file
     -v,   --verbose
