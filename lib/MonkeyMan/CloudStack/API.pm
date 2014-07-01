@@ -34,6 +34,11 @@ sub BUILD {
 
     my $self = shift;
 
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
+    return($self->error("The logger hasn't been initialized"))
+        unless($self->mm->has_logger);
+
     $self->mm->logger->trace("CloudStack's API connector has been initialized");
 
 }
@@ -44,8 +49,10 @@ sub craft_url {
 
     my($self, %parameters) = @_;
 
-    my $mm  = $self->mm;
-    my $log = $mm->logger;
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
+
+    my $mm = $self->mm;
 
     my $parameters_string;
     my $output;
@@ -67,10 +74,15 @@ sub run_command {
 
     my($self, %input) = @_;
 
+    return($self->error("Required parametrs haven't been defined"))
+        unless(ref($input{'parameters'}));
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
+    return($self->error("The logger hasn't been initialized"))
+        unless($self->mm->has_logger);
+
     my $mm  = $self->mm;
     my $log = $mm->logger;
-
-    return($self->error("Required parametrs haven't been defined")) unless(ref($input{'parameters'}));
 
     # Crafting the URL
 
@@ -84,7 +96,7 @@ sub run_command {
 
     # Running the command
 
-    $log->trace(">MM>CS> - querying CloudStack by $url");
+    $log->trace("[MM>CS] - querying CloudStack by $url");
 
     # FIXME - what about to use LWP::UserAgent here?
     my $mech = WWW::Mechanize->new(
@@ -105,7 +117,7 @@ sub run_command {
     };
     return($self->error("Can't XML::LibXML->load_xml(): $@")) unless(defined($dom));
 
-    $log->trace("<MM<CS< - have got data from CloudStack as $dom:\n" . $dom->toString(1));
+    $log->trace("[MM<CS] - have got data from CloudStack as $dom:\n" . $dom->toString(1));
 
     # Should we wait for an async job?
 
@@ -155,10 +167,15 @@ sub query_xpath {
 
     my ($self, $dom, $xpath, $results_to) = @_;
 
+    return($self->error("The DOM isn't defined"))
+        unless(defined($dom));
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
+    return($self->error("The logger hasn't been initialized"))
+        unless($self->mm->has_logger);
+
     my $mm  = $self->mm;
     my $log = $mm->logger;
-
-    return($self->error("DOM isn't defined")) unless(defined($dom));
 
     # First of all, let's find out what they've passed to us - a list or a string
 
@@ -175,14 +192,14 @@ sub query_xpath {
 
         $log->trace("Querying $dom for $query");
 
-        $log->trace("$dom contains: " . $dom->toString(1));
+        $log->trace("[>DOM<] - $dom contains: " . $dom->toString(1));
 
         my @nodes = eval {         $dom->findnodes($query); };
         return($self->error("Can't $dom->findnodes(): $@")) if($@);
 
         foreach my $node (@nodes) {
             $log->trace("Have got $node");
-            $log->trace("$node contains: " . $node->toString(1));
+            $log->trace("[>DOM<] - $node contains: " . $node->toString(1));
             push(@{$results}, $node);
         }
 

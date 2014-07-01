@@ -9,8 +9,17 @@ include /opt/monkeyman/etc/mysql.conf
 </email>
 
 <cloudstack>
+
     include /opt/monkeyman/etc/cloudstack_api.conf
-    demo_domain_id = 2
+
+    demo_domain_id  = 2
+
+    <cache>
+        enabled
+        ttl         = 300
+        never       = volume,virtualmachine,snapshot
+    </cache>
+        
 </cloudstack>
 
 <time>

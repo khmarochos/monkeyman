@@ -123,11 +123,9 @@ sub load_dom {
 
         # Do we have the XPath-query for that condition?
 
-        my $xpath_query = $self->_generate_xpath_query(
-            find    => {
-                attribute   => $condition,
-                value       => $input{'conditions'}->{$condition}
-            }
+        my $xpath_query = $self->_load_dom_xpath_query(
+            attribute   => $condition,
+            value       => $input{'conditions'}->{$condition}
         );
         return($self->error($self->error_message))
             unless(defined($xpath_query));
@@ -211,7 +209,7 @@ sub load_dom {
         push(@results, $dom);
 
         $log->trace(
-            "The following information have been found: " .
+            "[>DOM<] - $dom contains: " .
             $dom->toString(1)
         );
 
@@ -225,10 +223,6 @@ sub load_dom {
         default {
             $self->_set_dom($results[0]);
             $log->debug("$self element has been loaded with " . $self->dom);
-            $log->trace(
-                "Now we've got the following information about $self: " .
-                $self->dom->toString(1)
-            );
         }
     }
 
@@ -257,9 +251,7 @@ sub get_parameter {
 
     $log->trace("Getting the $parameter parameter of $self");
 
-    my $xpath_query = $self->_generate_xpath_query(
-        get => $parameter
-    );
+    my $xpath_query = $self->_get_parameter_xpath_query($parameter);
     return($self->error($self->error_message))
         unless(defined($xpath_query));
 
@@ -356,9 +348,7 @@ sub find_related_to_given {
     $log->trace("Looking for " . $self->element_type . "s related to $key_element");
 
     my $objects = $self->load_dom(
-        conditions => {
-            $key_element->element_type . "id" => $key_element->get_parameter('id')
-        }
+        conditions => { $self->_find_related_to_given_conditions($key_element) }
     );
     return($self->error($self->error_message)) unless(defined($objects));
     return($objects);

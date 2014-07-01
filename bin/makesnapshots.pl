@@ -63,13 +63,14 @@ my %conf_domains;
 my %info_storages;
 my %info_hosts;
 my %info_domains;
-my %info_instances;
+my %info_virtualmachines;
 my %info_volumes;
 my %info_snapshots;
 my %queue;
 
 THE_LOOP: while (1) {
 
+    # ----------------------------------------------------------------------
     # Reload everything If the schedule hasn't been loaded or has been reset
 
     unless(%schedule) {
@@ -150,6 +151,10 @@ THE_LOOP: while (1) {
                 next;
             }
 
+            # Storing the information about the domain
+
+            $info_domains{$domain_id} = $domain;
+
             $log->info("Analyzing the $domain_id ($domain_path) domain");
 
             # Getting the list of volumes in the domain
@@ -185,7 +190,50 @@ THE_LOOP: while (1) {
                     next;
                 }
 
+                # Storing the information about the volume
+
+                $info_volumes{$volume_id} = $volume;
+
                 $log->info("Analyzing the $volume_id ($volume_name) volume");
+
+                # Loading information about the storage and storing it to $info_storages{$storage_name} /!\
+                # 
+                #
+
+                # Finding the virtualmachine this volume's attached to
+                
+                my $virtualmachines = $volume->find_related_to_me("virtualmachine");
+                unless(defined($virtualmachines)) { $log->warn("Skipping the virtualmachine: " . $volume->error_message); next; }
+                unless(scalar(@$virtualmachines)) {
+                    $log->debug("The volume doesn't seem to be attached, skipping loading host information");
+                    next;
+                }
+
+                foreach my $virtualmachine_dom (@{$virtualmachines}) {
+
+                    my $virtualmachine = eval { MonkeyMan::CloudStack::Elements::VirtualMachine->new(
+                        mm          => $mm,
+                        load_dom    => {
+                             dom        => $virtualmachine_dom
+                        }
+                    ); };
+                    if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::VirtualMachine->new(): $@"); next; }
+
+                    my $virtualmachine_id = $virtualmachine->get_parameter('id');
+                    unless(defined($virtualmachine_id)) {
+                        $log->warn("Can't get the ID of the virtualmachine" .
+                            ($virtualmachine->has_error ? (": " . $virtualmachine->error_message) : undef)
+                        );
+                        next;
+                    }
+
+                    # Storing information about the virtualmachine
+
+                    $info_virtualmachines{$virtualmachine_id} = $virtualmachine;
+
+                }
+
+                # Loading information about the host and storing it to $info_hosts{$host_name} /!\
 
             }
 
@@ -195,9 +243,32 @@ THE_LOOP: while (1) {
 
 
 
+    # ----------------------------------------------------------
+    # Asking MM whats up, updating information about queued jobs
+
+
+
+    # -------------------------------
+    # Starting new snapshot processes
+
+
+
+    # -------------------------------------------
+    # Gathering and storing some usage statistics
+
+    # Counting stats
+
+    # Saving the queue and objects, MonkeyMan should be able to do that:
+    #   $dump_id = $mm->dump_state();
+    #   $restore = $mm->restore_state($dump_id);
+
+
+
+
     last(THE_LOOP);
 
 }
+
 
 
 exit;

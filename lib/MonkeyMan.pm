@@ -41,6 +41,7 @@ has 'logger' => (
     is          => 'ro',
     isa         => 'Log::Log4perl::Logger',
     writer      => '_set_logger',
+    clearer     => '_clear_logger',
     predicate   => 'has_logger'
 );
 has 'cloudstack_api' => (
@@ -106,7 +107,6 @@ log4perl.appender.screen                            = Log::Log4perl::Appender::S
 log4perl.appender.screen.layout                     = Log::Log4perl::Layout::PatternLayout
 log4perl.appender.screen.layout.ConversionPattern   = $log_screen_pattern
 log4perl.appender.screen.Filter                     = screen
-
 log4perl.filter.screen                              = Log::Log4perl::Filter::LevelRange
 log4perl.filter.screen.LevelMin                     = $log_screen_loglevel
 log4perl.filter.screen.AcceptOnMatch                = true
@@ -170,7 +170,10 @@ sub DEMOLISH {
 
     my $self = shift;
 
-    $self->logger->debug("MonkeyMan is being stopped") if($self->has_logger);
+    if($self->has_logger) {
+        $self->logger->debug("MonkeyMan is being stopped");
+        $self->_clear_logger;
+    }
 
 }
 
