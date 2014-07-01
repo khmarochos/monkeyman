@@ -37,13 +37,6 @@ has 'verbosity' => (
     writer      => '_set_verbosity',
     predicate   => '_has_verbosity'
 );
-has 'logger' => (
-    is          => 'ro',
-    isa         => 'Log::Log4perl::Logger',
-    writer      => '_set_logger',
-    clearer     => '_clear_logger',
-    predicate   => 'has_logger'
-);
 has 'cloudstack_api' => (
     is          => 'ro',
     isa         => 'MonkeyMan::CloudStack::API',
@@ -74,7 +67,7 @@ sub BUILD {
 
     # Initializing the logger if it haven't been defined yet
 
-    unless($self->has_logger) {
+    unless(Log::Log4perl->initialized) {
         if($self->_has_verbosity) {
             $self->_set_verbosity(0) if($self->verbosity < 0);
             $self->_set_verbosity(7) if($self->verbosity > 7);
@@ -111,18 +104,20 @@ log4perl.filter.screen                              = Log::Log4perl::Filter::Lev
 log4perl.filter.screen.LevelMin                     = $log_screen_loglevel
 log4perl.filter.screen.AcceptOnMatch                = true
 __END_LOGCONF__
-        eval {
-            Log::Log4perl::init_once(\$log_conf);
-        };
-        if($@) {
-            die("Can't Log::Log4perl::init_once(): $@")
-        }
-        $self->_set_logger(Log::Log4perl::get_logger("MonkeyMan"));
+        eval { Log::Log4perl::init_once(\$log_conf) };
+        die("Can't Log::Log4perl::init_once(): $@")
+            if($@);
+
+
     }
+
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    die("Can't Log::Log4perl::init_once(): $@")
+        if($@);
 
     # Okay, everything's fine now :)
 
-    $self->logger->debug("MonkeyMan has been initialized");
+    $log->debug("MonkeyMan has been initialized");
 
 }
 
@@ -161,19 +156,6 @@ sub init_cloudstack_api {
         $self->error("Can't MonkeyMan::CloudStack::API::new(): $@") :
         $cloudstack_api
     );
-
-}
-
-
-
-sub DEMOLISH {
-
-    my $self = shift;
-
-    if($self->has_logger) {
-        $self->logger->debug("MonkeyMan is being stopped");
-        $self->_clear_logger;
-    }
 
 }
 

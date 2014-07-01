@@ -65,14 +65,14 @@ sub load_dom {
         unless(%input);
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
+    my $mm  = $self->mm;
     return($self->error("CloudStack's API connector hasn't been initialized"))
         unless($self->mm->has_cloudstack_api);
-
-    my $mm  = $self->mm;
-    my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error("The logger hasn't been initialized: $@"))
+        if($@);
+
 
     my $nodes = [];             # resulting nodes are to be stored here
     my $dom_unfiltered;         # the source DOM
@@ -240,14 +240,13 @@ sub get_parameter {
         unless(defined($parameter));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
+    my $mm  = $self->mm;
     return($self->error("CloudStack's API connector hasn't been initialized"))
         unless($self->mm->has_cloudstack_api);
-
-    my $mm  = $self->mm;
-    my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error("The logger hasn't been initialized: $@"))
+        if($@);
 
     $log->trace("Getting the $parameter parameter of $self");
 
@@ -287,14 +286,13 @@ sub find_related_to_me {
         unless($self->get_parameter('id'));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
+    my $mm  = $self->mm;
     return($self->error("CloudStack's API connector hasn't been initialized"))
         unless($self->mm->has_cloudstack_api);
-
-    my $mm  = $self->mm;
-    my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error("The logger hasn't been initialized: $@"))
+        if($@);
 
     $log->trace("Going to look for ${what_to_find}s related to $self");
 
@@ -334,16 +332,13 @@ sub find_related_to_given {
         unless($key_element->has_dom);
     return($self->error($self->has_error) ? $self->error_message : "The ID of the element is unknown")
         unless($key_element->get_parameter('id'));
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
+    my $mm  = $self->mm;
     return($self->error("CloudStack's API connector hasn't been initialized"))
         unless($self->mm->has_cloudstack_api);
-
-    my $mm  = $self->mm;
-    my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error("The logger hasn't been initialized: $@"))
+        if($@);
 
     $log->trace("Looking for " . $self->element_type . "s related to $key_element");
 

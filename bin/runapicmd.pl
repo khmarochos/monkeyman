@@ -13,6 +13,7 @@ use MonkeyMan::CloudStack::API;
 
 use Getopt::Long;
 use XML::LibXML;
+use Log::Log4perl;
 
 
 
@@ -45,11 +46,13 @@ my $mm = eval { MonkeyMan->new(
 ); };
 die("Can't MonkeyMan->new(): $@") if($@);
 
-my $log = $mm->logger;
-die($mm->error_message) unless(defined($log));
+my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
+warn("The logger hasn't been initialized: $@") if($@);
 
 my $api = $mm->init_cloudstack_api;
 die($mm->error_message) unless(defined($api));
+
+
 
 my $result = $api->run_command(
     parameters  => $opts{'parameters'},
@@ -83,3 +86,4 @@ if(defined($opts{'xpath'})) {
 
 
 
+$log->debug("The task is completed");

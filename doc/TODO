@@ -12,6 +12,7 @@ tons of real shit.
 Make MonkeyMan able to cache object's information in memory, just simulating
 loading to the script. There should be handles to control its behaviour by
 configuration options
+    Added by melnik13 on 01.07.2014
 
 
 
@@ -32,5 +33,3 @@ Compose good help-messages for runapicmd, vminfo and makesnapshots tools.
 Recondireded
 ============
 
-To give a bit of shit.
-    Oh, fuck it!

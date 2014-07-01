@@ -36,10 +36,11 @@ sub BUILD {
 
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error("The logger hasn't been initialized: $@"))
+        if($@);
 
-    $self->mm->logger->trace("CloudStack's API connector has been initialized");
+    $log->trace("CloudStack's API connector has been initialized");
 
 }
 
@@ -78,11 +79,10 @@ sub run_command {
         unless(ref($input{'parameters'}));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
-
     my $mm  = $self->mm;
-    my $log = $mm->logger;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error("The logger hasn't been initialized: $@"))
+        if($@);
 
     # Crafting the URL
 
@@ -171,11 +171,11 @@ sub query_xpath {
         unless(defined($dom));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
-
     my $mm  = $self->mm;
-    my $log = $mm->logger;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error("The logger hasn't been initialized: $@"))
+        if($@);
+
 
     # First of all, let's find out what they've passed to us - a list or a string
 
@@ -208,16 +208,6 @@ sub query_xpath {
     }
 
     return($results);
-
-}
-
-
-
-sub DEMOLISH {
-
-    my $self = shift;
-
-    $self->mm->logger->trace("CloudStack's API connector is being demolished");
 
 }
 
