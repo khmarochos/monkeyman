@@ -1,55 +1,184 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
     <title>MonkeyMan by melnik13</title>
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script src="javascripts/respond.js"></script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <!--[if lt IE 8]>
-    <link rel="stylesheet" href="stylesheets/ie.css">
-    <![endif]-->
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-
   </head>
+
   <body>
-      <div id="header">
-        <nav>
-          <li class="fork"><a href="https://github.com/melnik13/monkeyman">View On GitHub</a></li>
-          <li class="downloads"><a href="https://github.com/melnik13/monkeyman/zipball/master">ZIP</a></li>
-          <li class="downloads"><a href="https://github.com/melnik13/monkeyman/tarball/master">TAR</a></li>
-          <li class="title">DOWNLOADS</li>
-        </nav>
-      </div><!-- end header -->
 
-    <div class="wrapper">
+    <header>
+      <div class="container">
+        <h1>MonkeyMan</h1>
+        <h2>A nice perl5 library for interacting with Apache CloudStack with some cool tools included</h2>
 
-      <section>
-        <div id="title">
-          <h1>MonkeyMan</h1>
-          <p>A nice perl5 library for interacting with Apache CloudStack with some cool tools included</p>
-          <hr>
-          <span class="credits left">Project maintained by <a href="https://github.com/melnik13">melnik13</a></span>
-          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
-        </div>
+        <section id="downloads">
+          <a href="https://github.com/melnik13/monkeyman/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/melnik13/monkeyman/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/melnik13/monkeyman" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
 
-        <h3>
-<a name="about-the-project" class="anchor" href="#about-the-project"><span class="octicon octicon-link"></span></a>About the project</h3>
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a name="monkeyman" class="anchor" href="#monkeyman"><span class="octicon octicon-link"></span></a>monkeyman</h1>
 
-<p>MonkeyMan is a library can be used to write scripts for automation of administrative tasks and routines needed for maintaining your <a href="http://cloudstack.apache.org/">Apache CloudStack</a> installation.</p>
+<blockquote>
+<p>Aye-aye-aye
+Aye-aye-aye
+Hugging up the big monkey man!</p>
+</blockquote>
 
-<p>If you have any questions, please, contact me: <a href="mailto:v.melnik@tucha13.net">v.melnik@tucha13.net</a>.</p>
+<p>If you administrating CloudStack installations, you may find it useful.
+If you love Perl5, you may consider it interesting.</p>
 
-<p><img src="http://tucha.ua/wp-content/uploads/2013/08/monk.png" alt="The cool artwork by D.Kolesnichenko for Tucha.UA"></p>
+<p>I'm developing a library and some set of tools for managing
+CloudStack-based infrastructure from the command line. It's going to
+become a smart system for doing lots of administrative tasks, so it's
+only the beginning for now. :-)</p>
+
+<p>But what we have at the moment?</p>
+
+<p>As about tools, we can do such things from UNIX-shell...</p>
+
+<p>For example, let's assume you want to check state of the VM having
+a certain IP-address AND being a member of a certain domain:</p>
+
+<pre><code>admin&gt; mm_vm_info has_ipaddress=10.1.1.127 has_domain=A201306
+
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;listvirtualmachinesresponse&gt;
+  &lt;virtualmachine&gt;
+    &lt;id&gt;99b885d4-70d7-4efc-8a4e-53417893fb19&lt;/id&gt;
+    &lt;name&gt;99b885d4-70d7-4efc-8a4e-53417893fb19&lt;/name&gt;
+    [...]
+</code></pre>
+
+<p>Or, if you want to, you can get certain parameters of this output:</p>
+
+<pre><code>admin&gt; mm_vm_info has_ipaddress=10.1.1.127 has_domain=A201306 \
+        -x //state -x //hostname -x //instancename
+
+&lt;state&gt;Running&lt;/state&gt;
+&lt;hostname&gt;h2.c1.p1.z1.tucha13.net&lt;/hostname&gt;
+&lt;instancename&gt;i-51-135-VM&lt;/instancename&gt;
+</code></pre>
+
+<p>Want to get rid of markup to use the result for something else?</p>
+
+<pre><code>admin&gt; ping $(mm_vm_info has_id=99b885d4-70d7-4efc-8a4e-53417893fb19
+        -x //nic/ipaddress -s -s)
+
+PING 10.1.1.127 (10.1.1.127) 56(84) bytes of data.
+    [...]
+
+</code></pre>
+
+<p>You can reset the VM found by your desired criterias:</p>
+
+<pre><code>admin&gt; mm_vm_reset has_instancename=i-13-666-VM
+</code></pre>
+
+<p>Want to listen to someone's network interface? No problem.</p>
+
+<pre><code>admin&gt; mm_vm_tcpdump has_ipaddress=10.1.1.253
+
+tcpdump: WARNING: vnet17: no IPv4 address assigned
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on vnet17, link-type EN10MB (Ethernet), capture size 65535 bytes
+15:21:01.845886 IP 10.1.1.1.36686 &gt; 10.1.1.253.imaps: Flags [S], seq 316746440, win 14600, options [mss 1460,sackOK,TS val 1959872931 ecr 0,nop,wscale 6], length 0
+15:21:01.846023 IP 10.1.1.253.imaps &gt; 10.1.1.1.36686: Flags [S.], seq 2234071684, ack 316746441, win 14480, options [mss 1460,sackOK,TS val 2579908884 ecr 1959872931,nop,wscale 6], length 0
+</code></pre>
+
+<p>^^^ The script just have found the hostname and the instance name,
+logged into the host, analyzed output of "virsh dumpxml ...", found the
+interface's name (vnet17) and launched tcpdump.</p>
+
+<p>And you can use all these things not only from the command-line, as you
+can use the object oriented library using all these things from your own
+Perl5 scripts.</p>
+
+<p>Let's assume you want to find and load all the information about some
+domain:</p>
+
+<div class="highlight highlight-perl"><pre>    <span class="k">my</span> <span class="nv">$domain</span> <span class="o">=</span> <span class="nb">eval</span> <span class="p">{</span> <span class="nn">MonkeyMan::CloudStack::Elements::</span><span class="n">Domain</span><span class="o">-&gt;</span><span class="k">new</span><span class="p">(</span>
+    <span class="n">mm</span>          <span class="o">=&gt;</span> <span class="nv">$mm</span><span class="p">,</span>
+    <span class="n">load_dom</span>    <span class="o">=&gt;</span> <span class="p">{</span>
+        <span class="n">conditions</span>  <span class="o">=&gt;</span> <span class="p">{</span>
+        <span class="n">path</span>        <span class="o">=&gt;</span> <span class="s">'ROOT/CUSTOMERS/ZALOOPA'</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="p">)};</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="vg">$@</span><span class="p">)</span> <span class="p">{</span> <span class="nv">$log</span><span class="o">-&gt;</span><span class="nb">warn</span><span class="p">(</span><span class="s">"Can't MonkeyMan::CloudStack::Elements::Domain-&gt;new(): $@"</span><span class="p">);</span> <span class="k">next</span><span class="p">;</span> <span class="p">}</span>
+</pre></div>
+
+<p>Voila, now you have the corresponding object's reference in the $domain
+variable. You can do some easy tricks with that domain. It's pretty easy
+to get any parameter:</p>
+
+<div class="highlight highlight-perl"><pre>    <span class="k">my</span> <span class="nv">$domain_id</span> <span class="o">=</span> <span class="nv">$domain</span><span class="o">-&gt;</span><span class="n">get_parameter</span><span class="p">(</span><span class="s">'id'</span><span class="p">);</span>
+
+    <span class="k">unless</span><span class="p">(</span><span class="nb">defined</span><span class="p">(</span><span class="nv">$domain_id</span><span class="p">))</span> <span class="p">{</span>
+    <span class="nv">$log</span><span class="o">-&gt;</span><span class="nb">warn</span><span class="p">(</span><span class="s">"Can't get the ID of the domain"</span> <span class="o">.</span>
+        <span class="p">(</span><span class="nv">$domain</span><span class="o">-&gt;</span><span class="n">has_error</span> <span class="p">?</span> <span class="p">(</span><span class="s">": "</span> <span class="o">.</span> <span class="nv">$domain</span><span class="o">-&gt;</span><span class="n">error_message</span><span class="p">)</span> <span class="p">:</span> <span class="nb">undef</span><span class="p">)</span>
+    <span class="p">);</span>
+    <span class="k">next</span><span class="p">;</span>
+    <span class="p">}</span>
+</pre></div>
+
+<p>What if you want to get all volumes belongs to this domain? It's easy:</p>
+
+<div class="highlight highlight-perl"><pre>    <span class="k">my</span> <span class="nv">$volumz</span> <span class="o">=</span> <span class="nv">$domain</span><span class="o">-&gt;</span><span class="n">find_related_to_me</span><span class="p">(</span><span class="s">"volume"</span><span class="p">);</span>
+    <span class="nv">$log</span><span class="o">-&gt;</span><span class="n">logdie</span><span class="p">(</span><span class="nv">$domain</span><span class="o">-&gt;</span><span class="n">error_message</span><span class="p">)</span> <span class="k">unless</span> <span class="nb">defined</span><span class="p">(</span><span class="nv">$volumz</span><span class="p">);</span>
+</pre></div>
+
+<p>No kidding, you have the reference to the list of XML::LibXML documents
+who have the  parameter corresponding to this domain. You can
+easily initialize them as objects to do other cool things with these
+volumes:</p>
+
+<div class="highlight highlight-perl"><pre>    <span class="k">foreach</span> <span class="k">my</span> <span class="nv">$volume_dom</span> <span class="p">(</span><span class="nv">@</span><span class="p">{</span> <span class="nv">$volumz</span> <span class="p">})</span> <span class="p">{</span>
+
+    <span class="k">my</span> <span class="nv">$volume</span> <span class="o">=</span> <span class="nb">eval</span> <span class="p">{</span> <span class="nn">MonkeyMan::CloudStack::Elements::</span><span class="n">Volume</span><span class="o">-&gt;</span><span class="k">new</span><span class="p">(</span>
+        <span class="n">mm</span>          <span class="o">=&gt;</span> <span class="nv">$mm</span><span class="p">,</span>
+        <span class="n">load_dom</span>    <span class="o">=&gt;</span> <span class="p">{</span>
+         <span class="n">dom</span>        <span class="o">=&gt;</span> <span class="nv">$volume_dom</span>   <span class="c1"># the XML document</span>
+        <span class="p">}</span>
+    <span class="p">);</span> <span class="p">};</span>
+    <span class="k">if</span><span class="p">(</span><span class="vg">$@</span><span class="p">)</span> <span class="p">{</span> <span class="nv">$log</span><span class="o">-&gt;</span><span class="nb">warn</span><span class="p">(</span><span class="s">"Can't MonkeyMan::CloudStack::Elements::Volume-&gt;new(): $@"</span><span class="p">);</span> <span class="k">next</span><span class="p">;</span> <span class="p">}</span>
+</pre></div>
+
+<p>Oh, well, too much text... :-)</p>
+
+<p>Would you like to use it? You're strongly welcome:
+<a href="https://github.com/melnik13/monkeyman/">https://github.com/melnik13/monkeyman/</a></p>
+
+<p>Would you like to join the project and develop it with me? Feel free to
+drop me a line: <a href="mailto:v.melnik@tucha.ua">v.melnik@tucha.ua</a></p>
+
+<p><img src="http://tucha.ua/wp-content/uploads/2013/08/monk.png" alt="Nice drawing by D.Kolesnichenko for Tucha.UA"></p>
       </section>
-
     </div>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-    
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-52432048-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
   </body>
 </html>
