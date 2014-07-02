@@ -47,32 +47,36 @@ my $mm = eval { MonkeyMan->new(
 ); };
 die("Can't MonkeyMan->new(): $@") if($@);
 
-my $log = $mm->logger;
-die($mm->error_message) unless(defined($log));
+my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
+die("The logger hasn't been initialized: $@") if($@);
 
 my $api = $mm->init_cloudstack_api;
-die($mm->error_message) unless(defined($api));
+$log->logdie($mm->error_message) unless(defined($api));
 
 
 
-my %schedule;
-my %conf_timeperiods;
-my %conf_storages;
-my %conf_hosts;
-my %conf_domains;
-my %info_storages;
-my %info_hosts;
-my %info_domains;
-my %info_virtualmachines;
-my %info_volumes;
-my %info_snapshots;
-my %queue;
+my %schedule;               # the key is the variable's name
+my %conf_timeperiods;       # the key is its name
+my %conf_storagepools;      # the key is its name
+my %conf_hosts;             # the key is its name
+my %conf_domains;           # the key is its full path
+my %conf_volumes;           # the key is its id
+my %info_storagepools;      # the key is its name
+my %info_hosts;             # the key is its name
+my %info_domains;           # the key is its id
+my %info_domains_by_path;   # the key is its full path
+my %info_volumes;           # the key is its id
+my %info_virtualmachines;   # the key is its id
+my %info_snapshots;         # the key is its id
+my %queue;                  # oh, fuck it :)
 
 THE_LOOP: while (1) {
 
     # ----------------------------------------------------------------------
     # Reload everything If the schedule hasn't been loaded or has been reset
 
+    # I'm reloading the schedule every time I get SIGHUP
+ 
     unless(%schedule) {
 
         %schedule = eval {
@@ -91,7 +95,7 @@ THE_LOOP: while (1) {
         # to reload them all
 
         undef(%conf_timeperiods);
-        undef(%conf_storages);
+        undef(%conf_storagepools);
         undef(%conf_hosts);
         undef(%conf_domains);
         undef(%queue);
@@ -102,7 +106,7 @@ THE_LOOP: while (1) {
 
     foreach my $section (
         { hash => \%conf_timeperiods,   type => 'timeperiod' },
-        { hash => \%conf_storages,      type => 'storage' },
+        { hash => \%conf_storagepools,  type => 'storagepool' },
         { hash => \%conf_hosts,         type => 'host' },
         { hash => \%conf_domains,       type => 'domain' }
     ) {
@@ -121,17 +125,19 @@ THE_LOOP: while (1) {
     }
 
 
+    # -------------------------------------------
+    # Loading information about objects if needed
 
-    # Checking if there's anything in the queue and does it need to be set up.
-    # I want to be able to reload the configuration without reloading the queue,
-    # by SIGHUP or some shit like that. And SIGUSR1 shall be a signal to
-    # rebuild the queue. That's why there's a separate condition for this task.
+    # It shall be able to reload the information without reloading the queue,
+    # by the timer or by SIGUSR1!
 
-    unless(%queue) {
+    foreach my $domain_path (grep(!/\*/, keys(%conf_domains))) {
 
-        # For every configured domain...
+        # Reload the information about the domain only if it's needed
 
-        foreach my $domain_path (grep(!/\*/, keys(%conf_domains))) {
+        unless(defined($info_domains_by_path{$domain_path})) {
+
+            $log->debug("Loading the information about the $domain_path domain");
 
             my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
                 mm          => $mm,
@@ -144,28 +150,38 @@ THE_LOOP: while (1) {
             if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain->new(): $@"); next; }
 
             my $domain_id = $domain->get_parameter('id');
-            unless(defined($domain_id)) {
-                $log->warn("Can't get the ID of the domain" .
-                    ($domain->has_error ? (": " . $domain->error_message) : undef)
-                );
-                next;
-            }
+            if($domain->has_error) { $log->warn($domain->error_message); next; }
+            unless(defined($domain_id)) { $log->warn("Can't get the id parameter of the domain"); next; }
 
-            # Storing the information about the domain
+            $info_domains_by_path{$domain_path} =
+                    $info_domains{$domain_id}   = $domain;
 
-            $info_domains{$domain_id} = $domain;
+            $log->info("The $domain_id ($domain_path) domain has been loaded");
 
-            $log->info("Analyzing the $domain_id ($domain_path) domain");
+        }
 
-            # Getting the list of volumes in the domain
-            
-            my $volumes = $domain->find_related_to_me("volume");
-            unless(defined($volumes)) { $log->warn("Skipping the domain: " . $domain->error_message); next; }
-            unless(scalar(@$volumes)) { $log->warn("Skipping the domain as it doesn't have any volumes"); next; }
+    }
 
-            # For every volume
+    # Get a fresh list of volumes in every domain on every pass
 
-            foreach my $volume_dom (@{$volumes}) {
+    foreach my $domain_id (keys(%info_domains)) {
+
+        my $domain = $info_domains{$domain_id};
+
+        $log->debug("Gathering information about volumes in the $domain_id ($domain) domain");
+
+        my $volumes = $domain->find_related_to_me("volume");
+        unless(defined($volumes)) { $log->warn("Skipping the domain: " . $domain->error_message); next; }
+        unless(scalar(@$volumes)) { $log->warn("Skipping the domain as it doesn't have any volumes"); next; }
+
+        foreach my $volume_dom (@{$volumes}) {
+
+            my $volume_id = eval { $volume_dom->findvalue('/volume/id') };
+            if($@) { $log->warn("Can't $volume_dom->findvalue(): $@"); next; }
+
+            unless(defined($info_volumes{$volume_id})) {
+
+                $log->trace("Loading the information about the $volume_id volume");
 
                 my $volume = eval { MonkeyMan::CloudStack::Elements::Volume->new(
                     mm          => $mm,
@@ -176,70 +192,119 @@ THE_LOOP: while (1) {
                 if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Volume->new(): $@"); next; }
 
                 my $volume_id = $volume->get_parameter('id');
-                unless(defined($volume_id)) {
-                    $log->warn("Can't get the ID of the volume" .
-                        ($volume->has_error ? (": " . $volume->error_message) : undef)
-                    );
-                    next;
-                }
-                my $volume_name = $volume->get_parameter('name');
-                unless(defined($volume_id)) {
-                    $log->warn("Can't get the name of the volume" .
-                        ($volume->has_error ? (": " . $volume->error_message) : undef)
-                    );
-                    next;
-                }
+                if($volume->has_error) { $log->warn($volume->error_message); next; }
+                unless(defined($volume_id)) { $log->warn("Can't get the id parameter of the volume"); next; }
 
-                # Storing the information about the volume
+                my $volume_name = $volume->get_parameter('name');
+                if($volume->has_error) { $log->warn($volume->error_message); next; }
+                unless(defined($volume_name)) { $log->warn("Can't get the name parameter of the volume"); next; }
 
                 $info_volumes{$volume_id} = $volume;
 
-                $log->info("Analyzing the $volume_id ($volume_name) volume");
-
-                # Loading information about the storage and storing it to $info_storages{$storage_name} /!\
-                # 
-                #
-
-                # Finding the virtualmachine this volume's attached to
-                
-                my $virtualmachines = $volume->find_related_to_me("virtualmachine");
-                unless(defined($virtualmachines)) { $log->warn("Skipping the virtualmachine: " . $volume->error_message); next; }
-                unless(scalar(@$virtualmachines)) {
-                    $log->debug("The volume doesn't seem to be attached, skipping loading host information");
-                    next;
-                }
-
-                foreach my $virtualmachine_dom (@{$virtualmachines}) {
-
-                    my $virtualmachine = eval { MonkeyMan::CloudStack::Elements::VirtualMachine->new(
-                        mm          => $mm,
-                        load_dom    => {
-                             dom        => $virtualmachine_dom
-                        }
-                    ); };
-                    if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::VirtualMachine->new(): $@"); next; }
-
-                    my $virtualmachine_id = $virtualmachine->get_parameter('id');
-                    unless(defined($virtualmachine_id)) {
-                        $log->warn("Can't get the ID of the virtualmachine" .
-                            ($virtualmachine->has_error ? (": " . $virtualmachine->error_message) : undef)
-                        );
-                        next;
-                    }
-
-                    # Storing information about the virtualmachine
-
-                    $info_virtualmachines{$virtualmachine_id} = $virtualmachine;
-
-                }
-
-                # Loading information about the host and storing it to $info_hosts{$host_name} /!\
+                $log->info("The $volume_id ($volume_name) volume has been loaded");
 
             }
 
-        } # The end of domains' loop
+        }
 
-    } # Okay, the queue has been loaded
+    }
+
+    foreach my $volume_id (keys(%info_volumes)) {
+
+        $log->debug("Updating the information about the $volume_id volume");
+
+        my $volume = $info_volumes{$volume_id};
+
+        my $virtualmachines = $volume->find_related_to_me("virtualmachine");
+        unless(defined($virtualmachines)) { $log->warn("Skipping the volume: " . $volume->error_message); next; }
+        unless(scalar(@$virtualmachines)) {
+            $log->debug("The volume doesn't seem to be attached, skipping host information loading");
+            next;
+        }
+
+        foreach my $virtualmachine_dom (@{$virtualmachines}) {
+
+            my $virtualmachine_id = eval { $virtualmachine_dom->findvalue('/virtualmachine/id') };
+            if($@) { $log->warn("Can't $virtualmachine_dom->findvalue(): $@"); next; }
+
+            unless(defined($info_virtualmachines{$virtualmachine_id})) {
+
+                $log->trace("Loading the information about the $virtualmachine_id virtualmachine");
+
+                my $virtualmachine = eval { MonkeyMan::CloudStack::Elements::VirtualMachine->new(
+                    mm          => $mm,
+                    load_dom    => {
+                         dom        => $virtualmachine_dom
+                    }
+                ); };
+                if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::VirtualMachine->new(): $@"); next; }
+
+                my $virtualmachine_id = $virtualmachine->get_parameter('id');
+                if($virtualmachine->has_error) { $log->warn($virtualmachine->error_message); next; }
+                unless(defined($virtualmachine_id)) { $log->warn("Can't get the ID of the virtualmachine"); next; }
+
+                # Storing information about the virtualmachine
+
+                $info_virtualmachines{$virtualmachine_id} = $virtualmachine;
+
+                $log->info("The $virtualmachine_id virtualmachine has been loaded");
+
+            }
+
+        }
+
+        my $storagepools = $volume->find_related_to_me("storagepool");
+        unless(defined($storagepools)) { $log->warn("Skipping the volume: " . $volume->error_message); next; }
+        unless(scalar(@$storagepools)) {
+            $log->debug("The volume doesn't seem to be attached, skipping host information loading");
+            next;
+        }
+
+        foreach my $storagepool_dom (@{$storagepools}) {
+
+            my $storagepool_id = eval { $storagepool_dom->findvalue('/storagepool/id') };
+            if($@) { $log->warn("Can't $storagepool_dom->findvalue(): $@"); next; }
+
+            unless(defined($info_storagepools{$storagepool_id})) {
+
+                $log->trace("Loading the information about the $storagepool_id storagepool");
+
+                my $storagepool = eval { MonkeyMan::CloudStack::Elements::StoragePool->new(
+                    mm          => $mm,
+                    load_dom    => {
+                         dom        => $storagepool_dom
+                    }
+                ); };
+                if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::StoragePool->new(): $@"); next; }
+
+                my $storagepool_id = $storagepool->get_parameter('id');
+                if($storagepool->has_error) { $log->warn($storagepool->error_message); next; }
+                unless(defined($storagepool_id)) { $log->warn("Can't get the ID of the storagepool"); next; }
+
+                # Storing information about the storagepool
+
+                $info_storagepools{$storagepool_id} = $storagepool;
+
+                $log->info("The $storagepool_id storagepool has been loaded");
+
+            }
+
+        }
+    }
+
+#    foreach my $virtualmachine_id (keys(%info_virtualmachines)) {
+#
+#        $log->debug("Updating the information about the $virtualmachine_id")
+#
+#        my $virtualmachine = $info_virtualmachines{$virtualmachine_id};
+#
+#        my $virtualmachine_hostid = $virtualmachine->get_parameter('hostid');
+#        if($virtualmachine->has_error) { $log->warn($virtualmachine->error_message); next; }
+#        unless(defined($virtualmachine_hostid)) { $log->debug("The virtual machine dosn't seem to be running"); next; }
+#
+#    }
+
+
 
 
 
@@ -265,8 +330,8 @@ THE_LOOP: while (1) {
 
 
 
-    last(THE_LOOP);
 
+    sleep 10; # shall be configured and/or calculated /!\
 }
 
 

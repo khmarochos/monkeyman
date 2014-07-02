@@ -47,10 +47,10 @@ my $mm = eval { MonkeyMan->new(
 die("Can't MonkeyMan->new(): $@") if($@);
 
 my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
-warn("The logger hasn't been initialized: $@") if($@);
+die("The logger hasn't been initialized: $@") if($@);
 
 my $api = $mm->init_cloudstack_api;
-die($mm->error_message) unless(defined($api));
+$log->logdie($mm->error_message) unless(defined($api));
 
 
 
@@ -84,6 +84,3 @@ if(defined($opts{'xpath'})) {
     print($result->toString(1));
 }
 
-
-
-$log->debug("The task is completed");

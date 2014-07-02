@@ -301,6 +301,7 @@ sub find_related_to_me {
             when('domain')          { return('Domain'); }
             when('virtualmachine')  { return('VirtualMachine'); }
             when('volume')          { return('Volume'); }
+            when('storagepool')     { return('StoragePool'); }
             default {
                 die("I'm not able to look for related ${what_to_find}s yet");
             }

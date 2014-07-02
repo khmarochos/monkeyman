@@ -144,3 +144,5 @@ drop me a line: v.melnik@tucha.ua
 
 ![Nice drawing by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
 
+P.S. CloudStack have such a nice API!
+
