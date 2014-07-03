@@ -17,8 +17,16 @@ my @MM_version = qw(
 
 # :filenames
 use constant MMMainConfigFile   => "$Bin/../etc/monkeyman.conf";
+use constant MMElementsModule   => {
+    domain          => 'Domain',
+    virtualmachine  => 'VirtualMachine',
+    volume          => 'Volume',
+    host            => 'Host',
+    storagepool     => 'StoragePool'
+};
 my @MM_filenames = qw(
     MMMainConfigFile
+    MMElementsModule
 );
 
 # :timeouts

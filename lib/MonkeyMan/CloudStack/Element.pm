@@ -218,11 +218,11 @@ sub load_dom {
     }
 
     given($results_got) {
-        when($_ < 1) { $log->debug("The requested parameter haven't been got") }
+        when($_ < 1) { $log->debug("The requested element haven't been got") }
         when($_ > 1) { $log->debug("$results_got results have been got") }
         default {
             $self->_set_dom($results[0]);
-            $log->debug("$self element has been loaded with " . $self->dom);
+            $log->debug("$self element has been found and loaded");
         }
     }
 
@@ -296,18 +296,8 @@ sub find_related_to_me {
 
     $log->trace("Going to look for ${what_to_find}s related to $self");
 
-    my $module_name = eval {
-        given($what_to_find) {
-            when('domain')          { return('Domain'); }
-            when('virtualmachine')  { return('VirtualMachine'); }
-            when('volume')          { return('Volume'); }
-            when('storagepool')     { return('StoragePool'); }
-            default {
-                die("I'm not able to look for related ${what_to_find}s yet");
-            }
-        };
-    };
-    return($self->error($@)) if($@);
+    my $module_name = ${&MMElementsModule}{$what_to_find};
+    return($self->error("I'm not able to look for related ${what_to_find}s yet")) unless(defined($module_name));
 
     my $quasi_object = eval {
         require "MonkeyMan/CloudStack/Elements/$module_name.pm";
