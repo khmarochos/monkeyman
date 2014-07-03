@@ -104,7 +104,6 @@ sub error_message {
     my $caller = $error->caller;
     return(
         "Can't " .
-        $caller->{'package'} . "->" .
         $caller->{'subroutine'} . "(): " .
         $error->text
     );

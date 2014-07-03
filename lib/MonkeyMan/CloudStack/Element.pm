@@ -86,8 +86,15 @@ sub load_dom {
 
         push(@{ $nodes }, eval {   $input{'dom'}->documentElement });
         return($self->error("Can't $input{'dom'}->documentElement(): $@")) if($@);
+    
+    } elsif(ref($input{'conditions'}) eq 'HASH') {
 
-    } else {
+        if(defined($input{'conditions'}->{""})) {
+            $log->debug(
+                "There are no defined conditions to find that object at the moment"
+            );
+            return([]);
+        }
 
         $log->debug(
             "Have got a request for a " . ref($self) .

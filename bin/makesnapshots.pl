@@ -235,7 +235,7 @@ THE_LOOP: while (1) {
 
 
 
-
+    last THE_LOOP;
 
     sleep 10; # shall be configured and/or calculated /!\
 }
@@ -379,7 +379,6 @@ sub find_related_and_refresh_if_needed {
     }
     unless(scalar(@{ $downlinks })) {
         $log->debug("The $uplink_id $uplink_type doesn't have any related ${downlinks_type}s");
-        return;
     }
 
     my $found = 0;
@@ -438,7 +437,7 @@ sub find_related_and_refresh_if_needed {
 
             $downlinks_objects_by_id->{$downlink_id} = $downlinks_objects_by_name->{$downlink_name} = $downlink;
 
-            $log->info("The $downlink_id ($downlink_name) has been refreshed");
+            $log->info("The $downlink_id ($downlink_name) $downlinks_type has been refreshed");
 
         }
 
