@@ -72,6 +72,10 @@ my $objects = {
                 by_name         => {},
                 by_id           => {},
                 children        => {
+                    snapshot        => {
+                        by_name         => {},
+                        by_id           => {}
+                    },
                     storagepool     => {
                         by_name         => {},
                         by_id           => {}

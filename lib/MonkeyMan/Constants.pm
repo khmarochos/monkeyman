@@ -20,8 +20,9 @@ use constant MMMainConfigFile   => "$Bin/../etc/monkeyman.conf";
 use constant MMElementsModule   => {
     domain          => 'Domain',
     virtualmachine  => 'VirtualMachine',
-    volume          => 'Volume',
     host            => 'Host',
+    volume          => 'Volume',
+    snapshot        => 'Snapshot',
     storagepool     => 'StoragePool'
 };
 my @MM_filenames = qw(
