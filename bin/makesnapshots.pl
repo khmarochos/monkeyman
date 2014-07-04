@@ -55,38 +55,40 @@ $log->logdie($mm->error_message) unless(defined($api));
 
 
 
+my %queue;
 my %schedule;                       # the key is the variable's name
 my %conf_timeperiods;               # the key is its name
 my %conf_storagepools;              # the key is its name
 my %conf_hosts;                     # the key is its name
 my %conf_domains;                   # the key is its full path
 my %conf_volumes;                   # the key is its id
-my %queue;
+
+# Defining the objects' tree (we need to update it on every pass)
 
 my $objects = {
     domain          => {
-        by_name         => {},
-        by_id           => {},
-        children        => {
+        objects_by_name         => {},
+        objects_by_id           => {},
+        downlinks        => {
             volume          => {
-                by_name         => {},
-                by_id           => {},
-                children        => {
+                objects_by_name         => {},
+                objects_by_id           => {},
+                downlinks        => {
                     snapshot        => {
-                        by_name         => {},
-                        by_id           => {}
+                        objects_by_name         => {},
+                        objects_by_id           => {}
                     },
                     storagepool     => {
-                        by_name         => {},
-                        by_id           => {}
+                        objects_by_name         => {},
+                        objects_by_id           => {}
                     },
                     virtualmachine  => {
-                        by_name         => {},
-                        by_id           => {},
-                        children        => {
+                        objects_by_name         => {},
+                        objects_by_id           => {},
+                        downlinks        => {
                             host            => {
-                                by_name         => {},
-                                by_id           => {}
+                                objects_by_name         => {},
+                                objects_by_id           => {}
                             }
                         }
                     }
@@ -163,7 +165,7 @@ THE_LOOP: while (1) {
 
         # Reload the information about the domain only if it's needed
 
-        unless(defined($objects->{'domain'}->{'by_name'}->{$domain_path})) {
+        unless(defined($objects->{'domain'}->{'objects_by_name'}->{$domain_path})) {
 
             $log->debug("Loading the information about the $domain_path domain");
 
@@ -181,24 +183,24 @@ THE_LOOP: while (1) {
             if($domain->has_error) { $log->warn($domain->error_message); next; }
             unless(defined($domain_id)) { $log->warn("Can't get the id parameter of the domain"); next; }
 
-            $objects->{'domain'}->{'by_name'}->{$domain_path} = $objects->{'domain'}->{'by_name'}->{$domain_id} = $domain;
+            $objects->{'domain'}->{'objects_by_name'}->{$domain_path} = $objects->{'domain'}->{'objects_by_name'}->{$domain_id} = $domain;
 
-            $log->info("The $domain_id ($domain_path) domain has been loaded");
+            $log->info("The $domain_id ($domain_path) domain has been refreshed");
 
         }
 
         # Do we need to scan for any downlinks?
 
-        my @downlinks_types_to_scan = keys(%{$objects->{'domain'}->{'children'}});
+        my @downlinks_types_to_scan = keys(%{$objects->{'domain'}->{'downlinks'}});
 
         foreach (@downlinks_types_to_scan) {
 
             # Loading downlinks
 
             my $results = find_related_and_refresh_if_needed(
-                $objects->{'domain'}->{'by_name'}->{$domain_path},
+                $objects->{'domain'}->{'objects_by_name'}->{$domain_path},
                 $_,
-                $objects->{'domain'}->{'children'}->{$_}
+                $objects->{'domain'}->{'downlinks'}->{$_}
             );
             unless(defined($results)) {
                 $log->warn("No ${_}s refreshed due to an error occuried");
@@ -387,7 +389,7 @@ sub find_related_and_refresh_if_needed {
 
         # Indeed, only if we need it
 
-        unless(defined($downlinks_objects->{'by_id'}->{$downlink_id})) {
+        unless(defined($downlinks_objects->{'objects_by_id'}->{$downlink_id})) {
 
             $log->trace("Loading the information about the $downlink_id $downlinks_type");
 
@@ -430,7 +432,7 @@ sub find_related_and_refresh_if_needed {
 
             # Storing information about the downlink
 
-            $downlinks_objects->{'by_id'}->{$downlink_id} = $downlinks_objects->{'by_name'}->{$downlink_name} = $downlink;
+            $downlinks_objects->{'objects_by_id'}->{$downlink_id} = $downlinks_objects->{'objects_by_name'}->{$downlink_name} = $downlink;
 
             $log->info("The $downlink_id ($downlink_name) $downlinks_type has been refreshed");
 
@@ -438,9 +440,7 @@ sub find_related_and_refresh_if_needed {
 
         # Do we need to scan for any downlinks?
 
-        use Data::Dumper; $log->debug(Dumper($downlinks_objects));
-
-        my @downlinks_types_to_scan = keys(%{$downlinks_objects->{'children'}});
+        my @downlinks_types_to_scan = keys(%{$downlinks_objects->{'downlinks'}});
         unless(@downlinks_types_to_scan) {
             $log->debug("No more downlinks to scan");
             next;
@@ -451,9 +451,9 @@ sub find_related_and_refresh_if_needed {
             # Loading downlinks
 
             my $results = find_related_and_refresh_if_needed(
-                $downlinks_objects->{'by_id'}->{$downlink_id},
+                $downlinks_objects->{'objects_by_id'}->{$downlink_id},
                 $_,
-                $downlinks_objects->{'children'}->{$_}
+                $downlinks_objects->{'downlinks'}->{$_}
             );
             unless(defined($results)) {
                 $log->warn("No ${_}s refreshed due to an error occuried");

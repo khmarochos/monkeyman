@@ -224,14 +224,9 @@ sub load_dom {
 
     }
 
-    given($results_got) {
-        when($_ < 1) { $log->debug("The requested element haven't been got") }
-        when($_ > 1) { $log->debug("$results_got results have been got") }
-        default {
-            $self->_set_dom($results[0]);
-            $log->debug("$self element has been found and loaded");
-        }
-    }
+    $log->debug("$results_got result(s) has(ve) been got");
+
+    if($results_got == 1) { $self->_set_dom($results[0]); }
 
     return(\@results);
 

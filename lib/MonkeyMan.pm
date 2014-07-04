@@ -43,7 +43,12 @@ has 'cloudstack_api' => (
     writer      => '_set_cloudstack_api',
     predicate   => 'has_cloudstack_api'
 );
-
+has 'cloudstack_cache' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    writer      => '_set_cloudstack_cache',
+    predicate   => 'has_cloudstack_cache'
+);
 
 
 sub BUILD {
