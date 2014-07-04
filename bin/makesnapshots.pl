@@ -61,38 +61,37 @@ my %conf_storagepools;              # the key is its name
 my %conf_hosts;                     # the key is its name
 my %conf_domains;                   # the key is its full path
 my %conf_volumes;                   # the key is its id
-my %objects_domains_by_id;
-my %objects_domains_by_name;        # actually the key is its full path!
-my %objects_volumes_by_id;
-my %objects_volumes_by_name;
-my %objects_storagepools_by_id;
-my %objects_storagepools_by_name;
-my %objects_virtualmachines_by_id;
-my %objects_virtualmachines_by_name;
-my %objects_hosts_by_id;
-my %objects_hosts_by_name;
-my %objects_snapshots_by_id;
 my %queue;
 
-my %objects_by_id_by_type = (
-    domain          => \%objects_domains_by_id,
-    volume          => \%objects_volumes_by_id,
-    storagepool     => \%objects_storagepools_by_id,
-    virtualmachine  => \%objects_virtualmachines_by_id,
-    host            => \%objects_hosts_by_id
-);
-my %objects_by_name_by_type = (
-    domain          => \%objects_domains_by_name,
-    volume          => \%objects_volumes_by_name,
-    storagepool     => \%objects_storagepools_by_name,
-    virtualmachine  => \%objects_virtualmachines_by_name,
-    host            => \%objects_hosts_by_name
-);
-my %downlinks_by_type = (
-    domain          => [ 'volume' ],
-    volume          => [ 'storagepool', 'virtualmachine' ],
-    virtualmachine  => [ 'host' ]
-);
+my $objects = {
+    domain          => {
+        by_name         => {},
+        by_id           => {},
+        children        => {
+            volume          => {
+                by_name         => {},
+                by_id           => {},
+                children        => {
+                    storagepool     => {
+                        by_name         => {},
+                        by_id           => {}
+                    },
+                    virtualmachine  => {
+                        by_name         => {},
+                        by_id           => {},
+                        children        => {
+                            host            => {
+                                by_name         => {},
+                                by_id           => {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
 
 
 THE_LOOP: while (1) {
@@ -160,7 +159,7 @@ THE_LOOP: while (1) {
 
         # Reload the information about the domain only if it's needed
 
-        unless(defined($objects_domains_by_name{$domain_path})) {
+        unless(defined($objects->{'domain'}->{'by_name'}->{$domain_path})) {
 
             $log->debug("Loading the information about the $domain_path domain");
 
@@ -178,7 +177,7 @@ THE_LOOP: while (1) {
             if($domain->has_error) { $log->warn($domain->error_message); next; }
             unless(defined($domain_id)) { $log->warn("Can't get the id parameter of the domain"); next; }
 
-            $objects_domains_by_name{$domain_path} = $objects_domains_by_id{$domain_id} = $domain;
+            $objects->{'domain'}->{'by_name'}->{$domain_path} = $objects->{'domain'}->{'by_name'}->{$domain_id} = $domain;
 
             $log->info("The $domain_id ($domain_path) domain has been loaded");
 
@@ -186,17 +185,16 @@ THE_LOOP: while (1) {
 
         # Do we need to scan for any downlinks?
 
-        my @downlinks_types_to_scan = (@{ $downlinks_by_type{"domain"} });
+        my @downlinks_types_to_scan = keys(%{$objects->{'domain'}->{'children'}});
 
         foreach (@downlinks_types_to_scan) {
 
             # Loading downlinks
 
             my $results = find_related_and_refresh_if_needed(
-                $objects_domains_by_name{$domain_path},
+                $objects->{'domain'}->{'by_name'}->{$domain_path},
                 $_,
-                $objects_by_id_by_type{$_},
-                $objects_by_name_by_type{$_}
+                $objects->{'domain'}->{'children'}->{$_}
             );
             unless(defined($results)) {
                 $log->warn("No ${_}s refreshed due to an error occuried");
@@ -207,10 +205,6 @@ THE_LOOP: while (1) {
         }
 
     }
-
-
-
-
 
 
 
@@ -234,8 +228,6 @@ THE_LOOP: while (1) {
     #   $restore = $mm->restore_state($dump_id);
 
 
-
-    last THE_LOOP;
 
     sleep 10; # shall be configured and/or calculated /!\
 }
@@ -343,10 +335,9 @@ sub configure_element {
 
 sub find_related_and_refresh_if_needed {
 
-    my $uplink                      = shift;
-    my $downlinks_type              = shift;
-    my $downlinks_objects_by_id     = shift;
-    my $downlinks_objects_by_name   = shift;
+    my $uplink              = shift;
+    my $downlinks_type      = shift;
+    my $downlinks_objects   = shift;
 
     my $uplink_id   = $uplink->get_parameter('id');
     if($uplink->has_error) {
@@ -392,7 +383,7 @@ sub find_related_and_refresh_if_needed {
 
         # Indeed, only if we need it
 
-        unless(defined($downlinks_objects_by_id->{$downlink_id})) {
+        unless(defined($downlinks_objects->{'by_id'}->{$downlink_id})) {
 
             $log->trace("Loading the information about the $downlink_id $downlinks_type");
 
@@ -435,7 +426,7 @@ sub find_related_and_refresh_if_needed {
 
             # Storing information about the downlink
 
-            $downlinks_objects_by_id->{$downlink_id} = $downlinks_objects_by_name->{$downlink_name} = $downlink;
+            $downlinks_objects->{'by_id'}->{$downlink_id} = $downlinks_objects->{'by_name'}->{$downlink_name} = $downlink;
 
             $log->info("The $downlink_id ($downlink_name) $downlinks_type has been refreshed");
 
@@ -443,21 +434,22 @@ sub find_related_and_refresh_if_needed {
 
         # Do we need to scan for any downlinks?
 
-        my $downlinks_types_to_scan = $downlinks_by_type{ $downlinks_objects_by_id->{$downlink_id}->element_type };
-        unless(defined($downlinks_types_to_scan)) {
+        use Data::Dumper; $log->debug(Dumper($downlinks_objects));
+
+        my @downlinks_types_to_scan = keys(%{$downlinks_objects->{'children'}});
+        unless(@downlinks_types_to_scan) {
             $log->debug("No more downlinks to scan");
             next;
         }
 
-        foreach (@{ $downlinks_types_to_scan }) {
+        foreach (@downlinks_types_to_scan) {
 
             # Loading downlinks
 
             my $results = find_related_and_refresh_if_needed(
-                $downlinks_objects_by_id->{$downlink_id},
+                $downlinks_objects->{'by_id'}->{$downlink_id},
                 $_,
-                $objects_by_id_by_type{$_},
-                $objects_by_name_by_type{$_}
+                $downlinks_objects->{'children'}->{$_}
             );
             unless(defined($results)) {
                 $log->warn("No ${_}s refreshed due to an error occuried");
