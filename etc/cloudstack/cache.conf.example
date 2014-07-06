@@ -2,5 +2,6 @@
     enabled
     ttl         = 300
     never       = volume,virtualmachine,snapshot
+#   forced      = *
 </cache>
         

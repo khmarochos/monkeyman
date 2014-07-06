@@ -85,7 +85,7 @@ sub BUILD {
         my $log_screen_pattern  = ($self->verbosity > 4) ?
             '%d [%p{1}] %m%n' :
             '%m%n';
-        my $log_conf_filename = $self->configuration('log::conf');
+        my $log_conf_filename = $self->configuration('log::log4perl');
         my $log_conf_loaded;
         my $log_conf_appenders;
         if(defined($log_conf_filename)) {

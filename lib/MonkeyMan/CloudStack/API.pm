@@ -57,13 +57,13 @@ sub craft_url {
 
     my $parameters_string;
     my $output;
-    $parameters{'apiKey'} = $mm->configuration('cloudstack::api_key');
+    $parameters{'apiKey'} = $mm->configuration('cloudstack::api::api_key');
     foreach my $parameter (sort(keys(%parameters))) {
         $parameters_string  .= (defined($parameters_string) ? '&' : '') . $parameter . '=' .            $parameters{$parameter};
         $output             .= (defined($output)            ? '&' : '') . $parameter . '=' . uri_encode($parameters{$parameter}, 1);
     }
-    my $base64_encoded  = encode_base64(hmac_sha1(lc($output), $mm->configuration('cloudstack::secret_key'))); chomp($base64_encoded);
-    my $url             = $mm->configuration('cloudstack::api_address') . '?' . $parameters_string . "&signature=" . uri_encode($base64_encoded, 1);
+    my $base64_encoded  = encode_base64(hmac_sha1(lc($output), $mm->configuration('cloudstack::api::secret_key'))); chomp($base64_encoded);
+    my $url             = $mm->configuration('cloudstack::api::api_address') . '?' . $parameters_string . "&signature=" . uri_encode($base64_encoded, 1);
 
     return($url);
 
@@ -92,7 +92,7 @@ sub run_command {
     return($self->error($self->error_message))
         unless(defined($url));
     return($self->error("The requested URL is invalid"))
-        unless(index($url, $mm->configuration('cloudstack::api_address')) == 0);
+        unless(index($url, $mm->configuration('cloudstack::api::api_address')) == 0);
 
     # Running the command
 

@@ -67,7 +67,7 @@ sub load_dom {
     return($self->error("CloudStack's API connector hasn't been initialized"))
         unless($self->mm->has_cloudstack_api);
     my $api = $mm->cloudstack_api;
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    m $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
     return($self->error("The logger hasn't been initialized: $@"))
         if($@);
 
