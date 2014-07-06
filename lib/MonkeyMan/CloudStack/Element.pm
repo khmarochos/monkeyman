@@ -290,7 +290,8 @@ sub get_parameter {
     }
 
     my $result = eval { $results_got ? ${ $results }[0]->textContent : undef; };
-    return($self->error("Can't ${ $results }[0]->textContent(): $@")) if($@);
+    return($self->error("Can't ${ $results }[0]->textContent(): $@"))
+        if($@);
 
     return($result);
 

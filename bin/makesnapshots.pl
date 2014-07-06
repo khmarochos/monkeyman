@@ -17,7 +17,6 @@ use Getopt::Long;
 use Config::General qw(ParseConfig);
 use Text::Glob qw(match_glob); $Text::Glob::strict_wildcard_slash = 0;
 use File::Basename;
-use Data::Dumper;
 
 
 
@@ -97,6 +96,7 @@ my $objects = {
         }
     }
 };
+my $volumes_by_id = $objects->{'domain'}->{'downlinks'}->{'volume'}->{'objects_by_id'};
 
 
 
@@ -128,7 +128,9 @@ THE_LOOP: while (1) {
         undef(%conf_storagepools);
         undef(%conf_hosts);
         undef(%conf_domains);
-        undef(%queue);
+        %queue = (
+            volumes => {}
+        )
 
     }
 
@@ -183,7 +185,7 @@ THE_LOOP: while (1) {
             if($domain->has_error) { $log->warn($domain->error_message); next; }
             unless(defined($domain_id)) { $log->warn("Can't get the id parameter of the domain"); next; }
 
-            $objects->{'domain'}->{'objects_by_name'}->{$domain_path} = $objects->{'domain'}->{'objects_by_name'}->{$domain_id} = $domain;
+            $objects->{'domain'}->{'objects_by_name'}->{$domain_path} = $objects->{'domain'}->{'objects_by_id'}->{$domain_id} = $domain;
 
             $log->info("The $domain_id ($domain_path) domain has been refreshed");
 
@@ -214,6 +216,95 @@ THE_LOOP: while (1) {
 
 
 
+    # -------------------------------
+    # Adding new volumes to the queue
+
+    foreach (keys(%{ $volumes_by_id })) {
+
+        my $volume = $volumes_by_id->{$_};
+
+        my $volume_domain = $volume->get_parameter('domainid');
+        if($volume->has_error) {
+            $log->warn($volume->error_message);
+            next;
+        } elsif(!defined($volume_domain)) {
+            $log->warn("The volume $volume doesn't have the domainid parameter");
+            next;
+        } else {
+            $volume_domain = $objects->{'domain'}->{'objects_by_id'}->{$volume_domain};
+            unless(ref($volume_domain) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{'domain'}) {
+                $log->warn("The $volume_domain domain looks unhealthy");
+                next;
+            }
+        }
+
+
+        my $volume_storagepool = $volume->get_parameter('storage');
+        if($volume->has_error) {
+            $log->warn($volume->error_message);
+            next;
+        } elsif(!defined($volume_storagepool)) {
+            $log->warn("The volume $volume doesn't have the storagepool parameter");
+            next;
+        } else {
+            $volume_storagepool = $objects->{'domain'}->{'downlinks'}->{'volume'}->{'downlinks'}->{'storagepool'}->{'objects_by_name'}->{$volume_storagepool};
+            unless(ref($volume_storagepool) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{'storagepool'}) {
+                $log->warn("The $volume_storagepool storagepool looks unhealthy");
+                next;
+            }
+        }
+
+        my $volume_virtualmachine = $volume->get_parameter('virtualmachine');
+        if($volume->has_error) {
+            $log->warn($volume->error_message);
+            next;
+        } elsif(!defined($volume_virtualmachine)) {
+            $log->trace("The volume $volume doesn't have the virtualmachine parameter");
+        } else {
+            $volume_virtualmachine = $objects->{'domain'}->{'downlinks'}->{'volume'}->{'downlinks'}->{'virtualmachine'}->{'objects_by_id'}->{$volume_virtualmachine};
+            unless(ref($volume_virtualmachine) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{'virtualmachine'}) {
+                $log->warn("The $volume_virtualmachine virtualmachine looks unhealthy");
+                next;
+            }
+        }
+
+        my $virtualmachine_host;
+        if(defined($volume_virtualmachine)) {
+            $virtualmachine_host = $volume_virtualmachine->get_parameter('host');
+            if($volume_virtualmachine->has_error) {
+                $log->warn($volume_virtualmachine->error_message);
+                next;
+            } elsif(!defined($virtualmachine_host)) {
+                $log->trace("The volume_virtualmachine $volume_virtualmachine doesn't have the host parameter");
+            } else {
+                $virtualmachine_host = $objects->{'domain'}->{'downlinks'}->{'volume'}->{'downlinks'}->{'virtualmachine'}->{'downlinks'}->{'host'}->{'objects_by_id'}->{$virtualmachine_host};
+                unless(ref($virtualmachine_host) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{'host'}) {
+                    $log->warn("The $virtualmachine_host host looks unhealthy");
+                    next;
+                }
+            }
+        }
+
+        unless(defined($queue{'volumes'}->{$_})) {
+            $queue{'volumes'}->{$_} = {
+                object  => $volume,
+                queued  => time,
+                done    => undef,
+                related => {
+                    domain          => $volume_domain,
+                    storagepool     => $volume_storagepool,
+                    virtualmachine  => $volume_virtualmachine,
+                    host            => $virtualmachine_host
+                }
+            };
+            $log->debug("Added the $_ volume to the queue");
+        }
+
+    }
+
+
+
+
     # ----------------------------------------------------------
     # Asking MM whats up, updating information about queued jobs
 
@@ -221,6 +312,7 @@ THE_LOOP: while (1) {
 
     # -------------------------------
     # Starting new snapshot processes
+
 
 
 

@@ -78,7 +78,7 @@ sub get_full_list {
         return(undef);
     }
 
-    unless($cached_list->{'updated'} + $self->_get_configuration->{'ttl'} > time) {
+    unless($cached_list->{'updated'} + $self->_get_configuration->{'ttl'} >= time) {
         $log->trace("The cached list of ${element_type}s is expired");
         return(undef);
     }
