@@ -6,8 +6,6 @@ use feature "switch";
 
 use MonkeyMan::Constants;
 
-use Data::Dumper;
-
 use Moose::Role;
 use namespace::autoclean;
 

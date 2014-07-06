@@ -1,0 +1,6 @@
+<cache>
+    enabled
+    ttl         = 300
+    never       = volume,virtualmachine,snapshot
+</cache>
+        

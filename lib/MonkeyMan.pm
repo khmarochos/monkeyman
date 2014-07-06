@@ -5,6 +5,7 @@ use warnings;
 
 use MonkeyMan::Constants;
 use MonkeyMan::CloudStack::API;
+use MonkeyMan::CloudStack::Cache;
 
 use Config::General qw(ParseConfig);
 use Log::Log4perl qw(:no_extra_logdie_message);
@@ -23,13 +24,14 @@ has 'config_file' => (
     isa         => 'Str',
     default     => MMMainConfigFile,
     predicate   => '_has_config_file',
+    required    => 'yes'
 );
 has 'configuration' => (
     is          => 'ro',
     isa         => 'HashRef',
     reader      => '_get_configuration',
     writer      => '_set_configuration',
-    predicate   => 'has_configuration'
+    predicate   => 'has_configuration',
 );
 has 'verbosity' => (
     is          => 'ro',
@@ -41,11 +43,11 @@ has 'cloudstack_api' => (
     is          => 'ro',
     isa         => 'MonkeyMan::CloudStack::API',
     writer      => '_set_cloudstack_api',
-    predicate   => 'has_cloudstack_api'
+    predicate   => 'has_cloudstack_api',
 );
 has 'cloudstack_cache' => (
     is          => 'ro',
-    isa         => 'HashRef',
+    isa         => 'MonkeyMan::CloudStack::Cache',
     writer      => '_set_cloudstack_cache',
     predicate   => 'has_cloudstack_cache'
 );
