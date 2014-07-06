@@ -1,8 +1,0 @@
-<mysql>
-    <cloudstack>
-        host        = localhost
-        db          = cloud
-        username    = ***
-        password    = ***
-    </cloudstack>
-</mysql>
