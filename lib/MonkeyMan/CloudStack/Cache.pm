@@ -20,14 +20,6 @@ has 'mm' => (
     writer      => '_set_mm',
     required    => 'yes'
 );
-has api => (
-    is          => 'ro',
-    isa         => 'MonkeyMan::CloudStack::API',
-    reader      => '_get_api',
-    writer      => '_set_api',
-    predicate   => 'has_api',
-    initializer => 'init_api'
-);
 has configuration => (
     is          => 'ro',
     isa         => 'HashRef',
@@ -47,46 +39,83 @@ has memory_pool => (
 
 
 
-sub get_list {
-    
-    my $self    = shift;
-    my $caller  = shift;
+sub BUILD {
 
-    return($self->error("The caller's object hasn't been defined"))
-        unless(defined($caller));
-    my $api = $self->_get_api;
-    return($self->error("API hasn't been initialized"))
-        unless(defined($api));
+    my $self = shift;
 
-    $self->trace(
-        "Going to look up for the full list of " .
-        $caller->element_type . "s"
-    );
-
-    my $result = $self->api->run_command(
-        parameters => $caller->_load_full_list_command
-    );
-    return($self->error($caller->error_message)) unless(defined($result));
-
-    return($result);
+    $self->_set_memory_pool({
+        lists       => {},
+        initialized => time
+    });
 
 }
 
 
 
-sub init_api {
+sub get_full_list {
 
-    my $self    = shift;
-    my $value   = shift;
+    my $self = shift;
+    my $element_type = shift;
 
-    if(defined($value)) {
-        return($value);
-    } else {
-        return($self->mm->cloudstack_api);
+    return($self->error("The element's type isn't defined"))
+        unless(defined($element_type));
+    return($self->error("The memory pool haven't been initialized"))
+        unless($self->_has_memory_pool);
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error("The logger hasn't been initialized: $@"))
+        if($@);
+
+    my $memory_pool = $self->_get_memory_pool;
+    my $cached_list = $memory_pool->{'lists'}->{$element_type};
+
+    unless(defined($cached_list)) {
+        $log->trace("Don't have a list of ${element_type}s in the memory pool");
+        return(undef);
     }
 
+    unless(ref($cached_list->{'dom'}) eq "XML::LibXML::Document") {
+        $log->trace("The cached list of ${element_type}s looks unhealthy");
+        return(undef);
+    }
+
+    unless($cached_list->{'updated'} + $self->_get_configuration->{'ttl'} > time) {
+        $log->trace("The cached list of ${element_type}s is expired");
+        return(undef);
+    }
+ 
+    return($cached_list);
+
 }
 
+
+
+sub store_full_list {
+
+    my $self            = shift;
+    my $element_type    = shift;
+    my $dom             = shift;
+    my $updated         = shift;
+
+    return($self->error("The element's type isn't defined"))
+        unless(defined($element_type));
+    return($self->error("The DOM isn't defined"))
+        unless(defined($dom));
+    return($self->error("The DOM isn't valid: $dom"))
+        unless(ref($dom) eq 'XML::LibXML::Document');
+    $updated = time
+        unless(defined($updated));
+    return($self->error("The memory pool haven't been initialized"))
+        unless($self->_has_memory_pool);
+    my $memory_pool = $self->_get_memory_pool;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error("The logger hasn't been initialized: $@"))
+        if($@);
+
+    $memory_pool->{'lists'}->{$element_type}->{'dom'}       = $dom;
+    $memory_pool->{'lists'}->{$element_type}->{'updated'}   = $updated;
+
+}
+    
 
 
 

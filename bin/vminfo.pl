@@ -44,10 +44,10 @@ my $mm = eval { MonkeyMan->new(
 ); };
 die("Can't MonkeyMan->new(): $@") if($@);
 
-my $log = $mm->logger;
-die($mm->error_message) unless(defined($log));
+my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
+die("The logger hasn't been initialized: $@") if($@);
 
-my $api = $mm->init_cloudstack_api;
+my $api = $mm->cloudstack_api;
 die($mm->error_message) unless(defined($api));
 
 

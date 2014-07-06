@@ -167,7 +167,7 @@ sub query_xpath {
 
     my ($self, $dom, $xpath, $results_to) = @_;
 
-    return($self->error("The DOM isn't defined"))
+    return($self->error("The DOM hasn't been defined"))
         unless(defined($dom));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);

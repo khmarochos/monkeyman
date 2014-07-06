@@ -65,9 +65,11 @@ sub load_dom {
         unless($self->has_mm);
     my $mm  = $self->mm;
     return($self->error("CloudStack's API connector hasn't been initialized"))
-        unless($self->mm->has_cloudstack_api);
-    my $api = $mm->cloudstack_api;
-    m $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+        unless($mm->has_cloudstack_api);
+    my $api     = $mm->cloudstack_api;
+    my $cache   = $mm->cloudstack_cache
+        if($mm->has_cloudstack_cache);
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
     return($self->error("The logger hasn't been initialized: $@"))
         if($@);
 
@@ -80,12 +82,40 @@ sub load_dom {
 
     if(ref($input{'dom'}) eq 'XML::LibXML::Document') {
 
-        $log->debug("Loading $self with the prederermined DOM: $input{'dom'}");
+        $log->debug("Loading $self with the predetermined DOM: $input{'dom'}");
 
         push(@{ $nodes }, eval {   $input{'dom'}->documentElement });
-        return($self->error("Can't $input{'dom'}->documentElement(): $@")) if($@);
+        return($self->error("Can't $input{'dom'}->documentElement(): $@"))
+            if($@);
     
-    } elsif(ref($input{'conditions'}) eq 'HASH') {
+    } else {
+
+        my $cached = $cache->get_full_list($self->element_type);
+        return($self->error($cache->error_message))
+            if($cache->has_error);
+        if(defined($cached)) {
+            $dom_unfiltered = $cached->{'dom'};
+            $log->trace("The list of " . $self->element_type . "s has been loaded from the cache");
+        } else {
+
+            $dom_unfiltered = $api->run_command(
+                # FIXME: it's quite dangerous to pass all parameters without any
+                # security checks, so I should consider adding a couple of them here...
+                parameters => $self->_load_full_list_command
+            );
+            return($self->error($api->error_message)) unless(defined($dom_unfiltered));
+
+            $cache->store_full_list($self->element_type, $dom_unfiltered, time);
+            $log->trace("The list of " . $self->element_type . "s has been stored in the cache");
+
+        }
+
+    }
+    
+    if(keys(%{ $input{'conditions'} })) {
+
+        # If someone passed the empty string instead of a hash, it means they can't
+        # calculate these conditions, so we shall point to an empty list
 
         if(defined($input{'conditions'}->{""})) {
             $log->debug(
@@ -95,7 +125,7 @@ sub load_dom {
         }
 
         $log->debug(
-            "Have got a request for a " . ref($self) .
+            "Have got a request for a " . $self->element_type .
             ", it shall match following conditions: " .
             join(" && ",
                 map { "'$_' eq '$input{'conditions'}->{$_}'" } (
@@ -104,12 +134,6 @@ sub load_dom {
             )
         );
 
-        $dom_unfiltered = $api->run_command(
-            # FIXME: it's quite dangerous to pass all parameters without any
-            # security checks, so I should consider adding a couple of them here...
-            parameters => $self->_load_full_list_command
-        );
-        return($self->error($api->error_message)) unless(defined($dom_unfiltered));
 
     }
 
@@ -119,7 +143,7 @@ sub load_dom {
 
         # Don't do anything if we already have some predetermined DOM
 
-        last if(ref($input{'dom'}) eq 'XML::LibXML::Document');
+        last unless(keys(%{ $input{'conditions'} }));
 
         # Create a new DOM for storing resulting nodes
 
