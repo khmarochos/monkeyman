@@ -17,6 +17,7 @@ use Getopt::Long;
 use Config::General qw(ParseConfig);
 use Text::Glob qw(match_glob); $Text::Glob::strict_wildcard_slash = 0;
 use File::Basename;
+use POSIX qw(strftime);
 
 
 
@@ -54,58 +55,35 @@ $log->logdie($mm->error_message) unless(defined($api));
 
 
 
-my %queue;
 my %schedule;                       # the key is the variable's name
-my %conf_timeperiods;               # the key is its name
-my %conf_storagepools;              # the key is its name
-my %conf_hosts;                     # the key is its name
-my %conf_domains;                   # the key is its full path
-my %conf_volumes;                   # the key is its id
 
-# Defining the objects' tree (we need to update it on every pass)
-
-my $objects = {
+my $objects;
+my $objects_configs = {
+    timeperiod      => {},
+    host            => {},
+    storagepool     => {},
+    domain          => {}
+};
+my $objects_relations = {
     domain          => {
-        objects_by_name         => {},
-        objects_by_id           => {},
-        downlinks        => {
-            volume          => {
-                objects_by_name         => {},
-                objects_by_id           => {},
-                downlinks        => {
-                    snapshot        => {
-                        objects_by_name         => {},
-                        objects_by_id           => {}
-                    },
-                    storagepool     => {
-                        objects_by_name         => {},
-                        objects_by_id           => {}
-                    },
-                    virtualmachine  => {
-                        objects_by_name         => {},
-                        objects_by_id           => {},
-                        downlinks        => {
-                            host            => {
-                                objects_by_name         => {},
-                                objects_by_id           => {}
-                            }
-                        }
-                    }
-                }
+        volume          => {
+            snapshot        => {},
+            storagepool     => {},
+            virtualmachine  => {
+                host            => {}
             }
         }
     }
 };
-my $volumes_by_id = $objects->{'domain'}->{'downlinks'}->{'volume'}->{'objects_by_id'};
+my $queue = {};
 
 
 
 THE_LOOP: while (1) {
 
-    # --------------------------------------------------------------------
     # Load everything If the schedule hasn't been loaded or has been reset
-
-    # I'm reloading the schedule every time I get SIGHUP
+ 
+    # I'm reloading the schedule every time I get SIGHUP!
  
     unless(%schedule) {
 
@@ -124,50 +102,41 @@ THE_LOOP: while (1) {
         # We shall forget all configuration elements as we obviously need
         # to reload them all
 
-        undef(%conf_timeperiods);
-        undef(%conf_storagepools);
-        undef(%conf_hosts);
-        undef(%conf_domains);
-        %queue = (
-            volumes => {}
-        )
+        foreach my $elements_type (keys(%{ $objects_configs })) {
+            $objects_configs->{$elements_type} = {};
+        }
+        $queue = {};
 
     }
 
     # Dealing with all configuration sections (reloading them if needed)
 
-    foreach my $section (
-        { hash => \%conf_timeperiods,   type => 'timeperiod' },
-        { hash => \%conf_storagepools,  type => 'storagepool' },
-        { hash => \%conf_hosts,         type => 'host' },
-        { hash => \%conf_domains,       type => 'domain' }
-    ) {
-        unless(defined(%{ $section->{'hash'}})) {
-            $log->trace("Some $section->{'type'}s definitely need to be defined");
+    foreach my $type (keys(%{ $objects_configs })) {
+        unless(defined(%{ $objects_configs->{$type} })) {
+            $log->trace("Some ${type}s definitely need to be defined");
             my $elements_loaded = eval {
                 load_elements(
                     \%schedule,
-                    $section->{'type'},
-                    $section->{'hash'}
+                    $type,
+                    $objects_configs->{$type}
                 );
             };
             if($@) { $log->die("Can't load_element(): $@"); };
-            $log->trace("$elements_loaded $section->{'type'}s have been loaded");
+            $log->trace("$elements_loaded ${type}s have been loaded");
         }
     }
 
 
-    # -------------------------------------------
     # Loading information about objects if needed
 
-    # It shall be able to reload the information without reloading the queue,
-    # by the timer or by SIGUSR1!
+    # It shall be allowed to reload the information without reloading
+    # the queue by the timer or by SIGUSR1!
 
-    foreach my $domain_path (grep(!/\*/, keys(%conf_domains))) {
+    foreach my $domain_path (grep(!/\*/, keys(%{ $objects_configs->{'domain'} }))) {
 
         # Reload the information about the domain only if it's needed
 
-        unless(defined($objects->{'domain'}->{'objects_by_name'}->{$domain_path})) {
+        unless(defined($objects->{'domain'}->{'by_name'}->{$domain_path}->{'object'})) {
 
             $log->debug("Loading the information about the $domain_path domain");
 
@@ -185,7 +154,11 @@ THE_LOOP: while (1) {
             if($domain->has_error) { $log->warn($domain->error_message); next; }
             unless(defined($domain_id)) { $log->warn("Can't get the id parameter of the domain"); next; }
 
-            $objects->{'domain'}->{'objects_by_name'}->{$domain_path} = $objects->{'domain'}->{'objects_by_id'}->{$domain_id} = $domain;
+            $objects->{'domain'}->{'by_name'}->{$domain_path} =
+            $objects->{'domain'}->{'by_id'}->{$domain_id} = {
+                object  => $domain,
+                used    => {}
+            };
 
             $log->info("The $domain_id ($domain_path) domain has been refreshed");
 
@@ -193,133 +166,147 @@ THE_LOOP: while (1) {
 
         # Do we need to scan for any downlinks?
 
-        my @downlinks_types_to_scan = keys(%{$objects->{'domain'}->{'downlinks'}});
-
-        foreach (@downlinks_types_to_scan) {
-
-            # Loading downlinks
-
-            my $results = find_related_and_refresh_if_needed(
-                $objects->{'domain'}->{'objects_by_name'}->{$domain_path},
-                $_,
-                $objects->{'domain'}->{'downlinks'}->{$_}
-            );
-            unless(defined($results)) {
-                $log->warn("No ${_}s refreshed due to an error occuried");
-                next;
-            }
-            $log->debug("$results ${_}(s) found");
-
+        my $results = find_related_and_refresh_if_needed(
+            $objects->{'domain'}->{'by_name'}->{$domain_path}->{'object'},
+            $objects_relations->{'domain'}
+        );
+        unless(defined($results)) {
+            $log->warn("No ${_}s refreshed due to an error occuried");
+            next;
         }
+        $log->debug("$results domains' downlink(s) found");
 
     }
 
 
 
-    # -------------------------------
-    # Adding new volumes to the queue
+    # Adding new volumes to the queue and adding references to related objects
 
-    foreach (keys(%{ $volumes_by_id })) {
+    while(my($volume_id, $volume) = each(%{ $objects->{'volume'}->{'by_id'} })) {
 
-        my $volume = $volumes_by_id->{$_};
-
-        my $volume_domain = $volume->get_parameter('domainid');
-        if($volume->has_error) {
-            $log->warn($volume->error_message);
-            next;
-        } elsif(!defined($volume_domain)) {
-            $log->warn("The volume $volume doesn't have the domainid parameter");
-            next;
-        } else {
-            $volume_domain = $objects->{'domain'}->{'objects_by_id'}->{$volume_domain};
-            unless(ref($volume_domain) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{'domain'}) {
-                $log->warn("The $volume_domain domain looks unhealthy");
-                next;
+=pod
+        while(my($element_type, $element_features) = each({
+            domain      => {
+                required        => 1,
+                parameter       => 'domainid',
+                parameter_type  => 'id',
+                config          => \%conf_domains
             }
-        }
+        }) {
 
-
-        my $volume_storagepool = $volume->get_parameter('storage');
-        if($volume->has_error) {
-            $log->warn($volume->error_message);
-            next;
-        } elsif(!defined($volume_storagepool)) {
-            $log->warn("The volume $volume doesn't have the storagepool parameter");
-            next;
-        } else {
-            $volume_storagepool = $objects->{'domain'}->{'downlinks'}->{'volume'}->{'downlinks'}->{'storagepool'}->{'objects_by_name'}->{$volume_storagepool};
-            unless(ref($volume_storagepool) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{'storagepool'}) {
-                $log->warn("The $volume_storagepool storagepool looks unhealthy");
+            my $element_id = $volume->{'object'}->get_parameter($element_features->{'parameter'});
+            if($volume->has_error) {
+                $log->warn($volume->{'object'}->error_message);
                 next;
-            }
-        }
-
-        my $volume_virtualmachine = $volume->get_parameter('virtualmachine');
-        if($volume->has_error) {
-            $log->warn($volume->error_message);
-            next;
-        } elsif(!defined($volume_virtualmachine)) {
-            $log->trace("The volume $volume doesn't have the virtualmachine parameter");
-        } else {
-            $volume_virtualmachine = $objects->{'domain'}->{'downlinks'}->{'volume'}->{'downlinks'}->{'virtualmachine'}->{'objects_by_id'}->{$volume_virtualmachine};
-            unless(ref($volume_virtualmachine) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{'virtualmachine'}) {
-                $log->warn("The $volume_virtualmachine virtualmachine looks unhealthy");
+            } elsif($element_features->{'required'} && !defined($domain)) {
+                $log->warn("The volume $volume doesn't have the $element_features->{'parameter'} parameter");
                 next;
-            }
-        }
-
-        my $virtualmachine_host;
-        if(defined($volume_virtualmachine)) {
-            $virtualmachine_host = $volume_virtualmachine->get_parameter('host');
-            if($volume_virtualmachine->has_error) {
-                $log->warn($volume_virtualmachine->error_message);
-                next;
-            } elsif(!defined($virtualmachine_host)) {
-                $log->trace("The volume_virtualmachine $volume_virtualmachine doesn't have the host parameter");
             } else {
-                $virtualmachine_host = $objects->{'domain'}->{'downlinks'}->{'volume'}->{'downlinks'}->{'virtualmachine'}->{'downlinks'}->{'host'}->{'objects_by_id'}->{$virtualmachine_host};
-                unless(ref($virtualmachine_host) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{'host'}) {
-                    $log->warn("The $virtualmachine_host host looks unhealthy");
+
+                $element = $objects->{$element_type}->{"by_$element_features->{'parameter_type'}"}->{$domain};
+                unless(ref($domain->{'object'}) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{$element_type}) {
+                    $log->warn("The $domain domain looks unhealthy");
                     next;
                 }
+
             }
         }
+=cut
 
-        unless(defined($queue{'volumes'}->{$_})) {
-            $queue{'volumes'}->{$_} = {
-                object  => $volume,
-                queued  => time,
-                done    => undef,
-                related => {
-                    domain          => $volume_domain,
-                    storagepool     => $volume_storagepool,
-                    virtualmachine  => $volume_virtualmachine,
-                    host            => $virtualmachine_host
-                }
+        # Adding the volume to the queue
+
+        unless(defined($queue->{$volume_id})) {
+            $queue->{$volume_id} = {
+                object      => $volume,
+                queued      => time,
+                postponed   => undef,
+                started     => undef,
+                done        => undef,
+                jobid       => undef,
+                related     => {}
             };
-            $log->debug("Added the $_ volume to the queue");
+            $log->debug("Added the $volume_id volume to the queue");
         }
+
+        # Updating the related objects' list
+
+=pod
+        $queue->{$volume_id}->{'related'} = {
+            domain          => $volume_domain,
+            storagepool     => $volume_storagepool,
+            virtualmachine  => $volume_virtualmachine,
+            host            => $virtualmachine_host
+        };
+=cut
 
     }
 
 
 
+    # Asking MM whats up, updating information about finished jobs
 
-    # ----------------------------------------------------------
-    # Asking MM whats up, updating information about queued jobs
+    foreach my $volume_id (keys(%{ $queue })) {
+
+        unless(
+             defined($queue->{$volume_id}->{'started'}) &&
+            !defined($queue->{$volume_id}->{'done'})
+        ) {
+            next;
+        }
+
+        unless(defined($queue->{$volume_id}->{'jobid'})) {
+            $log->warn("The $volume_id volume seems to be busy, but the jobid isn't defined");
+            next;
+        }
+
+    }
 
 
-
-    # -------------------------------
     # Starting new snapshot processes
 
+    foreach my $volume_id (keys(%{ $queue })) {
+
+        $log->debug("Checking the $volume_id volume in the queue");
+
+        if(
+            defined($queue->{$volume_id}->{'started'}) &&       # the job has been started,
+           !defined($queue->{$volume_id}->{'done'})             # but hasn't finished yet
+        ) {
+            $log->debug(
+                "The $volume_id volume is busy since " .
+                strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'started'})) .
+                ", skipping it"
+            );
+            next;
+        }
+
+        if(
+            defined($queue->{$volume_id}->{'postponed'}) &&     # has been postponed
+                    $queue->{$volume_id}->{'postponed'} > time  # and it's too early for a new job
+        ) {
+            $log->debug(
+                "The $volume_id volume is postponed till " .
+                strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'postponed'})) .
+                ", skipping it"
+            );
+            next;
+        }
+
+        $queue->{$volume_id}->{'started'} = time;
+
+        $log->info("The $volume_id volume has been started to make a snapshot");
+
+    }
 
 
 
-    # -------------------------------------------
     # Gathering and storing some usage statistics
 
+
+
     # Counting stats
+
+
 
     # Saving the queue and objects, MonkeyMan should be able to do that:
     #   $dump_id = $mm->dump_state();
@@ -328,6 +315,7 @@ THE_LOOP: while (1) {
 
 
     sleep 10; # shall be configured and/or calculated /!\
+
 }
 
 
@@ -431,12 +419,16 @@ sub configure_element {
 }
 
 
+
 sub find_related_and_refresh_if_needed {
 
-    my $uplink              = shift;
-    my $downlinks_type      = shift;
-    my $downlinks_objects   = shift;
+    my $uplink      = shift;
+    my $uplink_node = shift;
 
+    unless(defined($uplink_node)) {
+        $log->warn("The uplink's node isn't defined");
+        return;
+    }
     my $uplink_id   = $uplink->get_parameter('id');
     if($uplink->has_error) {
         $log->warn($uplink->error_message);
@@ -453,105 +445,109 @@ sub find_related_and_refresh_if_needed {
         return;
     }
 
-    $log->debug(
-        "Looking for ${downlinks_type}s related to the $uplink_id" .
-        (defined($uplink_name) ? " ($uplink_name) " : " ") .
-        $uplink_type
-    );
+    # Do we need to scan for any downlinks?
 
-    # Looking for related downlinks
-
-    my $downlinks = $uplink->find_related_to_me($downlinks_type);
-    unless(defined($downlinks)) {
-        $log->warn($uplink->error_message);
-        return;
-    }
-    unless(scalar(@{ $downlinks })) {
-        $log->debug("The $uplink_id $uplink_type doesn't have any related ${downlinks_type}s");
+    my @downlinks_types_to_scan = keys(%{ $uplink_node });
+    unless(@downlinks_types_to_scan) {
+        $log->debug("No more downlinks to scan");
     }
 
     my $found = 0;
 
-    foreach my $downlink_dom (@{ $downlinks }) {
+    foreach my $downlink_type (@downlinks_types_to_scan) {
 
-        $found++;
+        $log->debug(
+            "Looking for ${downlink_type}s related to the $uplink_id" .
+            (defined($uplink_name) ? " ($uplink_name) " : " ") .
+            $uplink_type
+        );
 
-        my $downlink_id = eval { $downlink_dom->findvalue("/$downlinks_type/id") };
-        if($@) { $log->warn("Can't $downlink_dom->findvalue(): $@"); next; }
+        # Looking for related downlinks
 
-        # Indeed, only if we need it
-
-        unless(defined($downlinks_objects->{'objects_by_id'}->{$downlink_id})) {
-
-            $log->trace("Loading the information about the $downlink_id $downlinks_type");
-
-            my $module_name = ${&MMElementsModule}{$downlinks_type};
-            unless(defined($module_name)) {
-                $log->warn("I'm not able to look for related ${downlinks_type}s yet");
-                return;
-            }
-
-            my $downlink = eval {
-                require("MonkeyMan/CloudStack/Elements/$module_name.pm");
-                return("MonkeyMan::CloudStack::Elements::$module_name"->new(
-                    mm          => $mm,
-                    load_dom    => {
-                         dom        => $downlink_dom
-                    }
-                ));
-            };
-            if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::$module_name->new(): $@"); next; }
-
-            $downlink_id = $downlink->get_parameter('id');
-            if($downlink->has_error) {
-                $log->warn($downlink->error_message);
-                next;
-            }
-            unless(defined($downlink_id)) {
-                $log->warn("Can't get the ID of the $downlinks_type");
-                next;
-            }
-
-            my $downlink_name = $downlink->get_parameter('name');
-            if($downlink->has_error) {
-                $log->warn($downlink->error_message);
-                next;
-            }
-            unless(defined($downlink_name)) {
-                $log->warn("Can't get the name of the $downlinks_type");
-                next;
-            }
-
-            # Storing information about the downlink
-
-            $downlinks_objects->{'objects_by_id'}->{$downlink_id} = $downlinks_objects->{'objects_by_name'}->{$downlink_name} = $downlink;
-
-            $log->info("The $downlink_id ($downlink_name) $downlinks_type has been refreshed");
-
+        my $downlinks = $uplink->find_related_to_me($downlink_type);
+        unless(defined($downlinks)) {
+            $log->warn($uplink->error_message);
+            return;
+        }
+        unless(scalar(@{ $downlinks })) {
+            $log->debug("The $uplink_id $uplink_type doesn't have any related ${downlink_type}s");
         }
 
-        # Do we need to scan for any downlinks?
+        foreach my $downlink_dom (@{ $downlinks }) {
 
-        my @downlinks_types_to_scan = keys(%{$downlinks_objects->{'downlinks'}});
-        unless(@downlinks_types_to_scan) {
-            $log->debug("No more downlinks to scan");
-            next;
-        }
+            $found++;
 
-        foreach (@downlinks_types_to_scan) {
+            my $downlink_id = eval { $downlink_dom->findvalue("/$downlink_type/id") };
+            if($@) { $log->warn("Can't $downlink_dom->findvalue(): $@"); next; }
 
-            # Loading downlinks
+            # Indeed, only if we need it
+
+            unless(defined($objects->{$downlink_type}->{'by_id'}->{$downlink_id})) {
+
+                $log->trace("Loading the information about the $downlink_id $downlink_type");
+
+                my $module_name = ${&MMElementsModule}{$downlink_type};
+                unless(defined($module_name)) {
+                    $log->warn("I'm not able to look for related ${downlink_type}s yet");
+                    return;
+                }
+
+                my $downlink = eval {
+                    require("MonkeyMan/CloudStack/Elements/$module_name.pm");
+                    return("MonkeyMan::CloudStack::Elements::$module_name"->new(
+                        mm          => $mm,
+                        load_dom    => {
+                             dom        => $downlink_dom
+                        }
+                    ));
+                };
+                if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::$module_name->new(): $@"); next; }
+
+                $downlink_id = $downlink->get_parameter('id');
+                if($downlink->has_error) {
+                    $log->warn($downlink->error_message);
+                    next;
+                }
+                unless(defined($downlink_id)) {
+                    $log->warn("Can't get the ID of the $downlink_type");
+                    next;
+                }
+
+                my $downlink_name = $downlink->get_parameter('name');
+                if($downlink->has_error) {
+                    $log->warn($downlink->error_message);
+                    next;
+                }
+                unless(defined($downlink_name)) {
+                    $log->warn("Can't get the name of the $downlink_type");
+                    next;
+                }
+
+                # Storing information about the downlink
+
+                $objects->{$downlink_type}->{'by_name'}->{$downlink_name} =
+                $objects->{$downlink_type}->{'by_id'}->{$downlink_id} = {
+                    object  => $downlink,
+                    config  => $objects_configs->{$downlink_type}->{$downlink_name},
+                    used    => {}
+                };
+
+                $log->info("The $downlink_id ($downlink_name) $downlink_type has been refreshed");
+
+            }
+
+            # Loading more downlinks it there are any
 
             my $results = find_related_and_refresh_if_needed(
-                $downlinks_objects->{'objects_by_id'}->{$downlink_id},
-                $_,
-                $downlinks_objects->{'downlinks'}->{$_}
+                $objects->{$downlink_type}->{'by_id'}->{$downlink_id}->{'object'},
+                $uplink_node->{$downlink_type}
             );
             unless(defined($results)) {
-                $log->warn("No ${_}s refreshed due to an error occuried");
+                $log->warn("No ${downlink_type}s refreshed due to an error occuried");
                 next;
             }
-            $log->debug("$results ${_}(s) found");
+            $log->debug("$results ${downlink_type}s' downlink(s) found");
+    
         }
 
     }

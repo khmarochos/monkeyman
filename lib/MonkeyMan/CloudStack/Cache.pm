@@ -69,7 +69,7 @@ sub get_full_list {
     my $cached_list = $memory_pool->{'lists'}->{$element_type};
 
     unless(defined($cached_list)) {
-        $log->trace("Don't have a list of ${element_type}s in the memory pool");
+        $log->trace("Don't have a list of ${element_type}s cached");
         return(undef);
     }
 
@@ -113,6 +113,8 @@ sub store_full_list {
 
     $memory_pool->{'lists'}->{$element_type}->{'dom'}       = $dom;
     $memory_pool->{'lists'}->{$element_type}->{'updated'}   = $updated;
+
+    return($memory_pool->{'lists'}->{$element_type});
 
 }
     

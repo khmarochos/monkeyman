@@ -93,9 +93,12 @@ sub load_dom {
         my $cached = $cache->get_full_list($self->element_type);
         return($self->error($cache->error_message))
             if($cache->has_error);
+
         if(defined($cached)) {
+
             $dom_unfiltered = $cached->{'dom'};
-            $log->trace("The list of " . $self->element_type . "s has been loaded from the cache");
+            $log->trace("The list of " . $self->element_type . "s (" . $cached->{'dom'} . ") has been loaded from the cache");
+
         } else {
 
             $dom_unfiltered = $api->run_command(
@@ -105,8 +108,10 @@ sub load_dom {
             );
             return($self->error($api->error_message)) unless(defined($dom_unfiltered));
 
-            $cache->store_full_list($self->element_type, $dom_unfiltered, time);
-            $log->trace("The list of " . $self->element_type . "s has been stored in the cache");
+            my $cached = $cache->store_full_list($self->element_type, $dom_unfiltered, time);
+            return($self->error($cache->error_message)) unless(defined($cached));
+
+            $log->trace("The list of " . $self->element_type . "s (" . $cached->{'dom'} . ") has been stored in the cache");
 
         }
 
@@ -204,11 +209,12 @@ sub load_dom {
 
             # Okay, now let's attach resulting nodes to the main node
 
-            my $child_last;
-
             foreach my $node (@{ $nodes }) {
 
-                my $child_last = eval {    $node_to_add_children->addChild($node); };
+                my $cloned_node = eval { $node->cloneNode; };
+                return($self->error("Can't $node->cloneNode() $@")) if ($@);
+
+                eval {$node_to_add_children->addChild($node); };
                 return($self->error("Can't $node_to_add_children->addChild() $@")) if ($@);
 
             }

@@ -145,34 +145,44 @@ sub init_logger {
 
         my $log_conf_loaded;
         my $log_conf_appenders;
+        my $log_conf_filters;
         if(defined($log_conf_filename)) {
             open(LOG_CONF_FILE, $log_conf_filename) || die("Can't open(): $@");
             while(<LOG_CONF_FILE>) {
                 $log_conf_loaded .= $_;
                 if(/^\s*log4perl\.appender\.([^\s\.]+)\s+=/) {
-                    $log_conf_appenders .= "$1, ";
+                    $log_conf_appenders .= ", $1";
+                } elsif(/^\s*log4perl\.filter\.([^\s\.]+)\s+=/) {
+                    $log_conf_filters   .= " && !$1"
+                        unless(($1 =~ /^monkeyman/) && ($self->verbosity <= 7));
                 }
             }
             close(LOG_CONF_FILE);
         }
+        chomp($log_conf_loaded);
 
         my $log_conf = <<__END_LOGCONF__;
-log4perl.category.MonkeyMan                         = ALL, ${log_conf_appenders}screen
+log4perl.category.MonkeyMan                                 = ALL$log_conf_appenders, screen
 
 $log_conf_loaded
 
-log4perl.appender.screen                            = Log::Log4perl::Appender::Screen
-log4perl.appender.screen.layout                     = Log::Log4perl::Layout::PatternLayout
-log4perl.appender.screen.layout.ConversionPattern   = $log_screen_pattern
-log4perl.appender.screen.Filter                     = screen
-log4perl.filter.screen                              = Log::Log4perl::Filter::LevelRange
-log4perl.filter.screen.LevelMin                     = $log_screen_loglevel
-log4perl.filter.screen.AcceptOnMatch                = true
+log4perl.appender.screen                                    = Log::Log4perl::Appender::Screen
+log4perl.appender.screen.layout                             = Log::Log4perl::Layout::PatternLayout
+log4perl.appender.screen.layout.ConversionPattern           = $log_screen_pattern
+log4perl.appender.screen.Filter                             = screen
+
+log4perl.filter.screen                                      = Log::Log4perl::Filter::Boolean
+log4perl.filter.screen.logic                                = screen_loglevel$log_conf_filters
+
+log4perl.filter.screen_loglevel                             = Log::Log4perl::Filter::LevelRange
+log4perl.filter.screen_loglevel.LevelMin                    = $log_screen_loglevel
+log4perl.filter.screen_loglevel.AcceptOnMatch               = true
 __END_LOGCONF__
 
         eval { Log::Log4perl::init_once(\$log_conf) };
         return($self->error("Can't Log::Log4perl::init_once(): $@"))
             if($@);
+
     }
 
     my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };

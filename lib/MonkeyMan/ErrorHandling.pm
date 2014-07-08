@@ -104,7 +104,9 @@ sub error_message {
     my $caller = $error->caller;
     return(
         "Can't " .
-        $caller->{'subroutine'} . "(): " .
+        $caller->{'subroutine'} . "(): at " .
+        $caller->{'file'} . " line " .
+        $caller->{'line'} . ": " .
         $error->text
     );
     
