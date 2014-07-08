@@ -105,7 +105,7 @@ sub error_message {
     return(
         "Can't " .
         $caller->{'subroutine'} . "(): at " .
-        $caller->{'file'} . " line " .
+        $caller->{'filename'} . " line " .
         $caller->{'line'} . ": " .
         $error->text
     );

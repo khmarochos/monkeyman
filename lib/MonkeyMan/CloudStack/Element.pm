@@ -97,7 +97,7 @@ sub load_dom {
         if(defined($cached)) {
 
             $dom_unfiltered = $cached->{'dom'};
-            $log->trace("The list of " . $self->element_type . "s (" . $cached->{'dom'} . ") has been loaded from the cache");
+            $log->trace("The list of " . $self->element_type . " ($cached->{'dom'})) has been loaded from the cache");
 
         } else {
 
@@ -111,7 +111,7 @@ sub load_dom {
             my $cached = $cache->store_full_list($self->element_type, $dom_unfiltered, time);
             return($self->error($cache->error_message)) unless(defined($cached));
 
-            $log->trace("The list of " . $self->element_type . "s (" . $cached->{'dom'} . ") has been stored in the cache");
+            $log->trace("The list of " . $self->element_type . "s ($cached->{'dom'}) has been stored in the cache");
 
         }
 
@@ -189,7 +189,8 @@ sub load_dom {
             # Building all required parents' nodes
         
             my @node_names = (split('/', eval { ${ $nodes }[0]->parentNode->nodePath; }));
-            return($self->error("Can't ${ $nodes }[0]->parentNode()->nodePath(): $@")) if($@);
+            return($self->error("Can't ${ $nodes }[0]->parentNode()->nodePath(): $@"))
+                if($@);
 
             my $node_to_add_children = $dom_filtered;
 
@@ -198,10 +199,12 @@ sub load_dom {
                 next unless ($node_name);
 
                 my $node = eval {          $dom_filtered->createElement($node_name); };
-                return($self->error("Can't $dom_filtered->createElement(): $@")) if($@);
+                return($self->error("Can't $dom_filtered->createElement(): $@"))
+                    if($@);
 
                 eval {                     $node_to_add_children->addChild($node); };
-                return($self->error("Can't $node_to_add_children->addChild(): $@")) if($@);
+                return($self->error("Can't $node_to_add_children->addChild(): $@"))
+                    if($@);
 
                 $node_to_add_children = $node;
 
@@ -211,11 +214,13 @@ sub load_dom {
 
             foreach my $node (@{ $nodes }) {
 
-                my $cloned_node = eval { $node->cloneNode; };
-                return($self->error("Can't $node->cloneNode() $@")) if ($@);
+                my $node_clone = eval { $node->cloneNode(1); };
+                return($self->error("Can't $node->cloneNode(): $@"))
+                    if($@);
 
-                eval {$node_to_add_children->addChild($node); };
-                return($self->error("Can't $node_to_add_children->addChild() $@")) if ($@);
+                eval { $node_to_add_children->addChild($node_clone); };
+                return($self->error("Can't $node_to_add_children->addChild() $@"))
+                    if ($@);
 
             }
 
@@ -236,10 +241,16 @@ sub load_dom {
     foreach my $node (@{ $nodes }) {
 
         my $dom = eval {           XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-        return($self->error("Can't XML::LibXML::Document->createDocument(): $@")) if($@);
+        return($self->error("Can't XML::LibXML::Document->createDocument(): $@"))
+            if($@);
 
-        eval {                     $dom->addChild($node); };
-        return($self->error("Can't $dom->addChild(): $@")) if($@);
+        my $node_clone = eval { $node->cloneNode(1); };
+        return($self->error("Can't $node->cloneNode(): $@"))
+            if($@);
+
+        eval {                     $dom->addChild($node_clone); };
+        return($self->error("Can't $dom->addChild(): $@"))
+            if($@);
 
         push(@results, $dom);
 
@@ -252,7 +263,7 @@ sub load_dom {
 
     }
 
-    $log->debug("$results_got result(s) has(ve) been got");
+    $log->debug("$results_got result(s) has/have been got");
 
     if($results_got == 1) { $self->_set_dom($results[0]); }
 

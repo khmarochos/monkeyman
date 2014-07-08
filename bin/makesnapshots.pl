@@ -55,15 +55,9 @@ $log->logdie($mm->error_message) unless(defined($api));
 
 
 
-my %schedule;                       # the key is the variable's name
-
-my $objects;
-my $objects_configs = {
-    timeperiod      => {},
-    host            => {},
-    storagepool     => {},
-    domain          => {}
-};
+my $schedule = {};
+my $configs = {};
+my $objects = {};
 my $objects_relations = {
     domain          => {
         volume          => {
@@ -85,9 +79,9 @@ THE_LOOP: while (1) {
  
     # I'm reloading the schedule every time I get SIGHUP!
  
-    unless(%schedule) {
+    unless(%{ $schedule }) {
 
-        %schedule = eval {
+        %{ $schedule } = eval {
             ParseConfig(
                 -ConfigFile         => $opts{'schedule'},
                 -UseApacheInclude   => 1
@@ -102,23 +96,21 @@ THE_LOOP: while (1) {
         # We shall forget all configuration elements as we obviously need
         # to reload them all
 
-        foreach my $elements_type (keys(%{ $objects_configs })) {
-            $objects_configs->{$elements_type} = {};
-        }
+        $configs = {};
         $queue = {};
 
     }
 
     # Dealing with all configuration sections (reloading them if needed)
 
-    foreach my $type (keys(%{ $objects_configs })) {
-        unless(defined(%{ $objects_configs->{$type} })) {
+    foreach my $type (qw/timeperiod storagepool host domain/) {
+        unless(keys(%{ $configs->{$type} })) {
             $log->trace("Some ${type}s definitely need to be defined");
             my $elements_loaded = eval {
                 load_elements(
-                    \%schedule,
+                    $schedule,
                     $type,
-                    $objects_configs->{$type}
+                    $configs->{$type}
                 );
             };
             if($@) { $log->die("Can't load_element(): $@"); };
@@ -127,12 +119,13 @@ THE_LOOP: while (1) {
     }
 
 
+
     # Loading information about objects if needed
 
     # It shall be allowed to reload the information without reloading
     # the queue by the timer or by SIGUSR1!
 
-    foreach my $domain_path (grep(!/\*/, keys(%{ $objects_configs->{'domain'} }))) {
+    foreach my $domain_path (grep(!/\*/, keys(%{ $configs->{'domain'} }))) {
 
         # Reload the information about the domain only if it's needed
 
@@ -314,7 +307,7 @@ THE_LOOP: while (1) {
 
 
 
-    sleep 10; # shall be configured and/or calculated /!\
+    sleep 2; # shall be configured and/or calculated /!\
 
 }
 
@@ -338,7 +331,7 @@ sub load_elements {
 
     # Loading templates
 
-    foreach my $template_name (grep( /\*/, keys(%{ $schedule{$elements_type} }))) {
+    foreach my $template_name (grep( /\*/, keys(%{ $schedule->{$elements_type} }))) {
         $elements_set->{$template_name} = $schedule->{$elements_type}->{$template_name};
         $log->trace("The $template_name ${elements_type}'s template has been loaded");
     }
@@ -347,7 +340,7 @@ sub load_elements {
 
     my $elements_loaded = 0;
 
-    foreach my $element_name (grep(!/\*/, keys(%{ $schedule{$elements_type} }))) {
+    foreach my $element_name (grep(!/\*/, keys(%{ $schedule->{$elements_type} }))) {
 
         $log->trace("Configuring the $element_name $elements_type");
 
@@ -356,16 +349,16 @@ sub load_elements {
 
         # Configuring the new element, adding configuration templates
  
-        my %element_configured;
+        my $element_configured = {};
         my $layers_loaded = eval {
             configure_element(
                 $elements_set,
                 $element_name,
-               \%element_configured
+                $element_configured
             );
         };
         $log->logdie("Can't configure_element(): $@") if($@);
-        $elements_set->{$element_name} = \%element_configured;
+        $elements_set->{$element_name} = $element_configured;
         $elements_loaded++;
 
         $log->debug("The $element_name $elements_type with $layers_loaded configuration layers has been loaded");
@@ -528,7 +521,7 @@ sub find_related_and_refresh_if_needed {
                 $objects->{$downlink_type}->{'by_name'}->{$downlink_name} =
                 $objects->{$downlink_type}->{'by_id'}->{$downlink_id} = {
                     object  => $downlink,
-                    config  => $objects_configs->{$downlink_type}->{$downlink_name},
+                    config  => $configs->{$downlink_type}->{$downlink_name},
                     used    => {}
                 };
 

@@ -195,11 +195,12 @@ sub query_xpath {
         $log->trace("[>DOM<] - $dom contains: " . $dom->toString(1));
 
         my @nodes = eval {         $dom->findnodes($query); };
-        return($self->error("Can't $dom->findnodes(): $@")) if($@);
+        return($self->error("Can't $dom->findnodes(): $@"))
+            if($@);
 
         foreach my $node (@nodes) {
             $log->trace("Have got $node");
-            $log->trace("[>DOM<] - $node contains: " . $node->toString(1));
+#            $log->trace("[>DOM<] - $node contains: " . $node->toString(1));
             push(@{$results}, $node);
         }
 
