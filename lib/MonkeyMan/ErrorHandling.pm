@@ -53,7 +53,8 @@ sub error {
             text    => $error_text,
             caller  => \%caller_info
         ); };
-        warn("Can't MonkeyMan::Error->new(): $@") if($@);
+        warn(mm_sprintify("Can't MonkeyMan::Error->new(): %s", $@))
+            if($@);
 
         $self->_set_error($error) if(defined($error));
 
@@ -66,7 +67,8 @@ sub error {
 
         # Othervise we'll return contents of the error attribute
 
-        return(undef) unless($self->has_error);
+        return(undef)
+            unless($self->has_error);
 
         if(want('OBJECT')) {
             return($self->_get_error);
@@ -80,18 +82,6 @@ sub error {
 
 
 
-sub self {
-
-    return(shift);
-    # We may need it when we want to get it as an object, for an example:
-    #
-    #   $error = $zaloopa->error;
-    #   print($error->context->{'package'}, $error->text, "\n");
-
-}
-
-
-
 sub error_message {
 
     my $self = shift;
@@ -99,16 +89,17 @@ sub error_message {
     return("Undefined error") unless($self->has_error);
 
     my $error = $self->_get_error;
-    return("Have got an error while running: " . $error->text) unless($error->has_caller);
+    return(mm_sprintify("Have got an error while running: %s", $error->text))
+        unless($error->has_caller);
 
     my $caller = $error->caller;
-    return(
-        "Can't " .
-        $caller->{'subroutine'} . "(): at " .
-        $caller->{'filename'} . " line " .
-        $caller->{'line'} . ": " .
-        $error->text
-    );
+    return(mm_sprintify(
+        "Can't %s(): at %s line %d: %s",
+            $caller->{'subroutine'},
+            $caller->{'filename'},
+            $caller->{'line'},
+            $error->text
+    ));
     
 }
 

@@ -4,10 +4,13 @@ use strict;
 use warnings;
 
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
 
 use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
+
+use POSIX qw(strftime);
 
 with 'MonkeyMan::ErrorHandling';
 
@@ -62,24 +65,28 @@ sub get_full_list {
     return($self->error("The memory pool haven't been initialized"))
         unless($self->_has_memory_pool);
     my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error("The logger hasn't been initialized: $@"))
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
         if($@);
 
     my $memory_pool = $self->_get_memory_pool;
     my $cached_list = $memory_pool->{'lists'}->{$element_type};
 
     unless(defined($cached_list)) {
-        $log->trace("Don't have a list of ${element_type}s cached");
+        $log->trace(mm_sprintify("Don't have a list of %ss cached", $element_type));
         return(undef);
     }
 
     unless(ref($cached_list->{'dom'}) eq "XML::LibXML::Document") {
-        $log->trace("The cached list of ${element_type}s looks unhealthy");
+        $log->trace(mm_sprintify("The cached list of %ss looks unhealthy", $element_type));
         return(undef);
     }
 
     unless($cached_list->{'updated'} + $self->_get_configuration->{'ttl'} >= time) {
-        $log->trace("The cached list of ${element_type}s is expired");
+        $log->trace(mm_sprintify(
+            "The cached list of %s is expired since %s",
+                $element_type,
+                strftime(MMDateTimeFormat, $cached_list->{'updated'} + $self->_get_configuration->{'ttl'})
+        ));
         return(undef);
     }
  
@@ -100,7 +107,7 @@ sub store_full_list {
         unless(defined($element_type));
     return($self->error("The DOM isn't defined"))
         unless(defined($dom));
-    return($self->error("The DOM isn't valid: $dom"))
+    return($self->error(mm_sprintify("The %s DOM isn't valid", $dom)))
         unless(ref($dom) eq 'XML::LibXML::Document');
     $updated = time
         unless(defined($updated));
@@ -108,7 +115,7 @@ sub store_full_list {
         unless($self->_has_memory_pool);
     my $memory_pool = $self->_get_memory_pool;
     my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error("The logger hasn't been initialized: $@"))
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
         if($@);
 
     $memory_pool->{'lists'}->{$element_type}->{'dom'}       = $dom;

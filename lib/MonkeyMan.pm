@@ -9,6 +9,7 @@ use MonkeyMan::CloudStack::Cache;
 
 use Config::General qw(ParseConfig);
 use Log::Log4perl qw(:no_extra_logdie_message);
+use Text::Template;
 use Data::Dumper;
 
 use Moose;
@@ -72,7 +73,7 @@ sub BUILD {
             );
         };
         if($@) {
-            die("Can't Config::General::ParseConfig(): $@");
+            die(mm_sprintify("Can't Config::General::ParseConfig(): %s", $@));
         }
         $self->_set_configuration(\%configuration);
     }
@@ -142,51 +143,30 @@ sub init_logger {
             '%d [%p{1}] %m%n' :
             '%m%n';
         my $log_conf_filename = $self->configuration('log::log4perl');
-
-        my $log_conf_loaded;
-        my $log_conf_appenders;
-        my $log_conf_filters;
-        if(defined($log_conf_filename)) {
-            open(LOG_CONF_FILE, $log_conf_filename) || die("Can't open(): $@");
-            while(<LOG_CONF_FILE>) {
-                $log_conf_loaded .= $_;
-                if(/^\s*log4perl\.appender\.([^\s\.]+)\s+=/) {
-                    $log_conf_appenders .= ", $1";
-                } elsif(/^\s*log4perl\.filter\.([^\s\.]+)\s+=/) {
-                    $log_conf_filters   .= " && !$1"
-                        unless(($1 =~ /^monkeyman/) && ($self->verbosity <= 7));
-                }
+        my $log_conf_template = Text::Template->new(
+            TYPE        => 'FILE',
+            SOURCE      => $log_conf_filename,
+            DELIMITERS  => ['<%', '%>']
+        );
+        return($self->error(mm_sprintify("Can't Text::Template::new(): %s", $Text::Template::ERROR)))
+            unless(defined($log_conf_template));
+        my $log_conf = $log_conf_template->fill_in(
+            HASH => {
+                log_screen_loglevel => $log_screen_loglevel,
+                log_screen_pattern  => $log_screen_pattern
             }
-            close(LOG_CONF_FILE);
-        }
-        chomp($log_conf_loaded);
-
-        my $log_conf = <<__END_LOGCONF__;
-log4perl.category.MonkeyMan                                 = ALL$log_conf_appenders, screen
-
-$log_conf_loaded
-
-log4perl.appender.screen                                    = Log::Log4perl::Appender::Screen
-log4perl.appender.screen.layout                             = Log::Log4perl::Layout::PatternLayout
-log4perl.appender.screen.layout.ConversionPattern           = $log_screen_pattern
-log4perl.appender.screen.Filter                             = screen
-
-log4perl.filter.screen                                      = Log::Log4perl::Filter::Boolean
-log4perl.filter.screen.logic                                = screen_loglevel$log_conf_filters
-
-log4perl.filter.screen_loglevel                             = Log::Log4perl::Filter::LevelRange
-log4perl.filter.screen_loglevel.LevelMin                    = $log_screen_loglevel
-log4perl.filter.screen_loglevel.AcceptOnMatch               = true
-__END_LOGCONF__
+        );
+        return($self->error(mm_sprintify("Can't %s->fill_in(): %s", $log_conf_template, $Text::Template::ERROR)))
+            unless(defined($log_conf));
 
         eval { Log::Log4perl::init_once(\$log_conf) };
-        return($self->error("Can't Log::Log4perl::init_once(): $@"))
+        return($self->error(mm_sprintify("Can't Log::Log4perl::init_once(): %s", $@)))
             if($@);
 
     }
 
     my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error("Can't Log::Log4perl::get_logger(): $@"))
+    return($self->error(mm_sprintify("Can't Log::Log4perl::get_logger(): %s", $@)))
         if($@);
 
     return($log);
@@ -206,7 +186,7 @@ sub init_cloudstack_api {
     };
 
     return($@ ?
-        $self->error("Can't MonkeyMan::CloudStack::API::new(): $@") :
+        $self->error(mm_sprintify("Can't MonkeyMan::CloudStack::API::new(): %s", $@)) :
         $cloudstack_api
     );
 
@@ -226,7 +206,7 @@ sub init_cloudstack_cache {
     };
 
     return($@ ?
-        $self->error("Can't MonkeyMan::CloudStack::Cache::new(): $@") :
+        $self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Cache::new(): %s", $@)) :
         $cloudstack_cache
     );
 

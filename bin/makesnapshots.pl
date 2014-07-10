@@ -9,6 +9,7 @@ use lib("$Bin/../lib");
 
 use MonkeyMan;
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
 use MonkeyMan::Show;
 use MonkeyMan::CloudStack::API;
 use MonkeyMan::CloudStack::Elements::Domain;
@@ -23,35 +24,36 @@ use POSIX qw(strftime);
 
 my %opts;
 
-my $res = GetOptions(
+eval { GetOptions(
     'h|help'        => \$opts{'help'},
       'version'     => \$opts{'version'},
     'c|config'      => \$opts{'config'},
     'v|verbose+'    => \$opts{'verbose'},
     'q|quiet'       => \$opts{'quiet'},
     's|schedule=s'  => \$opts{'schedule'}
-);
-unless($res) {
-    die("Can't GetOptions()");
-}
+); };
+die(mm_sprintify("Can't GetOptions(): %s", $@))
+    if($@);
 
 if($opts{'help'})       { MonkeyMan::Show::help('makesnapshots');   exit; };
 if($opts{'version'})    { MonkeyMan::Show::version;                 exit; };
-unless(defined($opts{'schedule'})) {
-    die("The schedule hasn't been defined, see --help for more information");
-}
+die("The schedule hasn't been defined, see --help for more information")
+    unless(defined($opts{'schedule'}));
 
 my $mm = eval { MonkeyMan->new(
     config_file => $opts{'config'},
     verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
 ); };
-die("Can't MonkeyMan->new(): $@") if($@);
+die(mm_sprintify("Can't MonkeyMan->new(): %s", $@))
+    if($@);
 
 my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
-die("The logger hasn't been initialized: $@") if($@);
+die(mm_sprintify("The logger hasn't been initialized: %s", $@))
+    if($@);
 
 my $api = $mm->cloudstack_api;
-$log->logdie($mm->error_message) unless(defined($api));
+$log->logdie($mm->error_message)
+    unless(defined($api));
 
 
 
@@ -87,9 +89,8 @@ THE_LOOP: while (1) {
                 -UseApacheInclude   => 1
             );
         };
-        if($@) {
-            $log->logdie("Can't Config::General->ParseConfig(): $@");
-        }
+        $log->logdie(mm_sprintify("Can't Config::General->ParseConfig(): ", $@))
+            if($@);
 
         $log->debug("The schedule has been loaded");
 
@@ -105,7 +106,7 @@ THE_LOOP: while (1) {
 
     foreach my $type (qw/timeperiod storagepool host domain/) {
         unless(keys(%{ $configs->{$type} })) {
-            $log->trace("Some ${type}s definitely need to be defined");
+            $log->trace(mm_sprintify("Some %s definitely need to be defined", $type));
             my $elements_loaded = eval {
                 load_elements(
                     $schedule,
@@ -113,8 +114,9 @@ THE_LOOP: while (1) {
                     $configs->{$type}
                 );
             };
-            if($@) { $log->die("Can't load_element(): $@"); };
-            $log->trace("$elements_loaded ${type}s have been loaded");
+            $log->die(mm_sprintify("Can't load_element(): %s", $@))
+                if($@);
+            $log->trace(mm_sprintify("%d %ss have been loaded", $elements_loaded, $type));
         }
     }
 
@@ -131,7 +133,7 @@ THE_LOOP: while (1) {
 
         unless(defined($objects->{'domain'}->{'by_name'}->{$domain_path}->{'object'})) {
 
-            $log->debug("Loading the information about the $domain_path domain");
+            $log->debug(mm_sprintify("Loading the information about the %s domain", $domain_path));
 
             my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
                 mm          => $mm,
@@ -141,7 +143,7 @@ THE_LOOP: while (1) {
                     }
                 }
             )};
-            if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::Domain->new(): $@"); next; }
+            if($@) { $log->warn(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::Domain->new(): %s", $@)); next; }
 
             my $domain_id = $domain->get_parameter('id');
             if($domain->has_error) { $log->warn($domain->error_message); next; }
@@ -153,7 +155,7 @@ THE_LOOP: while (1) {
                 used    => {}
             };
 
-            $log->info("The $domain_id ($domain_path) domain has been refreshed");
+            $log->info(mm_sprintify("The %s (%s) domain has been refreshed", $domain_id, $domain_path));
 
         }
 
@@ -164,10 +166,9 @@ THE_LOOP: while (1) {
             $objects_relations->{'domain'}
         );
         unless(defined($results)) {
-            $log->warn("No ${_}s refreshed due to an error occuried");
+            $log->warn(mm_sprintify("An error has occuried while refreshing %ss", $_));
             next;
         }
-        $log->debug("$results domains' downlink(s) found");
 
     }
 
@@ -192,13 +193,13 @@ THE_LOOP: while (1) {
                 $log->warn($volume->{'object'}->error_message);
                 next;
             } elsif($element_features->{'required'} && !defined($domain)) {
-                $log->warn("The volume $volume doesn't have the $element_features->{'parameter'} parameter");
+                $log->warn(mm_sprintify("The %s volume doesn't have the %s parameter", %volume, $element_features->{'parameter'}));
                 next;
             } else {
 
                 $element = $objects->{$element_type}->{"by_$element_features->{'parameter_type'}"}->{$domain};
                 unless(ref($domain->{'object'}) eq 'MonkeyMan::CloudStack::Elements::' . ${&MMElementsModule}{$element_type}) {
-                    $log->warn("The $domain domain looks unhealthy");
+                    $log->warn(mm_sprintify("The %s domain looks unhealthy", $domain));
                     next;
                 }
 
@@ -218,12 +219,12 @@ THE_LOOP: while (1) {
                 jobid       => undef,
                 related     => {}
             };
-            $log->debug("Added the $volume_id volume to the queue");
+            $log->debug(mm_sprintify("Added the %s volume to the queue", $volume_id));
         }
 
         # Updating the related objects' list
 
-=pod
+=podV
         $queue->{$volume_id}->{'related'} = {
             domain          => $volume_domain,
             storagepool     => $volume_storagepool,
@@ -248,7 +249,7 @@ THE_LOOP: while (1) {
         }
 
         unless(defined($queue->{$volume_id}->{'jobid'})) {
-            $log->warn("The $volume_id volume seems to be busy, but the jobid isn't defined");
+            $log->warn(mm_sprintify("The %s volume seems to be busy, but the jobid isn't defined", $volume_id));
             next;
         }
 
@@ -259,17 +260,17 @@ THE_LOOP: while (1) {
 
     foreach my $volume_id (keys(%{ $queue })) {
 
-        $log->debug("Checking the $volume_id volume in the queue");
+        $log->debug(mm_sprintify("Checking the %s volume in the queue", $volume_id));
 
         if(
             defined($queue->{$volume_id}->{'started'}) &&       # the job has been started,
            !defined($queue->{$volume_id}->{'done'})             # but hasn't finished yet
         ) {
-            $log->debug(
-                "The $volume_id volume is busy since " .
-                strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'started'})) .
-                ", skipping it"
-            );
+            $log->debug(mm_sprintify(
+                "The %s volume is busy since %s, skipping it",
+                    $volume_id,
+                    strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'started'}))
+            ));
             next;
         }
 
@@ -277,17 +278,17 @@ THE_LOOP: while (1) {
             defined($queue->{$volume_id}->{'postponed'}) &&     # has been postponed
                     $queue->{$volume_id}->{'postponed'} > time  # and it's too early for a new job
         ) {
-            $log->debug(
-                "The $volume_id volume is postponed till " .
-                strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'postponed'})) .
-                ", skipping it"
-            );
+            $log->debug(mm_sprintify(
+                "The %s volume is postponed till %s, skipping it",
+                    $volume_id,
+                    strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'started'}))
+            ));
             next;
         }
 
         $queue->{$volume_id}->{'started'} = time;
 
-        $log->info("The $volume_id volume has been started to make a snapshot");
+        $log->info(mm_sprintify("The %s volume has been started to make a snapshot", $volume_id));
 
     }
 
@@ -333,7 +334,7 @@ sub load_elements {
 
     foreach my $template_name (grep( /\*/, keys(%{ $schedule->{$elements_type} }))) {
         $elements_set->{$template_name} = $schedule->{$elements_type}->{$template_name};
-        $log->trace("The $template_name ${elements_type}'s template has been loaded");
+        $log->trace(mm_sprintify("The %s %s's template has been loaded", $template_name, $elements_type));
     }
 
     # Loading elements
@@ -342,7 +343,7 @@ sub load_elements {
 
     foreach my $element_name (grep(!/\*/, keys(%{ $schedule->{$elements_type} }))) {
 
-        $log->trace("Configuring the $element_name $elements_type");
+        $log->trace(mm_sprintify("Configuring the %s %s", $element_name, $elements_type));
 
         # Getting the configuration of the new element from the schedule
         $elements_set->{$element_name} = $schedule->{$elements_type}->{$element_name};
@@ -357,16 +358,25 @@ sub load_elements {
                 $element_configured
             );
         };
-        $log->logdie("Can't configure_element(): $@") if($@);
+        $log->logdie(mm_sprintify("Can't configure_element(): %s", $@))
+            if($@);
         $elements_set->{$element_name} = $element_configured;
         $elements_loaded++;
 
-        $log->debug("The $element_name $elements_type with $layers_loaded configuration layers has been loaded");
+        $log->debug(mm_sprintify(
+            "The %s %s with %s configuration layers has been loaded",
+                $element_name,
+                $elements_type,
+                $layers_loaded
+        ));
         foreach my $parameter (keys(%{ $elements_set->{$element_name} })) {
-            $log->debug(
-                "The $element_name $elements_type has $parameter = " .
-                $elements_set->{$element_name}->{$parameter}
-            );
+            $log->trace(mm_sprintify(
+                "The %s %s has %s = %s",
+                    $element_name,
+                    $elements_type,
+                    $parameter,
+                    $elements_set->{$element_name}->{$parameter}
+            ));
         }
 
     }
@@ -397,10 +407,15 @@ sub configure_element {
 
     foreach my $pattern (sort(keys(%{ $elements_set }))) {
         if(match_glob($pattern, $element_name)) {
-            $log->trace("The $pattern pattern matched the $element_name element");
+            $log->trace(mm_sprintify("The %s pattern matched the %s element", $pattern, $element_name));
             foreach (keys(%{ $elements_set->{$pattern} })) {
                 $element_configured->{$_} = $elements_set->{$pattern}->{$_};
-                $log->trace("The $element_name element has $_ = $element_configured->{$_}");
+                $log->trace(mm_sprintify(
+                    "The %s element has %s = %s",
+                        $element_name,
+                        $_,
+                        $element_configured->{$_}
+                ));
             }
             $matched_patterns++;
         }
@@ -441,19 +456,17 @@ sub find_related_and_refresh_if_needed {
     # Do we need to scan for any downlinks?
 
     my @downlinks_types_to_scan = keys(%{ $uplink_node });
-    unless(@downlinks_types_to_scan) {
-        $log->debug("No more downlinks to scan");
-    }
-
     my $found = 0;
 
     foreach my $downlink_type (@downlinks_types_to_scan) {
 
-        $log->debug(
-            "Looking for ${downlink_type}s related to the $uplink_id" .
-            (defined($uplink_name) ? " ($uplink_name) " : " ") .
-            $uplink_type
-        );
+        $log->debug(mm_sprintify(
+            "Looking for %s related to the %s (%s) %s",
+                $downlink_type,
+                $uplink_id,
+                $uplink_name,
+                $uplink_type
+        ));
 
         # Looking for related downlinks
 
@@ -463,7 +476,13 @@ sub find_related_and_refresh_if_needed {
             return;
         }
         unless(scalar(@{ $downlinks })) {
-            $log->debug("The $uplink_id $uplink_type doesn't have any related ${downlink_type}s");
+            $log->debug(mm_sprintify(
+                "The %s (%s) %s doesn't have any related %ss",
+                    $uplink_id,
+                    $uplink_name,
+                    $uplink_type,
+                    $downlink_type
+            ));
         }
 
         foreach my $downlink_dom (@{ $downlinks }) {
@@ -471,17 +490,21 @@ sub find_related_and_refresh_if_needed {
             $found++;
 
             my $downlink_id = eval { $downlink_dom->findvalue("/$downlink_type/id") };
-            if($@) { $log->warn("Can't $downlink_dom->findvalue(): $@"); next; }
+            if($@) { $log->warn(mm_sprintify("Can't %s->findvalue(): %s", $downlink_dom, $@)); next; }
 
             # Indeed, only if we need it
 
             unless(defined($objects->{$downlink_type}->{'by_id'}->{$downlink_id})) {
 
-                $log->trace("Loading the information about the $downlink_id $downlink_type");
+                $log->trace(mm_sprintify(
+                    "Loading the information about the %s %s",
+                        $downlink_id,
+                        $downlink_type
+                ));
 
                 my $module_name = ${&MMElementsModule}{$downlink_type};
                 unless(defined($module_name)) {
-                    $log->warn("I'm not able to look for related ${downlink_type}s yet");
+                    $log->warn(mm_sprintify("I'm not able to manipulate %ss yet", $downlink_type));
                     return;
                 }
 
@@ -494,7 +517,13 @@ sub find_related_and_refresh_if_needed {
                         }
                     ));
                 };
-                if($@) { $log->warn("Can't MonkeyMan::CloudStack::Elements::$module_name->new(): $@"); next; }
+                if($@) { $log->warn(mm_sprintify(
+                    "Can't MonkeyMan::CloudStack::Elements::%s->new(): %s",
+                        $module_name,
+                        $@
+                    ));
+                    next;
+                }
 
                 $downlink_id = $downlink->get_parameter('id');
                 if($downlink->has_error) {
@@ -502,7 +531,7 @@ sub find_related_and_refresh_if_needed {
                     next;
                 }
                 unless(defined($downlink_id)) {
-                    $log->warn("Can't get the ID of the $downlink_type");
+                    $log->warn(mm_sprintify("Can't get the ID of %s", $downlink));
                     next;
                 }
 
@@ -512,7 +541,7 @@ sub find_related_and_refresh_if_needed {
                     next;
                 }
                 unless(defined($downlink_name)) {
-                    $log->warn("Can't get the name of the $downlink_type");
+                    $log->warn(mm_sprintify("Can't get the name of %s", $downlink));
                     next;
                 }
 
@@ -525,7 +554,12 @@ sub find_related_and_refresh_if_needed {
                     used    => {}
                 };
 
-                $log->info("The $downlink_id ($downlink_name) $downlink_type has been refreshed");
+                $log->info(mm_sprintify(
+                    "The %s (%s) %s has been refreshed",
+                        $downlink_id,
+                        $downlink_name,
+                        $downlink_type
+                ));
 
             }
 
@@ -536,11 +570,10 @@ sub find_related_and_refresh_if_needed {
                 $uplink_node->{$downlink_type}
             );
             unless(defined($results)) {
-                $log->warn("No ${downlink_type}s refreshed due to an error occuried");
+                $log->warn(mm_sprintify("No %ss refreshed due to an error occuried", $downlink_type));
                 next;
             }
-            $log->debug("$results ${downlink_type}s' downlink(s) found");
-    
+
         }
 
     }

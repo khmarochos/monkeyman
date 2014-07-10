@@ -11,7 +11,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 # :version
 use constant MMVersion          => '0.2.1';
-my @MM_version = qw(
+my @MM_constants_version = qw(
     MMVersion
 );
 
@@ -25,14 +25,14 @@ use constant MMElementsModule   => {
     snapshot        => 'Snapshot',
     storagepool     => 'StoragePool'
 };
-my @MM_filenames = qw(
+my @MM_constants_filenames = qw(
     MMMainConfigFile
     MMElementsModule
 );
 
 # :timeouts
 use constant MMSleepWhileWaitingForAsyncJobResult   => 60;
-my @MM_timeouts = qw(
+my @MM_constants_timeouts = qw(
     MMSleepWhileWaitingForAsyncJobResult
 );
 
@@ -40,27 +40,27 @@ my @MM_timeouts = qw(
 use constant MMVerbosityLevels  => ('OFF', 'FATAL', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE', 'ALL');
 use constant MMVerbosityLevel   => 4;
 use constant MMDateTimeFormat   => "%Y/%m/%d %H:%M:%S";
-my @MM_logging = qw(
+my @MM_constants_logging = qw(
     MMVerbosityLevels
     MMVerbosityLevel
     MMDateTimeFormat
 );
 
-my @MM_all = (
-    @MM_version,
-    @MM_filenames,
-    @MM_timeouts,
-    @MM_logging
+my @MM_constants_all = (
+    @MM_constants_version,
+    @MM_constants_filenames,
+    @MM_constants_timeouts,
+    @MM_constants_logging
 );
 
 @ISA                = qw(Exporter);
-@EXPORT             = @MM_all;
-@EXPORT_OK          = @MM_all;
+@EXPORT             = @MM_constants_all;
+@EXPORT_OK          = @MM_constants_all;
 %EXPORT_TAGS        = (
-    version     => \@MM_version,
-    filenames   => \@MM_filenames,
-    timeouts    => \@MM_timeouts,
-    logging     => \@MM_logging
+    version     => \@MM_constants_version,
+    filenames   => \@MM_constants_filenames,
+    timeouts    => \@MM_constants_timeouts,
+    logging     => \@MM_constants_logging
 );
 
 

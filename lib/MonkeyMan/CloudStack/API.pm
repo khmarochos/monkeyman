@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
 
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
@@ -37,7 +38,7 @@ sub BUILD {
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
     my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error("The logger hasn't been initialized: $@"))
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
         if($@);
 
     $log->trace("CloudStack's API connector has been initialized");
@@ -81,7 +82,7 @@ sub run_command {
         unless($self->has_mm);
     my $mm  = $self->mm;
     my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error("The logger hasn't been initialized: $@"))
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
         if($@);
 
     # Crafting the URL
@@ -96,16 +97,17 @@ sub run_command {
 
     # Running the command
 
-    $log->trace("[MM>CS] - querying CloudStack by $url");
+    $log->trace(mm_sprintify("[CLOUDSTACK] Querying CloudStack by %s", defined($input{'url'}) ? $url : $input{'parameters'}));
 
     # FIXME - what about to use LWP::UserAgent here?
     my $mech = WWW::Mechanize->new(
         onerror => undef
     );
     my $response = $mech->get($url);
-    return($self->error("Can't $mech->get(): " . $response->status_line)) unless($response->is_success);
+    return($self->error(mm_sprintify("Can't %s->get(): %", $mech, $response->status_line)))
+        unless($response->is_success);
 
-    $log->trace('Got an HTTP-response: "' . $response->status_line . '"');
+    $log->trace(mm_sprintify("Got an HTTP-response: %s", $response->status_line));
 
     # Parsing the response
  
@@ -115,20 +117,27 @@ sub run_command {
             string => ($response->content)
         );
     };
-    return($self->error("Can't XML::LibXML->load_xml(): $@")) unless(defined($dom));
+    return($self->error(mm_sprintify("Can't %s->load_xml(): %s", $parser, $@)))
+        unless(defined($dom));
 
-    $log->trace("[MM<CS] - have got data from CloudStack as $dom:\n" . $dom->toString(1));
+    $log->trace(mm_sprintify("CloudStack returned %s", $dom));
+    $log->trace(mm_sprintify("[CLOUDSTACK] [XML] %s contains:\n%s", $dom, $dom->toString(1)));
 
     # Should we wait for an async job?
 
-    if(defined($input{'options'}->{'wait'}) && ($dom->findvalue('/*/jobid'))) {
+    my $jobid = eval { $dom->findvalue('/*/jobid'); };
+    return($self->error(mm_sprintify("Can't %s->findValue(): %s", $dom, $@)))
+        if($@);
+
+    if(defined($input{'options'}->{'wait'}) && ($jobid)) {
  
         my $alarm = time + $input{'options'}->{'wait'};
 
-        $log->debug(
-            "Waiting till " . strftime(MMDateTimeFormat, localtime($alarm)) . " " .
-            "for a responce concerning the job " . $dom->findvalue('/*/jobid')
-        );
+        $log->debug(mm_sprintify(
+            "Waiting till %s for a responce concerning the job %s",
+                strftime(MMDateTimeFormat, localtime($alarm)),
+                $jobid
+        ));
 
         while(sleep(
             $mm->configuration('time::sleep_while_waiting') ?
@@ -139,14 +148,18 @@ sub run_command {
             $dom = $self->run_command(
                 parameters => {
                     command => 'queryAsyncJobResult',
-                    jobid   => $dom->findvalue('/*/jobid')
+                    jobid   => $jobid
                 }
             );
             return($self->error($self->error_message))
                 unless(defined($dom));
 
             if($input{'options'}->{'wait'} && (time >= $alarm)) {
-                $log->info("A timeout of $input{'options'}->{'wait'} seconds has occured");
+                $log->warn(mm_sprintify(
+                    "A timeout of %d seconds has occured while waiting for %s to be completed",
+                        $input{'options'}->{'wait'},
+                        $jobid
+                ));
                 return($dom);
             }
 
@@ -173,7 +186,7 @@ sub query_xpath {
         unless($self->has_mm);
     my $mm  = $self->mm;
     my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error("The logger hasn't been initialized: $@"))
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
         if($@);
 
 
@@ -190,21 +203,18 @@ sub query_xpath {
 
     foreach my $query (@{ $queries }) {
 
-        $log->trace("Querying $dom for $query");
+        $log->trace(mm_sprintify("Querying %s for %s", $dom, $query));
+        $log->trace(mm_sprintify("[XML] %s (queried for %s) contains:\n%s", $dom, $query, $dom->toString(1)));
 
-        $log->trace("[>DOM<] - $dom contains: " . $dom->toString(1));
-
-        my @nodes = eval {         $dom->findnodes($query); };
-        return($self->error("Can't $dom->findnodes(): $@"))
+        my @nodes = eval { $dom->findnodes($query); };
+        return($self->error("Can't %s->findnodes(): %s", $dom, $@))
             if($@);
 
         foreach my $node (@nodes) {
-            $log->trace("Have got $node");
-#            $log->trace("[>DOM<] - $node contains: " . $node->toString(1));
+            $log->trace(mm_sprintify("[XML] %s (%d'st result) contains:\n%s", $node, scalar(@{ $results }), $node->toString(1)));
             push(@{$results}, $node);
         }
 
-        $log->trace("Have got " . scalar(@{$results}) . " result(s)");
 
     }
 
