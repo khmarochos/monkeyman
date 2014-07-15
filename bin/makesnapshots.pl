@@ -107,7 +107,7 @@ THE_LOOP: while (1) {
     foreach my $entity_type (qw/timeperiod storagepool host domain/) {
 
         unless(keys(%{ $configs->{$entity_type} })) {
-            $log->trace(mm_sprintify("Some %s definitely need to be defined", $entity_type));
+            $log->trace(mm_sprintify("Some %s definitely needs to be defined", $entity_type));
 
             # Loading templates
 
@@ -182,13 +182,13 @@ THE_LOOP: while (1) {
 
         }
 
-        # Do we need to scan for any downlinks?
+        # Do we need to scan for any downlinks? Oh, I bet we do!
 
         my $results = find_related_and_refresh_if_needed(
             $objects->{'domain'}->{'by_name'}->{$domain_path}->{'element'},
             $objects_relations->{'domain'},
             {
-                entity_name    => 'volume',
+                entity_type    => 'volume',
                 current_entity => undef
             }
         );
@@ -220,13 +220,6 @@ THE_LOOP: while (1) {
         }
 
     }
-
-
-    use Data::Dumper; $Data::Dumper::Indent = 2; $Data::Dumper::Terse = 1; $Data::Dumper::Maxdepth = 5;
-    $log->trace(Dumper($objects));
-    $log->trace(Dumper($configs));
-    last;
-
 
 
     # Asking MM whats up, updating information about finished jobs
@@ -286,6 +279,13 @@ THE_LOOP: while (1) {
 
 
 
+    use Data::Dumper; $Data::Dumper::Indent = 2; $Data::Dumper::Terse = 1; $Data::Dumper::Maxdepth = 5;
+#    $log->trace(Dumper($queue));
+    $log->trace(Dumper($objects->{'volume'}->{'by_id'}->{'81870d9a-a4b8-44e9-8af3-0ddc36ff3860'}));
+    last;
+
+
+
     # Gathering and storing some usage statistics
 
 
@@ -327,14 +327,22 @@ sub configure_entity {
 
     my $matched_patterns = 0;
 
-    foreach my $pattern (sort(keys(%{ $configs->{$entity_type} }))) {
+    $log->trace(mm_sprintify("entity_type = %s, entity_name = %s", $entity_type, $entity_name));
+
+    foreach my $pattern (sort(keys(%{ $schedule->{$entity_type} }))) {
+
         if(match_glob($pattern, $entity_name)) {
+
+            # If there are matching pattern or the exact name configured,
+            # attach the configuration hash to the main data structure
+ 
             $log->trace(mm_sprintify("The %s pattern matched the %s entity", $pattern, $entity_name));
             foreach my $parameter (keys(%{ $configs->{$entity_type}->{$pattern} })) {
                 $configs->{$entity_type}->{$entity_name}->{$parameter} = $configs->{$entity_type}->{$pattern}->{$parameter};
             }
             $matched_patterns++;
         }
+
     }
 
     if($matched_patterns) {
@@ -385,7 +393,10 @@ sub find_related_and_refresh_if_needed {
     if(
         (defined($key_entity->{'entity_type'}) &&
                 ($key_entity->{'entity_type'} eq $uplink_type))) {
-        $key_entity->{'current_entity'} = $uplink_node;
+
+        $log->trace(mm_sprintify("Processing the the key entity: %s", $key_entity->{'entity_type'}));
+
+        $key_entity->{'current_entity'} = $uplink;
     }
 
     # Do we need to scan for any downlinks?
@@ -517,6 +528,8 @@ sub find_related_and_refresh_if_needed {
                 defined($key_entity->{'current_entity'})
             ) {
 
+                $log->trace(mm_sprintify("Okay, we've got the key entity, it's a %s", $key_entity->{'entity_type'}));
+
                 # Setting object's master's entity reference to the correspondent master
 
                 $objects->{$downlink_type}->{'by_id'}->{$downlink_id}->{'masters'}->{ $key_entity->{'entity_type'} } =
@@ -536,7 +549,8 @@ sub find_related_and_refresh_if_needed {
 
             my $results = find_related_and_refresh_if_needed(
                 $objects->{$downlink_type}->{'by_id'}->{$downlink_id}->{'element'},
-                $uplink_node->{$downlink_type}
+                $uplink_node->{$downlink_type},
+                $key_entity
             );
             unless(defined($results)) {
                 $log->warn(mm_sprintify("No %ss refreshed due to an error occuried", $downlink_type));
@@ -550,9 +564,10 @@ sub find_related_and_refresh_if_needed {
     # If the uplink was the key_entity, we must drop the link to it!
 
     if(
-        (defined($key_entity->{'entity_name'}) &&
-                ($key_entity->{'entity_name'} eq $uplink_type))) {
-        $key_entity->{'current_entity'} = undef;
+        (defined($key_entity->{'entity_type'}) &&
+                ($key_entity->{'entity_type'} eq $uplink_type))) {
+        $key_entity->{'entity_type'} = undef;
+#        $key_entity->{'current_entity'} = undef;
     }
 
     return($found);

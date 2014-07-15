@@ -3,6 +3,7 @@ package MonkeyMan::ErrorHandling;
 use strict;
 use warnings;
 
+use MonkeyMan::Utils;
 use MonkeyMan::Error;
 
 use Want;
