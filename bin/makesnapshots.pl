@@ -77,6 +77,8 @@ my $queue = {};
 
 THE_LOOP: while (1) {
 
+    my $now = time;
+
     # Load everything If the schedule hasn't been loaded or has been reset
  
     # I'm reloading the schedule every time I get SIGHUP!
@@ -209,7 +211,7 @@ THE_LOOP: while (1) {
         unless(defined($queue->{$volume_id})) {
             $queue->{$volume_id} = {
                 entity      => $volume, # the corresponding Element-roled obj
-                queued      => time,    # when it has been added to the queue
+                queued      => $now,    # when it has been added to the queue
                 postponed   => undef,   # next check time, if it's postponed
                 started     => undef,   # started at, if the job is started
                 done        => undef,   # done at, if done
@@ -234,15 +236,21 @@ THE_LOOP: while (1) {
 
         unless(defined($queue->{$volume_id}->{'jobid'})) {
             $log->warn(mm_sprintify("The %s volume seems to be busy, but the jobid isn't defined", $volume_id));
-            next;
+#           next; FIXME - I must uncomment it back again!
+        }
+
+        if( $queue->{$volume_id}->{'started'} + 10 >= $now) {
+            $queue->{$volume_id}->{'started'}       = undef;
+            $queue->{$volume_id}->{'done'}          = $now;
+            $queue->{$volume_id}->{'postponed'}     = $now + $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'frequency'};
         }
 
     }
 
 
-    # Starting new snapshot processes
+    # Starting new snapshot processes if it's time for some of volumes to get backed up
 
-    foreach my $volume_id (keys(%{ $queue })) {
+    VOLUME: foreach my $volume_id (keys(%{ $queue })) {
 
         $log->debug(mm_sprintify("Checking the %s volume in the queue", $volume_id));
 
@@ -257,7 +265,7 @@ THE_LOOP: while (1) {
                     $volume_id,
                     strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'started'}))
             ));
-            next;
+            next VOLUME;
         }
 
         if(
@@ -267,19 +275,52 @@ THE_LOOP: while (1) {
             $log->debug(mm_sprintify(
                 "The %s volume is postponed till %s, skipping it",
                     $volume_id,
-                    strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'started'}))
+                    strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'postponed'}))
             ));
-            next;
+            next VOLUME;
         }
 
         # Determining business/idleness of entities occupied by the volume
 
-#        my $entity_type = 'storagepool'; # I'll add the loop to check other entities a bit later
-#        my $busy_entities = 0;
-#        foreach my $entity_to_check (@{ $queue->{$volume_id}->{'occupied'}->{$entity_type} }) {
-#            $busy_entities += scalar(@{ $entity_to_check->{'occupier'}->{'volume'} });
-#            $log->trace(mm_sprintify("The %s volume uses %s %s(s)", $busy_entities, $entity_type));
-#        }
+        foreach my $entity_type qw(virtualmachine storagepool host) {
+
+            foreach my $entity_id_occupied (keys(%{ $objects->{'volume'}->{'by_id'}->{$volume_id}->{'occupied'}->{$entity_type} })) {
+                my $occupiers_busy = 0;
+                foreach my $entity_id_occupier (keys(%{ $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'occupier'}->{'volume'} })) {
+                    if(
+                        defined($queue->{$entity_id_occupier}->{'started'}) &&
+                       !defined($queue->{$entity_id_occupier}->{'done'})
+                    ) {
+                        $occupiers_busy++;
+                        $log->trace(mm_sprintify(
+                            "The %s %s is occupied by %s volume which is busy now",
+                            $entity_id_occupied,
+                            $entity_type,
+                            $entity_id_occupier
+                        ));
+
+                    }
+                }
+
+                $log->trace(mm_sprintify("%d volume(s) uses the %s %s", $occupiers_busy, $entity_id_occupied, $entity_type));
+
+                if(
+                    defined($objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'flows'}) &&
+                            $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'flows'} < $occupiers_busy
+                ) {
+                    $log->debug(mm_sprintify(
+                        "The %s %s is occupied by %d volume(s) which is/are busy now, it's more or equal than %d, so the %s is threated as busy, skipping the volume",
+                        $entity_id_occupied,
+                        $entity_type,
+                        $occupiers_busy,
+                        $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'flows'},
+                        $entity_type
+                    ));
+                    next VOLUME;
+
+                }
+            }
+        }
 
         $queue->{$volume_id}->{'started'} = time;
 
@@ -295,7 +336,7 @@ THE_LOOP: while (1) {
     eval { mm_dump_object($objects, undef, "objects", 5); };
     $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
         if($@);
-    last;
+#    last;
 
 
 
@@ -390,12 +431,12 @@ sub find_related_and_refresh_if_needed {
         $log->warn($uplink->error_message);
         return;
     }
-    my $uplink_name = $uplink->get_parameter('name');
+    my $uplink_type = $uplink->element_type;
     if($uplink->has_error) {
         $log->warn($uplink->error_message);
         return;
     }
-    my $uplink_type = $uplink->element_type;
+    my $uplink_name = $uplink_type eq 'domain' ? $uplink->get_parameter('path') : $uplink->get_parameter('name');
     if($uplink->has_error) {
         $log->warn($uplink->error_message);
         return;
@@ -507,6 +548,14 @@ sub find_related_and_refresh_if_needed {
                 # Config/reconfig
 
                 unless(defined($configs->{$downlink_type}->{$downlink_name})) {
+
+                    foreach my $parameter (keys(%{ $configs->{$uplink_type}->{$uplink_name} })) {
+                        if(grep({ lc($_) eq lc($parameter) } qw(frequency available))) {
+                            $configs->{$downlink_type}->{$downlink_name}->{$parameter} =
+                                $configs->{$uplink_type}->{$uplink_name}->{$parameter};
+                        }
+                    }
+
                     my $layers_loaded = eval {
                         configure_entity(
                             $downlink_type,
@@ -545,15 +594,8 @@ sub find_related_and_refresh_if_needed {
 
                 # ...
 
-                push(
-                    @{ $objects->{$downlink_type}->{'by_id'}->{$downlink_id}->{'occupiers'}->{ $key_entity->{'entity_type'} } },
-                        $key_entity->{'current_entity_id'}
-                );
-
-                push(
-                    @{ $objects->{ $key_entity->{'entity_type'} }->{'by_id'}->{ $key_entity->{'current_entity_id'} }->{'occupied'}->{$downlink_type}},
-                        $downlink_id
-                );
+                $objects->{$downlink_type}->{'by_id'}->{$downlink_id}->{'occupier'}->{ $key_entity->{'entity_type'} }->{ $key_entity->{'current_entity_id'} } = 1;
+                $objects->{ $key_entity->{'entity_type'} }->{'by_id'}->{ $key_entity->{'current_entity_id'} }->{'occupied'}->{$downlink_type}->{$downlink_id} = 1;
 
             }
 
