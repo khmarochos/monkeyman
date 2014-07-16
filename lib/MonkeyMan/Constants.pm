@@ -10,13 +10,21 @@ use FindBin qw($Bin);
 use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 # :version
-use constant MMVersion          => '0.2.1';
+use constant MMVersion          => '0.2.2';
 my @MM_constants_version = qw(
     MMVersion
 );
 
+# :directories
+use constant MMMainConfigDirectory  => "$Bin/../etc";
+use constant MMDumpObjectsTo        => "$Bin/../var/dump/objects";
+my @MM_constants_directories = qw(
+    MMMainConfigDirectory
+    MMDumpObjectsTo
+);
+
 # :filenames
-use constant MMMainConfigFile   => "$Bin/../etc/monkeyman.conf";
+use constant MMMainConfigFile   => MMMainConfigDirectory . "/monkeyman.conf";
 use constant MMElementsModule   => {
     domain          => 'Domain',
     virtualmachine  => 'VirtualMachine',
@@ -48,6 +56,7 @@ my @MM_constants_logging = qw(
 
 my @MM_constants_all = (
     @MM_constants_version,
+    @MM_constants_directories,
     @MM_constants_filenames,
     @MM_constants_timeouts,
     @MM_constants_logging
@@ -58,6 +67,7 @@ my @MM_constants_all = (
 @EXPORT_OK          = @MM_constants_all;
 %EXPORT_TAGS        = (
     version     => \@MM_constants_version,
+    directories => \@MM_constants_directories,
     filenames   => \@MM_constants_filenames,
     timeouts    => \@MM_constants_timeouts,
     logging     => \@MM_constants_logging

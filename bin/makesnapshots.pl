@@ -188,8 +188,7 @@ THE_LOOP: while (1) {
             $objects->{'domain'}->{'by_name'}->{$domain_path}->{'element'},
             $objects_relations->{'domain'},
             {
-                entity_type    => 'volume',
-                current_entity => undef
+                entity_type    => 'volume'
             }
         );
         unless(defined($results)) {
@@ -209,12 +208,12 @@ THE_LOOP: while (1) {
 
         unless(defined($queue->{$volume_id})) {
             $queue->{$volume_id} = {
-                object      => $volume,
-                queued      => time,
-                postponed   => undef,
-                started     => undef,
-                done        => undef,
-                jobid       => undef
+                entity      => $volume, # the corresponding Element-roled obj
+                queued      => time,    # when it has been added to the queue
+                postponed   => undef,   # next check time, if it's postponed
+                started     => undef,   # started at, if the job is started
+                done        => undef,   # done at, if done
+                jobid       => undef    # the name is pretty descriptive :)
             };
             $log->debug(mm_sprintify("Added the %s volume to the queue", $volume_id));
         }
@@ -247,6 +246,8 @@ THE_LOOP: while (1) {
 
         $log->debug(mm_sprintify("Checking the %s volume in the queue", $volume_id));
 
+        # Shall we skip this volume due to certain conditions?
+
         if(
             defined($queue->{$volume_id}->{'started'}) &&       # the job has been started,
            !defined($queue->{$volume_id}->{'done'})             # but hasn't finished yet
@@ -260,7 +261,7 @@ THE_LOOP: while (1) {
         }
 
         if(
-            defined($queue->{$volume_id}->{'postponed'}) &&     # has been postponed
+            defined($queue->{$volume_id}->{'postponed'}) &&     # the job has been postponed
                     $queue->{$volume_id}->{'postponed'} > time  # and it's too early for a new job
         ) {
             $log->debug(mm_sprintify(
@@ -271,6 +272,15 @@ THE_LOOP: while (1) {
             next;
         }
 
+        # Determining business/idleness of entities occupied by the volume
+
+#        my $entity_type = 'storagepool'; # I'll add the loop to check other entities a bit later
+#        my $busy_entities = 0;
+#        foreach my $entity_to_check (@{ $queue->{$volume_id}->{'occupied'}->{$entity_type} }) {
+#            $busy_entities += scalar(@{ $entity_to_check->{'occupier'}->{'volume'} });
+#            $log->trace(mm_sprintify("The %s volume uses %s %s(s)", $busy_entities, $entity_type));
+#        }
+
         $queue->{$volume_id}->{'started'} = time;
 
         $log->info(mm_sprintify("The %s volume has been started to make a snapshot", $volume_id));
@@ -279,9 +289,12 @@ THE_LOOP: while (1) {
 
 
 
-    use Data::Dumper; $Data::Dumper::Indent = 2; $Data::Dumper::Terse = 1; $Data::Dumper::Maxdepth = 5;
-#    $log->trace(Dumper($queue));
-    $log->trace(Dumper($objects->{'volume'}->{'by_id'}->{'81870d9a-a4b8-44e9-8af3-0ddc36ff3860'}));
+    eval { mm_dump_object($queue, undef, "queue", 5); };
+    $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
+        if($@);
+    eval { mm_dump_object($objects, undef, "objects", 5); };
+    $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
+        if($@);
     last;
 
 
@@ -366,7 +379,7 @@ sub find_related_and_refresh_if_needed {
 
     my $uplink      = shift;
     my $uplink_node = shift;
-    my $key_entity = shift;
+    my $key_entity  = shift;
 
     unless(defined($uplink_node)) {
         $log->warn("The uplink's node isn't defined");
@@ -396,7 +409,7 @@ sub find_related_and_refresh_if_needed {
 
         $log->trace(mm_sprintify("Processing the the key entity: %s", $key_entity->{'entity_type'}));
 
-        $key_entity->{'current_entity'} = $uplink;
+        $key_entity->{'current_entity_id'} = $uplink_id;
     }
 
     # Do we need to scan for any downlinks?
@@ -521,25 +534,25 @@ sub find_related_and_refresh_if_needed {
 
             }
 
-            # Do we know the master?
+            # Do we know who occupied this entity?
 
             if(
                 defined($key_entity->{'entity_type'}) &&
-                defined($key_entity->{'current_entity'})
+                defined($key_entity->{'current_entity_id'})
             ) {
 
                 $log->trace(mm_sprintify("Okay, we've got the key entity, it's a %s", $key_entity->{'entity_type'}));
 
-                # Setting object's master's entity reference to the correspondent master
-
-                $objects->{$downlink_type}->{'by_id'}->{$downlink_id}->{'masters'}->{ $key_entity->{'entity_type'} } =
-                    $key_entity->{'current_entity'};
-
-                # Setting master's reference to this object
+                # ...
 
                 push(
-                    @{$key_entity->{'current_entity'}->{'family'}->{$downlink_type}},
-                        $objects->{$downlink_type}->{'by_id'}->{$downlink_id}
+                    @{ $objects->{$downlink_type}->{'by_id'}->{$downlink_id}->{'occupiers'}->{ $key_entity->{'entity_type'} } },
+                        $key_entity->{'current_entity_id'}
+                );
+
+                push(
+                    @{ $objects->{ $key_entity->{'entity_type'} }->{'by_id'}->{ $key_entity->{'current_entity_id'} }->{'occupied'}->{$downlink_type}},
+                        $downlink_id
                 );
 
             }
@@ -566,8 +579,7 @@ sub find_related_and_refresh_if_needed {
     if(
         (defined($key_entity->{'entity_type'}) &&
                 ($key_entity->{'entity_type'} eq $uplink_type))) {
-        $key_entity->{'entity_type'} = undef;
-#        $key_entity->{'current_entity'} = undef;
+        $key_entity->{'current_entity_id'} = undef;
     }
 
     return($found);
