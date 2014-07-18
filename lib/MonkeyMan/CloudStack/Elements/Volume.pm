@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
 
 use Moose;
 use MooseX::UndefTolerant;
@@ -71,6 +72,55 @@ sub _find_related_to_given_conditions {
     return(
         $key_element->element_type . "id" => $key_element->get_parameter('id')
     );
+
+}
+
+
+
+sub create_snapshot {
+
+    my($self, %input) = @_;
+
+    return($self->error("Required parameters haven't been defined"))
+        unless(%input);
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
+    my $mm  = $self->mm;
+    return($self->error("CloudStack's API connector hasn't been initialized"))
+        unless($mm->has_cloudstack_api);
+    my $api     = $mm->cloudstack_api;
+    my $cache   = $mm->cloudstack_cache
+        if($mm->has_cloudstack_cache);
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+
+    my $cmd_result = $api->run_command(
+        parameters  => {
+            command     => 'createSnapshot',
+            volumeid    => $self->get_parameter('id')
+        },
+        wait    => $input{'wait'}
+    );
+    unless(defined($cmd_result)) {
+        return($self->error($api->error_message));
+    }
+
+    if($input{'wait'}) {
+
+        # ...
+
+    } else {
+
+        my $job_id_list = $api->query_xpath($cmd_result, '/createsnapshotresponse/jobid');
+        return($self->error($api->error_message))
+            unless(defined($job_id_list));
+
+        my $job_id = eval { ${$job_id_list}[0]->textContent };
+        return($self->error(mm_sprintify("Can't XML::LibXML::Element->textContent(): %s", $@)))
+            if($@);
+
+        return($job_id);
+
+    }
 
 }
 

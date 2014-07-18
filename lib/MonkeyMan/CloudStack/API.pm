@@ -104,7 +104,7 @@ sub run_command {
         onerror => undef
     );
     my $response = $mech->get($url);
-    return($self->error(mm_sprintify("Can't %s->get(): %", $mech, $response->status_line)))
+    return($self->error(mm_sprintify("Can't %s->get(): %s", $mech, $response->status_line)))
         unless($response->is_success);
 
     $log->trace(mm_sprintify("Got an HTTP-response: %s", $response->status_line));

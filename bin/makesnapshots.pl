@@ -17,6 +17,7 @@ use MonkeyMan::CloudStack::Elements::Domain;
 use Getopt::Long;
 use Config::General qw(ParseConfig);
 use Text::Glob qw(match_glob); $Text::Glob::strict_wildcard_slash = 0;
+use Time::Period;
 use File::Basename;
 use POSIX qw(strftime);
 
@@ -236,10 +237,11 @@ THE_LOOP: while (1) {
 
         unless(defined($queue->{$volume_id}->{'jobid'})) {
             $log->warn(mm_sprintify("The %s volume seems to be busy, but the jobid isn't defined", $volume_id));
-#           next; FIXME - I must uncomment it back again!
+#            next;
         }
 
         if( $queue->{$volume_id}->{'started'} + 10 >= $now) {
+            $log->info(mm_sprintify("The %s volume's snapshot has been backed up, the %s snapshot has been stored", $volume_id, "!!!"));
             $queue->{$volume_id}->{'started'}       = undef;
             $queue->{$volume_id}->{'done'}          = $now;
             $queue->{$volume_id}->{'postponed'}     = $now + $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'frequency'};
@@ -276,6 +278,18 @@ THE_LOOP: while (1) {
                 "The %s volume is postponed till %s, skipping it",
                     $volume_id,
                     strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'postponed'}))
+            ));
+            next VOLUME;
+        }
+
+        if(
+            defined($objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'}) &&
+            !inPeriod($now, $configs->{'timeperiod'}->{ $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'} })
+        ) {
+            $log->debug(mm_sprintify(
+                "The %s volume is available only at these periods: %s, skipping it",
+                $volume_id,
+                $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'}
             ));
             next VOLUME;
         }
@@ -322,22 +336,36 @@ THE_LOOP: while (1) {
             }
         }
 
-        $queue->{$volume_id}->{'started'} = time;
+        my $volume_element = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'};
+        unless(defined($volume_element)) {
+            $log->warn("The %s volume's element haven't been initialized");
+            next VOLUME;
+        }
 
-        $log->info(mm_sprintify("The %s volume has been started to make a snapshot", $volume_id));
+        my $job_id = $volume_element->create_snapshot(wait => 0);
+        unless(defined($job_id)) {
+            $log->warn($volume_element->error_message);
+            next VOLUME;
+        }
+
+        $queue->{$volume_id}->{'started'}   = time;
+        $queue->{$volume_id}->{'jobid'}     = $job_id;
+
+        $log->info(mm_sprintify("The %s volume has been started to make a snapshot, the job id is %s", $volume_id, $job_id));
 
     }
 
 
 
+    eval { mm_dump_object($configs, undef, "configs", 5); };
+    $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
+        if($@);
     eval { mm_dump_object($queue, undef, "queue", 5); };
     $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
         if($@);
     eval { mm_dump_object($objects, undef, "objects", 5); };
     $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
         if($@);
-#    last;
-
 
 
     # Gathering and storing some usage statistics
@@ -354,7 +382,7 @@ THE_LOOP: while (1) {
 
 
 
-    sleep 2; # shall be configured and/or calculated /!\
+    sleep 10; # shall be configured and/or calculated /!\
 
 }
 
@@ -391,8 +419,8 @@ sub configure_entity {
             # attach the configuration hash to the main data structure
  
             $log->trace(mm_sprintify("The %s pattern matched the %s entity", $pattern, $entity_name));
-            foreach my $parameter (keys(%{ $configs->{$entity_type}->{$pattern} })) {
-                $configs->{$entity_type}->{$entity_name}->{$parameter} = $configs->{$entity_type}->{$pattern}->{$parameter};
+            foreach my $parameter (keys(%{ $schedule->{$entity_type}->{$pattern} })) {
+                $configs->{$entity_type}->{$entity_name}->{$parameter} = $schedule->{$entity_type}->{$pattern}->{$parameter};
             }
             $matched_patterns++;
         }
@@ -401,7 +429,7 @@ sub configure_entity {
 
     if($matched_patterns) {
         $log->debug(mm_sprintify(
-            "The %s %s with %s configuration layers has been loaded: %s",
+            "The %s %s with %d configuration layer(s) has been loaded: %s",
                 $entity_name,
                 $entity_type,
                 $matched_patterns,
@@ -549,12 +577,7 @@ sub find_related_and_refresh_if_needed {
 
                 unless(defined($configs->{$downlink_type}->{$downlink_name})) {
 
-                    foreach my $parameter (keys(%{ $configs->{$uplink_type}->{$uplink_name} })) {
-                        if(grep({ lc($_) eq lc($parameter) } qw(frequency available))) {
-                            $configs->{$downlink_type}->{$downlink_name}->{$parameter} =
-                                $configs->{$uplink_type}->{$uplink_name}->{$parameter};
-                        }
-                    }
+                    $log->trace(mm_sprintify("Updating the %s %s's configuration", $downlink_id, $downlink_type));
 
                     my $layers_loaded = eval {
                         configure_entity(
@@ -564,6 +587,21 @@ sub find_related_and_refresh_if_needed {
                     };
                     $log->logdie(mm_sprintify("Can't configure_entity(): %s", $@))
                         if($@);
+
+                    my @inherited_parameters = keys(%{ $configs->{$downlink_type}->{$downlink_name}->{'inherit'}->{$uplink_type} });
+                    if(scalar(@inherited_parameters)) {
+                        $log->trace(mm_sprintify("Inheriting %s parameter(s) from our %s",
+                            join(", ", @inherited_parameters),
+                            $uplink_type
+                        ));
+                        foreach my $parameter (keys(%{ $configs->{$uplink_type}->{$uplink_name} })) {
+                            if(grep({ $_ eq $parameter } @inherited_parameters)) {
+                                $configs->{$downlink_type}->{$downlink_name}->{$parameter} =
+                                    $configs->{$uplink_type}->{$uplink_name}->{$parameter};
+                            }
+                        }
+                    }
+
                 }
 
                 # Storing information about the downlink

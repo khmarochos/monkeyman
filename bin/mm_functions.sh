@@ -11,3 +11,5 @@ mm_vm_whereis() { local A=($(mm_vm_find "${@}")); [ "${#A[@]}" -eq 2 ] && echo "
 mm_vm_dumpxml() { local A=($(mm_vm_find "${@}")); [ "${#A[@]}" -eq 2 ] && ssh "${A[0]}" virsh dumpxml "${A[1]}"; }
 mm_vm_tcpdump() { local A=($(mm_vm_find "${@}")); [ "${#A[@]}" -eq 2 ] && (shift 2; ssh "${A[0]}" "tcpdump -l -i \$(virsh dumpxml ${A[1]} | xpath \"string(/domain/devices/interface[@type='bridge']/target/@dev)\" 2>/dev/null)";); }
 mm_vm_reset()   { local A=($(mm_vm_find "${@}")); [ "${#A[@]}" -eq 2 ] && ssh "${A[0]}" virsh reset "${A[1]}"; }
+
+mm_get_lsd()	{ less -S "${MM_PATH}/var/dump/objects/${1}$(ls -t "${MM_PATH}/var/dump/objects/${1}" | head -1)/${2}.dump"; }
