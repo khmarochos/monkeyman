@@ -20,6 +20,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 my @MM_utils_all = qw(
     mm_sprintify
     mm_dump_object
+    mm_method_checks
 );
 
 @ISA                = qw(Exporter);
@@ -114,3 +115,47 @@ sub mm_dump_object {
 
 
 
+sub mm_method_checks {
+
+    my(%parameters) = @_;
+    
+    my $checks = $parameters{'checks'};
+    my $object = $parameters{'object'};
+    die("The object hasn't been defined")
+        unless(defined($object));
+
+    while(my($check_key, $check_value) = each(%{ $checks })) {
+        given($check_key) {
+            when('mm') {
+                $object->has_mm || $check_value->{'careless'} || die("The MonkeyMan haven't been initialized");
+                ${ $check_value->{'variable'} } = $object->mm;
+            }
+            when('cloudstack_api') {
+                ($object->has_mm && $object->mm->has_cloudstack_api) || $check_value->{'careless'} || die("The CloudStack API haven't been initialized");
+                ${ $check_value->{'variable'} } = $object->mm->cloudstack_api;
+            }
+            when('cloudstack_cache') {
+                ($object->has_mm && $object->mm->has_cloudstack_cache) || $check_value->{'careless'} || die("The CloudStack cache haven't been initialized");
+                ${ $check_value->{'variable'} } = $object->mm->cloudstack_cache;
+            }
+            when('log') {
+                ${ $check_value->{'variable'} } = eval { Log::Log4perl::get_logger(ref($object)) };
+                die(mm_sprintify("Can't Log::Log4perl::get_logger(): %s", $@)) if($@ && (! $check_value->{'careless'}));
+            }
+            when(/^\$/) {
+                ${ $check_value->{'variable'} } = $check_value->{'value'};
+                defined(${ $check_value->{'variable'} }) || $check_value->{'careless'} || die(mm_sprintify(
+                    "The required parameter (%s) isn't defined", $_
+                ));
+            }
+            default {
+                die(mm_sprintify("Don't know how to check the %s parameter", $_));
+            }
+        }
+    }
+
+}
+
+
+
+1;

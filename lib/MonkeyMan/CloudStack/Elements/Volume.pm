@@ -5,6 +5,7 @@ use warnings;
 
 use MonkeyMan::Constants;
 use MonkeyMan::Utils;
+use MonkeyMan::CloudStack::Elements::AsyncJob;
 
 use Moose;
 use MooseX::UndefTolerant;
@@ -91,36 +92,24 @@ sub create_snapshot {
     my $api     = $mm->cloudstack_api;
     my $cache   = $mm->cloudstack_cache
         if($mm->has_cloudstack_cache);
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__); };
 
-    my $cmd_result = $api->run_command(
-        parameters  => {
-            command     => 'createSnapshot',
-            volumeid    => $self->get_parameter('id')
-        },
-        wait    => $input{'wait'}
-    );
-    unless(defined($cmd_result)) {
-        return($self->error($api->error_message));
-    }
+    my $job = eval {
+        MonkeyMan::CloudStack::Elements::AsyncJob->new(
+            mm  => $mm,
+            run => {
+                parameters  => {
+                    command     => 'createSnapshot',
+                    volumeid    => $self->get_parameter('id')
+                },
+                wait    => $input{'wait'}
+            }
+        );
+    };
+    return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::AsyncJob->new(): %s", $@)))
+        if($@);
 
-    if($input{'wait'}) {
-
-        # ...
-
-    } else {
-
-        my $job_id_list = $api->query_xpath($cmd_result, '/createsnapshotresponse/jobid');
-        return($self->error($api->error_message))
-            unless(defined($job_id_list));
-
-        my $job_id = eval { ${$job_id_list}[0]->textContent };
-        return($self->error(mm_sprintify("Can't XML::LibXML::Element->textContent(): %s", $@)))
-            if($@);
-
-        return($job_id);
-
-    }
+    return($job);
 
 }
 

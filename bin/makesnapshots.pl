@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+use feature qw(switch);
+
 use FindBin qw($Bin);
 
 use lib("$Bin/../lib");
@@ -211,12 +213,12 @@ THE_LOOP: while (1) {
 
         unless(defined($queue->{$volume_id})) {
             $queue->{$volume_id} = {
-                entity      => $volume, # the corresponding Element-roled obj
+                element     => $volume, # the corresponding Element-roled obj
                 queued      => $now,    # when it has been added to the queue
                 postponed   => undef,   # next check time, if it's postponed
                 started     => undef,   # started at, if the job is started
                 done        => undef,   # done at, if done
-                jobid       => undef    # the name is pretty descriptive :)
+                job         => undef    # the name is pretty descriptive :)
             };
             $log->debug(mm_sprintify("Added the %s volume to the queue", $volume_id));
         }
@@ -224,7 +226,7 @@ THE_LOOP: while (1) {
     }
 
 
-    # Asking MM whats up, updating information about finished jobs
+    # Asking MM whussap, updating information about finished jobs
 
     foreach my $volume_id (keys(%{ $queue })) {
 
@@ -235,16 +237,55 @@ THE_LOOP: while (1) {
             next;
         }
 
-        unless(defined($queue->{$volume_id}->{'jobid'})) {
-            $log->warn(mm_sprintify("The %s volume seems to be busy, but the jobid isn't defined", $volume_id));
-#            next;
+        my $job = $queue->{$volume_id}->{'job'};
+        unless(defined($job)) {
+            $log->warn(mm_sprintify("The %s volume seems to be busy, but the job isn't defined", $volume_id));
+            next;
         }
 
-        if( $queue->{$volume_id}->{'started'} + 10 >= $now) {
-            $log->info(mm_sprintify("The %s volume's snapshot has been backed up, the %s snapshot has been stored", $volume_id, "!!!"));
-            $queue->{$volume_id}->{'started'}       = undef;
-            $queue->{$volume_id}->{'done'}          = $now;
-            $queue->{$volume_id}->{'postponed'}     = $now + $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'frequency'};
+        my $job_result = $job->result;
+        unless(defined($job_result)) {
+            $log->warn($job->error_message);
+            next;
+        }
+
+        given($job_result->{'jobstatus'}) {
+            when(0) {
+                $log->debug(mm_sprintify(
+                    "The %s volume is still busy, the %s job is running",
+                        $volume_id,
+                        $job_result->{'jobid'}
+                ));
+                next;
+            }
+            when(1) {
+                $log->info(mm_sprintify(
+                    "The %s volume's snapshot has been backed up, the %s snapshot has been stored",
+                        $volume_id,
+                        "!!!"
+                ));
+                $queue->{$volume_id}->{'started'}       = undef;
+                $queue->{$volume_id}->{'done'}          = $now;
+                $queue->{$volume_id}->{'postponed'}     = $now + $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'frequency'};
+            }
+            when(2) {
+                $log->warn(mm_sprintify(
+                    "The %s volume haven't been backed up, the %s job has been failed: %s - %s",
+                        $volume_id,
+                        $job_result->{'jobid'},
+                        $job_result->{'jobresultcode'},
+                        $job_result->{'jobresult'}
+                ));
+                $queue->{$volume_id}->{'started'}       = undef;
+                $queue->{$volume_id}->{'done'}          = $now;
+            }
+            default {
+                $log->warn(mm_sprintify(
+                    "The %s job has an odd jobstatus: %s",
+                        $job_result->{'jobid'},
+                        $_
+                ));
+            }
         }
 
     }
@@ -342,16 +383,17 @@ THE_LOOP: while (1) {
             next VOLUME;
         }
 
-        my $job_id = $volume_element->create_snapshot(wait => 0);
-        unless(defined($job_id)) {
+        my $job = $volume_element->create_snapshot(wait => 0);
+        unless(defined($job)) {
             $log->warn($volume_element->error_message);
             next VOLUME;
         }
+        $log->trace(mm_sprintify("The %s job has been started", $job));
 
         $queue->{$volume_id}->{'started'}   = time;
-        $queue->{$volume_id}->{'jobid'}     = $job_id;
+        $queue->{$volume_id}->{'job'}       = $job;
 
-        $log->info(mm_sprintify("The %s volume has been started to make a snapshot, the job id is %s", $volume_id, $job_id));
+        $log->info(mm_sprintify("The %s volume has been started to make a snapshot, the job id is %s", $volume_id, $job->get_parameter('jobid')));
 
     }
 

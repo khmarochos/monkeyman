@@ -25,7 +25,8 @@ has 'init_load_dom' => (
     is          => 'ro',
     isa         => 'HashRef',
     predicate   => 'has_init_load_dom',
-    init_arg    => 'load_dom'
+    init_arg    => 'load_dom',
+    writer      => '_set_init_load_dom' # needed by preBUILDers
 );
 has 'dom' => (
     is          => 'ro',

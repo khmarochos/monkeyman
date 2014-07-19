@@ -107,7 +107,7 @@ sub run_command {
     return($self->error(mm_sprintify("Can't %s->get(): %s", $mech, $response->status_line)))
         unless($response->is_success);
 
-    $log->trace(mm_sprintify("Got an HTTP-response: %s", $response->status_line));
+    $log->trace(mm_sprintify("[CLOUDSTACK] Got an HTTP-response: %s", $response->status_line));
 
     # Parsing the response
  
