@@ -115,7 +115,61 @@ sub create_snapshot {
 
 
 
+sub cleanup_snapshots {
+
+    my $self = shift;
+    my($keep, $mm, $api, $log);
+
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            '$keep'             => {
+                                     variable   => \$keep,
+                                     value      => shift
+            },
+            'mm'                => { variable   => \$mm },
+            'cloudstack_api'    => { variable   => \$api },
+            'log'               => { variable   => \$log }
+        }
+    ); };
+    return($self->error($@))
+        if($@);
+
+    my $snapshots = $self->find_related_to_me('snapshot', 1);
+    return($self->error($self->error_message))
+        unless(defined($snapshots));
+
+    my $snapshots_deleted = 0;
+    my $snapshots_found = 0;
+
+    foreach my $snapshot (sort { $b->get_parameter('created') cmp $a->get_parameter('created') } (@{ $snapshots })) {
+        $log->trace(mm_sprintify(
+            "Found the %s snapshot created on %s related to the %s volume",
+                $snapshot->get_parameter('id'),
+                $snapshot->get_parameter('created'),
+                $self->get_parameter('id')
+        ));
+        if($snapshot->get_parameter('state') eq 'BackedUp') {
+            my $job = $snapshot->delete;
+            return($self->error($snapshot->error_message))
+                unless(defined($result));
+
+            if(++$snapshots_found > $keep) {
+                $log->info(mm_sprintify(
+                    "The %s snapshot has requested for deletion, the %s job has been started",
+                        $snapshot->get_parameter('id'),
+                             $job->get_parameter('id');
+                ));
+            }
+        }
+    }
+
+    return($snapshots_deleted);
+
+}
+
+
+
 __PACKAGE__->meta->make_immutable;
 
 1;
-

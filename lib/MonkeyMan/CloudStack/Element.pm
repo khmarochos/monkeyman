@@ -320,7 +320,7 @@ sub get_parameter {
 
 sub find_related_to_me {
 
-    my($self, $what_to_find) = @_;
+    my($self, $what_to_find, $return_elements) = @_;
 
     return($self->error("The type of soaked elements hasn't been defined"))
         unless(defined($what_to_find));
@@ -353,6 +353,20 @@ sub find_related_to_me {
 
     my $objects = $quasi_object->find_related_to_given($self);
     return($self->error($quasi_object->error_message)) unless(defined($objects));
+
+    if($return_elements) {
+        for(my $i = 0; $i < @{ $objects }; $i++) {
+            ${ $objects }[$i] = eval {
+                return("MonkeyMan::CloudStack::Elements::$module_name"->new(
+                    mm  => $mm,
+                    dom => ${ $objects }[$i]
+                ));
+            };
+            return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::%s->new(): %s", $module_name, $@)))
+                if($@);
+        }
+    }
+
     return($objects);
 
 }

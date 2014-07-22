@@ -83,7 +83,7 @@ sub get_full_list {
 
     unless($cached_list->{'updated'} + $self->_get_configuration->{'ttl'} >= time) {
         $log->trace(mm_sprintify(
-            "The cached list of %s is expired since %s",
+            "The cached list of %ss is expired since %s",
                 $element_type,
                 strftime(MMDateTimeFormat, localtime($cached_list->{'updated'} + $self->_get_configuration->{'ttl'}))
         ));

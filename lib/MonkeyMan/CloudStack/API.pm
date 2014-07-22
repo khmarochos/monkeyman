@@ -97,7 +97,8 @@ sub run_command {
 
     # Running the command
 
-    $log->trace(mm_sprintify("[CLOUDSTACK] Querying CloudStack by %s", defined($input{'url'}) ? $url : $input{'parameters'}));
+    $log->trace(mm_sprintify("Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
+    $log->trace(mm_sprintify("[CLOUDSTACK] Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
 
     # FIXME - what about to use LWP::UserAgent here?
     my $mech = WWW::Mechanize->new(
@@ -215,6 +216,7 @@ sub query_xpath {
             push(@{$results}, $node);
         }
 
+        $log->trace(mm_sprintify("Have found %d elements in %s", scalar(@nodes), $dom));
 
     }
 

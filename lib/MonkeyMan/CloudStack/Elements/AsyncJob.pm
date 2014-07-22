@@ -43,8 +43,6 @@ before BUILD => sub {
         die($@)
             if($@);
 
-        $log->trace("Going to run an API command");
-
         my $result = $api->run_command(%{ $self->init_run });
         die($api->error_message)
             unless(defined($result));
@@ -203,17 +201,25 @@ sub result_parse {
 
     foreach my $element (@{ $elements }) {
 
+        my $element_value;
         my $element_name = eval { $element->nodeName };
         return($self->error(mm_sprintify("Can't XML::LibXML::Element->nodeName(): %s", $@)))
             if($@);
 
-        my $element_value;
-        if(ref($element) eq 'XML::LibXML::Element') {
+        my $element = eval { $element->firstChild };
+        return($self->error(mm_sprintify("Can't XML::LibXML::Element->firstChild(): %s", $@)))
+           if($@);
+
+        my $more_children = eval { $element->hasChildNodes };
+        return($self->error(mm_sprintify("Can't XML::LibXML::Element->hasChildNodes(): %s", $@)))
+           if($@);
+
+        if($more_children) {
+            $element_value = $element;
+        } else {
             $element_value = eval { $element->textContent };
             return($self->error(mm_sprintify("Can't XML::LibXML::Element->textContent(): %s", $@)))
                if($@);
-        } else {
-            $element_value = $element;
         }
 
         $results_to->{$element_name} = $element_value;

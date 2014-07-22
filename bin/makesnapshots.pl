@@ -213,7 +213,7 @@ THE_LOOP: while (1) {
 
         unless(defined($queue->{$volume_id})) {
             $queue->{$volume_id} = {
-                element     => $volume, # the corresponding Element-roled obj
+                object      => $volume, # the corresponding object
                 queued      => $now,    # when it has been added to the queue
                 postponed   => undef,   # next check time, if it's postponed
                 started     => undef,   # started at, if the job is started
@@ -259,14 +259,32 @@ THE_LOOP: while (1) {
                 next;
             }
             when(1) {
+
+                my $snapshot_id = $api->query_xpath($job_result->{'jobresult'}, '//snapshot/id/text()');
+                unless(defined($snapshot_id)) {
+                    $log->warn($api->error_message);
+                    next;
+                }
+
                 $log->info(mm_sprintify(
                     "The %s volume's snapshot has been backed up, the %s snapshot has been stored",
                         $volume_id,
-                        "!!!"
+                        ${ $snapshot_id }[0]
                 ));
                 $queue->{$volume_id}->{'started'}       = undef;
                 $queue->{$volume_id}->{'done'}          = $now;
                 $queue->{$volume_id}->{'postponed'}     = $now + $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'frequency'};
+
+                my $snapshots_deleted = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'}->cleanup_snapshots(
+                                        $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'keep'}
+                );
+                unless(defined($snapshots_deleted)) {
+                    $log->warn($objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'}->error_message);
+                    next;
+                }
+
+                $log->trace(mm_sprintify("%d snapshot(s) have been deleted", $snapshots_deleted));
+
             }
             when(2) {
                 $log->warn(mm_sprintify(
@@ -707,3 +725,4 @@ sub find_related_and_refresh_if_needed {
     return($found);
 
 }
+

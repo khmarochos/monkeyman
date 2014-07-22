@@ -81,6 +81,16 @@ sub _find_related_to_given_conditions {
 
 
 
+sub delete {
+
+    my($self) = @_;
+
+    #...    
+
+}
+
+
+
 __PACKAGE__->meta->make_immutable;
 
 1;

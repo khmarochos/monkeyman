@@ -9,10 +9,8 @@ runned as root when root calls it: it's a bit insecure and can lead to
 tons of real shit.
 	Added by melnik13 on 30.06.2014
 
-Make MonkeyMan able to cache object's information in memory, just simulating
-loading to the script. There should be handles to control its behaviour by
-configuration options
-    Added by melnik13 on 01.07.2014
+Now we have such a nice mm_method_check(), so may all our methods use it!
+    Added by melnik13 on 21.07.2014
 
 
 
@@ -27,6 +25,12 @@ something, a lots of things just can't work!
 Compose good help-messages for runapicmd, vminfo and makesnapshots tools.
 	Added by melnik13 on 11.06.2014
     Partly implemented by melnik13 on 30.06.2014
+
+Make MonkeyMan able to cache object's information in memory, just simulating
+loading to the script. There should be handles to control its behaviour by
+configuration options
+    Added by melnik13 on 01.07.2014
+    Implemented by melnik13 somewhere in the middle of July, 2014
 
 
 
