@@ -128,7 +128,7 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
             next;
         }
     }
-    if($api->has_error) {
+    if($api->has_errors) {
         $log->warn($api->error_message);
         next;
     }
@@ -157,7 +157,7 @@ if(defined($opts{'xpath'})) {
                 "\n"
             );
         }
-        if($api->has_error) {
+        if($api->has_errors) {
             $log->warn($api->error_message);
             next;
         }

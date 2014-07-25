@@ -105,10 +105,9 @@ sub run_command {
         onerror => undef
     );
     my $response = $mech->get($url);
+    $log->trace(mm_sprintify("[CLOUDSTACK] Got an HTTP-response: %s", $response->status_line));
     return($self->error(mm_sprintify("Can't %s->get(): %s", $mech, $response->status_line)))
         unless($response->is_success);
-
-    $log->trace(mm_sprintify("[CLOUDSTACK] Got an HTTP-response: %s", $response->status_line));
 
     # Parsing the response
  
@@ -212,7 +211,7 @@ sub query_xpath {
             if($@);
 
         foreach my $node (@nodes) {
-            $log->trace(mm_sprintify("[XML] %s (%d'st result) contains:\n%s", $node, scalar(@{ $results }), $node->toString(1)));
+            $log->trace(mm_sprintify("[XML] %s (the %d'st result) contains:\n%s", $node, scalar(@{ $results }), $node->toString(1)));
             push(@{$results}, $node);
         }
 

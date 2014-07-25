@@ -174,7 +174,7 @@ THE_LOOP: while (1) {
             if($@) { $log->warn(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::Domain->new(): %s", $@)); next; }
 
             my $domain_id = $domain->get_parameter('id');
-            if($domain->has_error) { $log->warn($domain->error_message); next; }
+            if($domain->has_errors) { $log->warn($domain->error_message); next; }
             unless(defined($domain_id)) { $log->warn("Can't get the id parameter of the domain"); next; }
 
             $objects->{'domain'}->{'by_name'}->{$domain_path} =
@@ -341,16 +341,18 @@ THE_LOOP: while (1) {
             next VOLUME;
         }
 
-        if(
-            defined($objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'}) &&
-            !inPeriod($now, $configs->{'timeperiod'}->{ $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'} })
-        ) {
-            $log->debug(mm_sprintify(
-                "The %s volume is available only at these periods: %s, skipping it",
-                $volume_id,
-                $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'}
-            ));
-            next VOLUME;
+        if(defined($objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'})) {
+            my $timeperiod1 = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'};
+            my $timeperiod2 = $configs->{'timeperiod'}->{$timeperiod1}->{'period'};
+            if(!inPeriod($now, $timeperiod2)) {
+                $log->debug(mm_sprintify(
+                    "The %s volume is available only at these period: %s (%s), skipping it",
+                    $volume_id,
+                    $timeperiod1,
+                    $timeperiod2
+                ));
+                next VOLUME;
+            }
         }
 
         # Determining business/idleness of entities occupied by the volume
@@ -515,17 +517,17 @@ sub find_related_and_refresh_if_needed {
         return;
     }
     my $uplink_id   = $uplink->get_parameter('id');
-    if($uplink->has_error) {
+    if($uplink->has_errors) {
         $log->warn($uplink->error_message);
         return;
     }
     my $uplink_type = $uplink->element_type;
-    if($uplink->has_error) {
+    if($uplink->has_errors) {
         $log->warn($uplink->error_message);
         return;
     }
     my $uplink_name = $uplink_type eq 'domain' ? $uplink->get_parameter('path') : $uplink->get_parameter('name');
-    if($uplink->has_error) {
+    if($uplink->has_errors) {
         $log->warn($uplink->error_message);
         return;
     }
@@ -614,7 +616,7 @@ sub find_related_and_refresh_if_needed {
                 }
 
                 $downlink_id = $downlink->get_parameter('id');
-                if($downlink->has_error) {
+                if($downlink->has_errors) {
                     $log->warn($downlink->error_message);
                     next;
                 }
@@ -624,7 +626,7 @@ sub find_related_and_refresh_if_needed {
                 }
 
                 my $downlink_name = $downlink->get_parameter('name');
-                if($downlink->has_error) {
+                if($downlink->has_errors) {
                     $log->warn($downlink->error_message);
                     next;
                 }
@@ -654,8 +656,17 @@ sub find_related_and_refresh_if_needed {
                             join(", ", @inherited_parameters),
                             $uplink_type
                         ));
-                        foreach my $parameter (keys(%{ $configs->{$uplink_type}->{$uplink_name} })) {
-                            if(grep({ $_ eq $parameter } @inherited_parameters)) {
+                        foreach my $parameter (@inherited_parameters) {
+                            if(
+                                (       # If we have to force parameter's inheritance
+                             defined($configs->{$downlink_type}->{$downlink_name}->{'inherit'}->{$uplink_type}->{$parameter}) &&
+                                    ($configs->{$downlink_type}->{$downlink_name}->{'inherit'}->{$uplink_type}->{$parameter} eq 'force')
+                                ) || (  # If the downlink shall inherit the parameter only if it doesn't have it defined
+                             defined($configs->{$downlink_type}->{$downlink_name}->{'inherit'}->{$uplink_type}->{$parameter}) &&
+                                    ($configs->{$downlink_type}->{$downlink_name}->{'inherit'}->{$uplink_type}->{$parameter} eq 'careful') &&
+                            !defined($configs->{$downlink_type}->{$downlink_name}->{$parameter})
+                                )
+                            ) {         # Inheriting the parameter...
                                 $configs->{$downlink_type}->{$downlink_name}->{$parameter} =
                                     $configs->{$uplink_type}->{$uplink_name}->{$parameter};
                             }

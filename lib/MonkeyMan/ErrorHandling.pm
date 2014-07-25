@@ -13,13 +13,19 @@ use namespace::autoclean;
 
 
 
-has 'error' => (
+has 'errors' => (
     is          => 'ro',
-    isa         => 'MonkeyMan::Error',
-    predicate   => 'has_error',
-    reader      => '_get_error',
-    writer      => '_set_error'
+    isa         => 'ArrayRef',
+    builder     => '_build_errors'
 );
+
+
+
+sub _build_errors {
+
+    return([]);
+
+}
 
 
 
@@ -57,7 +63,8 @@ sub error {
         warn(mm_sprintify("Can't MonkeyMan::Error->new(): %s", $@))
             if($@);
 
-        $self->_set_error($error) if(defined($error));
+        $self->push_error($error)
+            if(defined($error));
 
         # Returning undef in any case is important, as they would like to return it by the method,
         # so everyone expects undef here
@@ -69,15 +76,49 @@ sub error {
         # Othervise we'll return contents of the error attribute
 
         return(undef)
-            unless($self->has_error);
+            unless($self->has_errors);
 
         if(want('OBJECT')) {
-            return($self->_get_error);
+            return($self->pop_error);
         } else {
-            return($self->_get_error->text);
+            return($self->pop_error->text);
         }
 
     }
+
+}
+
+
+
+sub push_error {
+
+    my $self    = shift;
+    my $error   = shift;
+
+    return(undef)
+        unless(ref($error) eq 'MonkeyMan::Error');
+
+    push(@{ $self->errors }, $error);
+
+}
+
+
+
+sub pop_error {
+
+    my $self = shift;
+
+    return(pop(@{ $self->errors }))
+
+}
+
+
+
+sub has_errors {
+
+    my $self = shift;
+
+    return(scalar(@{ $self->errors }));
 
 }
 
@@ -87,10 +128,12 @@ sub error_message {
 
     my $self = shift;
 
-    return("Undefined error") unless($self->has_error);
+    return("Undefined error")
+        unless($self->has_errors);
 
-    my $error = $self->_get_error;
-    return(mm_sprintify("Have got an error while running: %s", $error->text))
+    my $error = $self->pop_error;
+
+    return(mm_sprintify("Have got an error: %s", $error->text))
         unless($error->has_caller);
 
     my $caller = $error->caller;

@@ -135,6 +135,12 @@ sub cleanup_snapshots {
     return($self->error($@))
         if($@);
 
+    $log->trace(mm_sprintify(
+        "Going to cleanup old snapshots for the %s volume (%d snapshot(s) will be kept)",
+            $self->get_parameter('id'),
+            $keep
+    ));
+
     my $snapshots = $self->find_related_to_me('snapshot', 1);
     return($self->error($self->error_message))
         unless(defined($snapshots));
@@ -150,17 +156,18 @@ sub cleanup_snapshots {
                 $self->get_parameter('id')
         ));
         if($snapshot->get_parameter('state') eq 'BackedUp') {
-            my $job = $snapshot->delete;
-            return($self->error($snapshot->error_message))
-                unless(defined($result));
 
             if(++$snapshots_found > $keep) {
+                my $job = $snapshot->delete;
+                return($self->error($snapshot->error_message))
+                    unless(defined($job));
                 $log->info(mm_sprintify(
                     "The %s snapshot has requested for deletion, the %s job has been started",
                         $snapshot->get_parameter('id'),
-                             $job->get_parameter('id');
+                             $job->get_parameter('jobid')
                 ));
             }
+
         }
     }
 

@@ -5,6 +5,8 @@ use warnings;
 use feature "switch";
 
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
+use MonkeyMan::CloudStack::Elements::AsyncJob;
 
 use Moose;
 use MooseX::UndefTolerant;
@@ -83,9 +85,34 @@ sub _find_related_to_given_conditions {
 
 sub delete {
 
-    my($self) = @_;
+    my $self = shift;
+    my($mm, $log);
 
-    #...    
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'                => { variable   => \$mm },
+            'log'               => { variable   => \$log }
+        }
+    ); };
+    return($self->error($@))
+        if($@);
+
+    my $job = eval {
+        MonkeyMan::CloudStack::Elements::AsyncJob->new(
+            mm  => $mm,
+            run => {
+                parameters  => {
+                    command     => 'deleteSnapshot',
+                    id          => $self->get_parameter('id')
+                }
+            }
+        );
+    };
+    return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::AsyncJob->new(): %s", $@)))
+        if($@);
+
+    return($job);
 
 }
 

@@ -94,7 +94,7 @@ sub load_dom {
 
         my $cached = $cache->get_full_list($self->element_type);
         return($self->error($cache->error_message))
-            if($cache->has_error);
+            if($cache->has_errors);
 
         if(defined($cached)) {
 
@@ -326,7 +326,7 @@ sub find_related_to_me {
         unless(defined($what_to_find));
     return($self->error("The element's information haven't been loaded"))
         unless($self->has_dom);
-    return($self->error($self->has_error) ? $self->error_message : "The ID of the element is unknown")
+    return($self->error($self->has_errors) ? $self->error_message : "The ID of the element is unknown")
         unless($self->get_parameter('id'));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
@@ -381,7 +381,7 @@ sub find_related_to_given {
         unless(defined($key_element));
     return($self->error("The key element's information haven't been loaded"))
         unless($key_element->has_dom);
-    return($self->error($self->has_error) ? $self->error_message : "The ID of the element is unknown")
+    return($self->error($self->has_errors) ? $self->error_message : "The ID of the element is unknown")
         unless($key_element->get_parameter('id'));
     my $mm  = $self->mm;
     return($self->error("CloudStack's API connector hasn't been initialized"))

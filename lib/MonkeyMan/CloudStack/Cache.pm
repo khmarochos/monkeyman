@@ -58,16 +58,34 @@ sub BUILD {
 sub get_full_list {
 
     my $self = shift;
-    my $element_type = shift;
+    my($element_type, $mm, $log);
 
-    return($self->error("The element's type isn't defined"))
-        unless(defined($element_type));
-    return($self->error("The memory pool haven't been initialized"))
-        unless($self->_has_memory_pool);
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            '$element_type'     => {
+                                     variable   => \$element_type,
+                                     value      => shift
+            },
+            'mm'                => { variable   => \$mm },
+            'log'               => { variable   => \$log }
+        }
+    ); };
+    return($self->error($@))
         if($@);
 
+    my $never_cache = $mm->{'configuration'}->{'cloudstack'}->{'cache'}->{'never'};
+    if(defined($never_cache)) {
+        foreach (split(/,\s*/, $never_cache)) {
+            if(lc($element_type) eq lc($_)) {
+                $log->trace(mm_sprintify("%ss are never being cached", $element_type));
+                return(undef);
+            }
+        }
+    }
+
+    return($self->error("The memory pool haven't been initialized"))
+        unless($self->_has_memory_pool);
     my $memory_pool = $self->_get_memory_pool;
     my $cached_list = $memory_pool->{'lists'}->{$element_type};
 
