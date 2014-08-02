@@ -84,14 +84,14 @@ sub BUILD {
     die($self->error_message)
         unless(defined($log));
 
-    unless(defined($self->skip_init->{'api'})) {
+    unless($self->skip_init->{'cloudstack_api'}) {
         my $cloudstack_api = $self->init_cloudstack_api;
         die($self->error_message)
             unless(defined($cloudstack_api));
         $self->_set_cloudstack_api($cloudstack_api);
     }
 
-    unless(defined($self->skip_init->{'cache'})) {
+    unless($self->skip_init->{'cloudstack_cache'}) {
         my $cloudstack_cache = $self->init_cloudstack_cache;
         die($self->error_message)
             unless(defined($cloudstack_cache));

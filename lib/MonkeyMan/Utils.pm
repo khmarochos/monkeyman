@@ -117,6 +117,45 @@ sub mm_dump_object {
 
 sub mm_method_checks {
 
+=pod
+
+    package MonkeyMan::SomeClass;
+    use MonkeyMan::Utils;
+
+    some_method {
+        my($self, %parameters) = (shift, @_);
+        my($mm, $log, $cloudstack_api, $cloudstack_cache, $something);
+
+        eval { mm_method_checks(
+            'object' => $self,
+            'checks' => {
+                'mm'                => { variable   => \$mm },
+                'log'               => { variable   => \$log },
+                'cloudstack_api'    => { variable   => \$cloudstack_api },
+                'cloudstack_cache'  => { variable   => \$cloudstack_cache },
+                '$something' => {
+                    value       => $parameters{'something'}
+                }, # Just checks if the parameter has been defined
+                '$something' => {
+                    variable    => \$something,
+                    value       =>  $parameters{'something'}
+                }, # Checks the parameter and makes $something equal to the value
+                '$something' => {
+                    variable    => \$something,
+                    value       =>  $parameters{'something'},
+                    careless    => 1
+                }  # Makes $something equal to the value, but doesn't care about it
+                   # Of course, you can do all these tricks to any element's attribute, such as mm, log, etc.
+            },
+        ); };
+        return($self->error($@))
+            if($@);
+    }
+
+    Performes essential sanity checks for the method being called.
+
+=cut
+
     my(%parameters) = @_;
     
     my $checks = $parameters{'checks'};
@@ -125,33 +164,59 @@ sub mm_method_checks {
         unless(defined($object));
 
     while(my($check_key, $check_value) = each(%{ $checks })) {
+
+        my $value = $check_value->{'value'};
+
+        # Assigning some "special" parameters...
         given($check_key) {
             when('mm') {
-                $object->has_mm || $check_value->{'careless'} || die("The MonkeyMan haven't been initialized");
-                ${ $check_value->{'variable'} } = $object->mm;
+                $value = $object->mm
+                    if(!defined($value) && $object->has_mm);
             }
             when('cloudstack_api') {
-                ($object->has_mm && $object->mm->has_cloudstack_api) || $check_value->{'careless'} || die("The CloudStack API haven't been initialized");
-                ${ $check_value->{'variable'} } = $object->mm->cloudstack_api;
+                $value = $object->mm->cloudstack_api
+                    if(!defined($value) && $object->has_mm && $object->mm->has_cloudstack_api);
             }
             when('cloudstack_cache') {
-                ($object->has_mm && $object->mm->has_cloudstack_cache) || $check_value->{'careless'} || die("The CloudStack cache haven't been initialized");
-                ${ $check_value->{'variable'} } = $object->mm->cloudstack_cache;
+                $value = $object->mm->cloudstack_cache
+                    if(!defined($value) && $object->has_mm && $object->mm->has_cloudstack_cache);
             }
             when('log') {
-                ${ $check_value->{'variable'} } = eval { Log::Log4perl::get_logger(ref($object)) };
-                die(mm_sprintify("Can't Log::Log4perl::get_logger(): %s", $@)) if($@ && (! $check_value->{'careless'}));
+                $value = eval { Log::Log4perl::get_logger(ref($object)) }
+                    if(!defined($value));
             }
             when(/^\$/) {
-                ${ $check_value->{'variable'} } = $check_value->{'value'};
-                defined(${ $check_value->{'variable'} }) || $check_value->{'careless'} || die(mm_sprintify(
-                    "The required parameter (%s) isn't defined", $_
-                ));
+                # It's okay :)
             }
             default {
                 die(mm_sprintify("Don't know how to check the %s parameter", $_));
             }
         }
+
+        # Have we got anything?
+        if(
+            !defined($value) &&
+            !$check_value->{'careless'}
+        ) {
+            die(mm_sprintify("The %s parameter has been neither defined nor initialized", $check_key))
+        }
+
+        # If the variable is given, it's supposed to be a reference!
+        if(
+            defined($check_value->{'variable'}) &&
+               !ref($check_value->{'variable'})
+        ) {
+            die(mm_sprintify("The variable for the %s parameter isn't a reference", $check_key));
+        }
+
+        # If the value and the variable are given, just assign the value to the variable
+        if(
+                ref($check_value->{'variable'}) eq 'SCALAR'
+        ) {
+                  ${$check_value->{'variable'}} = $value;
+                    next;
+        }
+
     }
 
 }
