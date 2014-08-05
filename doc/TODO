@@ -1,3 +1,11 @@
+Current
+=======
+
+Use mm_method_check() everywhere
+    Added by melnik13 on 05.08.2014
+
+
+
 Planned
 =======
 
@@ -30,7 +38,7 @@ Make MonkeyMan able to cache object's information in memory, just simulating
 loading to the script. There should be handles to control its behaviour by
 configuration options
     Added by melnik13 on 01.07.2014
-    Implemented by melnik13 somewhere in the middle of July, 2014
+    Implemented by melnik13 once in the middle of July, 2014
 
 
 

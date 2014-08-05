@@ -33,7 +33,9 @@ eval { GetOptions(
     'c|config'      => \$opts{'config'},
     'v|verbose+'    => \$opts{'verbose'},
     'q|quiet'       => \$opts{'quiet'},
-    's|schedule=s'  => \$opts{'schedule'}
+    's|schedule=s'  => \$opts{'schedule'},
+    'no-snapshots'  => \$opts{'no-snapshots'},
+    'no-cleanup'    => \$opts{'no-cleanup'}
 ); };
 die(mm_sprintify("Can't GetOptions(): %s", $@))
     if($@);
@@ -62,7 +64,9 @@ $log->logdie($mm->error_message)
 
 my $schedule = {};
 my $configs = {};
-my $objects = {};
+my $objects = {
+    rebuilt         => 0
+};
 my $objects_relations = {
     domain          => {
         volume          => {
@@ -84,7 +88,7 @@ THE_LOOP: while (1) {
 
     # Load everything If the schedule hasn't been loaded or has been reset
  
-    # I'm reloading the schedule every time I get SIGHUP!
+    # TODO: I shall reload the schedule every time I get SIGHUP!
  
     unless(%{ $schedule }) {
 
@@ -94,7 +98,7 @@ THE_LOOP: while (1) {
                 -UseApacheInclude   => 1
             );
         };
-        $log->logdie(mm_sprintify("Can't Config::General->ParseConfig(): ", $@))
+        $log->logdie(mm_sprintify("Can't Config::General->ParseConfig(): %s", $@))
             if($@);
 
         $log->debug("The schedule has been loaded");
@@ -155,51 +159,57 @@ THE_LOOP: while (1) {
     # It shall be allowed to reload the information without reloading
     # the queue by the timer or by SIGUSR1!
 
-    foreach my $domain_path (grep(!/\*/, keys(%{ $configs->{'domain'} }))) {
+    if($objects->{'rebuilt'} + $schedule->{'timings'}->{'keep_objects'} < $now) {
 
-        # Reload the information about the domain only if it's needed
+        foreach my $domain_path (grep(!/\*/, keys(%{ $configs->{'domain'} }))) {
 
-        unless(defined($objects->{'domain'}->{'by_name'}->{$domain_path}->{'element'})) {
+            # Reload the information about the domain only if it's needed
 
-            $log->debug(mm_sprintify("Loading the information about the %s domain", $domain_path));
+            unless(defined($objects->{'domain'}->{'by_name'}->{$domain_path}->{'element'})) {
 
-            my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
-                mm          => $mm,
-                load_dom    => {
-                    conditions  => {
-                        path        => $domain_path
+                $log->debug(mm_sprintify("Loading the information about the %s domain", $domain_path));
+
+                my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
+                    mm          => $mm,
+                    load_dom    => {
+                        conditions  => {
+                            path        => $domain_path
+                        }
                     }
-                }
-            )};
-            if($@) { $log->warn(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::Domain->new(): %s", $@)); next; }
+                )};
+                if($@) { $log->warn(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::Domain->new(): %s", $@)); next; }
 
-            my $domain_id = $domain->get_parameter('id');
-            if($domain->has_errors) { $log->warn($domain->error_message); next; }
-            unless(defined($domain_id)) { $log->warn("Can't get the id parameter of the domain"); next; }
+                my $domain_id = $domain->get_parameter('id');
+                if($domain->has_errors) { $log->warn($domain->error_message); next; }
+                unless(defined($domain_id)) { $log->warn("Can't get the id parameter of the domain"); next; }
 
-            $objects->{'domain'}->{'by_name'}->{$domain_path} =
-            $objects->{'domain'}->{'by_id'}->{$domain_id} = {
-                element => $domain,
-                config  => $configs->{'domain'}->{$domain_path}
-            };
+                objects->{'domain'}->{'by_name'}->{$domain_path} =
+                $objects->{'domain'}->{'by_id'}->{$domain_id} = {
+                    element => $domain,
+                    config  => $configs->{'domain'}->{$domain_path}
+                };
 
-            $log->info(mm_sprintify("The %s (%s) domain has been refreshed", $domain_id, $domain_path));
+                $log->info(mm_sprintify("The %s (%s) domain has been refreshed", $domain_id, $domain_path));
 
-        }
-
-        # Do we need to scan for any downlinks? Oh, I bet we do!
-
-        my $results = find_related_and_refresh_if_needed(
-            $objects->{'domain'}->{'by_name'}->{$domain_path}->{'element'},
-            $objects_relations->{'domain'},
-            {
-                entity_type    => 'volume'
             }
-        );
-        unless(defined($results)) {
-            $log->warn(mm_sprintify("An error has occuried while refreshing %ss", $_));
-            next;
+
+            # Do we need to scan for any downlinks?
+
+            my $results = find_related_and_refresh_if_needed(
+                $objects->{'domain'}->{'by_name'}->{$domain_path}->{'element'},
+                $objects_relations->{'domain'},
+                {
+                    entity_type    => 'volume'
+                }
+            );
+            unless(defined($results)) {
+                $log->warn(mm_sprintify("An error has occuried while refreshing %ss", $_));
+                next;
+            }
+
         }
+
+        $objects->{'rebuilt'} = time; # Not $now, as it takes some time()
 
     }
 
@@ -238,12 +248,12 @@ THE_LOOP: while (1) {
         }
 
         my $job = $queue->{$volume_id}->{'job'};
-        unless(defined($job)) {
+        unless(defined($job) || $opts{'no-snapshots'}) {
             $log->warn(mm_sprintify("The %s volume seems to be busy, but the job isn't defined", $volume_id));
             next;
         }
 
-        my $job_result = $job->result;
+        my $job_result = $opts{'no-snapshots'} ? { jobstatus => 1 } : $job->result;
         unless(defined($job_result)) {
             $log->warn($job->error_message);
             next;
@@ -260,24 +270,33 @@ THE_LOOP: while (1) {
             }
             when(1) {
 
-                my $snapshot_id = $api->query_xpath($job_result->{'jobresult'}, '//snapshot/id/text()');
-                unless(defined($snapshot_id)) {
-                    $log->warn($api->error_message);
-                    next;
+                unless($opts{'no-snapshots'}) {
+
+                    my $snapshot_id = $api->query_xpath($job_result->{'jobresult'}, '//snapshot/id/text()');
+                    unless(defined($snapshot_id)) {
+                        $log->warn($api->error_message);
+                        next;
+                    }
+
+                    $log->info(mm_sprintify(
+                        "The %s volume's snapshot has been backed up, the %s snapshot has been stored",
+                            $volume_id,
+                            ${ $snapshot_id }[0]
+                    ));
+
                 }
 
-                $log->info(mm_sprintify(
-                    "The %s volume's snapshot has been backed up, the %s snapshot has been stored",
-                        $volume_id,
-                        ${ $snapshot_id }[0]
-                ));
                 $queue->{$volume_id}->{'started'}       = undef;
                 $queue->{$volume_id}->{'done'}          = $now;
                 $queue->{$volume_id}->{'postponed'}     = $now + $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'frequency'};
 
-                my $snapshots_deleted = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'}->cleanup_snapshots(
-                                        $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'keep'}
-                );
+                # We don't need to call cleanup_snapshots for each volume, let's do it only when the snapshot is done
+
+                my $snapshots_deleted = 
+                    $opts{'no-cleanup'} ?
+                        $objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'}->cleanup_snapshots(
+                            $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'keep'}) :
+                        0;
                 unless(defined($snapshots_deleted)) {
                     $log->warn($objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'}->error_message);
                     next;
@@ -403,17 +422,35 @@ THE_LOOP: while (1) {
             next VOLUME;
         }
 
-        my $job = $volume_element->create_snapshot(wait => 0);
-        unless(defined($job)) {
-            $log->warn($volume_element->error_message);
-            next VOLUME;
+        $queue->{$volume_id}->{'started'} = time;
+
+        if($opts{'no-snapshots'}) {
+
+            $log->info(mm_sprintify(
+                "The %s volume needs to have a snapshot, but it's not allowed to do it",
+                $volume_id
+            ));
+
+        } else {
+
+            my $job = $volume_element->create_snapshot(wait => 0);
+            unless(defined($job)) {
+                $log->warn($volume_element->error_message);
+                next VOLUME;
+            }
+            $log->trace(mm_sprintify("The %s job has been started", $job));
+
+            $queue->{$volume_id}->{'job'} = $job;
+
+            $log->info(mm_sprintify(
+                "The %s volume has been started to make a snapshot, the job id is %s",
+                $volume_id,
+                $job->get_parameter('jobid')
+            ));
+
         }
-        $log->trace(mm_sprintify("The %s job has been started", $job));
 
-        $queue->{$volume_id}->{'started'}   = time;
-        $queue->{$volume_id}->{'job'}       = $job;
-
-        $log->info(mm_sprintify("The %s volume has been started to make a snapshot, the job id is %s", $volume_id, $job->get_parameter('jobid')));
+        last VOLUME; # Don't create more than one snapshots in the same LOOP
 
     }
 
@@ -444,7 +481,7 @@ THE_LOOP: while (1) {
 
 
 
-    sleep 10; # shall be configured and/or calculated /!\
+    sleep(defined($schedule->{'timings'}->{'sleep_between_loops'}) ? $schedule->{'timings'}->{'sleep_between_loops'} : 60);
 
 }
 

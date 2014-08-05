@@ -134,17 +134,25 @@ sub mm_method_checks {
                 'cloudstack_api'    => { variable   => \$cloudstack_api },
                 'cloudstack_cache'  => { variable   => \$cloudstack_cache },
                 '$something' => {
-                    value       => $parameters{'something'}
-                }, # Just checks if the parameter has been defined
-                '$something' => {
-                    variable    => \$something,
                     value       =>  $parameters{'something'}
-                }, # Checks the parameter and makes $something equal to the value
+                }, # ^^^ Just checks if the parameter has been defined
                 '$something' => {
-                    variable    => \$something,
                     value       =>  $parameters{'something'},
+                    isaref      => 'MonkeyMan::_templates::SomeClass'
+                }, # ^^^ Checks if the parameter is defined and it's a reference to something
+                '$something' => {
+                    value       =>  $parameters{'something'},
+                    error       => "Something hasn't been defined"
+                }, # ^^^ What error message should be generated if the check fails instead of default
+                '$something' => {
+                    value       =>  $parameters{'something'},
+                    variable    => \$something
+                }, # ^^^ Checks the parameter and makes $something equal to the value
+                '$something' => {
+                    value       =>  $parameters{'something'},
+                    variable    => \$something,
                     careless    => 1
-                }  # Makes $something equal to the value, but doesn't care about it
+                }  # ^^^ Makes $something equal to the value, but doesn't care about the value itself
                    # Of course, you can do all these tricks to any element's attribute, such as mm, log, etc.
             },
         ); };
@@ -168,6 +176,7 @@ sub mm_method_checks {
         my $value = $check_value->{'value'};
 
         # Assigning some "special" parameters...
+ 
         given($check_key) {
             when('mm') {
                 $value = $object->mm
@@ -194,14 +203,39 @@ sub mm_method_checks {
         }
 
         # Have we got anything?
+
         if(
             !defined($value) &&
             !$check_value->{'careless'}
         ) {
-            die(mm_sprintify("The %s parameter has been neither defined nor initialized", $check_key))
+            die(
+                defined($check_value->{'error'}) ?
+                    $check_value->{'error'} :
+                    mm_sprintify("The %s parameter has been neither defined nor initialized", $check_key)
+            );
+        }
+
+        # Shall it be a reference?
+
+        if(
+            defined($check_value->{'isaref'}) &&
+           (ref($check_value->{'value'}) ne $check_value->{'isaref'})
+        ) {
+            die(
+                defined($check_value->{'error'}) ?
+                    $check_value->{'error'} :
+                    mm_sprintify("The %s parameter (%s) isn't a reference to %s",
+                        $check_key,
+                        ref($check_value->{'value'}) ?
+                            mm_sprintify("is a reference to %s", ref($check_value->{'value'})) :
+                            mm_sprintify("is not a reference, equal to %s", $check_value->{'value'}),
+                        $check_value->{'isaref'}
+                    )
+            );
         }
 
         # If the variable is given, it's supposed to be a reference!
+
         if(
             defined($check_value->{'variable'}) &&
                !ref($check_value->{'variable'})
@@ -210,6 +244,7 @@ sub mm_method_checks {
         }
 
         # If the value and the variable are given, just assign the value to the variable
+
         if(
                 ref($check_value->{'variable'}) eq 'SCALAR'
         ) {

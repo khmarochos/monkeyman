@@ -38,18 +38,26 @@ sub some_method {
             'cloudstack_api'    => { variable   => \$cloudstack_api },
             'cloudstack_cache'  => { variable   => \$cloudstack_cache },
             '$something' => {
-                value       => $parameters{'something'}
-            }, # Just checks if the parameter has been defined
-            '$something' => {
-                variable    => \$something,
                 value       =>  $parameters{'something'}
-            }, # Checks the parameter and makes $something equal to the value
+            }, # ^^^ Just checks if the parameter has been defined
             '$something' => {
-                variable    => \$something,
                 value       =>  $parameters{'something'},
+                isaref      => 'MonkeyMan::_templates::SomeClass'
+            }, # ^^^ Checks if the parameter is defined and it's a reference to something
+            '$something' => {
+                value       =>  $parameters{'something'},
+                error       => "Something hasn't been defined"
+            }, # ^^^ What error message should be generated if the check fails instead of default
+            '$something' => {
+                value       =>  $parameters{'something'},
+                variable    => \$something
+            }, # ^^^ Checks the parameter and makes $something equal to the value
+            '$something' => {
+                value       =>  $parameters{'something'},
+                variable    => \$something,
                 careless    => 1
-            }  # Makes $something equal to the value, but doesn't care about the value itself
-               # TODO: You also can do all these tricks to element's attributes, such as $mm, $log, etc.
+            }  # ^^^ Makes $something equal to the value, but doesn't care about the value itself
+               # You also can do all these tricks to element's attributes, such as $mm, $log, etc.
         }
     ); };
     return($self->error($@))

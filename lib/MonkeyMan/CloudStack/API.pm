@@ -34,14 +34,16 @@ has 'mm' => (
 sub BUILD {
 
     my $self = shift;
+    my($mm, $log);
 
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
-        if($@);
-
-    $log->trace("CloudStack's API connector has been initialized");
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'    => { variable => \$mm },
+            'log'   => { variable => \$log }
+        });
+    };
+    $log->trace(mm_sprintify("CloudStack's API connector has been initialized (MonkeyMan's instance %s)", $mm));
 
 }
 
