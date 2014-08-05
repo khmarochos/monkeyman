@@ -1,10 +1,12 @@
-package MonkeyMan::CloudStack::Elements::VirtualMachine;
+package MonkeyMan::CloudStack::Elements::Snapshot;
 
 use strict;
 use warnings;
 use feature "switch";
 
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
+use MonkeyMan::CloudStack::Elements::AsyncJob;
 
 use Moose;
 use MooseX::UndefTolerant;
@@ -15,14 +17,14 @@ with 'MonkeyMan::CloudStack::Element';
 
 
 sub element_type {
-    return('virtualmachine');
+    return('snapshot');
 }
 
 
 
 sub _load_full_list_command {
     return({
-        command => 'listVirtualMachines',
+        command => 'listSnapshots',
         listall => 'true'
     });
 }
@@ -37,9 +39,9 @@ sub _load_dom_xpath_query {
         unless(%parameters);
 
     if($parameters{'attribute'} eq 'FINAL') {
-        return("/listvirtualmachinesresponse/virtualmachine");
+        return("/listsnapshotsresponse/snapshot");
     } else {
-        return("/listvirtualmachinesresponse/virtualmachine[" .
+        return("/listsnapshotsresponse/snapshot[" .
             $parameters{'attribute'} . "='" .
             $parameters{'value'} . "']"
         );
@@ -56,7 +58,7 @@ sub _get_parameter_xpath_query {
     return($self->error("The required parameter hasn't been defined"))
         unless(defined($parameter));
 
-    return("/virtualmachine/$parameter");
+    return("/snapshot/$parameter");
 
 }
 
@@ -70,16 +72,47 @@ sub _find_related_to_given_conditions {
         unless(defined($key_element));
 
     given($key_element->element_type) {
-        when('volume') {
-            return(
-                id  => $key_element->get_parameter('virtualmachineid')
-            );
-        } default {
+        default {
             return(
                 $key_element->element_type . "id" => $key_element->get_parameter('id')
             );
         }
     }
+
+}
+
+
+
+sub delete {
+
+    my $self = shift;
+    my($mm, $log);
+
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'                => { variable   => \$mm },
+            'log'               => { variable   => \$log }
+        }
+    ); };
+    return($self->error($@))
+        if($@);
+
+    my $job = eval {
+        MonkeyMan::CloudStack::Elements::AsyncJob->new(
+            mm  => $mm,
+            run => {
+                parameters  => {
+                    command     => 'deleteSnapshot',
+                    id          => $self->get_parameter('id')
+                }
+            }
+        );
+    };
+    return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::AsyncJob->new(): %s", $@)))
+        if($@);
+
+    return($job);
 
 }
 

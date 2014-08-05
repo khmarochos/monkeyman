@@ -5,8 +5,7 @@ use warnings;
 use feature "switch";
 
 use MonkeyMan::Constants;
-
-use Data::Dumper;
+use MonkeyMan::Utils;
 
 use Moose::Role;
 use namespace::autoclean;
@@ -26,7 +25,8 @@ has 'init_load_dom' => (
     is          => 'ro',
     isa         => 'HashRef',
     predicate   => 'has_init_load_dom',
-    init_arg    => 'load_dom'
+    init_arg    => 'load_dom',
+    writer      => '_set_init_load_dom' # needed by preBUILDers
 );
 has 'dom' => (
     is          => 'ro',
@@ -65,14 +65,16 @@ sub load_dom {
         unless(%input);
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
-    return($self->error("CloudStack's API connector hasn't been initialized"))
-        unless($self->mm->has_cloudstack_api);
-
     my $mm  = $self->mm;
-    my $log = $mm->logger;
-    my $api = $mm->cloudstack_api;
+    return($self->error("CloudStack's API connector hasn't been initialized"))
+        unless($mm->has_cloudstack_api);
+    my $api     = $mm->cloudstack_api;
+    my $cache   = $mm->cloudstack_cache
+        if($mm->has_cloudstack_cache);
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+        if($@);
+
 
     my $nodes = [];             # resulting nodes are to be stored here
     my $dom_unfiltered;         # the source DOM
@@ -82,29 +84,65 @@ sub load_dom {
 
     if(ref($input{'dom'}) eq 'XML::LibXML::Document') {
 
-        $log->debug("Loading $self with the prederermined DOM: $input{'dom'}");
+        $log->debug(mm_sprintify("Loading %s with the predetermined DOM: %s", $self, $input{'dom'}));
 
-        push(@{ $nodes }, eval {   $input{'dom'}->documentElement });
-        return($self->error("Can't $input{'dom'}->documentElement(): $@")) if($@);
-
+        push(@{ $nodes }, eval { $input{'dom'}->documentElement });
+        return($self->error(mm_sprintify("Can't %s->documentElement(): %s", $input{'dom'}, $@)))
+            if($@);
+    
     } else {
 
-        $log->debug(
-            "Have got a request for a " . ref($self) .
-            ", it shall match following conditions: " .
-            join(" && ",
-                map { "'$_' eq '$input{'conditions'}->{$_}'" } (
-                    keys(%{ $input{'conditions'} })
-                )
-            )
-        );
+        my $cached = $cache->get_full_list($self->element_type);
+        return($self->error($cache->error_message))
+            if($cache->has_errors);
 
-        $dom_unfiltered = $api->run_command(
-            # FIXME: it's quite dangerous to pass all parameters without any
-            # security checks, so I should consider adding a couple of them here...
-            parameters => $self->_load_full_list_command
-        );
-        return($self->error($api->error_message)) unless(defined($dom_unfiltered));
+        if(defined($cached)) {
+
+            $dom_unfiltered = $cached->{'dom'};
+            $log->trace(mm_sprintify(
+                "The list of %ss has been loaded from the cache as %s",
+                    $self->element_type,
+                    $cached->{'dom'}
+            ));
+
+        } else {
+
+            $dom_unfiltered = $api->run_command(
+                # FIXME: it's quite dangerous to pass all parameters without any
+                # security checks, so I should consider adding a couple of them here...
+                parameters => $self->_load_full_list_command
+            );
+            return($self->error($api->error_message)) unless(defined($dom_unfiltered));
+
+            my $cached = $cache->store_full_list($self->element_type, $dom_unfiltered, time);
+            return($self->error($cache->error_message)) unless(defined($cached));
+
+            $log->trace(mm_sprintify(
+                "The list of %ss has been stored in the cache as %s",
+                    $self->element_type,
+                    $cached->{'dom'}
+            ));
+
+        }
+
+    }
+    
+    if(keys(%{ $input{'conditions'} })) {
+
+        # If someone passed the empty string instead of a hash, it means they can't
+        # calculate these conditions, so we shall point to an empty list
+
+        if(defined($input{'conditions'}->{""})) {
+            $log->debug("There are no defined conditions to find that object at the moment");
+            return([]);
+        }
+
+        $log->debug(mm_sprintify(
+            "Have got a request for a %s, it shall match following conditions: %s",
+                $self->element_type,
+                $input{'conditions'}
+        ));
+
 
     }
 
@@ -114,20 +152,19 @@ sub load_dom {
 
         # Don't do anything if we already have some predetermined DOM
 
-        last if(ref($input{'dom'}) eq 'XML::LibXML::Document');
+        last unless(keys(%{ $input{'conditions'} }));
 
         # Create a new DOM for storing resulting nodes
 
-        $dom_filtered = eval {     XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-        return($self->error("Can't XML::LibXML::Document->createDocument(): $@")) if($@);
+        $dom_filtered = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
+        return($self->error(mm_sprintify("Can't XML::LibXML::Document->createDocument(): %s" ,$@)))
+            if($@);
 
         # Do we have the XPath-query for that condition?
 
-        my $xpath_query = $self->_generate_xpath_query(
-            find    => {
-                attribute   => $condition,
-                value       => $input{'conditions'}->{$condition}
-            }
+        my $xpath_query = $self->_load_dom_xpath_query(
+            attribute   => $condition,
+            value       => $input{'conditions'}->{$condition}
         );
         return($self->error($self->error_message))
             unless(defined($xpath_query));
@@ -142,10 +179,11 @@ sub load_dom {
         # working and return nothing.
 
         if(scalar(@{ $nodes }) < 1) {
-            $log->trace(
-                "Nothing matches the condition: " .
-                "$condition == $input{'conditions'}->{$condition}"
-            );
+            $log->trace(mm_sprintify(
+                "Nothing matches the condition: %s == %s",
+                    $condition,
+                    $input{'conditions'}->{$condition}
+            ));
             last;
         }
 
@@ -157,7 +195,8 @@ sub load_dom {
             # Building all required parents' nodes
         
             my @node_names = (split('/', eval { ${ $nodes }[0]->parentNode->nodePath; }));
-            return($self->error("Can't ${ $nodes }[0]->parentNode()->nodePath(): $@")) if($@);
+            return($self->error(mm_sprintify("Can't %s->parentNode()->nodePath(): %s", ${ $nodes }[0], $@)))
+                if($@);
 
             my $node_to_add_children = $dom_filtered;
 
@@ -165,11 +204,13 @@ sub load_dom {
 
                 next unless ($node_name);
 
-                my $node = eval {          $dom_filtered->createElement($node_name); };
-                return($self->error("Can't $dom_filtered->createElement(): $@")) if($@);
+                my $node = eval { $dom_filtered->createElement($node_name); };
+                return($self->error(mm_sprintify("Can't %s->createElement(): %s", $dom_filtered, $@)))
+                    if($@);
 
-                eval {                     $node_to_add_children->addChild($node); };
-                return($self->error("Can't $node_to_add_children->addChild(): $@")) if($@);
+                eval { $node_to_add_children->addChild($node); };
+                return($self->error(mm_sprintify("Can't %s->addChild(): %s", $node_to_add_children, $@)))
+                    if($@);
 
                 $node_to_add_children = $node;
 
@@ -177,17 +218,21 @@ sub load_dom {
 
             # Okay, now let's attach resulting nodes to the main node
 
-            my $child_last;
-
             foreach my $node (@{ $nodes }) {
 
-                my $child_last = eval {    $node_to_add_children->addChild($node); };
-                return($self->error("Can't $node_to_add_children->addChild() $@")) if ($@);
+                my $node_clone = eval { $node->cloneNode(1); };
+                return($self->error(mm_sprintify("Can't %s->cloneNode(): %s", $node, $@)))
+                    if($@);
+
+                eval { $node_to_add_children->addChild($node_clone); };
+                return($self->error(mm_sprintify("Can't %s->addChild(): %s", $node_to_add_children, $@)))
+                    if ($@);
 
             }
 
             eval { $node_to_add_children->setAttribute("count", scalar(@{ $nodes })); };
-            return(self->error("Can't $node_to_add_children->setAttribute(): $@")) if($@);
+            return(self->error(mm_sprintify("Can't %s->setAttribute(): %s", $node_to_add_children, $@)))
+                if($@);
 
             $dom_unfiltered = $dom_filtered;
 
@@ -202,35 +247,27 @@ sub load_dom {
 
     foreach my $node (@{ $nodes }) {
 
-        my $dom = eval {           XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-        return($self->error("Can't XML::LibXML::Document->createDocument(): $@")) if($@);
+        my $dom = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
+        return($self->error(mm_sprintify("Can't XML::LibXML::Document->createDocument(): %s", $@)))
+            if($@);
 
-        eval {                     $dom->addChild($node); };
-        return($self->error("Can't $dom->addChild(): $@")) if($@);
+        my $node_clone = eval { $node->cloneNode(1); };
+        return($self->error(mm_sprintify("Can't %s->cloneNode(): %s", $node, $@)))
+            if($@);
+
+        eval { $dom->addChild($node_clone); };
+        return($self->error(mm_sprintify("Can't %s->addChild(): %s", $dom, $@)))
+            if($@);
 
         push(@results, $dom);
-
-        $log->trace(
-            "The following information have been found: " .
-            $dom->toString(1)
-        );
 
         $results_got++;
 
     }
 
-    given($results_got) {
-        when($_ < 1) { $log->debug("The requested parameter haven't been got") }
-        when($_ > 1) { $log->debug("$results_got results have been got") }
-        default {
-            $self->_set_dom($results[0]);
-            $log->debug("$self element has been loaded with " . $self->dom);
-            $log->trace(
-                "Now we've got the following information about $self: " .
-                $self->dom->toString(1)
-            );
-        }
-    }
+    $log->debug(mm_sprintify("%d got result(s) has/have been got", $results_got));
+
+    if($results_got == 1) { $self->_set_dom($results[0]); }
 
     return(\@results);
 
@@ -246,20 +283,17 @@ sub get_parameter {
         unless(defined($parameter));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
+    my $mm  = $self->mm;
     return($self->error("CloudStack's API connector hasn't been initialized"))
         unless($self->mm->has_cloudstack_api);
-
-    my $mm  = $self->mm;
-    my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+        if($@);
 
-    $log->trace("Getting the $parameter parameter of $self");
+    $log->trace(mm_sprintify("Looking up for the %s parameter of %s", $parameter, $self));
 
-    my $xpath_query = $self->_generate_xpath_query(
-        get => $parameter
-    );
+    my $xpath_query = $self->_get_parameter_xpath_query($parameter);
     return($self->error($self->error_message))
         unless(defined($xpath_query));
 
@@ -271,11 +305,12 @@ sub get_parameter {
 
     given($results_got) {
         when($_ < 1) { $log->trace("The requested parameter haven't been got") }
-        when($_ > 1) { $log->warn("$results_got results have been got, but the caller is expecting only 1, returning the first one") }
+        when($_ > 1) { $log->warn(mm_sprintify("%d results have been got, but the caller is expecting only 1, returning the first one", $results_got)) }
     }
 
     my $result = eval { $results_got ? ${ $results }[0]->textContent : undef; };
-    return($self->error("Can't ${ $results }[0]->textContent(): $@")) if($@);
+    return($self->error(mm_sprintify("Can't %s->textContent(): %s", ${ $results }[0], $@)))
+        if($@);
 
     return($result);
 
@@ -285,47 +320,53 @@ sub get_parameter {
 
 sub find_related_to_me {
 
-    my($self, $what_to_find) = @_;
+    my($self, $what_to_find, $return_elements) = @_;
 
     return($self->error("The type of soaked elements hasn't been defined"))
         unless(defined($what_to_find));
     return($self->error("The element's information haven't been loaded"))
         unless($self->has_dom);
-    return($self->error($self->has_error) ? $self->error_message : "The ID of the element is unknown")
+    return($self->error($self->has_errors) ? $self->error_message : "The ID of the element is unknown")
         unless($self->get_parameter('id'));
     return($self->error("MonkeyMan hasn't been initialized"))
         unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
+    my $mm  = $self->mm;
     return($self->error("CloudStack's API connector hasn't been initialized"))
         unless($self->mm->has_cloudstack_api);
-
-    my $mm  = $self->mm;
-    my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+        if($@);
 
-    $log->trace("Going to look for ${what_to_find}s related to $self");
+    $log->trace(mm_sprintify("Going to look for %ss related to %s", $what_to_find, $self));
 
-    my $module_name = eval {
-        given($what_to_find) {
-            when('domain')          { return('Domain'); }
-            when('virtualmachine')  { return('VirtualMachine'); }
-            when('volume')          { return('Volume'); }
-            default {
-                die("I'm not able to look for related ${what_to_find}s yet");
-            }
-        };
-    };
-    return($self->error($@)) if($@);
+    my $module_name = ${&MMElementsModule}{$what_to_find};
+    return($self->error(mm_sprintify("I'm not able to look for related %ss yet", $what_to_find)))
+        unless(defined($module_name));
 
     my $quasi_object = eval {
         require "MonkeyMan/CloudStack/Elements/$module_name.pm";
          return("MonkeyMan::CloudStack::Elements::$module_name"->new(mm => $mm));
     };
-    return($self->error("Can't MonkeyMan::CloudStack::Elements::${module_name}->new(): $@")) if($@);
+    return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::%s->new(): %s", $module_name, $@)))
+        if($@);
 
     my $objects = $quasi_object->find_related_to_given($self);
     return($self->error($quasi_object->error_message)) unless(defined($objects));
+
+    if($return_elements) {
+        for(my $i = 0; $i < @{ $objects }; $i++) {
+            ${ $objects }[$i] = eval {
+                return("MonkeyMan::CloudStack::Elements::$module_name"->new(
+                    mm  => $mm,
+                    dom => ${ $objects }[$i]
+                ));
+            };
+            return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::%s->new(): %s", $module_name, $@)))
+                if($@);
+        }
+    }
+
     return($objects);
 
 }
@@ -340,25 +381,20 @@ sub find_related_to_given {
         unless(defined($key_element));
     return($self->error("The key element's information haven't been loaded"))
         unless($key_element->has_dom);
-    return($self->error($self->has_error) ? $self->error_message : "The ID of the element is unknown")
+    return($self->error($self->has_errors) ? $self->error_message : "The ID of the element is unknown")
         unless($key_element->get_parameter('id'));
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-    return($self->error("The logger hasn't been initialized"))
-        unless($self->mm->has_logger);
+    my $mm  = $self->mm;
     return($self->error("CloudStack's API connector hasn't been initialized"))
         unless($self->mm->has_cloudstack_api);
-
-    my $mm  = $self->mm;
-    my $log = $mm->logger;
     my $api = $mm->cloudstack_api;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+        if($@);
 
-    $log->trace("Looking for " . $self->element_type . "s related to $key_element");
+    $log->trace(mm_sprintify("Looking for %ss related to %s", $self->element_type, $key_element));
 
     my $objects = $self->load_dom(
-        conditions => {
-            $key_element->element_type . "id" => $key_element->get_parameter('id')
-        }
+        conditions => { $self->_find_related_to_given_conditions($key_element) }
     );
     return($self->error($self->error_message)) unless(defined($objects));
     return($objects);

@@ -13,6 +13,7 @@ use MonkeyMan::CloudStack::API;
 
 use Getopt::Long;
 use XML::LibXML;
+use Log::Log4perl;
 
 
 
@@ -29,27 +30,29 @@ eval { GetOptions(
     'w|wait:0'              => \$opts{'wait'},
     's|short+'              => \$opts{'short'}
 ); };
-if($@) {
-    die("Can't GetOptions(): $@");
-}
+die(mm_sprintify("Can't GetOptions(): %s", $@))
+    if($@);
 
 if($opts{'help'})       { MonkeyMan::Show::help('runapicmd');   exit; };
 if($opts{'version'})    { MonkeyMan::Show::version;             exit; };
-unless(defined($opts{'parameters'})) {
-    die("Mandatory parameters haven't been defined, see --help for more information");
-}
+die("Mandatory parameters haven't been defined, see --help for more information")
+    unless(defined($opts{'parameters'}));
 
 my $mm = eval { MonkeyMan->new(
     config_file => $opts{'config'},
     verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
 ); };
-die("Can't MonkeyMan->new(): $@") if($@);
+die(mm_sprintify("Can't MonkeyMan->new(): %s", $@))
+    if($@);
 
-my $log = $mm->logger;
-die($mm->error_message) unless(defined($log));
+my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
+die(mm_sprintify("The logger hasn't been initialized", $@))
+    if($@);
 
-my $api = $mm->init_cloudstack_api;
-die($mm->error_message) unless(defined($api));
+my $api = $mm->cloudstack_api;
+$log->logdie($mm->error_message) unless(defined($api));
+
+
 
 my $result = $api->run_command(
     parameters  => $opts{'parameters'},
@@ -80,6 +83,4 @@ if(defined($opts{'xpath'})) {
 } else {
     print($result->toString(1));
 }
-
-
 

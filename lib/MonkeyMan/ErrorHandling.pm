@@ -3,6 +3,7 @@ package MonkeyMan::ErrorHandling;
 use strict;
 use warnings;
 
+use MonkeyMan::Utils;
 use MonkeyMan::Error;
 
 use Want;
@@ -12,13 +13,19 @@ use namespace::autoclean;
 
 
 
-has 'error' => (
+has 'errors' => (
     is          => 'ro',
-    isa         => 'MonkeyMan::Error',
-    predicate   => 'has_error',
-    reader      => '_get_error',
-    writer      => '_set_error'
+    isa         => 'ArrayRef',
+    builder     => '_build_errors'
 );
+
+
+
+sub _build_errors {
+
+    return([]);
+
+}
 
 
 
@@ -53,9 +60,11 @@ sub error {
             text    => $error_text,
             caller  => \%caller_info
         ); };
-        warn("Can't MonkeyMan::Error->new(): $@") if($@);
+        warn(mm_sprintify("Can't MonkeyMan::Error->new(): %s", $@))
+            if($@);
 
-        $self->_set_error($error) if(defined($error));
+        $self->push_error($error)
+            if(defined($error));
 
         # Returning undef in any case is important, as they would like to return it by the method,
         # so everyone expects undef here
@@ -66,12 +75,13 @@ sub error {
 
         # Othervise we'll return contents of the error attribute
 
-        return(undef) unless($self->has_error);
+        return(undef)
+            unless($self->has_errors);
 
         if(want('OBJECT')) {
-            return($self->_get_error);
+            return($self->pop_error);
         } else {
-            return($self->_get_error->text);
+            return($self->pop_error->text);
         }
 
     }
@@ -80,13 +90,35 @@ sub error {
 
 
 
-sub self {
+sub push_error {
 
-    return(shift);
-    # We may need it when we want to get it as an object, for an example:
-    #
-    #   $error = $zaloopa->error;
-    #   print($error->context->{'package'}, $error->text, "\n");
+    my $self    = shift;
+    my $error   = shift;
+
+    return(undef)
+        unless(ref($error) eq 'MonkeyMan::Error');
+
+    push(@{ $self->errors }, $error);
+
+}
+
+
+
+sub pop_error {
+
+    my $self = shift;
+
+    return(pop(@{ $self->errors }))
+
+}
+
+
+
+sub has_errors {
+
+    my $self = shift;
+
+    return(scalar(@{ $self->errors }));
 
 }
 
@@ -96,18 +128,22 @@ sub error_message {
 
     my $self = shift;
 
-    return("Undefined error") unless($self->has_error);
+    return("Undefined error")
+        unless($self->has_errors);
 
-    my $error = $self->_get_error;
-    return("Have got an error while running: " . $error->text) unless($error->has_caller);
+    my $error = $self->pop_error;
+
+    return(mm_sprintify("Have got an error: %s", $error->text))
+        unless($error->has_caller);
 
     my $caller = $error->caller;
-    return(
-        "Can't " .
-        $caller->{'package'} . "->" .
-        $caller->{'subroutine'} . "(): " .
-        $error->text
-    );
+    return(mm_sprintify(
+        "Can't %s(): at %s line %d: %s",
+            $caller->{'subroutine'},
+            $caller->{'filename'},
+            $caller->{'line'},
+            $error->text
+    ));
     
 }
 

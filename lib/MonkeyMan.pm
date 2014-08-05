@@ -4,10 +4,13 @@ use strict;
 use warnings;
 
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
 use MonkeyMan::CloudStack::API;
+use MonkeyMan::CloudStack::Cache;
 
 use Config::General qw(ParseConfig);
 use Log::Log4perl qw(:no_extra_logdie_message);
+use Text::Template;
 use Data::Dumper;
 
 use Moose;
@@ -23,13 +26,19 @@ has 'config_file' => (
     isa         => 'Str',
     default     => MMMainConfigFile,
     predicate   => '_has_config_file',
+    required    => 'yes'
 );
 has 'configuration' => (
     is          => 'ro',
     isa         => 'HashRef',
     reader      => '_get_configuration',
     writer      => '_set_configuration',
-    predicate   => 'has_configuration'
+    predicate   => 'has_configuration',
+);
+has 'skip_init' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    default     => sub {{}}
 );
 has 'verbosity' => (
     is          => 'ro',
@@ -37,19 +46,18 @@ has 'verbosity' => (
     writer      => '_set_verbosity',
     predicate   => '_has_verbosity'
 );
-has 'logger' => (
-    is          => 'ro',
-    isa         => 'Log::Log4perl::Logger',
-    writer      => '_set_logger',
-    predicate   => 'has_logger'
-);
 has 'cloudstack_api' => (
     is          => 'ro',
     isa         => 'MonkeyMan::CloudStack::API',
     writer      => '_set_cloudstack_api',
-    predicate   => 'has_cloudstack_api'
+    predicate   => 'has_cloudstack_api',
 );
-
+has 'cloudstack_cache' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::CloudStack::Cache',
+    writer      => '_set_cloudstack_cache',
+    predicate   => 'has_cloudstack_cache'
+);
 
 
 sub BUILD {
@@ -66,63 +74,34 @@ sub BUILD {
             );
         };
         if($@) {
-            die("Can't Config::General::ParseConfig(): $@");
+            die(mm_sprintify("Can't Config::General::ParseConfig(): %s", $@));
         }
         $self->_set_configuration(\%configuration);
     }
 
-    # Initializing the logger if it haven't been defined yet
+    # Initializing connectors
 
-    unless($self->has_logger) {
-        if($self->_has_verbosity) {
-            $self->_set_verbosity(0) if($self->verbosity < 0);
-            $self->_set_verbosity(7) if($self->verbosity > 7);
-        } else {
-            $self->_set_verbosity(&MMVerbosityLevel);
-        }
-        my $log_screen_loglevel = (&MMVerbosityLevels)[$self->verbosity];
-        my $log_screen_pattern  = ($self->verbosity > 4) ?
-            '%d [%p{1}] %m%n' :
-            '%m%n';
-        my $log_conf_filename = $self->configuration('log::conf');
-        my $log_conf_loaded;
-        my $log_conf_appenders;
-        if(defined($log_conf_filename)) {
-            open(LOG_CONF_FILE, $log_conf_filename) || die("Can't open(): $@");
-            while(<LOG_CONF_FILE>) {
-                $log_conf_loaded .= $_;
-                if(/^\s*log4perl\.appender\.([^\s\.]+)\s+=/) {
-                    $log_conf_appenders .= "$1, ";
-                }
-            }
-            close(LOG_CONF_FILE);
-        }
-        my $log_conf = <<__END_LOGCONF__;
-log4perl.category.MonkeyMan                         = ALL, ${log_conf_appenders}screen
+    my $log = $self->init_logger;
+    die($self->error_message)
+        unless(defined($log));
 
-$log_conf_loaded
+    unless($self->skip_init->{'cloudstack_api'}) {
+        my $cloudstack_api = $self->init_cloudstack_api;
+        die($self->error_message)
+            unless(defined($cloudstack_api));
+        $self->_set_cloudstack_api($cloudstack_api);
+    }
 
-log4perl.appender.screen                            = Log::Log4perl::Appender::Screen
-log4perl.appender.screen.layout                     = Log::Log4perl::Layout::PatternLayout
-log4perl.appender.screen.layout.ConversionPattern   = $log_screen_pattern
-log4perl.appender.screen.Filter                     = screen
-
-log4perl.filter.screen                              = Log::Log4perl::Filter::LevelRange
-log4perl.filter.screen.LevelMin                     = $log_screen_loglevel
-log4perl.filter.screen.AcceptOnMatch                = true
-__END_LOGCONF__
-        eval {
-            Log::Log4perl::init_once(\$log_conf);
-        };
-        if($@) {
-            die("Can't Log::Log4perl::init_once(): $@")
-        }
-        $self->_set_logger(Log::Log4perl::get_logger("MonkeyMan"));
+    unless($self->skip_init->{'cloudstack_cache'}) {
+        my $cloudstack_cache = $self->init_cloudstack_cache;
+        die($self->error_message)
+            unless(defined($cloudstack_cache));
+        $self->_set_cloudstack_cache($cloudstack_cache);
     }
 
     # Okay, everything's fine now :)
 
-    $self->logger->debug("MonkeyMan has been initialized");
+    $log->debug("MonkeyMan has been initialized");
 
 }
 
@@ -147,18 +126,68 @@ sub configuration {
 
 
 
+sub init_logger {
+
+    my $self = shift;
+
+    unless(Log::Log4perl->initialized) {
+
+        if($self->_has_verbosity) {
+            $self->_set_verbosity(0) if($self->verbosity < 0);
+            $self->_set_verbosity(7) if($self->verbosity > 7);
+        } else {
+            $self->_set_verbosity(&MMVerbosityLevel);
+        }
+
+        my $log_screen_loglevel = (&MMVerbosityLevels)[$self->verbosity];
+        my $log_screen_pattern  = ($self->verbosity > 4) ?
+            '%d [%p{1}] %m%n' :
+            '%m%n';
+        my $log_conf_filename = $self->configuration('log::log4perl');
+        my $log_conf_template = Text::Template->new(
+            TYPE        => 'FILE',
+            SOURCE      => $log_conf_filename,
+            DELIMITERS  => ['<%', '%>']
+        );
+        return($self->error(mm_sprintify("Can't Text::Template::new(): %s", $Text::Template::ERROR)))
+            unless(defined($log_conf_template));
+        my $log_conf = $log_conf_template->fill_in(
+            HASH => {
+                log_screen_loglevel => $log_screen_loglevel,
+                log_screen_pattern  => $log_screen_pattern
+            }
+        );
+        return($self->error(mm_sprintify("Can't %s->fill_in(): %s", $log_conf_template, $Text::Template::ERROR)))
+            unless(defined($log_conf));
+
+        eval { Log::Log4perl::init_once(\$log_conf) };
+        return($self->error(mm_sprintify("Can't Log::Log4perl::init_once(): %s", $@)))
+            if($@);
+
+    }
+
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error(mm_sprintify("Can't Log::Log4perl::get_logger(): %s", $@)))
+        if($@);
+
+    return($log);
+
+}
+
+
+
 sub init_cloudstack_api {
 
     my $self = shift;
 
     my $cloudstack_api = eval {
-        $self->_set_cloudstack_api(
-            MonkeyMan::CloudStack::API->new(mm => $self)
-        );
+        MonkeyMan::CloudStack::API->new(
+            mm => $self
+        )
     };
 
     return($@ ?
-        $self->error("Can't MonkeyMan::CloudStack::API::new(): $@") :
+        $self->error(mm_sprintify("Can't MonkeyMan::CloudStack::API::new(): %s", $@)) :
         $cloudstack_api
     );
 
@@ -166,11 +195,21 @@ sub init_cloudstack_api {
 
 
 
-sub DEMOLISH {
+sub init_cloudstack_cache {
 
     my $self = shift;
 
-    $self->logger->debug("MonkeyMan is being stopped") if($self->has_logger);
+    my $cloudstack_cache = eval {
+        MonkeyMan::CloudStack::Cache->new(
+            mm              => $self,
+            configuration   => $self->configuration->{'cloudstack'}->{'cache'}
+        )
+    };
+
+    return($@ ?
+        $self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Cache::new(): %s", $@)) :
+        $cloudstack_cache
+    );
 
 }
 

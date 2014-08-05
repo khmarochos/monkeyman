@@ -1,4 +1,4 @@
-package MonkeyMan::CloudStack::Elements::VirtualMachine;
+package MonkeyMan::CloudStack::Elements::StoragePool;
 
 use strict;
 use warnings;
@@ -15,14 +15,14 @@ with 'MonkeyMan::CloudStack::Element';
 
 
 sub element_type {
-    return('virtualmachine');
+    return('storagepool');
 }
 
 
 
 sub _load_full_list_command {
     return({
-        command => 'listVirtualMachines',
+        command => 'listStoragePools',
         listall => 'true'
     });
 }
@@ -37,9 +37,9 @@ sub _load_dom_xpath_query {
         unless(%parameters);
 
     if($parameters{'attribute'} eq 'FINAL') {
-        return("/listvirtualmachinesresponse/virtualmachine");
+        return("/liststoragepoolsresponse/storagepool");
     } else {
-        return("/listvirtualmachinesresponse/virtualmachine[" .
+        return("/liststoragepoolsresponse/storagepool[" .
             $parameters{'attribute'} . "='" .
             $parameters{'value'} . "']"
         );
@@ -56,7 +56,7 @@ sub _get_parameter_xpath_query {
     return($self->error("The required parameter hasn't been defined"))
         unless(defined($parameter));
 
-    return("/virtualmachine/$parameter");
+    return("/storagepool/$parameter");
 
 }
 
@@ -71,9 +71,9 @@ sub _find_related_to_given_conditions {
 
     given($key_element->element_type) {
         when('volume') {
-            return(
-                id  => $key_element->get_parameter('virtualmachineid')
-            );
+            return(      "" => "")
+                unless(defined($key_element->get_parameter('storage')));
+            return(    name => $key_element->get_parameter('storage'));
         } default {
             return(
                 $key_element->element_type . "id" => $key_element->get_parameter('id')

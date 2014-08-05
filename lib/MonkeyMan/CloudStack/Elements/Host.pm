@@ -1,4 +1,4 @@
-package MonkeyMan::CloudStack::Elements::VirtualMachine;
+package MonkeyMan::CloudStack::Elements::Host;
 
 use strict;
 use warnings;
@@ -15,14 +15,14 @@ with 'MonkeyMan::CloudStack::Element';
 
 
 sub element_type {
-    return('virtualmachine');
+    return('host');
 }
 
 
 
 sub _load_full_list_command {
     return({
-        command => 'listVirtualMachines',
+        command => 'listHosts',
         listall => 'true'
     });
 }
@@ -37,9 +37,9 @@ sub _load_dom_xpath_query {
         unless(%parameters);
 
     if($parameters{'attribute'} eq 'FINAL') {
-        return("/listvirtualmachinesresponse/virtualmachine");
+        return("/listhostsresponse/host");
     } else {
-        return("/listvirtualmachinesresponse/virtualmachine[" .
+        return("/listhostsresponse/host[" .
             $parameters{'attribute'} . "='" .
             $parameters{'value'} . "']"
         );
@@ -56,7 +56,7 @@ sub _get_parameter_xpath_query {
     return($self->error("The required parameter hasn't been defined"))
         unless(defined($parameter));
 
-    return("/virtualmachine/$parameter");
+    return("/host/$parameter");
 
 }
 
@@ -70,10 +70,10 @@ sub _find_related_to_given_conditions {
         unless(defined($key_element));
 
     given($key_element->element_type) {
-        when('volume') {
-            return(
-                id  => $key_element->get_parameter('virtualmachineid')
-            );
+        when('virtualmachine') {
+            return(      "" => "")
+                unless(defined($key_element->get_parameter('hostid')));
+            return(      id => $key_element->get_parameter('hostid'));
         } default {
             return(
                 $key_element->element_type . "id" => $key_element->get_parameter('id')

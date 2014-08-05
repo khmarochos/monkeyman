@@ -1,62 +1,107 @@
+#
+# Here you can configure timeperiods for further usage
+#
+
 <timeperiod Never>
-	period  NONE
+    period \
+        NONE
 </timeperiod>
 
 <timeperiod Always>
-	period  sec(0-59)
+    period \
+        sec(0-59)
 </timeperiod>
 
 <timeperiod Nightly>
-	period	HR(8pm-7am)
+    period \
+        HR(8pm-7am)
 </timeperiod>
 
 <timeperiod NonWorkingHours>
-	period	WD(Mon-Fri) HR(12am-7pm), \
-		WD(Mon-Fri) HR(8pm-11pm), \
-		WD(Sat-Sun)
+    period \
+        WD(Mon-Fri) HR(12am-7pm), \
+        WD(Mon-Fri) HR(8pm-11pm), \
+        WD(Sat-Sun)
 </timeperiod>
 
-<timeperiod NonWorkingHoursButSaturdaysAreWorking>
-	period	WD(Mon-Sat) HR(12am-7pm), \
-		WD(Mon-Sat) HR(8pm-11pm), \
-		WD(Sun)
+<timeperiod NonWorkingHoursButSaturdays>
+    period \
+        WD(Mon-Sat) HR(12am-7pm), \
+        WD(Mon-Sat) HR(8pm-11pm), \
+        WD(Sun)
 </timeperiod>
 
 
+
+#
+# You must list all domains for taking snapshots
+#
+
+<domain ROOT/*>
+    available   Always
+    frequency   43200   # 43200 seconds = 12 hours
+    keep        2
+</domain>
+
+<domain ROOT/CUSTOMERS/A000000/>
+
+<domain ROOT/CUSTOMERS/A000001/>
+
+<domain ROOT/CUSTOMERS/A000002/>
+
+
+
+#
+# You'll probably want to inherit some parameters from the domain this volume belongs to
+#
+
+<volume *>
+    <inherit>
+        <domain>
+            available   careful # "careful" or "forced", it's easy to guess what it's for
+            frequency   careful
+            keep        careful
+        </domain>
+    </inherit>
+</volume>
+
+
+
+#
+# Your hosts must be configured as available
+#
 
 <host *>
-	available	Always
-	flows		1
+    available    Always
+    flows        1
+</host>
+
+<host *.c2.p1.z1.tucha13.net>
+    available   Never
 </host>
 
 
 
-<storage *>
-	available	Always
-	flows		1
-</storage>
+#
+# Storagepools must be configured just as hosts
+#
+
+<storagepool *>
+    available    Always
+    flows        1
+</storagepool>
+
+<storagepool *.c2.p1.z1.tucha13.net>
+    available   Never
+</host>
 
 
 
-<domain ROOT/*>
-	available	Nightly
-	frequency	43200   # 43200 seconds = 12 hours
-</domain>
-<domain ROOT/CUSTOMERS/XZ13>
-	available	NonWorkingHours
-</domain>
-<domain ROOT/CUSTOMERS/XZ666/>
-<domain ROOT/CUSTOMERS/XZ667/>
-<domain ROOT/CUSTOMERS/XZ668/>
-<domain ROOT/ZALOOPA>
-	exclude_instance XXX
-	exclude_instance YYY
-	exclude_instance ZZZ
-	exclude_volume ROOT-XXX
-	exclude_volume DATA-XXX
-	exclude_volume ROOT-YYY
-	exclude_volume SHIT-YYY
-	exclude_volume ROOT-ZZZ
-	exclude_volume CRAP-ZZZ
-</domain>
-<domain ROOT/TUCHASHIELD/>
+#
+# They're important
+#
+
+<timings>
+    sleep_between_loops     60
+    keep_objects            600
+</timings>

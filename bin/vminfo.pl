@@ -28,26 +28,26 @@ eval { GetOptions(
     'x|xpath=s@'                => \$opts{'xpath'},
     's|short+'                  => \$opts{'short'}
 ); };
-if($@) {
-    die("Can't GetOptions(): $@");
-}
+die(mm_sprintify("Can't GetOptions(): %s", $@))
+    if($@);
 
 if($opts{'help'})       { MonkeyMan::Show::help('vminfo');  exit; };
 if($opts{'version'})    { MonkeyMan::Show::version;         exit; };
-unless(defined($opts{'conditions'})) {
-    die("Mandatory conditions haven't been defined, see --help for more information");
-}
+die("Mandatory conditions haven't been defined, see --help for more information")
+    unless(defined($opts{'conditions'}));
 
 my $mm = eval { MonkeyMan->new(
     config_file => $opts{'config'},
     verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
 ); };
-die("Can't MonkeyMan->new(): $@") if($@);
+die(mm_sprintify("Can't MonkeyMan->new(): %s", $@))
+    if($@);
 
-my $log = $mm->logger;
-die($mm->error_message) unless(defined($log));
+my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
+die(mm_sprintify("The logger hasn't been initialized: %s", $@))
+    if($@);
 
-my $api = $mm->init_cloudstack_api;
+my $api = $mm->cloudstack_api;
 die($mm->error_message) unless(defined($api));
 
 
@@ -64,16 +64,23 @@ $log->die($api->error_message) unless(defined($virtualmachines));
 
 foreach my $condition (keys(%{ $opts{'conditions'} })) {
 
-    $log->trace("Checking for a condition: $condition = $opts{'conditions'}->{$condition}");
+    $log->trace(mm_sprintify(
+        "Checking for the condition: %s = %s",
+            $condition,
+            $opts{'conditions'}->{$condition}
+    ));
 
     my $result = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-    $log->logdie("Can't XML::LibXML::Document->createDocument(): $@") if($@);
+    $log->logdie(mm_sprintify("Can't XML::LibXML::Document->createDocument(): %s", $@))
+        if($@);
 
     my $result_main_node = eval { $result->createElement("listvirtualmachinesresponse"); };
-    $log->logdie("Can't $result->createElement(): $@") if($@);
+    $log->logdie(mm_sprintify("Can't %s->createElement(): %s", $result, $@))
+        if($@);
 
     eval { $result->addChild($result_main_node); };
-    $log->logdie("Can't $result->addChild(): $@") if($@);
+    $log->logdie(mm_sprintify("Can't %s->addChild(): %s", $result, $@))
+        if($@);
 
     # Analyzing the condition
 
@@ -103,8 +110,7 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
             $opts{'conditions'}->{'has_state'} .
             "']"
     } else {
-        $log->warn("The $condition condition isn't valid");
-        next;
+        $log->logdie(mm_sprintify("The %s condition isn't valid", $condition));
     }
 
     # Getting the list of matched nodes for the condition and adding them to
@@ -118,11 +124,11 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
     foreach my $node (@{ $nodes }) {
         eval { $result_main_node->addChild($node); };
         if($@) {
-            $log->warn("Can't $result_main_node->addChild(): $@");
+            $log->warn("Can't %s->addChild(): %s", $result_main_node, $@));
             next;
         }
     }
-    if($api->has_error) {
+    if($api->has_errors) {
         $log->warn($api->error_message);
         next;
     }
@@ -151,7 +157,7 @@ if(defined($opts{'xpath'})) {
                 "\n"
             );
         }
-        if($api->has_error) {
+        if($api->has_errors) {
             $log->warn($api->error_message);
             next;
         }

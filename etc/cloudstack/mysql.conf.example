@@ -1,0 +1,6 @@
+<mysql>
+    host        = localhost
+    db          = cloud
+    username    = ***
+    password    = ***
+</mysql>

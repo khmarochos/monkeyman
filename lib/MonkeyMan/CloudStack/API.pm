@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
 
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
@@ -33,8 +34,16 @@ has 'mm' => (
 sub BUILD {
 
     my $self = shift;
+    my($mm, $log);
 
-    $self->mm->logger->trace("CloudStack's API connector has been initialized");
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'    => { variable => \$mm },
+            'log'   => { variable => \$log }
+        });
+    };
+    $log->trace(mm_sprintify("CloudStack's API connector has been initialized (MonkeyMan's instance %s)", $mm));
 
 }
 
@@ -44,18 +53,20 @@ sub craft_url {
 
     my($self, %parameters) = @_;
 
-    my $mm  = $self->mm;
-    my $log = $mm->logger;
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
+
+    my $mm = $self->mm;
 
     my $parameters_string;
     my $output;
-    $parameters{'apiKey'} = $mm->configuration('cloudstack::api_key');
+    $parameters{'apiKey'} = $mm->configuration('cloudstack::api::api_key');
     foreach my $parameter (sort(keys(%parameters))) {
         $parameters_string  .= (defined($parameters_string) ? '&' : '') . $parameter . '=' .            $parameters{$parameter};
         $output             .= (defined($output)            ? '&' : '') . $parameter . '=' . uri_encode($parameters{$parameter}, 1);
     }
-    my $base64_encoded  = encode_base64(hmac_sha1(lc($output), $mm->configuration('cloudstack::secret_key'))); chomp($base64_encoded);
-    my $url             = $mm->configuration('cloudstack::api_address') . '?' . $parameters_string . "&signature=" . uri_encode($base64_encoded, 1);
+    my $base64_encoded  = encode_base64(hmac_sha1(lc($output), $mm->configuration('cloudstack::api::secret_key'))); chomp($base64_encoded);
+    my $url             = $mm->configuration('cloudstack::api::api_address') . '?' . $parameters_string . "&signature=" . uri_encode($base64_encoded, 1);
 
     return($url);
 
@@ -67,10 +78,14 @@ sub run_command {
 
     my($self, %input) = @_;
 
+    return($self->error("Required parametrs haven't been defined"))
+        unless(ref($input{'parameters'}));
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
     my $mm  = $self->mm;
-    my $log = $mm->logger;
-
-    return($self->error("Required parametrs haven't been defined")) unless(ref($input{'parameters'}));
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+        if($@);
 
     # Crafting the URL
 
@@ -80,20 +95,21 @@ sub run_command {
     return($self->error($self->error_message))
         unless(defined($url));
     return($self->error("The requested URL is invalid"))
-        unless(index($url, $mm->configuration('cloudstack::api_address')) == 0);
+        unless(index($url, $mm->configuration('cloudstack::api::api_address')) == 0);
 
     # Running the command
 
-    $log->trace(">MM>CS> - querying CloudStack by $url");
+    $log->trace(mm_sprintify("Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
+    $log->trace(mm_sprintify("[CLOUDSTACK] Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
 
     # FIXME - what about to use LWP::UserAgent here?
     my $mech = WWW::Mechanize->new(
         onerror => undef
     );
     my $response = $mech->get($url);
-    return($self->error("Can't $mech->get(): " . $response->status_line)) unless($response->is_success);
-
-    $log->trace('Got an HTTP-response: "' . $response->status_line . '"');
+    $log->trace(mm_sprintify("[CLOUDSTACK] Got an HTTP-response: %s", $response->status_line));
+    return($self->error(mm_sprintify("Can't %s->get(): %s", $mech, $response->status_line)))
+        unless($response->is_success);
 
     # Parsing the response
  
@@ -103,20 +119,27 @@ sub run_command {
             string => ($response->content)
         );
     };
-    return($self->error("Can't XML::LibXML->load_xml(): $@")) unless(defined($dom));
+    return($self->error(mm_sprintify("Can't %s->load_xml(): %s", $parser, $@)))
+        unless(defined($dom));
 
-    $log->trace("<MM<CS< - have got data from CloudStack as $dom:\n" . $dom->toString(1));
+    $log->trace(mm_sprintify("CloudStack returned %s", $dom));
+    $log->trace(mm_sprintify("[CLOUDSTACK] [XML] %s contains:\n%s", $dom, $dom->toString(1)));
 
     # Should we wait for an async job?
 
-    if(defined($input{'options'}->{'wait'}) && ($dom->findvalue('/*/jobid'))) {
+    my $jobid = eval { $dom->findvalue('/*/jobid'); };
+    return($self->error(mm_sprintify("Can't %s->findValue(): %s", $dom, $@)))
+        if($@);
+
+    if(defined($input{'options'}->{'wait'}) && ($jobid)) {
  
         my $alarm = time + $input{'options'}->{'wait'};
 
-        $log->debug(
-            "Waiting till " . strftime(MMDateTimeFormat, localtime($alarm)) . " " .
-            "for a responce concerning the job " . $dom->findvalue('/*/jobid')
-        );
+        $log->debug(mm_sprintify(
+            "Waiting till %s for a responce concerning the job %s",
+                strftime(MMDateTimeFormat, localtime($alarm)),
+                $jobid
+        ));
 
         while(sleep(
             $mm->configuration('time::sleep_while_waiting') ?
@@ -127,14 +150,18 @@ sub run_command {
             $dom = $self->run_command(
                 parameters => {
                     command => 'queryAsyncJobResult',
-                    jobid   => $dom->findvalue('/*/jobid')
+                    jobid   => $jobid
                 }
             );
             return($self->error($self->error_message))
                 unless(defined($dom));
 
             if($input{'options'}->{'wait'} && (time >= $alarm)) {
-                $log->info("A timeout of $input{'options'}->{'wait'} seconds has occured");
+                $log->warn(mm_sprintify(
+                    "A timeout of %d seconds has occured while waiting for %s to be completed",
+                        $input{'options'}->{'wait'},
+                        $jobid
+                ));
                 return($dom);
             }
 
@@ -155,10 +182,15 @@ sub query_xpath {
 
     my ($self, $dom, $xpath, $results_to) = @_;
 
+    return($self->error("The DOM hasn't been defined"))
+        unless(defined($dom));
+    return($self->error("MonkeyMan hasn't been initialized"))
+        unless($self->has_mm);
     my $mm  = $self->mm;
-    my $log = $mm->logger;
+    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
+    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+        if($@);
 
-    return($self->error("DOM isn't defined")) unless(defined($dom));
 
     # First of all, let's find out what they've passed to us - a list or a string
 
@@ -173,34 +205,23 @@ sub query_xpath {
 
     foreach my $query (@{ $queries }) {
 
-        $log->trace("Querying $dom for $query");
+        $log->trace(mm_sprintify("Querying %s for %s", $dom, $query));
+        $log->trace(mm_sprintify("[XML] %s (queried for %s) contains:\n%s", $dom, $query, $dom->toString(1)));
 
-        $log->trace("$dom contains: " . $dom->toString(1));
-
-        my @nodes = eval {         $dom->findnodes($query); };
-        return($self->error("Can't $dom->findnodes(): $@")) if($@);
+        my @nodes = eval { $dom->findnodes($query); };
+        return($self->error("Can't %s->findnodes(): %s", $dom, $@))
+            if($@);
 
         foreach my $node (@nodes) {
-            $log->trace("Have got $node");
-            $log->trace("$node contains: " . $node->toString(1));
+            $log->trace(mm_sprintify("[XML] %s (the %d'st result) contains:\n%s", $node, scalar(@{ $results }), $node->toString(1)));
             push(@{$results}, $node);
         }
 
-        $log->trace("Have got " . scalar(@{$results}) . " result(s)");
+        $log->trace(mm_sprintify("Have found %d elements in %s", scalar(@nodes), $dom));
 
     }
 
     return($results);
-
-}
-
-
-
-sub DEMOLISH {
-
-    my $self = shift;
-
-    $self->mm->logger->trace("CloudStack's API connector is being demolished");
 
 }
 
