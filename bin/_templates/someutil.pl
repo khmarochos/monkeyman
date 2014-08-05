@@ -2,19 +2,23 @@
 
 use strict;
 use warnings;
-
 use feature qw(switch);
 
-use FindBin qw($Bin);
-
-use lib("$Bin/../lib");
+my $Lib;
+BEGIN {
+    use FindBin qw($Bin);
+    if($Bin =~ /^(\/.+\/monkeyman)\/bin(\/.+)?/) {
+       $Lib = "$1/lib";
+    }
+}
+use lib ($Lib);
 
 use MonkeyMan;
 use MonkeyMan::Constants;
 use MonkeyMan::Utils;
 use MonkeyMan::Show;
 use MonkeyMan::CloudStack::API;
-use MonkeyMan::SomeClass;
+use MonkeyMan::_templates::SomeClass;
 
 use Getopt::Long;
 
@@ -48,8 +52,11 @@ die(mm_sprintify("The logger hasn't been initialized: %s", $@))
 
 
 
-my $some_object = eval { MonkeyMan::SomeClass->new(mm => $mm); };
-$log->logdie(mm_sprintify("Can't MonkeyMan::SomeClass->new(): %s", $@))
+#
+# vvv    Your code goes here    vvv
+#
+my $some_object = eval { MonkeyMan::_templates::SomeClass->new(mm => $mm); };
+$log->logdie(mm_sprintify("Can't MonkeyMan::_templates::SomeClass->new(): %s", $@))
     if($@);
 
 my $result = $some_object->some_method(
@@ -58,9 +65,10 @@ my $result = $some_object->some_method(
 $log->logdie($some_object->error_message)
     if($some_object->has_errors);
 
-
-
 $log->info(mm_sprintify("%s", $result));
+#
+# ^^^    You code went there    ^^^
+#
 
 
 

@@ -1,4 +1,4 @@
-package MonkeyMan::SomeClass;
+package MonkeyMan::_templates::SomeClass;
 
 use strict;
 use warnings;

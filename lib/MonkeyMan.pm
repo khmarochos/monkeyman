@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
 use MonkeyMan::CloudStack::API;
 use MonkeyMan::CloudStack::Cache;
 

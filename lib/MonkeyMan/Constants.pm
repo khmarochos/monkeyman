@@ -16,9 +16,15 @@ my @MM_constants_version = qw(
 );
 
 # :directories
-use constant MMMainConfigDirectory  => "$Bin/../etc";
-use constant MMDumpObjectsTo        => "$Bin/../var/dump/objects";
+sub MMRootDirectory {
+    if($Bin =~ /^(\/.+\/monkeyman)\/bin(\/.+)?/) {
+        return($1);
+    }
+}
+use constant MMMainConfigDirectory  => MMRootDirectory . "/etc";
+use constant MMDumpObjectsTo        => MMRootDirectory . "/var/dump/objects";
 my @MM_constants_directories = qw(
+    MMRootDirectory
     MMMainConfigDirectory
     MMDumpObjectsTo
 );
