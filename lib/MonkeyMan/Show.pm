@@ -81,6 +81,22 @@ MODULE-SPECIFIC OPTIONS:
 
 __END_OF_VMINFO_HELP_MESSAGE__
             );
+        } when('makesnapshots') {
+            print(<<__END_OF_MAKESNAPSHOTS_HELP_MESSAGE__
+
+MODULE'S PURPOURSE:
+The purpourse of this module is to take snapshots according to the schedule.
+
+MODULE-SPECIFIC OPTIONS:
+    -s ?, --schedule ?
+        [man] The backup schedule file
+    --no-snapshots
+        [opt] Don't take snapshots, emulate the work
+    --no-cleanup
+        [opt] Don't cleanup snapshots
+
+__END_OF_MAKESNAPSHOTS_HELP_MESSAGE__
+            );
         }
     }
 }
