@@ -183,7 +183,7 @@ THE_LOOP: while (1) {
                 if($domain->has_errors) { $log->warn($domain->error_message); next; }
                 unless(defined($domain_id)) { $log->warn("Can't get the id parameter of the domain"); next; }
 
-                objects->{'domain'}->{'by_name'}->{$domain_path} =
+                $objects->{'domain'}->{'by_name'}->{$domain_path} =
                 $objects->{'domain'}->{'by_id'}->{$domain_id} = {
                     element => $domain,
                     config  => $configs->{'domain'}->{$domain_path}
@@ -294,9 +294,9 @@ THE_LOOP: while (1) {
 
                 my $snapshots_deleted = 
                     $opts{'no-cleanup'} ?
+                        0 :
                         $objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'}->cleanup_snapshots(
-                            $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'keep'}) :
-                        0;
+                            $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'keep'});
                 unless(defined($snapshots_deleted)) {
                     $log->warn($objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'}->error_message);
                     next;
