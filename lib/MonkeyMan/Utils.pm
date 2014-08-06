@@ -38,7 +38,7 @@ sub mm_sprintify {
 
     for(my $i = 0; $i < @_; $i++) {
         given($values[$i]) {
-            when(undef)             { $values[$i] = "< undef >"; }
+            when(undef)             { $values[$i] = "[UNDEF]"; }
             when(ref($_) eq 'HASH') { $values[$i] = Dumper($_); }
             when(blessed($_))       { $values[$i] = sprintf("[%s\@0x%x]", blessed($_), refaddr($_)); }
         }
@@ -177,7 +177,7 @@ sub mm_method_checks {
 
         my $value = $check_value->{'value'};
 
-        # Assigning some "special" parameters...
+        # Assigning parameters...
  
         given($check_key) {
             when('mm') {
@@ -218,7 +218,7 @@ sub mm_method_checks {
             );
         }
 
-        # Shall it be a reference?
+        # Shall the value be a reference?
 
         if(
             defined($check_value->{'isaref'}) &&
@@ -237,7 +237,7 @@ sub mm_method_checks {
             );
         }
 
-        # If the variable is given, it's supposed to be a reference!
+        # If the target variable is given, it's supposed to be a reference, isn't it?
 
         if(
             defined($check_value->{'variable'}) &&
@@ -246,7 +246,7 @@ sub mm_method_checks {
             die(mm_sprintify("The variable for the %s parameter isn't a reference", $check_key));
         }
 
-        # If the value and the variable are given, just assign the value to the variable
+        # If the value and the variable are given, assign the value to the variable
 
         if(
                 ref($check_value->{'variable'}) eq 'SCALAR'

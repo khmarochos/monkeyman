@@ -7,6 +7,7 @@ use MonkeyMan::Utils;
 use MonkeyMan::Error;
 
 use Want;
+use Carp qw(longmess);
 
 use Moose::Role;
 use namespace::autoclean;
@@ -16,12 +17,15 @@ use namespace::autoclean;
 has 'errors' => (
     is          => 'ro',
     isa         => 'ArrayRef',
-    builder     => '_build_errors'
+    builder     => '_build_errors',
+    lazy        => 1
 );
 
 
 
 sub _build_errors {
+
+    # If it's "lazy", each object has it's own error stack
 
     return([]);
 
@@ -57,8 +61,8 @@ sub error {
         }
 
         my $error = eval { MonkeyMan::Error->new(
-            text    => $error_text,
-            caller  => \%caller_info
+            text        => $error_text,
+            caller      => \%caller_info
         ); };
         warn(mm_sprintify("Can't MonkeyMan::Error->new(): %s", $@))
             if($@);
@@ -128,7 +132,7 @@ sub error_message {
 
     my $self = shift;
 
-    return("Undefined error")
+    return("The error stack is empty")
         unless($self->has_errors);
 
     my $error = $self->pop_error;
@@ -138,11 +142,10 @@ sub error_message {
 
     my $caller = $error->caller;
     return(mm_sprintify(
-        "Can't %s(): at %s line %d: %s",
+        "Can't %s(): %s%s",
             $caller->{'subroutine'},
-            $caller->{'filename'},
-            $caller->{'line'},
-            $error->text
+            $error->text,
+            $error->text =~ /^\[BACKTRACE\]\s/m ? "" : $error->backtrace
     ));
     
 }
