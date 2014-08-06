@@ -10,7 +10,7 @@ use FindBin qw($Bin);
 use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 # :version
-use constant MMVersion          => '1.0.0';
+use constant MMVersion          => '1.0.1';
 my @MM_constants_version = qw(
     MMVersion
 );

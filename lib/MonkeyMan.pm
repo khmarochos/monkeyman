@@ -101,7 +101,7 @@ sub BUILD {
 
     # Okay, everything's fine now :)
 
-    $log->debug("MonkeyMan has been initialized");
+    $log->trace("MonkeyMan has been initialized");
 
 }
 

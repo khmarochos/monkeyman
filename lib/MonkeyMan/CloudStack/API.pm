@@ -43,6 +43,9 @@ sub BUILD {
             'log'   => { variable => \$log }
         });
     };
+    return($self->error($@))
+        if($@);
+
     $log->trace(mm_sprintify("CloudStack's API connector has been initialized (MonkeyMan's instance %s)", $mm));
 
 }
@@ -52,11 +55,16 @@ sub BUILD {
 sub craft_url {
 
     my($self, %parameters) = @_;
+    my($mm);
 
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-
-    my $mm = $self->mm;
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'    => { variable => \$mm }
+        });
+    };
+    return($self->error($@))
+        if($@);
 
     my $parameters_string;
     my $output;
@@ -77,14 +85,20 @@ sub craft_url {
 sub run_command {
 
     my($self, %input) = @_;
+    my($mm, $log);
 
-    return($self->error("Required parametrs haven't been defined"))
-        unless(ref($input{'parameters'}));
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-    my $mm  = $self->mm;
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'            => { variable => \$mm },
+            'log'           => { variable => \$log },
+            '$parameters'   => {
+                value           => $input{'parameters'},
+                isaref          => 'HASH'
+            }
+        });
+    };
+    return($self->error($@))
         if($@);
 
     # Crafting the URL
@@ -103,6 +117,7 @@ sub run_command {
     $log->trace(mm_sprintify("[CLOUDSTACK] Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
 
     # FIXME - what about to use LWP::UserAgent here?
+
     my $mech = WWW::Mechanize->new(
         onerror => undef
     );
@@ -180,17 +195,21 @@ sub run_command {
 
 sub query_xpath {
 
-    my ($self, $dom, $xpath, $results_to) = @_;
+    my($self, $dom, $xpath, $results_to) = @_;
+    my($mm, $log);
 
-    return($self->error("The DOM hasn't been defined"))
-        unless(defined($dom));
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-    my $mm  = $self->mm;
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'            => { variable   => \$mm },
+            'log'           => { variable   => \$log },
+            '$dom'          => { value      =>  $dom,           error       => "The DOM hasn't been defined" }
+#           '$xpath'        => { value      =>  $xpath,         careless    => 1 },
+#           '$results_to'   => { value      =>  $results_to,    careless    => 1 }
+        });
+    };
+    return($self->error($@))
         if($@);
-
 
     # First of all, let's find out what they've passed to us - a list or a string
 

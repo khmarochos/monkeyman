@@ -1,8 +1,6 @@
 Current
 =======
 
-Now we have such a nice mm_method_check(), so may all our methods use it!
-    Added by melnik13 on 21.07.2014
 
 
 
@@ -13,9 +11,6 @@ Make all binaries to change their eUID, as we don't want them to be
 runned as root when root calls it: it's a bit insecure and can lead to
 tons of real shit.
 	Added by melnik13 on 30.06.2014
-
-Now we have such a nice mm_method_check(), so may all our methods use it!
-    Added by melnik13 on 21.07.2014
 
 
 
@@ -41,6 +36,9 @@ Finish makesnapshots.pl. :)
 	Added by melnik13 on 11.06.2014
 	Implemented by melnik13 on 05.08.2014
 
+Now we have such a nice mm_method_check(), so may all our methods use it!
+    Added by melnik13 on 21.07.2014
+    Implemented by melnik13 on 06.08.2014
 
 
 Ideas

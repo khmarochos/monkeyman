@@ -203,7 +203,7 @@ THE_LOOP: while (1) {
                 }
             );
             unless(defined($results)) {
-                $log->warn(mm_sprintify("An error has occuried while refreshing %ss", $_));
+                $log->warn("An error has occuried while refreshing volumes");
                 next;
             }
 
@@ -363,9 +363,15 @@ THE_LOOP: while (1) {
         if(defined($objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'})) {
             my $timeperiod1 = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'};
             my $timeperiod2 = $configs->{'timeperiod'}->{$timeperiod1}->{'period'};
+            $log->debug(mm_sprintify(
+                "The %s volume is available only at this timeperiod: %s (which means %s)",
+                $volume_id,
+                $timeperiod1,
+                $timeperiod2
+            ));
             if(!inPeriod($now, $timeperiod2)) {
                 $log->debug(mm_sprintify(
-                    "The %s volume is available only at these period: %s (%s), skipping it",
+                    "The %s volume is available only at this timeperiod: %s (which means %s), skipping it",
                     $volume_id,
                     $timeperiod1,
                     $timeperiod2
