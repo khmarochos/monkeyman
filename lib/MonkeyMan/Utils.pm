@@ -131,6 +131,8 @@ sub mm_method_checks {
             'checks' => {
                 'mm'                => { variable   => \$mm },
                 'log'               => { variable   => \$log },
+                'element_dom'       => { variable   => \$element_dom },
+                'element_id'        => { variable   => \$element_id },
                 'cloudstack_api'    => { variable   => \$cloudstack_api },
                 'cloudstack_cache'  => { variable   => \$cloudstack_cache },
                 '$something' => {
@@ -181,23 +183,24 @@ sub mm_method_checks {
             when('mm') {
                 $value = $object->mm
                     if(!defined($value) && $object->has_mm);
-            }
-            when('cloudstack_api') {
-                $value = $object->mm->cloudstack_api
-                    if(!defined($value) && $object->has_mm && $object->mm->has_cloudstack_api);
-            }
-            when('cloudstack_cache') {
-                $value = $object->mm->cloudstack_cache
-                    if(!defined($value) && $object->has_mm && $object->mm->has_cloudstack_cache);
-            }
-            when('log') {
+            } when('log') {
                 $value = eval { Log::Log4perl::get_logger(ref($object)) }
                     if(!defined($value));
-            }
-            when(/^\$/) {
+            } when('element_dom') {
+                $value = $object->dom
+                    if(!defined($value) && $object->has_dom);
+            } when('element_id') {
+                $value = $object->get_parameter('id')
+                      if(defined($object->get_parameter('id') && $object->get_parameter('id') =~ /./)); #
+            } when('cloudstack_api') {
+                $value = $object->mm->cloudstack_api
+                    if(!defined($value) && $object->has_mm && $object->mm->has_cloudstack_api);
+            } when('cloudstack_cache') {
+                $value = $object->mm->cloudstack_cache
+                    if(!defined($value) && $object->has_mm && $object->mm->has_cloudstack_cache);
+            } when(/^\$/) {
                 # It's okay :)
-            }
-            default {
+            } default {
                 die(mm_sprintify("Don't know how to check the %s parameter", $_));
             }
         }

@@ -60,21 +60,20 @@ sub BUILD {
 sub load_dom {
     
     my($self, %input) = @_;
+    my($mm, $log, $api, $cache);
 
-    return($self->error("Required parameters haven't been defined"))
-        unless(%input);
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-    my $mm  = $self->mm;
-    return($self->error("CloudStack's API connector hasn't been initialized"))
-        unless($mm->has_cloudstack_api);
-    my $api     = $mm->cloudstack_api;
-    my $cache   = $mm->cloudstack_cache
-        if($mm->has_cloudstack_cache);
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'                => { variable   => \$mm },
+            'log'               => { variable   => \$log },
+            'cloudstack_api'    => { variable   => \$api },
+            'cloudstack_cache'  => { variable   => \$cache, careless => 1 },
+            '$input'            => { value      => \%input, error => "Required parameters haven't been defined" },
+        }
+    ); };
+    return($self->error($@))
         if($@);
-
 
     my $nodes = [];             # resulting nodes are to be stored here
     my $dom_unfiltered;         # the source DOM
@@ -278,17 +277,19 @@ sub load_dom {
 sub get_parameter {
 
     my($self, $parameter) = @_;
+    my($mm, $log, $api, $dom);
 
-    return($self->error("The soaked parameter hasn't been defined"))
-        unless(defined($parameter));
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-    my $mm  = $self->mm;
-    return($self->error("CloudStack's API connector hasn't been initialized"))
-        unless($self->mm->has_cloudstack_api);
-    my $api = $mm->cloudstack_api;
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'                => { variable   => \$mm },
+            'log'               => { variable   => \$log },
+            'element_dom'       => { variable   => \$dom, careless => 1 },
+            'cloudstack_api'    => { variable   => \$api },
+            '$parameter'        => { value      =>  $parameter }
+        }
+    ); };
+    return($self->error($@))
         if($@);
 
     $log->trace(mm_sprintify("Looking up for the %s parameter of %s", $parameter, $self));
@@ -297,7 +298,7 @@ sub get_parameter {
     return($self->error($self->error_message))
         unless(defined($xpath_query));
 
-    my $results = $api->query_xpath($self->dom, $xpath_query);
+    my $results = $api->query_xpath($dom, $xpath_query);
     return($self->error($api->error_message))
         unless(defined($results));
 
@@ -321,21 +322,17 @@ sub get_parameter {
 sub find_related_to_me {
 
     my($self, $what_to_find, $return_elements) = @_;
+    my($mm, $log);
 
-    return($self->error("The type of soaked elements hasn't been defined"))
-        unless(defined($what_to_find));
-    return($self->error("The element's information haven't been loaded"))
-        unless($self->has_dom);
-    return($self->error($self->has_errors) ? $self->error_message : "The ID of the element is unknown")
-        unless($self->get_parameter('id'));
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-    my $mm  = $self->mm;
-    return($self->error("CloudStack's API connector hasn't been initialized"))
-        unless($self->mm->has_cloudstack_api);
-    my $api = $mm->cloudstack_api;
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'                => { variable   => \$mm },
+            'log'               => { variable   => \$log },
+            '$what_to_find'     => { value      =>  $what_to_find }
+        }
+    ); };
+    return($self->error($@))
         if($@);
 
     $log->trace(mm_sprintify("Going to look for %ss related to %s", $what_to_find, $self));
@@ -353,6 +350,8 @@ sub find_related_to_me {
 
     my $objects = $quasi_object->find_related_to_given($self);
     return($self->error($quasi_object->error_message)) unless(defined($objects));
+
+    # Wrapping each element in an object of its type, if they're asking 'bout that
 
     if($return_elements) {
         for(my $i = 0; $i < @{ $objects }; $i++) {
@@ -376,19 +375,27 @@ sub find_related_to_me {
 sub find_related_to_given {
 
     my($self, $key_element) = @_;
+    my($mm, $log, $dom);
 
-    return($self->error("The key element hasn't been defined"))
-        unless(defined($key_element));
-    return($self->error("The key element's information haven't been loaded"))
-        unless($key_element->has_dom);
-    return($self->error($self->has_errors) ? $self->error_message : "The ID of the element is unknown")
-        unless($key_element->get_parameter('id'));
-    my $mm  = $self->mm;
-    return($self->error("CloudStack's API connector hasn't been initialized"))
-        unless($self->mm->has_cloudstack_api);
-    my $api = $mm->cloudstack_api;
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'                => { variable   => \$mm },
+            'log'               => { variable   => \$log },
+            '$key_element'      => { value      =>  $key_element }
+        }
+    ); };
+    return($self->error($@))
+        if($@);
+
+    eval { mm_method_checks(
+        'object' => $key_element,
+        'checks' => {
+            'element_dom'       => { },
+            'element_id'        => { }
+        }
+    ); };
+    return($self->error($@))
         if($@);
 
     $log->trace(mm_sprintify("Looking for %ss related to %s", $self->element_type, $key_element));

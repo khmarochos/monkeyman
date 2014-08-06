@@ -57,18 +57,15 @@ sub BUILD {
 
 sub get_full_list {
 
-    my $self = shift;
-    my($element_type, $mm, $log);
+    my($self, $element_type) = @_;
+    my($mm, $log);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            '$element_type'     => {
-                                     variable   => \$element_type,
-                                     value      => shift
-            },
             'mm'                => { variable   => \$mm },
-            'log'               => { variable   => \$log }
+            'log'               => { variable   => \$log },
+            '$element_type'     => { value      =>  $element_type }
         }
     ); };
     return($self->error($@))
@@ -116,28 +113,31 @@ sub get_full_list {
 
 sub store_full_list {
 
-    my $self            = shift;
-    my $element_type    = shift;
-    my $dom             = shift;
-    my $updated         = shift;
+    my($self, $element_type, $dom, $updated) = @_;
+    my($mm, $log);
 
-    return($self->error("The element's type isn't defined"))
-        unless(defined($element_type));
-    return($self->error("The DOM isn't defined"))
-        unless(defined($dom));
-    return($self->error(mm_sprintify("The %s DOM isn't valid", $dom)))
-        unless(ref($dom) eq 'XML::LibXML::Document');
-    $updated = time
-        unless(defined($updated));
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'mm'            => { variable   => \$mm },
+            'log'           => { variable   => \$log },
+            '$dom'          => {
+                value           => $dom,
+                isaref          => "XML::LibXML::Document",
+                error           => mm_sprintify("The %s DOM isn't valid", $dom)
+            },
+            '$element_type' => { value      =>  $element_type }
+        });
+    };
+    return($self->error($@))
+        if($@);
+
     return($self->error("The memory pool haven't been initialized"))
         unless($self->_has_memory_pool);
     my $memory_pool = $self->_get_memory_pool;
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__) };
-    return($self->error(mm_sprintify("The logger hasn't been initialized: %s", $@)))
-        if($@);
 
     $memory_pool->{'lists'}->{$element_type}->{'dom'}       = $dom;
-    $memory_pool->{'lists'}->{$element_type}->{'updated'}   = $updated;
+    $memory_pool->{'lists'}->{$element_type}->{'updated'}   = defined($updated) ? $updated : time;
 
     return($memory_pool->{'lists'}->{$element_type});
 
