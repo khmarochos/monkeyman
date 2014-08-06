@@ -219,13 +219,35 @@ THE_LOOP: while (1) {
 
     while(my($volume_id, $volume) = each(%{ $objects->{'volume'}->{'by_id'} })) {
 
+        my $frequency = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'frequency'};
+        my $latest = 0;
+        foreach my $snapshot_id (keys( %{ $objects->{'volume'}->{'by_id'}->{$volume_id}->{'occupied'}->{'snapshot'} } )) {
+
+            my $snapshot_element = $objects->{'snapshot'}->{'by_id'}->{$snapshot_id}->{'element'};
+            unless(defined($snapshot_element)) {
+                $log->warn(mm_sprintify("The %s snapshot isn't initialized", $snapshot_id));
+                next;
+            }
+
+            my $created = $snapshot_element->get_parameter('created');
+            unless(defined($created)) {
+                $log->warn($snapshot_element->error_message);
+                next;
+            }
+
+            $created = mm_string_to_time($created);
+
+            $latest = $created if($latest < $created);
+        }
+        my $postponed = $latest + $frequency if(defined($frequency));
+
         # Adding the volume to the queue
 
         unless(defined($queue->{$volume_id})) {
             $queue->{$volume_id} = {
                 object      => $volume, # the corresponding object
                 queued      => $now,    # when it has been added to the queue
-                postponed   => undef,   # next check time, if it's postponed
+                postponed   => $postponed, # next check time, if it's postponed
                 started     => undef,   # started at, if the job is started
                 done        => undef,   # done at, if done
                 job         => undef    # the name is pretty descriptive :)
@@ -261,14 +283,15 @@ THE_LOOP: while (1) {
 
         given($job_result->{'jobstatus'}) {
             when(0) {
+
                 $log->debug(mm_sprintify(
                     "The %s volume is still busy, the %s job is running",
                         $volume_id,
                         $job_result->{'jobid'}
                 ));
                 next;
-            }
-            when(1) {
+
+            } when(1) {
 
                 unless($opts{'no-snapshots'}) {
 
@@ -304,8 +327,8 @@ THE_LOOP: while (1) {
 
                 $log->trace(mm_sprintify("%d snapshot(s) have been deleted", $snapshots_deleted));
 
-            }
-            when(2) {
+            } when(2) {
+
                 $log->warn(mm_sprintify(
                     "The %s volume haven't been backed up, the %s job has been failed: %s - %s",
                         $volume_id,
@@ -315,13 +338,15 @@ THE_LOOP: while (1) {
                 ));
                 $queue->{$volume_id}->{'started'}       = undef;
                 $queue->{$volume_id}->{'done'}          = $now;
-            }
-            default {
+
+            } default {
+
                 $log->warn(mm_sprintify(
                     "The %s job has an odd jobstatus: %s",
                         $job_result->{'jobid'},
                         $_
                 ));
+
             }
         }
 
