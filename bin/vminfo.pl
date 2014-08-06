@@ -8,6 +8,7 @@ use lib("$Bin/../lib");
 
 use MonkeyMan;
 use MonkeyMan::Constants;
+use MonkeyMan::Utils;
 use MonkeyMan::Show;
 use MonkeyMan::CloudStack::API;
 
@@ -124,7 +125,7 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
     foreach my $node (@{ $nodes }) {
         eval { $result_main_node->addChild($node); };
         if($@) {
-            $log->warn("Can't %s->addChild(): %s", $result_main_node, $@));
+            $log->warn("Can't %s->addChild(): %s", $result_main_node, $@);
             next;
         }
     }

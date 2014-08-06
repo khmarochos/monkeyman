@@ -363,13 +363,7 @@ THE_LOOP: while (1) {
         if(defined($objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'})) {
             my $timeperiod1 = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'};
             my $timeperiod2 = $configs->{'timeperiod'}->{$timeperiod1}->{'period'};
-            $log->debug(mm_sprintify(
-                "The %s volume is available only at this timeperiod: %s (which means %s)",
-                $volume_id,
-                $timeperiod1,
-                $timeperiod2
-            ));
-            if(!inPeriod($now, $timeperiod2)) {
+            if(inPeriod($now, $timeperiod2) != 1) {
                 $log->debug(mm_sprintify(
                     "The %s volume is available only at this timeperiod: %s (which means %s), skipping it",
                     $volume_id,
@@ -380,7 +374,7 @@ THE_LOOP: while (1) {
             }
         }
 
-        # Determining business/idleness of entities occupied by the volume
+        # Determining business/idleness and availability of entities occupied by the volume
 
         foreach my $entity_type qw(virtualmachine storagepool host) {
 
@@ -406,7 +400,7 @@ THE_LOOP: while (1) {
 
                 if(
                     defined($objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'flows'}) &&
-                            $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'flows'} < $occupiers_busy
+                            $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'flows'} <= $occupiers_busy
                 ) {
                     $log->debug(mm_sprintify(
                         "The %s %s is occupied by %d volume(s) which is/are busy now, it's more or equal than %d, so the %s is threated as busy, skipping the volume",
@@ -419,7 +413,25 @@ THE_LOOP: while (1) {
                     next VOLUME;
 
                 }
+
+                if(defined($objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'available'})) {
+                    my $timeperiod1 = $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'available'};
+                    my $timeperiod2 = $configs->{'timeperiod'}->{$timeperiod1}->{'period'};
+
+                    if(inPeriod($now, $timeperiod2) != 1) {
+                        $log->debug(mm_sprintify(
+                            "The %s %s is available only at this timeperiod: %s (which means %s), skipping it",
+                            $entity_id_occupied,
+                            $entity_type,
+                            $timeperiod1,
+                            $timeperiod2
+                        ));
+                        next VOLUME;
+                    }
+                }
+
             }
+
         }
 
         my $volume_element = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'};
@@ -456,7 +468,7 @@ THE_LOOP: while (1) {
 
         }
 
-        last VOLUME; # Don't create more than one snapshots in the same LOOP
+        #last VOLUME; # Don't create more than one snapshots in the same LOOP
 
     }
 

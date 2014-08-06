@@ -56,7 +56,11 @@ sub some_method {
                 value       =>  $parameters{'something'},
                 variable    => \$something,
                 careless    => 1
-            }  # ^^^ Makes $something equal to the value, but doesn't care about the value itself
+            }, # ^^^ Makes $something equal to the value, but doesn't care about the value itself
+            '$something' => {
+                value       =>  $parameters{'something'},
+                isaref      => 'MonkeyMan::_templates::SomeClass'
+            } 
                # You also can do all these tricks to element's attributes, such as $mm, $log, etc.
         }
     ); };
