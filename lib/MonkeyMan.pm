@@ -141,8 +141,8 @@ sub init_logger {
 
         my $log_screen_loglevel = (&MMVerbosityLevels)[$self->verbosity];
         my $log_screen_pattern  = ($self->verbosity > 4) ?
-            '%d [%p{1}] %m%n' :
-            '%m%n';
+            '%d %m%n' :
+            '%d [%p{1}] %m%n';
         my $log_conf_filename = $self->configuration('log::log4perl');
         my $log_conf_template = Text::Template->new(
             TYPE        => 'FILE',

@@ -330,14 +330,16 @@ THE_LOOP: while (1) {
             } when(2) {
 
                 $log->warn(mm_sprintify(
-                    "The %s volume haven't been backed up, the %s job has been failed: %s - %s",
+                    "The %s volume hasn't been backed up, the %s job has been failed: %s - %s",
                         $volume_id,
                         $job_result->{'jobid'},
                         $job_result->{'jobresultcode'},
                         $job_result->{'jobresult'}
                 ));
+
                 $queue->{$volume_id}->{'started'}       = undef;
                 $queue->{$volume_id}->{'done'}          = $now;
+                $queue->{$volume_id}->{'postponed'}     = $now + $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'frequency'};
 
             } default {
 
@@ -461,11 +463,9 @@ THE_LOOP: while (1) {
 
         my $volume_element = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'element'};
         unless(defined($volume_element)) {
-            $log->warn("The %s volume's element haven't been initialized");
+            $log->warn("The %s volume's element hasn't been initialized");
             next VOLUME;
         }
-
-        $queue->{$volume_id}->{'started'} = time;
 
         if($opts{'no-snapshots'}) {
 
@@ -473,6 +473,9 @@ THE_LOOP: while (1) {
                 "The %s volume needs to have a snapshot, but it's not allowed to do it",
                 $volume_id
             ));
+
+            $queue->{$volume_id}->{'started'} = time;
+            $queue->{$volume_id}->{'done'}    = undef;
 
         } else {
 
@@ -483,7 +486,9 @@ THE_LOOP: while (1) {
             }
             $log->trace(mm_sprintify("The %s job has been started", $job));
 
-            $queue->{$volume_id}->{'job'} = $job;
+            $queue->{$volume_id}->{'job'}     = $job;
+            $queue->{$volume_id}->{'started'} = time;
+            $queue->{$volume_id}->{'done'}    = undef;
 
             $log->info(mm_sprintify(
                 "The %s volume has been started to make a snapshot, the job id is %s",
