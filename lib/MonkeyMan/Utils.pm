@@ -14,6 +14,7 @@ use Data::Dumper;
 use Data::Dump::XML;
 use File::Path;
 use POSIX qw(strftime);
+use POSIX::strptime;
 
 use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
@@ -21,6 +22,7 @@ my @MM_utils_all = qw(
     mm_sprintify
     mm_dump_object
     mm_method_checks
+    mm_string_to_time
 );
 
 @ISA                = qw(Exporter);
@@ -256,6 +258,19 @@ sub mm_method_checks {
         }
 
     }
+
+}
+
+
+
+sub mm_string_to_time {
+
+    my $string = shift;
+
+    return(undef)
+        unless(defined($string));
+
+    return(POSIX::strftime("%s", POSIX::strptime($string, "%Y-%m-%dT%H:%M:%S")));
 
 }
 
