@@ -145,7 +145,7 @@ sub error_message {
         "Can't %s(): %s%s",
             $caller->{'subroutine'},
             $error->text,
-            $error->text =~ /^\[BACKTRACE\]\s/m ? "" : $error->backtrace
+            $error->text =~ /\[BACKTRACE\]\s/ ? "" : ("\n" . $error->backtrace)
     ));
     
 }
