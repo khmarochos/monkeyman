@@ -35,7 +35,8 @@ eval { GetOptions(
     'q|quiet'       => \$opts{'quiet'},
     's|schedule=s'  => \$opts{'schedule'},
     'no-snapshots'  => \$opts{'no-snapshots'},
-    'no-cleanup'    => \$opts{'no-cleanup'}
+    'no-cleanup'    => \$opts{'no-cleanup'},
+    'dump-crap'     => \$opts{'dump-crap'}
 ); };
 die(mm_sprintify("Can't GetOptions(): %s", $@))
     if($@);
@@ -509,30 +510,25 @@ THE_LOOP: while (1) {
 
 
 
-    eval { mm_dump_object($configs, undef, "configs", 5); };
-    $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
-        if($@);
-    eval { mm_dump_object($queue, undef, "queue", 5); };
-    $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
-        if($@);
-    eval { mm_dump_object($objects, undef, "objects", 5); };
-    $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
-        if($@);
-
-
-    # Gathering and storing some usage statistics
-
-
-
-    # Counting stats
+    if($opts{'dump-crap'}) {
+        eval { mm_dump_object($configs, undef, "configs", 5); };
+        $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
+            if($@);
+        eval { mm_dump_object($queue, undef, "queue", 5); };
+        $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
+            if($@);
+        eval { mm_dump_object($objects, undef, "objects", 5); };
+        $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
+            if($@);
+    }
 
 
 
-    # Saving the queue and objects, MonkeyMan should be able to do that:
-    #   $dump_id = $mm->dump_state();
-    #   $restore = $mm->restore_state($dump_id);
+    # TODO: Gathering and storing some usage statistics
 
 
+
+    # Getting rest
 
     sleep(defined($schedule->{'timings'}->{'sleep_between_loops'}) ? $schedule->{'timings'}->{'sleep_between_loops'} : 60);
 
