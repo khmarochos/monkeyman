@@ -405,9 +405,13 @@ THE_LOOP: while (1) {
 
         foreach my $entity_type qw(virtualmachine storagepool host) {
 
-            foreach my $entity_id_occupied (keys(%{ $objects->{'volume'}->{'by_id'}->{$volume_id}->{'occupied'}->{$entity_type} })) {
+            foreach my $entity_id_occupied (
+                keys(%{ $objects->{'volume'}->{'by_id'}->{$volume_id}->{'occupied'}->{$entity_type} })
+            ) {
                 my $occupiers_busy = 0;
-                foreach my $entity_id_occupier (keys(%{ $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'occupier'}->{'volume'} })) {
+                foreach my $entity_id_occupier (
+                    keys(%{ $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'occupier'}->{'volume'} })
+                ) {
                     if(
                         defined($queue->{$entity_id_occupier}->{'started'}) &&
                        !defined($queue->{$entity_id_occupier}->{'done'})
@@ -430,7 +434,8 @@ THE_LOOP: while (1) {
                             $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'flows'} <= $occupiers_busy
                 ) {
                     $log->debug(mm_sprintify(
-                        "The %s %s is occupied by %d volume(s) which is/are busy now, it's more or equal than %d, so the %s is threated as busy, skipping the volume",
+                        "The %s %s is occupied by %d volume(s) which is/are busy now, " .
+                        "it's greater or equal than %d, so the %s is threated as busy, skipping the volume",
                         $entity_id_occupied,
                         $entity_type,
                         $occupiers_busy,
