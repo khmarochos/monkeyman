@@ -26,7 +26,7 @@ has 'cs' => (
 has configuration => (
     is          => 'ro',
     isa         => 'HashRef',
-    writer      => '_set_configuration',
+    writer      => '_set_onfiguration',
     predicate   => 'has_configuration',
     builder     => '_build_configuration',
     lazy        => 1
@@ -82,7 +82,7 @@ sub get_full_list {
     return($self->error($@))
         if($@);
 
-    my $never_cache = $cs->configuration->{'never'};
+    my $never_cache = $configuration->{'never'};
     if(defined($never_cache)) {
         foreach (split(/,\s*/, $never_cache)) {
             if(lc($element_type) eq lc($_)) {
