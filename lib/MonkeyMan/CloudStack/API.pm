@@ -9,7 +9,7 @@ use MonkeyMan::Utils;
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
-use WWW::Mechanize;
+use LWP::UserAgent;
 use XML::LibXML;
 use POSIX qw(strftime);
 
@@ -111,14 +111,12 @@ sub run_command {
     $log->trace(mm_sprintify("Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
     $log->trace(mm_sprintify("[CLOUDSTACK] Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
 
-    # FIXME - what about to use LWP::UserAgent here?
-
-    my $mech = WWW::Mechanize->new(
-        onerror => undef
+    my $ua = LWP::UserAgent->new(
+        agent   => "MonkeyMan-" . MMVersion . " (libwww-perl/#.###)",
     );
-    my $response = $mech->get($url);
+    my $response = $ua->get($url);
     $log->trace(mm_sprintify("[CLOUDSTACK] Got an HTTP-response: %s", $response->status_line));
-    return($self->error(mm_sprintify("Can't %s->get(): %s", $mech, $response->status_line)))
+    return($self->error(mm_sprintify("Can't %s->get(): %s", $ua, $response->status_line)))
         unless($response->is_success);
 
     # Parsing the response
