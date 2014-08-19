@@ -81,6 +81,7 @@ sub _find_related_to_given_conditions {
 sub create_snapshot {
 
     my($self, %input) = @_;
+    my($log, $cs);
 
     return($self->error("Required parameters haven't been defined"))
         unless(%input);
@@ -88,8 +89,8 @@ sub create_snapshot {
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'log'       => { variable => \$log },
-            'cs_api'    => { variable => \$api }
+            'log'   => { variable => \$log },
+            'cs'    => { variable => \$cs }
         }
     ); };
     return($self->error($@))
@@ -97,7 +98,7 @@ sub create_snapshot {
 
     my $job = eval {
         MonkeyMan::CloudStack::Elements::AsyncJob->new(
-            mm  => $mm,
+            cs  => $cs,
             run => {
                 parameters  => {
                     command     => 'createSnapshot',
