@@ -162,7 +162,7 @@ sub cleanup_snapshots {
                 return($self->error($snapshot->error_message))
                     unless(defined($job));
                 $log->info(mm_sprintify(
-                    "The %s snapshot has requested for deletion, the %s job has been started",
+                    "The %s snapshot has been requested for deletion, the %s job has been started",
                         $snapshot->get_parameter('id'),
                              $job->get_parameter('jobid')
                 ));
