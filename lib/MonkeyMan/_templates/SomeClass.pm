@@ -28,15 +28,13 @@ sub some_method {
 
     my $self = shift;
     my %parameters = @_;
-    my($mm, $log, $cloudstack_api, $cloudstack_cache, $something);
+    my($mm, $log, $something);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
             'mm'                => { variable   => \$mm },
             'log'               => { variable   => \$log },
-            'cloudstack_api'    => { variable   => \$cloudstack_api },
-            'cloudstack_cache'  => { variable   => \$cloudstack_cache },
             '$something' => {
                 value       =>  $parameters{'something'}
             }, # ^^^ Just checks if the parameter has been defined

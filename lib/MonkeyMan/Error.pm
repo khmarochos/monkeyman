@@ -34,7 +34,7 @@ has 'backtrace' => (
 
 
 sub _build_backtrace {
-    longmess("[BACKTRACE]");
+    longmess("[BACKTRACE] requested");
 }
     
 

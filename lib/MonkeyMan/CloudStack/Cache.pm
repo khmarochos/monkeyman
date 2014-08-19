@@ -16,20 +16,20 @@ with 'MonkeyMan::ErrorHandling';
 
 
 
-has 'mm' => (
+has 'cs' => (
     is          => 'ro',
-    isa         => 'MonkeyMan',
-    predicate   => 'has_mm',
-    writer      => '_set_mm',
+    isa         => 'MonkeyMan::CloudStack',
+    predicate   => 'has_cs',
+    writer      => '_set_cs',
     required    => 'yes'
 );
 has configuration => (
     is          => 'ro',
     isa         => 'HashRef',
-    reader      => '_get_configuration',
     writer      => '_set_configuration',
     predicate   => 'has_configuration',
-    required    => 'yes'
+    builder     => '_build_configuration',
+    lazy        => 1
 );
 has memory_pool => (
     is          => 'ro',
@@ -55,23 +55,34 @@ sub BUILD {
 
 
 
+sub _build_configuration {
+
+    my $self = shift;
+
+    return(eval { $self->cs->configuration->{'cache'} });
+
+}
+
+
+
 sub get_full_list {
 
     my($self, $element_type) = @_;
-    my($mm, $log);
+    my($log, $cs, $configuration);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'                => { variable   => \$mm },
-            'log'               => { variable   => \$log },
-            '$element_type'     => { value      =>  $element_type }
+            'log'           => { variable   => \$log },
+            'cs'            => { variable   => \$cs },
+            'configuration' => { variable   => \$configuration },
+            '$element_type' => { value      =>  $element_type }
         }
     ); };
     return($self->error($@))
         if($@);
 
-    my $never_cache = $mm->{'configuration'}->{'cloudstack'}->{'cache'}->{'never'};
+    my $never_cache = $cs->configuration->{'never'};
     if(defined($never_cache)) {
         foreach (split(/,\s*/, $never_cache)) {
             if(lc($element_type) eq lc($_)) {
@@ -96,11 +107,11 @@ sub get_full_list {
         return(undef);
     }
 
-    unless($cached_list->{'updated'} + $self->_get_configuration->{'ttl'} >= time) {
+    unless($cached_list->{'updated'} + $configuration->{'ttl'} >= time) {
         $log->trace(mm_sprintify(
             "The cached list of %ss is expired since %s",
                 $element_type,
-                strftime(MMDateTimeFormat, localtime($cached_list->{'updated'} + $self->_get_configuration->{'ttl'}))
+                strftime(MMDateTimeFormat, localtime($cached_list->{'updated'} + $configuration->{'ttl'}))
         ));
         return(undef);
     }
@@ -114,12 +125,11 @@ sub get_full_list {
 sub store_full_list {
 
     my($self, $element_type, $dom, $updated) = @_;
-    my($mm, $log);
+    my($log);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'            => { variable   => \$mm },
             'log'           => { variable   => \$log },
             '$dom'          => {
                 value           => $dom,

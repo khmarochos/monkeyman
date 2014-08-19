@@ -14,11 +14,11 @@ with 'MonkeyMan::ErrorHandling';
 
 
 
-has 'mm' => (
+has 'cs' => (
     is          => 'ro',
-    isa         => 'MonkeyMan',
-    predicate   => 'has_mm',
-    writer      => '_set_mm',
+    isa         => 'MonkeyMan::CloudStack',
+    predicate   => 'has_cs',
+    writer      => '_set_cs',
     required    => 'yes'
 );
 has 'init_load_dom' => (
@@ -57,19 +57,36 @@ sub BUILD {
 
 
 
+sub own_method_checks {
+
+    my($self, $check_key) = @_;
+
+    given($check_key) {
+        when('dom') {
+            return($self->dom);
+        } when('id') {
+            return($self->get_parameter('id'));
+        } default {
+            die(mm_sprintify("[CAN'T CHECK] - the parameter %s is unknown", $check_key));
+        }
+    }
+
+}
+
+
+
 sub load_dom {
     
     my($self, %input) = @_;
-    my($mm, $log, $api, $cache);
+    my($log, $api, $cache);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'                => { variable   => \$mm },
-            'log'               => { variable   => \$log },
-            'cloudstack_api'    => { variable   => \$api },
-            'cloudstack_cache'  => { variable   => \$cache, careless => 1 },
-            '$input'            => { value      => \%input, error => "Required parameters haven't been defined" },
+            'log'       => { variable   => \$log },
+            'cs_api'    => { variable   => \$api },
+            'cs_cache'  => { variable   => \$cache, careless => 1 },
+            '$input'    => { value      => \%input, error => "Required parameters haven't been defined" },
         }
     ); };
     return($self->error($@))
@@ -277,16 +294,15 @@ sub load_dom {
 sub get_parameter {
 
     my($self, $parameter) = @_;
-    my($mm, $log, $api, $dom);
+    my($log, $api, $dom);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'                => { variable   => \$mm },
-            'log'               => { variable   => \$log },
-            'element_dom'       => { variable   => \$dom, careless => 1 },
-            'cloudstack_api'    => { variable   => \$api },
-            '$parameter'        => { value      =>  $parameter }
+            'log'           => { variable   => \$log },
+            'dom'           => { variable   => \$dom, careless => 1 },
+            'cs_api'        => { variable   => \$api },
+            '$parameter'    => { value      =>  $parameter }
         }
     ); };
     return($self->error($@))
@@ -306,7 +322,7 @@ sub get_parameter {
 
     given($results_got) {
         when($_ < 1) { $log->trace("The requested parameter haven't been got") }
-        when($_ > 1) { $log->warn(mm_sprintify("%d results have been got, but the caller is expecting only 1, returning the first one", $results_got)) }
+        when($_ > 1) { $log->warn(mm_sprintify("%d results have been got, but the caller is expecting for only one", $results_got)) }
     }
 
     my $result = eval { $results_got ? ${ $results }[0]->textContent : undef; };
@@ -322,14 +338,14 @@ sub get_parameter {
 sub find_related_to_me {
 
     my($self, $what_to_find, $return_elements) = @_;
-    my($mm, $log);
+    my($log, $cs);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'                => { variable   => \$mm },
-            'log'               => { variable   => \$log },
-            '$what_to_find'     => { value      =>  $what_to_find }
+            'log'           => { variable   => \$log },
+            'cs'            => { variable   => \$cs },
+            '$what_to_find' => { value      =>  $what_to_find }
         }
     ); };
     return($self->error($@))
@@ -343,7 +359,7 @@ sub find_related_to_me {
 
     my $quasi_object = eval {
         require "MonkeyMan/CloudStack/Elements/$module_name.pm";
-         return("MonkeyMan::CloudStack::Elements::$module_name"->new(mm => $mm));
+         return("MonkeyMan::CloudStack::Elements::$module_name"->new(cs => $cs));
     };
     return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::%s->new(): %s", $module_name, $@)))
         if($@);
@@ -357,7 +373,7 @@ sub find_related_to_me {
         for(my $i = 0; $i < @{ $objects }; $i++) {
             ${ $objects }[$i] = eval {
                 return("MonkeyMan::CloudStack::Elements::$module_name"->new(
-                    mm  => $mm,
+                    cs  => $cs,
                     dom => ${ $objects }[$i]
                 ));
             };
@@ -375,14 +391,13 @@ sub find_related_to_me {
 sub find_related_to_given {
 
     my($self, $key_element) = @_;
-    my($mm, $log, $dom);
+    my($log, $dom);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'                => { variable   => \$mm },
-            'log'               => { variable   => \$log },
-            '$key_element'      => { value      =>  $key_element }
+            'log'           => { variable   => \$log },
+            '$key_element'  => { value      =>  $key_element }
         }
     ); };
     return($self->error($@))
@@ -391,8 +406,8 @@ sub find_related_to_given {
     eval { mm_method_checks(
         'object' => $key_element,
         'checks' => {
-            'element_dom'       => { },
-            'element_id'        => { }
+            'dom'           => { },
+            'id'            => { }
         }
     ); };
     return($self->error($@))

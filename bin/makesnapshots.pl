@@ -57,8 +57,12 @@ my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
 die(mm_sprintify("The logger hasn't been initialized: %s", $@))
     if($@);
 
-my $api = $mm->cloudstack_api;
-$log->logdie($mm->error_message)
+my $cs = $mm->init_cloudstack;
+die($mm->error_message)
+    unless(defined($cs));
+
+my $api = $cs->api;
+die($cs->error_message)
     unless(defined($api));
 
 
@@ -171,7 +175,7 @@ THE_LOOP: while (1) {
                 $log->debug(mm_sprintify("Loading the information about the %s domain", $domain_path));
 
                 my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
-                    mm          => $mm,
+                    cs          => $cs,
                     load_dom    => {
                         conditions  => {
                             path        => $domain_path
@@ -687,7 +691,7 @@ sub find_related_and_refresh_if_needed {
                 my $downlink = eval {
                     require("MonkeyMan/CloudStack/Elements/$module_name.pm");
                     return("MonkeyMan::CloudStack::Elements::$module_name"->new(
-                        mm          => $mm,
+                        cs          => $cs,
                         load_dom    => {
                              dom        => $downlink_dom
                         }

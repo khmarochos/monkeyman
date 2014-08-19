@@ -21,32 +21,29 @@ with 'MonkeyMan::ErrorHandling';
 
 
 
-has 'mm' => (
+has 'cs' => (
     is          => 'ro',
-    isa         => 'MonkeyMan',
-    predicate   => 'has_mm',
-    writer      => '_set_mm',
+    isa         => 'MonkeyMan::CloudStack',
+    predicate   => 'has_cs',
+    writer      => '_set_cs',
     required    => 'yes'
+);
+has configuration => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    writer      => '_set_configuration',
+    predicate   => 'has_configuration',
+    builder     => '_build_configuration',
+    lazy        => 1
 );
 
 
 
-sub BUILD {
+sub _build_configuration {
 
     my $self = shift;
-    my($mm, $log);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'mm'    => { variable => \$mm },
-            'log'   => { variable => \$log }
-        });
-    };
-    return($self->error($@))
-        if($@);
-
-    $log->trace(mm_sprintify("CloudStack's API connector has been initialized (MonkeyMan's instance %s)", $mm));
+    return(eval { $self->cs->configuration->{'api'} });
 
 }
 
@@ -55,12 +52,12 @@ sub BUILD {
 sub craft_url {
 
     my($self, %parameters) = @_;
-    my($mm);
+    my($configuration);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'    => { variable => \$mm }
+            'configuration' => { variable => \$configuration },
         });
     };
     return($self->error($@))
@@ -68,13 +65,13 @@ sub craft_url {
 
     my $parameters_string;
     my $output;
-    $parameters{'apiKey'} = $mm->configuration('cloudstack::api::api_key');
+    $parameters{'apiKey'} = $configuration->{'api_key'};
     foreach my $parameter (sort(keys(%parameters))) {
         $parameters_string  .= (defined($parameters_string) ? '&' : '') . $parameter . '=' .            $parameters{$parameter};
         $output             .= (defined($output)            ? '&' : '') . $parameter . '=' . uri_encode($parameters{$parameter}, 1);
     }
-    my $base64_encoded  = encode_base64(hmac_sha1(lc($output), $mm->configuration('cloudstack::api::secret_key'))); chomp($base64_encoded);
-    my $url             = $mm->configuration('cloudstack::api::api_address') . '?' . $parameters_string . "&signature=" . uri_encode($base64_encoded, 1);
+    my $base64_encoded  = encode_base64(hmac_sha1(lc($output), $configuration->{'secret_key'})); chomp($base64_encoded);
+    my $url             = $configuration->{'api_address'} . '?' . $parameters_string . "&signature=" . uri_encode($base64_encoded, 1);
 
     return($url);
 
@@ -85,16 +82,16 @@ sub craft_url {
 sub run_command {
 
     my($self, %input) = @_;
-    my($mm, $log);
+    my($log, $configuration);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'            => { variable => \$mm },
-            'log'           => { variable => \$log },
-            '$parameters'   => {
-                value           => $input{'parameters'},
-                isaref          => 'HASH'
+            'log'               => { variable => \$log },
+            'configuration'     => { variable => \$configuration },
+            '$parameters'       => {
+                value               => $input{'parameters'},
+                isaref              => 'HASH'
             }
         });
     };
@@ -103,13 +100,11 @@ sub run_command {
 
     # Crafting the URL
 
-    my $url = defined($input{'url'}) ?
-        defined($input{'url'}) :
-        $self->craft_url(%{ $input{'parameters'} });
+    my $url = defined($input{'url'}) ? $input{'url'} : $self->craft_url(%{ $input{'parameters'} });
     return($self->error($self->error_message))
         unless(defined($url));
     return($self->error("The requested URL is invalid"))
-        unless(index($url, $mm->configuration('cloudstack::api::api_address')) == 0);
+        unless(index($url, $configuration->{'api_address'}) == 0);
 
     # Running the command
 
@@ -156,11 +151,13 @@ sub run_command {
                 $jobid
         ));
 
-        while(sleep(
-            $mm->configuration('time::sleep_while_waiting') ?
-                $mm->configuration('time::sleep_while_waiting') :
-                MMSleepWhileWaitingForAsyncJobResult
-        )) {
+        my $time_to_sleep = eval {
+            defined($self->cs->mm->configuration->{'time'}->{'sleep_while_waiting'}) ?
+                    $self->cs->mm->configuration->{'time'}->{'sleep_while_waiting'} :
+                    MMSleepWhileWaitingForAsyncJobResult
+        };
+
+        while($time_to_sleep) {
 
             $dom = $self->run_command(
                 parameters => {
@@ -196,12 +193,11 @@ sub run_command {
 sub query_xpath {
 
     my($self, $dom, $xpath, $results_to) = @_;
-    my($mm, $log);
+    my($log);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'            => { variable   => \$mm },
             'log'           => { variable   => \$log },
             '$dom'          => { value      =>  $dom,           error       => "The DOM hasn't been defined" }
 #           '$xpath'        => { value      =>  $xpath,         careless    => 1 },

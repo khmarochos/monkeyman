@@ -49,8 +49,13 @@ my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
 die(mm_sprintify("The logger hasn't been initialized", $@))
     if($@);
 
-my $api = $mm->cloudstack_api;
-$log->logdie($mm->error_message) unless(defined($api));
+my $cs = $mm->init_cloudstack;
+die($mm->error_message)
+    unless(defined($cs));
+
+my $api = $cs->api;
+$log->logdie($cs->error_message)
+    unless(defined($api));
 
 
 

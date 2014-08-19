@@ -5,8 +5,7 @@ use warnings;
 
 use MonkeyMan::Constants;
 use MonkeyMan::Utils;
-use MonkeyMan::CloudStack::API;
-use MonkeyMan::CloudStack::Cache;
+use MonkeyMan::CloudStack;
 
 use Config::General qw(ParseConfig);
 use Log::Log4perl qw(:no_extra_logdie_message);
@@ -46,18 +45,7 @@ has 'verbosity' => (
     writer      => '_set_verbosity',
     predicate   => '_has_verbosity'
 );
-has 'cloudstack_api' => (
-    is          => 'ro',
-    isa         => 'MonkeyMan::CloudStack::API',
-    writer      => '_set_cloudstack_api',
-    predicate   => 'has_cloudstack_api',
-);
-has 'cloudstack_cache' => (
-    is          => 'ro',
-    isa         => 'MonkeyMan::CloudStack::Cache',
-    writer      => '_set_cloudstack_cache',
-    predicate   => 'has_cloudstack_cache'
-);
+
 
 
 sub BUILD {
@@ -81,23 +69,9 @@ sub BUILD {
 
     # Initializing connectors
 
-    my $log = $self->init_logger;
+    my $log = $self->_init_logger;
     die($self->error_message)
         unless(defined($log));
-
-    unless($self->skip_init->{'cloudstack_api'}) {
-        my $cloudstack_api = $self->init_cloudstack_api;
-        die($self->error_message)
-            unless(defined($cloudstack_api));
-        $self->_set_cloudstack_api($cloudstack_api);
-    }
-
-    unless($self->skip_init->{'cloudstack_cache'}) {
-        my $cloudstack_cache = $self->init_cloudstack_cache;
-        die($self->error_message)
-            unless(defined($cloudstack_cache));
-        $self->_set_cloudstack_cache($cloudstack_cache);
-    }
 
     # Okay, everything's fine now :)
 
@@ -112,21 +86,25 @@ sub configuration {
     my($self, $parameter) = @_;
 
     if(defined($parameter)) {
+
         my $node = $self->_get_configuration;
         foreach (split('::', $parameter)) {
             return(undef) unless(ref($node));
             $node = $node->{$_};
         }
         return($node);
+
     } else {
+
         return($self->_get_configuration)
+
     };
 
 }
 
 
 
-sub init_logger {
+sub _init_logger {
 
     my $self = shift;
 
@@ -176,39 +154,15 @@ sub init_logger {
 
 
 
-sub init_cloudstack_api {
+sub init_cloudstack {
 
     my $self = shift;
 
-    my $cloudstack_api = eval {
-        MonkeyMan::CloudStack::API->new(
-            mm => $self
-        )
-    };
+    my $cloudstack = eval { MonkeyMan::CloudStack->new(mm => $self); };
 
     return($@ ?
-        $self->error(mm_sprintify("Can't MonkeyMan::CloudStack::API::new(): %s", $@)) :
-        $cloudstack_api
-    );
-
-}
-
-
-
-sub init_cloudstack_cache {
-
-    my $self = shift;
-
-    my $cloudstack_cache = eval {
-        MonkeyMan::CloudStack::Cache->new(
-            mm              => $self,
-            configuration   => $self->configuration->{'cloudstack'}->{'cache'}
-        )
-    };
-
-    return($@ ?
-        $self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Cache::new(): %s", $@)) :
-        $cloudstack_cache
+        $self->error(mm_sprintify("Can't MonkeyMan::CloudStack::new(): %s", $@)) :
+        $cloudstack
     );
 
 }

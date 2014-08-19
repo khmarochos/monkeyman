@@ -131,31 +131,30 @@ sub mm_method_checks {
         eval { mm_method_checks(
             'object' => $self,
             'checks' => {
-                'mm'                => { variable   => \$mm },
-                'log'               => { variable   => \$log },
-                'element_dom'       => { variable   => \$element_dom },
-                'element_id'        => { variable   => \$element_id },
-                'cloudstack_api'    => { variable   => \$cloudstack_api },
-                'cloudstack_cache'  => { variable   => \$cloudstack_cache },
-                '$something' => {
-                    value       =>  $parameters{'something'}
+                'mm'            => { variable   => \$mm },
+                'log'           => { variable   => \$log },
+                'cs'            => { variable => \$cloudstack },
+                'cs_api'        => { variable   => \$cloudstack_api },
+                'cs_cache'      => { variable   => \$cloudstack_cache },
+                '$something'    => {
+                    value           =>  $parameters{'something'}
                 }, # ^^^ Just checks if the parameter has been defined
-                '$something' => {
-                    value       =>  $parameters{'something'},
-                    isaref      => 'MonkeyMan::_templates::SomeClass'
+                '$something'    => {
+                    value           =>  $parameters{'something'},
+                    isaref          => 'MonkeyMan::_templates::SomeClass'
                 }, # ^^^ Checks if the parameter is defined and it's a reference to something
-                '$something' => {
-                    value       =>  $parameters{'something'},
-                    error       => "Something hasn't been defined"
+                '$something'    => {
+                    value           =>  $parameters{'something'},
+                    error           => "Something hasn't been defined"
                 }, # ^^^ What error message should be generated if the check fails instead of default
-                '$something' => {
-                    value       =>  $parameters{'something'},
-                    variable    => \$something
+                '$something'    => {
+                    value           =>  $parameters{'something'},
+                    variable        => \$something
                 }, # ^^^ Checks the parameter and makes $something equal to the value
-                '$something' => {
-                    value       =>  $parameters{'something'},
-                    variable    => \$something,
-                    careless    => 1
+                '$something'    => {
+                    value           =>  $parameters{'something'},
+                    variable        => \$something,
+                    careless        => 1
                 }  # ^^^ Makes $something equal to the value, but doesn't care about the value itself
                    # Of course, you can do all these tricks to any element's attribute, such as mm, log, etc.
             },
@@ -177,37 +176,49 @@ sub mm_method_checks {
 
     while(my($check_key, $check_value) = each(%{ $checks })) {
 
+        # If the value is given, just assign it
+
         my $value = $check_value->{'value'};
 
-        # Assigning parameters...
- 
-        given($check_key) {
-            when('mm') {
-                $value = $object->mm
-                    if(!defined($value) && $object->has_mm);
-            } when('log') {
-                $value = eval { Log::Log4perl::get_logger(ref($object)) }
-                    if(!defined($value));
-            } when('element_dom') {
-                $value = $object->dom
-                    if(!defined($value) && $object->has_dom);
-            } when('element_id') {
-                $value = $object->get_parameter('id')
-                      if(defined($object->get_parameter('id') && $object->get_parameter('id') =~ /./)); #
-            } when('cloudstack_api') {
-                $value = $object->mm->cloudstack_api
-                    if(!defined($value) && $object->has_mm && $object->mm->has_cloudstack_api);
-            } when('cloudstack_cache') {
-                $value = $object->mm->cloudstack_cache
-                    if(!defined($value) && $object->has_mm && $object->mm->has_cloudstack_cache);
-            } when(/^\$/) {
-                # It's okay :)
-            } default {
-                die(mm_sprintify("Don't know how to check the %s parameter", $_));
+        # Or, if we don't have the value...
+        
+        unless(defined($value)) {
+            my $try_global_method_checks = 0;
+            if($object->can('own_method_checks') && $check_key !~ /^\$/) {
+                $value = eval { $object->own_method_checks($check_key) };
+                $try_global_method_checks = 1
+                    if($@ =~ /^\[CAN'T CHECK\]/)
+            } else {
+                $try_global_method_checks = 1;
             }
+
+            if($try_global_method_checks) {
+                given($check_key) {
+                    when('log') {
+                        $value = Log::Log4perl::get_logger(ref($object))
+                    } when('mm') {
+                        $value = $object->mm
+                    } when('configuration') {
+                        $value = $object->configuration
+                    } when('cs') {
+                        $value = $object->cs
+                    } when('cs_api') {
+                        $value = $object->cs->api
+                            if($object->has_cs);
+                    } when('cs_cache') {
+                        $value = $object->cs->cache
+                            if($object->has_cs);
+                    } when(/^\$/) {
+                        # Oh, it's okay
+                    } default {
+                        die(mm_sprintify("[CAN'T CHECK] - the parameter %s is unknown", $check_key));
+                    }
+                }
+            }
+
         }
 
-        # Have we got anything?
+        # So, have we got anything after all these checks and assignments?
 
         if(
             !defined($value) &&

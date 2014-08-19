@@ -45,11 +45,13 @@ die(mm_sprintify("Can't MonkeyMan->new(): %s", $@))
     if($@);
 
 my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
-die(mm_sprintify("The logger hasn't been initialized: %s", $@))
-    if($@);
+die(mm_sprintify("The logger hasn't been initialized: %s", $@)) if($@);
 
-my $api = $mm->cloudstack_api;
-die($mm->error_message) unless(defined($api));
+my $cs = $mm->init_cloudstack;
+die($mm->error_message) unless(defined($cs));
+
+my $api = $cs->api;
+die($cs->error_message) unless(defined($api));
 
 
 
@@ -59,7 +61,7 @@ my $virtualmachines = $api->run_command(
         listall     => 'true'
     }
 );
-$log->die($api->error_message) unless(defined($virtualmachines));
+$log->logdie($api->error_message) unless(defined($virtualmachines));
 
 
 
