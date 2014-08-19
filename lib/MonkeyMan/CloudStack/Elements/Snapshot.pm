@@ -86,13 +86,13 @@ sub _find_related_to_given_conditions {
 sub delete {
 
     my $self = shift;
-    my($mm, $log);
+    my($cs, $log);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            'mm'                => { variable   => \$mm },
-            'log'               => { variable   => \$log }
+            'cs'    => { variable => \$cs },
+            'log'   => { variable => \$log }
         }
     ); };
     return($self->error($@))
@@ -100,7 +100,7 @@ sub delete {
 
     my $job = eval {
         MonkeyMan::CloudStack::Elements::AsyncJob->new(
-            mm  => $mm,
+            cs  => $cs,
             run => {
                 parameters  => {
                     command     => 'deleteSnapshot',

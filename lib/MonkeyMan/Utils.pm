@@ -204,10 +204,10 @@ sub mm_method_checks {
                         $value = $object->cs
                     } when('cs_api') {
                         $value = $object->cs->api
-                            if($object->has_cs);
+                            if(ref($object->cs) eq 'MonkeyMan::CloudStack');
                     } when('cs_cache') {
                         $value = $object->cs->cache
-                            if($object->has_cs);
+                            if(ref($object->cs) eq 'MonkeyMan::CloudStack');
                     } when(/^\$/) {
                         # Oh, it's okay
                     } default {

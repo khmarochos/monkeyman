@@ -84,15 +84,16 @@ sub create_snapshot {
 
     return($self->error("Required parameters haven't been defined"))
         unless(%input);
-    return($self->error("MonkeyMan hasn't been initialized"))
-        unless($self->has_mm);
-    my $mm  = $self->mm;
-    return($self->error("CloudStack's API connector hasn't been initialized"))
-        unless($mm->has_cloudstack_api);
-    my $api     = $mm->cloudstack_api;
-    my $cache   = $mm->cloudstack_cache
-        if($mm->has_cloudstack_cache);
-    my $log = eval { Log::Log4perl::get_logger(__PACKAGE__); };
+
+    eval { mm_method_checks(
+        'object' => $self,
+        'checks' => {
+            'log'       => { variable => \$log },
+            'cs_api'    => { variable => \$api }
+        }
+    ); };
+    return($self->error($@))
+        if($@);
 
     my $job = eval {
         MonkeyMan::CloudStack::Elements::AsyncJob->new(
@@ -123,13 +124,12 @@ sub cleanup_snapshots {
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            '$keep'             => {
-                                     variable   => \$keep,
-                                     value      => shift
-            },
-            'mm'                => { variable   => \$mm },
-            'cloudstack_api'    => { variable   => \$api },
-            'log'               => { variable   => \$log }
+            'log'       => { variable   => \$log },
+            'cs_api'    => { variable   => \$api },
+            '$keep'     => {
+                             variable   => \$keep,
+                             value      => shift
+            }
         }
     ); };
     return($self->error($@))

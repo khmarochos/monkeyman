@@ -36,8 +36,8 @@ before BUILD => sub {
         eval { mm_method_checks(
             'object'    => $self,
             'checks'    => {
-                'cloudstack_api'    => { variable   => \$api },
-                'log'               => { variable   => \$log }
+                'log'       => { variable   => \$log },
+                'cs_api'    => { variable   => \$api }
             }
         ); };
         die($@)
@@ -128,19 +128,18 @@ sub _find_related_to_given_conditions {
 sub result {
 
     my $self = shift;
-    my($jobid, $mm, $api, $log);
+    my($log, $api, $jobid);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            '$jobid'            => {
-                                     variable   => \$jobid,
-                                     value      => shift,
-                                     careless   => 1
-            },
-            'mm'                => { variable   => \$mm },
-            'cloudstack_api'    => { variable   => \$api },
-            'log'               => { variable   => \$log }
+            'log'       => { variable   => \$log },
+            'cs_api'    => { variable   => \$api },
+            '$jobid'    => {
+                            variable   => \$jobid,
+                            value      => shift,
+                            careless   => 1
+            }
         }
     ); };
     return($self->error($@))
@@ -172,22 +171,21 @@ sub result {
 sub result_parse {
 
     my $self = shift;
-    my($dom, $results_to, $mm, $api, $log);
+    my($log, $api, $dom, $results_to);
 
     eval { mm_method_checks(
         'object' => $self,
         'checks' => {
-            '$dom'              => {
-                                     variable   => \$dom,
-                                     value      => shift,
+            'log'           => { variable   => \$log },
+            'cs_api'        => { variable   => \$api },
+            '$dom'          => {
+                                variable   => \$dom,
+                                value      => shift,
             },
-            '$results_to'       => {
-                                     variable   => \$results_to,
-                                     value      => shift,
-            },
-            'mm'                => { variable   => \$mm },
-            'cloudstack_api'    => { variable   => \$api },
-            'log'               => { variable   => \$log }
+            '$results_to'   => {
+                                variable   => \$results_to,
+                                value      => shift,
+            }
         }
     ); };
     return($self->error($@))
