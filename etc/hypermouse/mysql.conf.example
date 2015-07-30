@@ -1,6 +1,0 @@
-<mysql>
-    host        = localhost
-    db          = hypermouse
-    username    = ***
-    password    = ***
-</mysql>
