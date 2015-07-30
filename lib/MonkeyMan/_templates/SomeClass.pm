@@ -1,16 +1,20 @@
 package MonkeyMan::_templates::SomeClass;
 
+# Use pragmas
 use strict;
 use warnings;
 
+# Use my own modules (supposing we know where to find them)
 use MonkeyMan::Constants;
 use MonkeyMan::Utils;
 
+# Use 3rd party libraries
+use TryCatch;
+
+# Use Moose
 use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
-
-with 'MonkeyMan::ErrorHandling';
 
 
 
@@ -21,56 +25,6 @@ has 'mm' => (
     writer      => '_set_mm',
     required    => 'yes'
 );
-
-
-
-sub some_method {
-
-    my $self = shift;
-    my %parameters = @_;
-    my($mm, $log, $something);
-
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'mm'                => { variable   => \$mm },
-            'log'               => { variable   => \$log },
-            '$something' => {
-                value       =>  $parameters{'something'}
-            }, # ^^^ Just checks if the parameter has been defined
-            '$something' => {
-                value       =>  $parameters{'something'},
-                isaref      => 'MonkeyMan::_templates::SomeClass'
-            }, # ^^^ Checks if the parameter is defined and it's a reference to something
-            '$something' => {
-                value       =>  $parameters{'something'},
-                error       => "Something hasn't been defined"
-            }, # ^^^ What error message should be generated if the check fails instead of default
-            '$something' => {
-                value       =>  $parameters{'something'},
-                variable    => \$something
-            }, # ^^^ Checks the parameter and makes $something equal to the value
-            '$something' => {
-                value       =>  $parameters{'something'},
-                variable    => \$something,
-                careless    => 1
-            }, # ^^^ Makes $something equal to the value, but doesn't care about the value itself
-            '$something' => {
-                value       =>  $parameters{'something'},
-                isaref      => 'MonkeyMan::_templates::SomeClass'
-            } 
-               # You also can do all these tricks to element's attributes, such as $mm, $log, etc.
-        }
-    ); };
-    return($self->error($@))
-        if($@);
-
-    $log->trace(mm_sprintify("I've got \"%s\" as \$something", $something));
-    $log->trace(mm_sprintify("I've also got these parameters: %s", \%parameters));
-
-    return(mm_sprintify("That %s is fine, thank you!", $something));
-
-}
 
 
 

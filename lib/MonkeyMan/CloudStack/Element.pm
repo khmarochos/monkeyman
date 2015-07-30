@@ -1,16 +1,19 @@
 package MonkeyMan::CloudStack::Element;
 
+# Use pragmas
 use strict;
 use warnings;
-use feature "switch";
 
+# Use my own modules (supposing we know where to find them)
 use MonkeyMan::Constants;
 use MonkeyMan::Utils;
 
+# Use 3rd-party libraries
+use experimental qw(switch);
+
+# Use Moose :)
 use Moose::Role;
 use namespace::autoclean;
-
-with 'MonkeyMan::ErrorHandling';
 
 
 
@@ -47,9 +50,8 @@ sub BUILD {
     if($self->has_init_load_dom) {
         my $result = $self->load_dom(%{$self->init_load_dom});
         given($result) {
-            when(undef)                     { die($self->error_message) }
-            when(scalar(@{ $result }) < 1)  { die("The element hasn't been found") }
-            when(scalar(@{ $result }) > 1)  { die("Too many elements have been found") }
+            when(scalar(@{ $result }) < 1) { MonkeyMan::Exception->throw("The element hasn't been found") }
+            when(scalar(@{ $result }) > 1) { MonkeyMan::Exception->throw("Too many elements have been found") }
         }
     }
     
@@ -62,12 +64,11 @@ sub own_method_checks {
     my($self, $check_key) = @_;
 
     given($check_key) {
-        when('dom') {
-            return($self->dom);
-        } when('id') {
-            return($self->get_parameter('id'));
-        } default {
-            die(mm_sprintify("[CAN'T CHECK] - the parameter %s is unknown", $check_key));
+        when('dom') { return($self->dom); }
+        when('id')  { return($self->get_parameter('id')); }
+        default {
+            MonkeyMan::Exception::MethodInvocationCheck::CheckNotImplemented->
+                throw_f("The %s parameter isn't implemeted to be checked", $check_key);
         }
     }
 
@@ -80,17 +81,21 @@ sub load_dom {
     my($self, %input) = @_;
     my($log, $api, $cache);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'       => { variable   => \$log },
-            'cs_api'    => { variable   => \$api },
-            'cs_cache'  => { variable   => \$cache, careless => 1 },
-            '$input'    => { value      => \%input, error => "Required parameters haven't been defined" },
-        }
-    ); };
-    return($self->error($@))
-        if($@);
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'       => { variable   => \$log },
+                'cs_api'    => { variable   => \$api },
+                'cs_cache'  => { variable   => \$cache, careless => 1 },
+                '$input'    => { value      => \%input, error => "Required parameters haven't been defined" },
+            }
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
     my $nodes = [];             # resulting nodes are to be stored here
     my $dom_unfiltered;         # the source DOM
@@ -98,24 +103,24 @@ sub load_dom {
 
     # Load the predetermined DOM (if given) or the full list of elements
 
-    if(ref($input{'dom'}) eq 'XML::LibXML::Document') {
+    if(blessed($input{'dom'}) && $input{'dom'}->isa('XML::LibXML::Document')) {
 
-        $log->debug(mm_sprintify("Loading %s with the predetermined DOM: %s", $self, $input{'dom'}));
+        $log->debug(mm_sprintf("Loading %s with the predetermined DOM: %s", $self, $input{'dom'}));
 
-        push(@{ $nodes }, eval { $input{'dom'}->documentElement });
-        return($self->error(mm_sprintify("Can't %s->documentElement(): %s", $input{'dom'}, $@)))
-            if($@);
+        try {
+            push(@{ $nodes }, eval { $input{'dom'}->documentElement });
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't %s->documentElement(): %s", $input{'dom'}, $e);
+        }
     
     } else {
 
         my $cached = $cache->get_full_list($self->element_type);
-        return($self->error($cache->error_message))
-            if($cache->has_errors);
 
         if(defined($cached)) {
 
             $dom_unfiltered = $cached->{'dom'};
-            $log->trace(mm_sprintify(
+            $log->trace(mm_sprintf(
                 "The list of %ss has been loaded from the cache as %s",
                     $self->element_type,
                     $cached->{'dom'}
@@ -125,15 +130,13 @@ sub load_dom {
 
             $dom_unfiltered = $api->run_command(
                 # FIXME: it's quite dangerous to pass all parameters without any
-                # security checks, so I should consider adding a couple of them here...
+                # security checks, so I should consider adding a couple of restrictions here...
                 parameters => $self->_load_full_list_command
             );
-            return($self->error($api->error_message)) unless(defined($dom_unfiltered));
 
-            my $cached = $cache->store_full_list($self->element_type, $dom_unfiltered, time);
-            return($self->error($cache->error_message)) unless(defined($cached));
+            $cache->store_full_list($self->element_type, $dom_unfiltered, time);
 
-            $log->trace(mm_sprintify(
+            $log->trace(mm_sprintf(
                 "The list of %ss has been stored in the cache as %s",
                     $self->element_type,
                     $cached->{'dom'}
@@ -153,7 +156,7 @@ sub load_dom {
             return([]);
         }
 
-        $log->debug(mm_sprintify(
+        $log->debug(mm_sprintf(
             "Have got a request for a %s, it shall match following conditions: %s",
                 $self->element_type,
                 $input{'conditions'}
@@ -172,9 +175,11 @@ sub load_dom {
 
         # Create a new DOM for storing resulting nodes
 
-        $dom_filtered = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-        return($self->error(mm_sprintify("Can't XML::LibXML::Document->createDocument(): %s" ,$@)))
-            if($@);
+        try {
+            $dom_filtered = XML::LibXML::Document->createDocument("1.0", "UTF-8");
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't XML::LibXML::Document->createDocument(): %s", $e);
+        }
 
         # Do we have the XPath-query for that condition?
 
@@ -182,20 +187,16 @@ sub load_dom {
             attribute   => $condition,
             value       => $input{'conditions'}->{$condition}
         );
-        return($self->error($self->error_message))
-            unless(defined($xpath_query));
 
         # Okay, let's apply the filter
 
         $nodes = $api->query_xpath($dom_unfiltered, $xpath_query);
-        return($self->error($api->error_message))
-            unless(defined($nodes));
 
         # So, how many nodes have we got? If there are no nodes, let's stop
         # working and return nothing.
 
         if(scalar(@{ $nodes }) < 1) {
-            $log->trace(mm_sprintify(
+            $log->trace(mm_sprintf(
                 "Nothing matches the condition: %s == %s",
                     $condition,
                     $input{'conditions'}->{$condition}
@@ -210,9 +211,12 @@ sub load_dom {
 
             # Building all required parents' nodes
         
-            my @node_names = (split('/', eval { ${ $nodes }[0]->parentNode->nodePath; }));
-            return($self->error(mm_sprintify("Can't %s->parentNode()->nodePath(): %s", ${ $nodes }[0], $@)))
-                if($@);
+            my @node_names;
+            try {
+                @node_names = (split('/', ${ $nodes }[0]->parentNode->nodePath));
+            } catch($e) {
+                MonkeyMan::Exception->throw_f("Can't %s->parentNode()->nodePath(): %s", ${ $nodes }[0], $e);
+            }
 
             my $node_to_add_children = $dom_filtered;
 
@@ -220,13 +224,19 @@ sub load_dom {
 
                 next unless ($node_name);
 
-                my $node = eval { $dom_filtered->createElement($node_name); };
-                return($self->error(mm_sprintify("Can't %s->createElement(): %s", $dom_filtered, $@)))
-                    if($@);
+                my $node;
 
-                eval { $node_to_add_children->addChild($node); };
-                return($self->error(mm_sprintify("Can't %s->addChild(): %s", $node_to_add_children, $@)))
-                    if($@);
+                try {
+                    $node = $dom_filtered->createElement($node_name);
+                } catch($e) {
+                    MonkeyMan::Exception->throw_f("Can't %s->createElement(): %s", $dom_filtered, $e);
+                }
+
+                try {
+                    $node_to_add_children->addChild($node);
+                } catch($e) {
+                    MonkeyMan::Exception->throw_f("Can't %s->addChild(): %s", $node_to_add_children, $e);
+                }
 
                 $node_to_add_children = $node;
 
@@ -236,19 +246,27 @@ sub load_dom {
 
             foreach my $node (@{ $nodes }) {
 
-                my $node_clone = eval { $node->cloneNode(1); };
-                return($self->error(mm_sprintify("Can't %s->cloneNode(): %s", $node, $@)))
-                    if($@);
+                my $node_clone;
+                
+                try {
+                    $node->cloneNode(1);
+                } catch($e) {
+                    MonkeyMan::Exception->throw_f("Can't %s->cloneNode(): %s", $node, $e);
+                }
 
-                eval { $node_to_add_children->addChild($node_clone); };
-                return($self->error(mm_sprintify("Can't %s->addChild(): %s", $node_to_add_children, $@)))
-                    if ($@);
+                try {
+                    $node_to_add_children->addChild($node_clone);
+                } catch($e) {
+                    MonkeyMan::Exception->throw_f("Can't %s->addChild(): %s", $node_to_add_children, $e);
+                }
 
             }
 
-            eval { $node_to_add_children->setAttribute("count", scalar(@{ $nodes })); };
-            return(self->error(mm_sprintify("Can't %s->setAttribute(): %s", $node_to_add_children, $@)))
-                if($@);
+            try {
+                $node_to_add_children->setAttribute("count", scalar(@{ $nodes }));
+            } catch($e) {
+                MonkeyMan::Exception->("Can't %s->setAttribute(): %s", $node_to_add_children, $e);
+            }
 
             $dom_unfiltered = $dom_filtered;
 
@@ -263,17 +281,27 @@ sub load_dom {
 
     foreach my $node (@{ $nodes }) {
 
-        my $dom = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-        return($self->error(mm_sprintify("Can't XML::LibXML::Document->createDocument(): %s", $@)))
-            if($@);
+        my $dom;
+        
+        try {
+            $dom = XML::LibXML::Document->createDocument("1.0", "UTF-8");
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't XML::LibXML::Document->createDocument(): %s", $e);
+        }
 
-        my $node_clone = eval { $node->cloneNode(1); };
-        return($self->error(mm_sprintify("Can't %s->cloneNode(): %s", $node, $@)))
-            if($@);
+        my $node_clone;
+        
+        try {
+            $node_clone = $node->cloneNode(1);
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't %s->cloneNode(): %s", $node, $e);
+        }
 
-        eval { $dom->addChild($node_clone); };
-        return($self->error(mm_sprintify("Can't %s->addChild(): %s", $dom, $@)))
-            if($@);
+        try {
+            $dom->addChild($node_clone);
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't %s->addChild(): %s", $dom, $e);
+        }
 
         push(@results, $dom);
 
@@ -281,7 +309,7 @@ sub load_dom {
 
     }
 
-    $log->debug(mm_sprintify("%d got result(s) has/have been got", $results_got));
+    $log->debug(mm_sprintf("%d got result(s) has/have been got", $results_got));
 
     if($results_got == 1) { $self->_set_dom($results[0]); }
 
@@ -296,38 +324,42 @@ sub get_parameter {
     my($self, $parameter) = @_;
     my($log, $api, $dom);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'           => { variable   => \$log },
-            'dom'           => { variable   => \$dom, careless => 1 },
-            'cs_api'        => { variable   => \$api },
-            '$parameter'    => { value      =>  $parameter }
-        }
-    ); };
-    return($self->error($@))
-        if($@);
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'           => { variable   => \$log },
+                'dom'           => { variable   => \$dom, careless => 1 },
+                'cs_api'        => { variable   => \$api },
+                '$parameter'    => { value      =>  $parameter }
+            }
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
-    $log->trace(mm_sprintify("Looking up for the %s parameter of %s", $parameter, $self));
+    $log->trace(mm_sprintf("Looking up for the %s parameter of %s", $parameter, $self));
 
     my $xpath_query = $self->_get_parameter_xpath_query($parameter);
-    return($self->error($self->error_message))
-        unless(defined($xpath_query));
 
     my $results = $api->query_xpath($dom, $xpath_query);
-    return($self->error($api->error_message))
-        unless(defined($results));
 
     my $results_got = scalar(@{ $results });
 
     given($results_got) {
         when($_ < 1) { $log->trace("The requested parameter haven't been got") }
-        when($_ > 1) { $log->warn(mm_sprintify("%d results have been got, but the caller is expecting for only one", $results_got)) }
+        when($_ > 1) { $log->warn(mm_sprintf("%d results have been got, but the caller is expecting for only one", $results_got)) }
     }
 
-    my $result = eval { $results_got ? ${ $results }[0]->textContent : undef; };
-    return($self->error(mm_sprintify("Can't %s->textContent(): %s", ${ $results }[0], $@)))
-        if($@);
+    my $result;
+
+    try {
+        $result = $results_got ? ${ $results }[0]->textContent : undef;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't %s->textContent(): %s", ${ $results }[0], $e);
+    }
 
     return($result);
 
@@ -340,45 +372,50 @@ sub find_related_to_me {
     my($self, $what_to_find, $return_elements) = @_;
     my($log, $cs);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'           => { variable   => \$log },
-            'cs'            => { variable   => \$cs },
-            '$what_to_find' => { value      =>  $what_to_find }
-        }
-    ); };
-    return($self->error($@))
-        if($@);
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'           => { variable   => \$log },
+                'cs'            => { variable   => \$cs },
+                '$what_to_find' => { value      =>  $what_to_find }
+            }
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
-    $log->trace(mm_sprintify("Going to look for %ss related to %s", $what_to_find, $self));
+    $log->trace(mm_sprintf("Going to look for %ss related to %s", $what_to_find, $self));
 
     my $module_name = ${&MMElementsModule}{$what_to_find};
-    return($self->error(mm_sprintify("I'm not able to look for related %ss yet", $what_to_find)))
+    MonkeyMan::Exception->throw_f("I'm not able to look for related %ss yet", $what_to_find)
         unless(defined($module_name));
 
-    my $quasi_object = eval {
+    my $quasi_object;
+
+    try {
         require "MonkeyMan/CloudStack/Elements/$module_name.pm";
-         return("MonkeyMan::CloudStack::Elements::$module_name"->new(cs => $cs));
-    };
-    return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::%s->new(): %s", $module_name, $@)))
-        if($@);
+        $quasi_object = "MonkeyMan::CloudStack::Elements::$module_name"->new(cs => $cs);
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't MonkeyMan::CloudStack::Elements::%s->new(): %s", $module_name, $e)
+    }
 
     my $objects = $quasi_object->find_related_to_given($self);
-    return($self->error($quasi_object->error_message)) unless(defined($objects));
 
     # Wrapping each element in an object of its type, if they're asking 'bout that
 
     if($return_elements) {
         for(my $i = 0; $i < @{ $objects }; $i++) {
-            ${ $objects }[$i] = eval {
-                return("MonkeyMan::CloudStack::Elements::$module_name"->new(
+            try {
+                ${ $objects }[$i] = "MonkeyMan::CloudStack::Elements::$module_name"->new(
                     cs  => $cs,
                     dom => ${ $objects }[$i]
-                ));
-            };
-            return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::%s->new(): %s", $module_name, $@)))
-                if($@);
+                );
+            } catch($e) {
+                MonkeyMan::Exception->throw_f("Can't MonkeyMan::CloudStack::Elements::%s->new(): %s", $module_name, $e);
+            }
         }
     }
 
@@ -393,32 +430,40 @@ sub find_related_to_given {
     my($self, $key_element) = @_;
     my($log, $dom);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'           => { variable   => \$log },
-            '$key_element'  => { value      =>  $key_element }
-        }
-    ); };
-    return($self->error($@))
-        if($@);
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'           => { variable   => \$log },
+                '$key_element'  => { value      =>  $key_element }
+            }
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
-    eval { mm_method_checks(
-        'object' => $key_element,
-        'checks' => {
-            'dom'           => { },
-            'id'            => { }
-        }
-    ); };
-    return($self->error($@))
-        if($@);
+    try {
+        mm_check_method_invocation(
+            'object' => $key_element,
+            'checks' => {
+                'dom'           => { },
+                'id'            => { }
+            }
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
-    $log->trace(mm_sprintify("Looking for %ss related to %s", $self->element_type, $key_element));
+    $log->trace(mm_sprintf("Looking for %ss related to %s", $self->element_type, $key_element));
 
     my $objects = $self->load_dom(
         conditions => { $self->_find_related_to_given_conditions($key_element) }
     );
-    return($self->error($self->error_message)) unless(defined($objects));
+
     return($objects);
 
 }

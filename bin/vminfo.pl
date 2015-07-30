@@ -1,17 +1,22 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
+# Use pragmas
 use strict;
 use warnings;
 
+# Find the libraries-directory
 use FindBin qw($Bin);
 use lib("$Bin/../lib");
 
+# Use my own modules
 use MonkeyMan;
 use MonkeyMan::Constants;
 use MonkeyMan::Utils;
 use MonkeyMan::Show;
 use MonkeyMan::CloudStack::API;
 
+# Use 3rd-party libraries
+use TryCatch;
 use Getopt::Long;
 use XML::LibXML;
 
@@ -19,39 +24,50 @@ use XML::LibXML;
 
 my %opts;
 
-eval { GetOptions(
-    'h|help'                    => \$opts{'help'},
-      'version'                 => \$opts{'version'},
-    'c|config'                  => \$opts{'config'},
-    'v|verbose+'                => \$opts{'verbose'},
-    'q|quiet'                   => \$opts{'quiet'},
-    'o|cond|conditions=s%{,}'   => \$opts{'conditions'},
-    'x|xpath=s@'                => \$opts{'xpath'},
-    's|short+'                  => \$opts{'short'}
-); };
-die(mm_sprintify("Can't GetOptions(): %s", $@))
-    if($@);
+try {
+    GetOptions(
+        'h|help'                    => \$opts{'help'},
+          'version'                 => \$opts{'version'},
+        'c|config'                  => \$opts{'config'},
+        'v|verbose+'                => \$opts{'verbose'},
+        'q|quiet'                   => \$opts{'quiet'},
+        'o|cond|conditions=s%{,}'   => \$opts{'conditions'},
+        'x|xpath=s@'                => \$opts{'xpath'},
+        's|short+'                  => \$opts{'short'}
+    );
+} catch($e) {
+    MonkeyMan::Exception->throw_f("Can't GetOptions(): %s", $e)
+}
 
 if($opts{'help'})       { MonkeyMan::Show::help('vminfo');  exit; };
 if($opts{'version'})    { MonkeyMan::Show::version;         exit; };
-die("Mandatory conditions haven't been defined, see --help for more information")
+MonkeyMan::Exception->throw("Mandatory parameters haven't been defined, see --help for more information")
     unless(defined($opts{'conditions'}));
 
-my $mm = eval { MonkeyMan->new(
-    config_file => $opts{'config'},
-    verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
-); };
-die(mm_sprintify("Can't MonkeyMan->new(): %s", $@))
-    if($@);
+my $mm;
 
-my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
-die(mm_sprintify("The logger hasn't been initialized: %s", $@)) if($@);
+try {
+    $mm = MonkeyMan->new(
+        config_file => $opts{'config'},
+        verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
+    );
+} catch(MonkeyMan::Exception $e) {
+    $e->throw;
+} catch($e) {
+    MonkeyMan::Exception->throw_f("Can't MonkeyMan->new(): %s", $e);
+}
+
+my $log;
+
+try {
+    $log = Log::Log4perl::get_logger("MonkeyMan");
+} catch($e) {
+    MonkeyMan::Exception->throw_f("The logger hasn't been initialized", $e);
+}
 
 my $cs = $mm->init_cloudstack;
-die($mm->error_message) unless(defined($cs));
 
 my $api = $cs->api;
-die($cs->error_message) unless(defined($api));
 
 
 
@@ -61,28 +77,27 @@ my $virtualmachines = $api->run_command(
         listall     => 'true'
     }
 );
-$log->logdie($api->error_message) unless(defined($virtualmachines));
 
 
 
 foreach my $condition (keys(%{ $opts{'conditions'} })) {
 
-    $log->trace(mm_sprintify(
+    $log->trace(mm_sprintf(
         "Checking for the condition: %s = %s",
             $condition,
             $opts{'conditions'}->{$condition}
     ));
 
     my $result = eval { XML::LibXML::Document->createDocument("1.0", "UTF-8"); };
-    $log->logdie(mm_sprintify("Can't XML::LibXML::Document->createDocument(): %s", $@))
+    $log->logdie(mm_sprintf("Can't XML::LibXML::Document->createDocument(): %s", $@))
         if($@);
 
     my $result_main_node = eval { $result->createElement("listvirtualmachinesresponse"); };
-    $log->logdie(mm_sprintify("Can't %s->createElement(): %s", $result, $@))
+    $log->logdie(mm_sprintf("Can't %s->createElement(): %s", $result, $@))
         if($@);
 
     eval { $result->addChild($result_main_node); };
-    $log->logdie(mm_sprintify("Can't %s->addChild(): %s", $result, $@))
+    $log->logdie(mm_sprintf("Can't %s->addChild(): %s", $result, $@))
         if($@);
 
     # Analyzing the condition
@@ -113,7 +128,7 @@ foreach my $condition (keys(%{ $opts{'conditions'} })) {
             $opts{'conditions'}->{'has_state'} .
             "']"
     } else {
-        $log->logdie(mm_sprintify("The %s condition isn't valid", $condition));
+        $log->logdie(mm_sprintf("The %s condition isn't valid", $condition));
     }
 
     # Getting the list of matched nodes for the condition and adding them to

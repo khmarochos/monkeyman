@@ -1,20 +1,24 @@
 package MonkeyMan::CloudStack;
 
+# Use pragmas
 use strict;
 use warnings;
 
-use MonkeyMan::Constants;
+# Use my own modules (supposing we know where to find them)
+use MonkeyMan::Constants qw(:ALL);
 use MonkeyMan::Utils;
+use MonkeyMan::Exception;
 use MonkeyMan::CloudStack::API;
 use MonkeyMan::CloudStack::Cache;
 
+# Use 3rd-party libraries
+use TryCatch;
+use POSIX qw(strftime);
+
+# Use Moose :)
 use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
-
-use POSIX qw(strftime);
-
-with 'MonkeyMan::ErrorHandling';
 
 
 
@@ -60,16 +64,26 @@ sub BUILD {
     # Self-configuring
 
     unless($self->skip_init->{'api'}) {
-        my $api = $self->init_api;
-        die($self->error_message)
-            unless(defined($api));
+        my $api;
+        try {
+            $api = $self->init_api;
+        } catch(MonkeyMan::Exception $e) {
+            $e->throw;
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't %s->init_api(): %s", $self, $e);
+        }
         $self->_set_api($api);
     }
 
     unless($self->skip_init->{'cache'}) {
-        my $cache = $self->init_cache;
-        die($self->error_message)
-            unless(defined($cache));
+        my $cache;
+        try {
+            $cache = $self->init_cache;
+        } catch(MonkeyMan::Exception $e) {
+            $e->throw;
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't %s->init_cache(): %s", $self, $e);
+        }
         $self->_set_cache($cache);
     }
 
@@ -81,7 +95,7 @@ sub _build_configuration {
 
     my $self = shift;
 
-    return(eval { $self->mm->configuration->{'cloudstack'} });
+    $self->mm->configuration->{'cloudstack'};
 
 }
 
@@ -90,13 +104,17 @@ sub _build_configuration {
 sub init_api {
 
     my $self = shift;
+    my $api;
 
-    my $api = eval { MonkeyMan::CloudStack::API->new(cs => $self); };
+    try {
+        $api = MonkeyMan::CloudStack::API->new(cs => $self);
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't MonkeyMan::CloudStack::API->new(): %s", $e);
+    }
 
-    return($@ ?
-        $self->error(mm_sprintify("Can't MonkeyMan::CloudStack::API::new(): %s", $@)) :
-        $api
-    );
+    return($api);
 
 }
 
@@ -105,13 +123,19 @@ sub init_api {
 sub init_cache {
 
     my $self = shift;
+    my $cache;
 
-    my $cache = eval { MonkeyMan::CloudStack::Cache->new(cs => $self); };
+    try {
+        $cache = MonkeyMan::CloudStack::Cache->new(cs => $self);
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch(Moose::Exception $e) {
+        MonkeyMan::Exception->throw($e->message);
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't MonkeyMan::CloudStack::Cache->new(): %s", $e);
+    }
 
-    return($@ ?
-        $self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Cache::new(): %s", $@)) :
-        $cache
-    );
+    return($cache);
 
 }
 

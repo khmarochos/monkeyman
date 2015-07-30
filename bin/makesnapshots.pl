@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -12,10 +12,12 @@ use lib("$Bin/../lib");
 use MonkeyMan;
 use MonkeyMan::Constants;
 use MonkeyMan::Utils;
+use MonkeyMan::Exception;
 use MonkeyMan::Show;
 use MonkeyMan::CloudStack::API;
 use MonkeyMan::CloudStack::Elements::Domain;
 
+use TryCatch;
 use Getopt::Long;
 use Config::General qw(ParseConfig);
 use Text::Glob qw(match_glob); $Text::Glob::strict_wildcard_slash = 0;
@@ -26,44 +28,64 @@ use POSIX qw(strftime);
 
 
 my %opts;
+my $mm;
+my $log;
+my $cs;
+my $api;
 
-eval { GetOptions(
-    'h|help'        => \$opts{'help'},
-      'version'     => \$opts{'version'},
-    'c|config'      => \$opts{'config'},
-    'v|verbose+'    => \$opts{'verbose'},
-    'q|quiet'       => \$opts{'quiet'},
-    's|schedule=s'  => \$opts{'schedule'},
-    'no-snapshots'  => \$opts{'no-snapshots'},
-    'no-cleanup'    => \$opts{'no-cleanup'},
-    'dump-crap'     => \$opts{'dump-crap'}
-); };
-die(mm_sprintify("Can't GetOptions(): %s", $@))
-    if($@);
+try {
+    GetOptions(
+        'h|help'        => \$opts{'help'},
+          'version'     => \$opts{'version'},
+        'c|config'      => \$opts{'config'},
+        'v|verbose+'    => \$opts{'verbose'},
+        'q|quiet'       => \$opts{'quiet'},
+        's|schedule=s'  => \$opts{'schedule'},
+        'no-snapshots'  => \$opts{'no-snapshots'},
+        'no-cleanup'    => \$opts{'no-cleanup'},
+        'dump-crap'     => \$opts{'dump-crap'}
+    );
+} catch($e) {
+    MonkeyMan::Exception::Initialization->throw_f("Can't GetOptions(): %s", $e))
+}
 
 if($opts{'help'})       { MonkeyMan::Show::help('makesnapshots');   exit; };
 if($opts{'version'})    { MonkeyMan::Show::version;                 exit; };
-die("The schedule hasn't been defined, see --help for more information")
+MonkeyMan::Exception::Initialization->throw("The schedule hasn't been defined, see --help for more information")
     unless(defined($opts{'schedule'}));
 
-my $mm = eval { MonkeyMan->new(
-    config_file => $opts{'config'},
-    verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
-); };
-die(mm_sprintify("Can't MonkeyMan->new(): %s", $@))
-    if($@);
+try {
+    $mm MonkeyMan->new(
+        config_file => $opts{'config'},
+        verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
+    );
+} catch(MonkeyMan::Exception $e) {
+    $e->throw;
+} catch($e) {
+    MonkeyMan::Exception->throw_f("Can't initialize MonkeyMan: %s", $e);
+}
 
-my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
-die(mm_sprintify("The logger hasn't been initialized: %s", $@))
-    if($@);
+try {
+    $log = Log::Log4perl::get_logger("MonkeyMan");
+} catch($e) {
+    MonkeyMan::Exception->throw_f("The logger hasn't been initialized: %s", $e);
+}
 
-my $cs = $mm->init_cloudstack;
-die($mm->error_message)
-    unless(defined($cs));
+try {
+    $cs = $mm->init_cloudstack;
+} catch(MonkeyMan::Exception $e) {
+    $e->throw;
+} catch($e) {
+    MonkeyMan::Exception->throw_f("Can't initialize CloudStack interface: %s", $e);
+}
 
-my $api = $cs->api;
-die($cs->error_message)
-    unless(defined($api));
+try {
+    $api = $cs->api;
+} catch(MonkeyMan::Exception $e) {
+    $e->throw;
+} catch($e) {
+    MonkeyMan::Exception->throw_f("Can't initialize CloudStack API: %s", $e);
+}
 
 
 
@@ -97,14 +119,14 @@ THE_LOOP: while (1) {
  
     unless(%{ $schedule }) {
 
-        %{ $schedule } = eval {
-            ParseConfig(
+        try {
+            %{ $schedule } = ParseConfig(
                 -ConfigFile         => $opts{'schedule'},
                 -UseApacheInclude   => 1
             );
-        };
-        $log->logdie(mm_sprintify("Can't Config::General->ParseConfig(): %s", $@))
-            if($@);
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't Config::General->ParseConfig(): %s", $e);
+        }
 
         $log->debug("The schedule has been loaded");
 
@@ -121,13 +143,13 @@ THE_LOOP: while (1) {
     foreach my $entity_type (qw/timeperiod storagepool host domain/) {
 
         unless(keys(%{ $configs->{$entity_type} })) {
-            $log->trace(mm_sprintify("Some %s definitely needs to be defined", $entity_type));
+            $log->trace(mm_sprintf("Some %s definitely needs to be defined", $entity_type));
 
             # Loading templates
 
             foreach my $template_name (grep( /\*/, keys(%{ $schedule->{$entity_type} }))) {
                 $configs->{$entity_type}->{$template_name} = $schedule->{$entity_type}->{$template_name};
-                $log->trace(mm_sprintify("The %s %s's template has been loaded", $template_name, $entity_type));
+                $log->trace(mm_sprintf("The %s %s's template has been loaded", $template_name, $entity_type));
             }
 
             # Loading entities
@@ -136,7 +158,7 @@ THE_LOOP: while (1) {
 
             foreach my $entity_name (grep(!/\*/, keys(%{ $schedule->{$entity_type} }))) {
 
-                $log->trace(mm_sprintify("Configuring the %s %s", $entity_name, $entity_type));
+                $log->trace(mm_sprintf("Configuring the %s %s", $entity_name, $entity_type));
 
                 # Configuring the new entity, adding configuration templates
          
@@ -146,13 +168,13 @@ THE_LOOP: while (1) {
                         $entity_name
                     );
                 };
-                $log->logdie(mm_sprintify("Can't configure_entity(): %s", $@))
+                $log->logdie(mm_sprintf("Can't configure_entity(): %s", $@))
                     if($@);
                 $entities_loaded++;
 
             }
 
-            $log->trace(mm_sprintify("%d %ss have been loaded", $entities_loaded, $entity_type));
+            $log->trace(mm_sprintf("%d %ss have been loaded", $entities_loaded, $entity_type));
         }
 
     }
@@ -172,7 +194,7 @@ THE_LOOP: while (1) {
 
             unless(defined($objects->{'domain'}->{'by_name'}->{$domain_path}->{'element'})) {
 
-                $log->debug(mm_sprintify("Loading the information about the %s domain", $domain_path));
+                $log->debug(mm_sprintf("Loading the information about the %s domain", $domain_path));
 
                 my $domain = eval { MonkeyMan::CloudStack::Elements::Domain->new(
                     cs          => $cs,
@@ -182,7 +204,7 @@ THE_LOOP: while (1) {
                         }
                     }
                 )};
-                if($@) { $log->warn(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::Domain->new(): %s", $@)); next; }
+                if($@) { $log->warn(mm_sprintf("Can't MonkeyMan::CloudStack::Elements::Domain->new(): %s", $@)); next; }
 
                 my $domain_id = $domain->get_parameter('id');
                 if($domain->has_errors) { $log->warn($domain->error_message); next; }
@@ -194,7 +216,7 @@ THE_LOOP: while (1) {
                     config  => $configs->{'domain'}->{$domain_path}
                 };
 
-                $log->info(mm_sprintify("The %s (%s) domain has been refreshed", $domain_id, $domain_path));
+                $log->info(mm_sprintf("The %s (%s) domain has been refreshed", $domain_id, $domain_path));
 
             }
 
@@ -230,7 +252,7 @@ THE_LOOP: while (1) {
 
             my $snapshot_element = $objects->{'snapshot'}->{'by_id'}->{$snapshot_id}->{'element'};
             unless(defined($snapshot_element)) {
-                $log->warn(mm_sprintify("The %s snapshot isn't initialized", $snapshot_id));
+                $log->warn(mm_sprintf("The %s snapshot isn't initialized", $snapshot_id));
                 next;
             }
 
@@ -257,7 +279,7 @@ THE_LOOP: while (1) {
                 done        => undef,   # done at, if done
                 job         => undef    # the name is pretty descriptive :)
             };
-            $log->debug(mm_sprintify("Added the %s volume to the queue", $volume_id));
+            $log->debug(mm_sprintf("Added the %s volume to the queue", $volume_id));
         }
 
     }
@@ -276,7 +298,7 @@ THE_LOOP: while (1) {
 
         my $job = $queue->{$volume_id}->{'job'};
         unless(defined($job) || $opts{'no-snapshots'}) {
-            $log->warn(mm_sprintify("The %s volume seems to be busy, but the job isn't defined", $volume_id));
+            $log->warn(mm_sprintf("The %s volume seems to be busy, but the job isn't defined", $volume_id));
             next;
         }
 
@@ -289,7 +311,7 @@ THE_LOOP: while (1) {
         given($job_result->{'jobstatus'}) {
             when(0) {
 
-                $log->debug(mm_sprintify(
+                $log->debug(mm_sprintf(
                     "The %s volume is still busy, the %s job is running",
                         $volume_id,
                         $job_result->{'jobid'}
@@ -306,7 +328,7 @@ THE_LOOP: while (1) {
                         next;
                     }
 
-                    $log->info(mm_sprintify(
+                    $log->info(mm_sprintf(
                         "The %s volume's snapshot has been backed up, the %s snapshot has been stored",
                             $volume_id,
                             ${ $snapshot_id }[0]
@@ -330,11 +352,11 @@ THE_LOOP: while (1) {
                     next;
                 }
 
-                $log->trace(mm_sprintify("%d snapshot(s) have been deleted", $snapshots_deleted));
+                $log->trace(mm_sprintf("%d snapshot(s) have been deleted", $snapshots_deleted));
 
             } when(2) {
 
-                $log->warn(mm_sprintify(
+                $log->warn(mm_sprintf(
                     "The %s volume hasn't been backed up, the %s job has been failed: %s - %s",
                         $volume_id,
                         $job_result->{'jobid'},
@@ -348,7 +370,7 @@ THE_LOOP: while (1) {
 
             } default {
 
-                $log->warn(mm_sprintify(
+                $log->warn(mm_sprintf(
                     "The %s job has an odd jobstatus: %s",
                         $job_result->{'jobid'},
                         $_
@@ -364,7 +386,7 @@ THE_LOOP: while (1) {
 
     VOLUME: foreach my $volume_id (keys(%{ $queue })) {
 
-        $log->debug(mm_sprintify("Checking the %s volume in the queue", $volume_id));
+        $log->debug(mm_sprintf("Checking the %s volume in the queue", $volume_id));
 
         # Shall we skip this volume due to certain conditions?
 
@@ -372,7 +394,7 @@ THE_LOOP: while (1) {
             defined($queue->{$volume_id}->{'started'}) &&       # the job has been started,
            !defined($queue->{$volume_id}->{'done'})             # but hasn't finished yet
         ) {
-            $log->debug(mm_sprintify(
+            $log->debug(mm_sprintf(
                 "The %s volume is busy since %s, skipping it",
                     $volume_id,
                     strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'started'}))
@@ -384,7 +406,7 @@ THE_LOOP: while (1) {
             defined($queue->{$volume_id}->{'postponed'}) &&     # the job has been postponed
                     $queue->{$volume_id}->{'postponed'} > time  # and it's too early for a new job
         ) {
-            $log->debug(mm_sprintify(
+            $log->debug(mm_sprintf(
                 "The %s volume is postponed till %s, skipping it",
                     $volume_id,
                     strftime(MMDateTimeFormat, localtime($queue->{$volume_id}->{'postponed'}))
@@ -396,7 +418,7 @@ THE_LOOP: while (1) {
             my $timeperiod1 = $objects->{'volume'}->{'by_id'}->{$volume_id}->{'config'}->{'available'};
             my $timeperiod2 = $configs->{'timeperiod'}->{$timeperiod1}->{'period'};
             if(inPeriod($now, $timeperiod2) != 1) {
-                $log->debug(mm_sprintify(
+                $log->debug(mm_sprintf(
                     "The %s volume is available only at this timeperiod: %s (which means %s), skipping it",
                     $volume_id,
                     $timeperiod1,
@@ -408,7 +430,7 @@ THE_LOOP: while (1) {
 
         # Determining business/idleness and availability of entities occupied by the volume
 
-        foreach my $entity_type qw(virtualmachine storagepool host) {
+        foreach my $entity_type (qw(virtualmachine storagepool host)) {
 
             foreach my $entity_id_occupied (
                 keys(%{ $objects->{'volume'}->{'by_id'}->{$volume_id}->{'occupied'}->{$entity_type} })
@@ -422,7 +444,7 @@ THE_LOOP: while (1) {
                        !defined($queue->{$entity_id_occupier}->{'done'})
                     ) {
                         $occupiers_busy++;
-                        $log->trace(mm_sprintify(
+                        $log->trace(mm_sprintf(
                             "The %s %s is occupied by %s volume which is busy now",
                             $entity_id_occupied,
                             $entity_type,
@@ -432,13 +454,13 @@ THE_LOOP: while (1) {
                     }
                 }
 
-                $log->trace(mm_sprintify("%d volume(s) uses the %s %s", $occupiers_busy, $entity_id_occupied, $entity_type));
+                $log->trace(mm_sprintf("%d volume(s) uses the %s %s", $occupiers_busy, $entity_id_occupied, $entity_type));
 
                 if(
                     defined($objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'flows'}) &&
                             $objects->{$entity_type}->{'by_id'}->{$entity_id_occupied}->{'config'}->{'flows'} <= $occupiers_busy
                 ) {
-                    $log->debug(mm_sprintify(
+                    $log->debug(mm_sprintf(
                         "The %s %s is occupied by %d volume(s) which is/are busy now, " .
                         "it's greater or equal than %d, so the %s is threated as busy, skipping the volume",
                         $entity_id_occupied,
@@ -456,7 +478,7 @@ THE_LOOP: while (1) {
                     my $timeperiod2 = $configs->{'timeperiod'}->{$timeperiod1}->{'period'};
 
                     if(inPeriod($now, $timeperiod2) != 1) {
-                        $log->debug(mm_sprintify(
+                        $log->debug(mm_sprintf(
                             "The %s %s is available only at this timeperiod: %s (which means %s), skipping it",
                             $entity_id_occupied,
                             $entity_type,
@@ -479,7 +501,7 @@ THE_LOOP: while (1) {
 
         if($opts{'no-snapshots'}) {
 
-            $log->info(mm_sprintify(
+            $log->info(mm_sprintf(
                 "The %s volume needs to have a snapshot, but it's not allowed to do it",
                 $volume_id
             ));
@@ -494,13 +516,13 @@ THE_LOOP: while (1) {
                 $log->warn($volume_element->error_message);
                 next VOLUME;
             }
-            $log->trace(mm_sprintify("The %s job has been started", $job));
+            $log->trace(mm_sprintf("The %s job has been started", $job));
 
             $queue->{$volume_id}->{'job'}     = $job;
             $queue->{$volume_id}->{'started'} = time;
             $queue->{$volume_id}->{'done'}    = undef;
 
-            $log->info(mm_sprintify(
+            $log->info(mm_sprintf(
                 "The %s volume has been started to make a snapshot, the job id is %s",
                 $volume_id,
                 $job->get_parameter('jobid')
@@ -515,15 +537,20 @@ THE_LOOP: while (1) {
 
 
     if($opts{'dump-crap'}) {
-        eval { mm_dump_object($configs, undef, "configs", 5); };
-        $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
-            if($@);
-        eval { mm_dump_object($queue, undef, "queue", 5); };
-        $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
-            if($@);
-        eval { mm_dump_object($objects, undef, "objects", 5); };
-        $log->warn(mm_sprintify("Can't mm_dump_object(): %s", $@))
-            if($@);
+        my %crap = (
+            configs     => $configs,
+            queue       => $queue,
+            objects     => $objects
+        );
+        while(my($name, $var) = each(%crap)) {
+            eval { mm_dump_object(
+                data        => $var,
+                object_name => $name,
+                max_depth   => 5
+            ); };
+            $log->warn(mm_sprintf("Can't mm_dump_object(): %s", $@))
+                if($@);
+        }
     }
 
 
@@ -561,7 +588,7 @@ sub configure_entity {
 
     my $matched_patterns = 0;
 
-    $log->trace(mm_sprintify("entity_type = %s, entity_name = %s", $entity_type, $entity_name));
+    $log->trace(mm_sprintf("entity_type = %s, entity_name = %s", $entity_type, $entity_name));
 
     foreach my $pattern (sort(keys(%{ $schedule->{$entity_type} }))) {
 
@@ -570,7 +597,7 @@ sub configure_entity {
             # If there are matching pattern or the exact name configured,
             # attach the configuration hash to the main data structure
  
-            $log->trace(mm_sprintify("The %s pattern matched the %s entity", $pattern, $entity_name));
+            $log->trace(mm_sprintf("The %s pattern matched the %s entity", $pattern, $entity_name));
             foreach my $parameter (keys(%{ $schedule->{$entity_type}->{$pattern} })) {
                 $configs->{$entity_type}->{$entity_name}->{$parameter} = $schedule->{$entity_type}->{$pattern}->{$parameter};
             }
@@ -580,7 +607,7 @@ sub configure_entity {
     }
 
     if($matched_patterns) {
-        $log->debug(mm_sprintify(
+        $log->debug(mm_sprintf(
             "The %s %s with %d configuration layer(s) has been loaded: %s",
                 $entity_name,
                 $entity_type,
@@ -628,7 +655,7 @@ sub find_related_and_refresh_if_needed {
         (defined($key_entity->{'entity_type'}) &&
                 ($key_entity->{'entity_type'} eq $uplink_type))) {
 
-        $log->trace(mm_sprintify("Processing the the key entity: %s", $key_entity->{'entity_type'}));
+        $log->trace(mm_sprintf("Processing the the key entity: %s", $key_entity->{'entity_type'}));
 
         $key_entity->{'current_entity_id'} = $uplink_id;
     }
@@ -640,7 +667,7 @@ sub find_related_and_refresh_if_needed {
 
     foreach my $downlink_type (@downlinks_types_to_scan) {
 
-        $log->debug(mm_sprintify(
+        $log->debug(mm_sprintf(
             "Looking for %s related to the %s (%s) %s",
                 $downlink_type,
                 $uplink_id,
@@ -656,7 +683,7 @@ sub find_related_and_refresh_if_needed {
             return;
         }
         unless(scalar(@{ $downlinks })) {
-            $log->debug(mm_sprintify(
+            $log->debug(mm_sprintf(
                 "The %s (%s) %s doesn't have any related %ss",
                     $uplink_id,
                     $uplink_name,
@@ -670,13 +697,13 @@ sub find_related_and_refresh_if_needed {
             $found++;
 
             my $downlink_id = eval { $downlink_dom->findvalue("/$downlink_type/id") };
-            if($@) { $log->warn(mm_sprintify("Can't %s->findvalue(): %s", $downlink_dom, $@)); next; }
+            if($@) { $log->warn(mm_sprintf("Can't %s->findvalue(): %s", $downlink_dom, $@)); next; }
 
             # Indeed, only if we need it
 
             unless(defined($objects->{$downlink_type}->{'by_id'}->{$downlink_id})) {
 
-                $log->trace(mm_sprintify(
+                $log->trace(mm_sprintf(
                     "Loading the information about the %s %s",
                         $downlink_id,
                         $downlink_type
@@ -684,7 +711,7 @@ sub find_related_and_refresh_if_needed {
 
                 my $module_name = ${&MMElementsModule}{$downlink_type};
                 unless(defined($module_name)) {
-                    $log->warn(mm_sprintify("I'm not able to manipulate %ss yet", $downlink_type));
+                    $log->warn(mm_sprintf("I'm not able to manipulate %ss yet", $downlink_type));
                     return;
                 }
 
@@ -697,7 +724,7 @@ sub find_related_and_refresh_if_needed {
                         }
                     ));
                 };
-                if($@) { $log->warn(mm_sprintify(
+                if($@) { $log->warn(mm_sprintf(
                     "Can't MonkeyMan::CloudStack::Elements::%s->new(): %s",
                         $module_name,
                         $@
@@ -711,7 +738,7 @@ sub find_related_and_refresh_if_needed {
                     next;
                 }
                 unless(defined($downlink_id)) {
-                    $log->warn(mm_sprintify("Can't get the ID of %s", $downlink));
+                    $log->warn(mm_sprintf("Can't get the ID of %s", $downlink));
                     next;
                 }
 
@@ -721,7 +748,7 @@ sub find_related_and_refresh_if_needed {
                     next;
                 }
                 unless(defined($downlink_name)) {
-                    $log->warn(mm_sprintify("Can't get the name of %s", $downlink));
+                    $log->warn(mm_sprintf("Can't get the name of %s", $downlink));
                     next;
                 }
 
@@ -729,7 +756,7 @@ sub find_related_and_refresh_if_needed {
 
                 unless(defined($configs->{$downlink_type}->{$downlink_name})) {
 
-                    $log->trace(mm_sprintify("Updating the %s %s's configuration", $downlink_id, $downlink_type));
+                    $log->trace(mm_sprintf("Updating the %s %s's configuration", $downlink_id, $downlink_type));
 
                     my $layers_loaded = eval {
                         configure_entity(
@@ -737,12 +764,12 @@ sub find_related_and_refresh_if_needed {
                             $downlink_name
                         );
                     };
-                    $log->logdie(mm_sprintify("Can't configure_entity(): %s", $@))
+                    $log->logdie(mm_sprintf("Can't configure_entity(): %s", $@))
                         if($@);
 
                     my @inherited_parameters = keys(%{ $configs->{$downlink_type}->{$downlink_name}->{'inherit'}->{$uplink_type} });
                     if(scalar(@inherited_parameters)) {
-                        $log->trace(mm_sprintify("Inheriting %s parameter(s) from our %s",
+                        $log->trace(mm_sprintf("Inheriting %s parameter(s) from our %s",
                             join(", ", @inherited_parameters),
                             $uplink_type
                         ));
@@ -773,7 +800,7 @@ sub find_related_and_refresh_if_needed {
                     config  => $configs->{$downlink_type}->{$downlink_name},
                 };
 
-                $log->info(mm_sprintify(
+                $log->info(mm_sprintf(
                     "The %s (%s) %s has been refreshed",
                         $downlink_id,
                         $downlink_name,
@@ -789,7 +816,7 @@ sub find_related_and_refresh_if_needed {
                 defined($key_entity->{'current_entity_id'})
             ) {
 
-                $log->trace(mm_sprintify("Okay, we've got the key entity, it's a %s", $key_entity->{'entity_type'}));
+                $log->trace(mm_sprintf("Okay, we've got the key entity, it's a %s", $key_entity->{'entity_type'}));
 
                 # ...
 
@@ -807,7 +834,7 @@ sub find_related_and_refresh_if_needed {
                 $key_entity
             );
             unless(defined($results)) {
-                $log->warn(mm_sprintify("No %ss refreshed due to an error occuried", $downlink_type));
+                $log->warn(mm_sprintf("No %ss refreshed due to an error occuried", $downlink_type));
                 next;
             }
 

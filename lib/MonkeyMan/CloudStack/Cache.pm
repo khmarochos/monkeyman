@@ -1,18 +1,22 @@
 package MonkeyMan::CloudStack::Cache;
 
+# Use pragmas
 use strict;
 use warnings;
 
-use MonkeyMan::Constants;
+# Use my own modules (supposing we know where to find them)
+use MonkeyMan::Constants qw(:ALL);
 use MonkeyMan::Utils;
 
+# Use 3rd party libraries
+use TryCatch;
+use Scalar::Util qw(blessed);
+use POSIX qw(strftime);
+
+# Use Moose :)
 use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
-
-use POSIX qw(strftime);
-
-with 'MonkeyMan::ErrorHandling';
 
 
 
@@ -37,21 +41,10 @@ has memory_pool => (
     reader      => '_get_memory_pool',
     writer      => '_set_memory_pool',
     predicate   => '_has_memory_pool',
+    builder     => '_build_memory_pool',
+    lazy        => 1,
     init_arg    => undef
 );
-
-
-
-sub BUILD {
-
-    my $self = shift;
-
-    $self->_set_memory_pool({
-        lists       => {},
-        initialized => time
-    });
-
-}
 
 
 
@@ -65,53 +58,68 @@ sub _build_configuration {
 
 
 
+sub _build_memory_pool {
+
+    return({
+        lists       => {},
+        initialized => time
+    });
+
+}
+
+
+
 sub get_full_list {
 
     my($self, $element_type) = @_;
     my($log, $cs, $configuration);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'           => { variable   => \$log },
-            'cs'            => { variable   => \$cs },
-            'configuration' => { variable   => \$configuration },
-            '$element_type' => { value      =>  $element_type }
-        }
-    ); };
-    return($self->error($@))
-        if($@);
-
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'           => { variable   => \$log },
+                'cs'            => { variable   => \$cs },
+                'configuration' => { variable   => \$configuration },
+                '$element_type' => { value      =>  $element_type }
+            }
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    }
+    
     my $never_cache = $configuration->{'never'};
     if(defined($never_cache)) {
         foreach (split(/,\s*/, $never_cache)) {
             if(lc($element_type) eq lc($_)) {
-                $log->trace(mm_sprintify("%ss are never being cached", $element_type));
+                $log->trace(mm_sprintf("%ss are never being cached", $element_type));
                 return(undef);
             }
         }
     }
 
-    return($self->error("The memory pool haven't been initialized"))
+    MonkeyMan::Exception->throw("The memory pool haven't been initialized")
         unless($self->_has_memory_pool);
     my $memory_pool = $self->_get_memory_pool;
     my $cached_list = $memory_pool->{'lists'}->{$element_type};
 
     unless(defined($cached_list)) {
-        $log->trace(mm_sprintify("Don't have a list of %ss cached", $element_type));
+        $log->trace(mm_sprintf("Don't have a list of %ss cached", $element_type));
         return(undef);
     }
 
-    unless(ref($cached_list->{'dom'}) eq "XML::LibXML::Document") {
-        $log->trace(mm_sprintify("The cached list of %ss looks unhealthy", $element_type));
+    unless(blessed($cached_list->{'dom'}) && $cached_list->{'dom'}->isa("XML::LibXML::Document")) {
+        $log->warn(mm_sprintf("The cached list of %ss isn't an XML::LibXML::Document object", $element_type));
         return(undef);
     }
 
     unless($cached_list->{'updated'} + $configuration->{'ttl'} >= time) {
-        $log->trace(mm_sprintify(
+        $log->trace(mm_sprintf(
             "The cached list of %ss is expired since %s",
                 $element_type,
-                strftime(MMDateTimeFormat, localtime($cached_list->{'updated'} + $configuration->{'ttl'}))
+                strftime(MM_DATE_TIME_FORMAT, localtime($cached_list->{'updated'} + $configuration->{'ttl'}))
         ));
         return(undef);
     }
@@ -127,23 +135,27 @@ sub store_full_list {
     my($self, $element_type, $dom, $updated) = @_;
     my($log);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'           => { variable   => \$log },
-            '$dom'          => {
-                value           => $dom,
-                isaref          => "XML::LibXML::Document",
-                error           => mm_sprintify("The %s DOM isn't valid", $dom)
-            },
-            '$element_type' => { value      =>  $element_type }
-        });
-    };
-    return($self->error($@))
-        if($@);
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'           => { variable   => \$log },
+                '$dom'          => {
+                    value           => $dom,
+                    isaref          => "XML::LibXML::Document",
+                    error           => mm_sprintf("The %s DOM isn't valid", $dom)
+                },
+                '$element_type' => { value      =>  $element_type }
+            });
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    }
 
-    return($self->error("The memory pool haven't been initialized"))
+    MonkeyMan::Exception->throw("The memory pool haven't been initialized")
         unless($self->_has_memory_pool);
+
     my $memory_pool = $self->_get_memory_pool;
 
     $memory_pool->{'lists'}->{$element_type}->{'dom'}       = $dom;

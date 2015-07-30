@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -33,7 +33,7 @@ eval { GetOptions(
     'v|verbose+'    => \$opts{'verbose'},
     'q|quiet'       => \$opts{'quiet'}
 ); };
-die(mm_sprintify("Can't GetOptions(): %s", $@))
+die(mm_sprintf("Can't GetOptions(): %s", $@))
     if($@);
 
 if($opts{'help'})       { MonkeyMan::Show::help('someutil');   exit; };
@@ -43,11 +43,11 @@ my $mm = eval { MonkeyMan->new(
     config_file => $opts{'config'},
     verbosity   => $opts{'quiet'} ? 0 : ($opts{'verbose'} ? $opts{'verbose'} : 0) + 4
 ); };
-die(mm_sprintify("Can't MonkeyMan->new(): %s", $@))
+die(mm_sprintf("Can't MonkeyMan->new(): %s", $@))
     if($@);
 
 my $log = eval { Log::Log4perl::get_logger("MonkeyMan") };
-die(mm_sprintify("The logger hasn't been initialized: %s", $@))
+die(mm_sprintf("The logger hasn't been initialized: %s", $@))
     if($@);
 
 
@@ -56,7 +56,7 @@ die(mm_sprintify("The logger hasn't been initialized: %s", $@))
 # vvv    Your code goes here    vvv
 #
 my $some_object = eval { MonkeyMan::_templates::SomeClass->new(mm => $mm); };
-$log->logdie(mm_sprintify("Can't MonkeyMan::_templates::SomeClass->new(): %s", $@))
+$log->logdie(mm_sprintf("Can't MonkeyMan::_templates::SomeClass->new(): %s", $@))
     if($@);
 
 my $result = $some_object->some_method(
@@ -65,7 +65,7 @@ my $result = $some_object->some_method(
 $log->logdie($some_object->error_message)
     if($some_object->has_errors);
 
-$log->info(mm_sprintify("%s", $result));
+$log->info(mm_sprintf("%s", $result));
 #
 # ^^^    You code went there    ^^^
 #

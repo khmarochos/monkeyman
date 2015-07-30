@@ -1,11 +1,14 @@
 package MonkeyMan::CloudStack::Elements::AsyncJob;
 
+# Use pragmas
 use strict;
 use warnings;
 
+# Use my own modules (supposing we know where to find them)
 use MonkeyMan::Constants;
 use MonkeyMan::Utils;
 
+# Use Moose :)
 use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
@@ -33,27 +36,31 @@ before BUILD => sub {
 
         my($api, $log);
 
-        eval { mm_method_checks(
-            'object'    => $self,
-            'checks'    => {
-                'log'       => { variable   => \$log },
-                'cs_api'    => { variable   => \$api }
-            }
-        ); };
-        die($@)
-            if($@);
+        try {
+            mm_check_method_invocation(
+                'object'    => $self,
+                'checks'    => {
+                    'log'       => { variable   => \$log },
+                    'cs_api'    => { variable   => \$api }
+                }
+            );
+        } catch(MonkeyMan::Exception $e) {
+            $e->throw;
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+        } 
 
         my $result = $api->run_command(%{ $self->init_run });
-        die($api->error_message)
-            unless(defined($result));
 
         my $jobids = $api->query_xpath($result, "/*/jobid");
-        die($api->error_message)
-            unless(defined($jobids));
 
-        my $jobid = eval { ${$jobids}[0]->textContent; };
-        die(mm_sprintify("Can't XML::LibXML::Element->textContent(): %s", $@))
-            if($@);
+        my $jobid;
+        
+        try {
+            $jobid = ${$jobids}[0]->textContent;
+        } catch($e) {
+            MonkeyMan::Exception->throw("Can't XML::LibXML::Element->textContent(): %s", $e);
+        }
 
         $self->_set_init_load_dom({ conditions => { jobid => $jobid} }); # the object will be created after
 
@@ -81,7 +88,7 @@ sub _load_dom_xpath_query {
 
     my($self, %parameters) = @_;
 
-    return($self->error("Required parameters haven't been defined"))
+    MonkeyMan::Exception->throw("Required parameters haven't been defined")
         unless(%parameters);
 
     if($parameters{'attribute'} eq 'FINAL') {
@@ -101,7 +108,7 @@ sub _get_parameter_xpath_query {
 
     my($self, $parameter) = @_;
 
-    return($self->error("Required parameters haven't been defined"))
+    MonkeyMan::Exception->throw("The required parameter hasn't been defined"))
         unless(defined($parameter));
 
     return("/asyncjobs/$parameter");
@@ -114,7 +121,7 @@ sub _find_related_to_given_conditions {
 
     my($self, $key_element) = @_;
 
-    return($self->error("The key element hasn't been defined"))
+    MonkeyMan::Exception->throw("The key element hasn't been defined")
         unless(defined($key_element));
 
     return(
@@ -130,24 +137,28 @@ sub result {
     my $self = shift;
     my($log, $api, $jobid);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'       => { variable   => \$log },
-            'cs_api'    => { variable   => \$api },
-            '$jobid'    => {
-                            variable   => \$jobid,
-                            value      => shift,
-                            careless   => 1
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'       => { variable   => \$log },
+                'cs_api'    => { variable   => \$api },
+                '$jobid'    => {
+                                variable   => \$jobid,
+                                value      => shift,
+                                careless   => 1
+                }
             }
-        }
-    ); };
-    return($self->error($@))
-        if($@);
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
     $jobid = $self->get_parameter('jobid')
         unless(defined($jobid));
-    return($self->error("The element's ID isn't defined"))
+    MonkeyMan::Exception->throw("The element's ID isn't defined")
         unless(defined($jobid));
 
     my $result_of_run = $api->run_command(
@@ -158,9 +169,8 @@ sub result {
     );
 
     my $result_to_return = {};
-    my $result = $self->result_parse($result_of_run, $result_to_return);
-    return($self->error($self->error_message))
-        unless(defined($result));
+
+    $self->result_parse($result_of_run, $result_to_return);
 
     return($result_to_return);
 
@@ -173,51 +183,64 @@ sub result_parse {
     my $self = shift;
     my($log, $api, $dom, $results_to);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'           => { variable   => \$log },
-            'cs_api'        => { variable   => \$api },
-            '$dom'          => {
-                                variable   => \$dom,
-                                value      => shift,
-            },
-            '$results_to'   => {
-                                variable   => \$results_to,
-                                value      => shift,
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'           => { variable   => \$log },
+                'cs_api'        => { variable   => \$api },
+                '$dom'          => {
+                                    variable   => \$dom,
+                                    value      => shift,
+                },
+                '$results_to'   => {
+                                    variable   => \$results_to,
+                                    value      => shift,
+                }
             }
-        }
-    ); };
-    return($self->error($@))
-        if($@);
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
     my $elements = $api->query_xpath($dom, "/queryasyncjobresultresponse/*");
-    return($self->error($api->error_message))
-        unless(defined($elements));
 
     my $elements_found = 0;
 
     foreach my $element (@{ $elements }) {
 
         my $element_value;
-        my $element_name = eval { $element->nodeName };
-        return($self->error(mm_sprintify("Can't XML::LibXML::Element->nodeName(): %s", $@)))
-            if($@);
+        my $element_name;
+        my $more_children;
 
-        my $element = eval { $element->firstChild };
-        return($self->error(mm_sprintify("Can't XML::LibXML::Element->firstChild(): %s", $@)))
-           if($@);
+        try {
+            $element_name = $element->nodeName;
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't XML::LibXML::Element->nodeName(): %s", $e);
+        }
 
-        my $more_children = eval { $element->hasChildNodes };
-        return($self->error(mm_sprintify("Can't XML::LibXML::Element->hasChildNodes(): %s", $@)))
-           if($@);
+        try {
+            $element = $element->firstChild;
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't XML::LibXML::Element->firstChild(): %s", $e);
+        }
+
+        try {
+            $more_children = $element->hasChildNodes;
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't XML::LibXML::Element->hasChildNodes(): %s", $e);
+        }
 
         if($more_children) {
             $element_value = $element;
         } else {
-            $element_value = eval { $element->textContent };
-            return($self->error(mm_sprintify("Can't XML::LibXML::Element->textContent(): %s", $@)))
-               if($@);
+            try {
+                $element_value = $element->textContent;
+            } catch($e) {
+                MonkeyMan::Exception->throw_f("Can't XML::LibXML::Element->textContent(): %s", $e);
+            }
         }
 
         $results_to->{$element_name} = $element_value;

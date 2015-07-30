@@ -12,7 +12,7 @@ use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
 
-with 'MonkeyMan::ErrorHandling';
+with 'MonkeyMan::ExceptionHandling';
 
 
 

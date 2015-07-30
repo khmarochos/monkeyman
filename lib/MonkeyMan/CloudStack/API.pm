@@ -1,11 +1,16 @@
 package MonkeyMan::CloudStack::API;
 
+# Use pragmas
 use strict;
 use warnings;
 
-use MonkeyMan::Constants;
+# Use my own modules (supposing we know where to find them)
+use MonkeyMan::Constants qw(:ALL);
 use MonkeyMan::Utils;
+use MonkeyMan::Exception;
 
+# Use 3rd party libraries
+use TryCatch;
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
@@ -13,11 +18,10 @@ use LWP::UserAgent;
 use XML::LibXML;
 use POSIX qw(strftime);
 
+# Use Moose :)
 use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
-
-with 'MonkeyMan::ErrorHandling';
 
 
 
@@ -28,7 +32,7 @@ has 'cs' => (
     writer      => '_set_cs',
     required    => 'yes'
 );
-has configuration => (
+has 'configuration' => (
     is          => 'ro',
     isa         => 'HashRef',
     writer      => '_set_configuration',
@@ -43,7 +47,7 @@ sub _build_configuration {
 
     my $self = shift;
 
-    return(eval { $self->cs->configuration->{'api'} });
+    $self->cs->configuration->{'api'};
 
 }
 
@@ -54,14 +58,18 @@ sub craft_url {
     my($self, %parameters) = @_;
     my($configuration);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'configuration' => { variable => \$configuration },
-        });
-    };
-    return($self->error($@))
-        if($@);
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'configuration' => { variable => \$configuration },
+            }
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
     my $parameters_string;
     my $output;
@@ -84,76 +92,82 @@ sub run_command {
     my($self, %input) = @_;
     my($log, $configuration);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'               => { variable => \$log },
-            'configuration'     => { variable => \$configuration },
-            '$parameters'       => {
-                value               => $input{'parameters'},
-                isaref              => 'HASH'
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'               => { variable => \$log },
+                'configuration'     => { variable => \$configuration },
+                '$parameters'       => {
+                    value               => $input{'parameters'},
+                    isaref              => 'HASH'
+                }
             }
-        });
-    };
-    return($self->error($@))
-        if($@);
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
     # Crafting the URL
 
     my $url = defined($input{'url'}) ? $input{'url'} : $self->craft_url(%{ $input{'parameters'} });
-    return($self->error($self->error_message))
-        unless(defined($url));
-    return($self->error("The requested URL is invalid"))
+    MonkeyMan::Exception->throw("The requested URL is invalid")
         unless(index($url, $configuration->{'api_address'}) == 0);
 
     # Running the command
 
-    $log->trace(mm_sprintify("Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
-    $log->trace(mm_sprintify("[CLOUDSTACK] Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
+    $log->trace(mm_sprintf(             "Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
+    $log->trace(mm_sprintf("[CLOUDSTACK] Querying CloudStack for %s", defined($input{'url'}) ? $url : $input{'parameters'}));
 
     my $ua = LWP::UserAgent->new(
-        agent   => "MonkeyMan-" . MMVersion . " (libwww-perl/#.###)",
+        agent       => "MonkeyMan-" . MM_VERSION . " (libwww-perl/#.###)",
+        ssl_opts    => { verify_hostname => 0 } #FIXME#
     );
+
     my $response = $ua->get($url);
-    $log->trace(mm_sprintify("[CLOUDSTACK] Got an HTTP-response: %s", $response->status_line));
-    return($self->error(mm_sprintify("Can't %s->get(): %s", $ua, $response->status_line)))
+    $log->trace(mm_sprintf("[CLOUDSTACK] Got an HTTP-response: %s", $response->status_line));
+    MonkeyMan::Exception->throw_f("Can't %s->get(): %s", $ua, $response->status_line)
         unless($response->is_success);
 
     # Parsing the response
  
     my $parser  = XML::LibXML->new();
-    my $dom     = eval {
-        $parser->load_xml(
+    my $dom;
+    try {
+        $dom = $parser->load_xml(
             string => ($response->content)
         );
-    };
-    return($self->error(mm_sprintify("Can't %s->load_xml(): %s", $parser, $@)))
-        unless(defined($dom));
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't %s->load_xml(): %s", $parser, $e);
+    }
 
-    $log->trace(mm_sprintify("CloudStack returned %s", $dom));
-    $log->trace(mm_sprintify("[CLOUDSTACK] [XML] %s contains:\n%s", $dom, $dom->toString(1)));
+    $log->trace(mm_sprintf("CloudStack returned %s", $dom));
+    $log->trace(mm_sprintf("[CLOUDSTACK] [XML] %s contains:\n%s", $dom, $dom->toString(1)));
 
     # Should we wait for an async job?
 
-    my $jobid = eval { $dom->findvalue('/*/jobid'); };
-    return($self->error(mm_sprintify("Can't %s->findValue(): %s", $dom, $@)))
-        if($@);
+    my $jobid;
+    try {
+        $dom->findvalue('/*/jobid');
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't %s->findValue(): %s", $dom, $e)
+    }
 
     if(defined($input{'options'}->{'wait'}) && ($jobid)) {
  
         my $alarm = time + $input{'options'}->{'wait'};
 
-        $log->debug(mm_sprintify(
+        $log->debug(mm_sprintf(
             "Waiting till %s for a responce concerning the job %s",
-                strftime(MMDateTimeFormat, localtime($alarm)),
+                strftime(MM_DATE_TIME_FORMAT, localtime($alarm)),
                 $jobid
         ));
 
-        my $time_to_sleep = eval {
-            defined($self->cs->mm->configuration->{'time'}->{'sleep_while_waiting'}) ?
-                    $self->cs->mm->configuration->{'time'}->{'sleep_while_waiting'} :
-                    MMSleepWhileWaitingForAsyncJobResult
-        };
+        my $time_to_sleep = defined($self->cs->mm->configuration->{'time'}->{'sleep_while_waiting'}) ?
+            $self->cs->mm->configuration->{'time'}->{'sleep_while_waiting'} :
+            MM_SLEEP_WHILE_WAITING_FOR_ASYNC_JOB_RESULT;
 
         while($time_to_sleep) {
 
@@ -163,11 +177,9 @@ sub run_command {
                     jobid   => $jobid
                 }
             );
-            return($self->error($self->error_message))
-                unless(defined($dom));
 
             if($input{'options'}->{'wait'} && (time >= $alarm)) {
-                $log->warn(mm_sprintify(
+                $log->warn(mm_sprintf(
                     "A timeout of %d seconds has occured while waiting for %s to be completed",
                         $input{'options'}->{'wait'},
                         $jobid
@@ -193,17 +205,21 @@ sub query_xpath {
     my($self, $dom, $xpath, $results_to) = @_;
     my($log);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'           => { variable   => \$log },
-            '$dom'          => { value      =>  $dom,           error       => "The DOM hasn't been defined" }
-#           '$xpath'        => { value      =>  $xpath,         careless    => 1 },
-#           '$results_to'   => { value      =>  $results_to,    careless    => 1 }
-        });
-    };
-    return($self->error($@))
-        if($@);
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'           => { variable   => \$log },
+                '$dom'          => { value      =>  $dom,           error       => "The DOM hasn't been defined" }
+#               '$xpath'        => { value      =>  $xpath,         careless    => 1 },
+#               '$results_to'   => { value      =>  $results_to,    careless    => 1 }
+            }
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    }
 
     # First of all, let's find out what they've passed to us - a list or a string
 
@@ -218,19 +234,22 @@ sub query_xpath {
 
     foreach my $query (@{ $queries }) {
 
-        $log->trace(mm_sprintify("Querying %s for %s", $dom, $query));
-        $log->trace(mm_sprintify("[XML] %s (queried for %s) contains:\n%s", $dom, $query, $dom->toString(1)));
+        $log->trace(mm_sprintf("Querying %s for %s", $dom, $query));
+        $log->trace(mm_sprintf("[XML] %s (queried for %s) contains:\n%s", $dom, $query, $dom->toString(1)));
 
-        my @nodes = eval { $dom->findnodes($query); };
-        return($self->error("Can't %s->findnodes(): %s", $dom, $@))
-            if($@);
+        my @nodes;
+        try {
+            @nodes = $dom->findnodes($query);
+        } catch($e) {
+            MonkeyMan::Exception->throw_f("Can't %s->findnodes(): %s", $dom, $e);
+        }
 
         foreach my $node (@nodes) {
-            $log->trace(mm_sprintify("[XML] %s (the %d'st result) contains:\n%s", $node, scalar(@{ $results }), $node->toString(1)));
+            $log->trace(mm_sprintf("[XML] %s (the %d'st result) contains:\n%s", $node, scalar(@{ $results }), $node->toString(1)));
             push(@{$results}, $node);
         }
 
-        $log->trace(mm_sprintify("Have found %d elements in %s", scalar(@nodes), $dom));
+        $log->trace(mm_sprintf("Have found %d elements in %s", scalar(@nodes), $dom));
 
     }
 

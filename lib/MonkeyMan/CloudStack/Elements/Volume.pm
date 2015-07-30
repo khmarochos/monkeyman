@@ -1,12 +1,15 @@
 package MonkeyMan::CloudStack::Elements::Volume;
 
+# Use pragmas
 use strict;
 use warnings;
 
+# Use my own modules (supposing we know where to find them)
 use MonkeyMan::Constants;
 use MonkeyMan::Utils;
 use MonkeyMan::CloudStack::Elements::AsyncJob;
 
+# Use Moose :)
 use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
@@ -34,7 +37,7 @@ sub _load_dom_xpath_query {
 
     my($self, %parameters) = @_;
 
-    return($self->error("Required parameters haven't been defined"))
+    MonkeyMan::Exception->throw("Required parameters haven't been defined")
         unless(%parameters);
 
     if($parameters{'attribute'} eq 'FINAL') {
@@ -54,7 +57,7 @@ sub _get_parameter_xpath_query {
 
     my($self, $parameter) = @_;
 
-    return($self->error("Required parameters haven't been defined"))
+    MonkeyMan::Exception->throw("The required parameter hasn't been defined")
         unless(defined($parameter));
 
     return("/volume/$parameter");
@@ -67,7 +70,7 @@ sub _find_related_to_given_conditions {
 
     my($self, $key_element) = @_;
 
-    return($self->error("The key element hasn't been defined"))
+    MonkeyMan::Exception->throw("The key element hasn't been defined")
         unless(defined($key_element));
 
     return(
@@ -83,21 +86,27 @@ sub create_snapshot {
     my($self, %input) = @_;
     my($log, $cs);
 
-    return($self->error("Required parameters haven't been defined"))
+    MonkeyMan::Exception->throw("Required parameters haven't been defined")
         unless(%input);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'   => { variable => \$log },
-            'cs'    => { variable => \$cs }
-        }
-    ); };
-    return($self->error($@))
-        if($@);
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'cs'    => { variable => \$cs },
+                'log'   => { variable => \$log }
+            }
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
-    my $job = eval {
-        MonkeyMan::CloudStack::Elements::AsyncJob->new(
+    my $job;
+
+    try {
+        $job = MonkeyMan::CloudStack::Elements::AsyncJob->new(
             cs  => $cs,
             run => {
                 parameters  => {
@@ -107,9 +116,11 @@ sub create_snapshot {
                 wait    => $input{'wait'}
             }
         );
-    };
-    return($self->error(mm_sprintify("Can't MonkeyMan::CloudStack::Elements::AsyncJob->new(): %s", $@)))
-        if($@);
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't MonkeyMan::CloudStack::Elements::AsyncJob->new(): %s", $e)
+    }
 
     return($job);
 
@@ -122,35 +133,37 @@ sub cleanup_snapshots {
     my $self = shift;
     my($keep, $mm, $api, $log);
 
-    eval { mm_method_checks(
-        'object' => $self,
-        'checks' => {
-            'log'       => { variable   => \$log },
-            'cs_api'    => { variable   => \$api },
-            '$keep'     => {
-                             variable   => \$keep,
-                             value      => shift
+    try {
+        mm_check_method_invocation(
+            'object' => $self,
+            'checks' => {
+                'log'       => { variable   => \$log },
+                'cs_api'    => { variable   => \$api },
+                '$keep'     => {
+                                 variable   => \$keep,
+                                 value      => shift
+                }
             }
-        }
-    ); };
-    return($self->error($@))
-        if($@);
+        );
+    } catch(MonkeyMan::Exception $e) {
+        $e->throw;
+    } catch($e) {
+        MonkeyMan::Exception->throw_f("Can't mm_check_method_invocation(): %s", $e);
+    } 
 
-    $log->trace(mm_sprintify(
+    $log->trace(mm_sprintf(
         "Going to cleanup old snapshots for the %s volume (%d snapshot(s) will be kept)",
             $self->get_parameter('id'),
             $keep
     ));
 
     my $snapshots = $self->find_related_to_me('snapshot', 1);
-    return($self->error($self->error_message))
-        unless(defined($snapshots));
 
     my $snapshots_deleted = 0;
     my $snapshots_found = 0;
 
     foreach my $snapshot (sort { $b->get_parameter('created') cmp $a->get_parameter('created') } (@{ $snapshots })) {
-        $log->trace(mm_sprintify(
+        $log->trace(mm_sprintf(
             "Found the %s snapshot created on %s related to the %s volume",
                 $snapshot->get_parameter('id'),
                 $snapshot->get_parameter('created'),
@@ -162,7 +175,7 @@ sub cleanup_snapshots {
                 my $job = $snapshot->delete;
                 return($self->error($snapshot->error_message))
                     unless(defined($job));
-                $log->info(mm_sprintify(
+                $log->info(mm_sprintf(
                     "The %s snapshot has been requested for deletion, the %s job has been started",
                         $snapshot->get_parameter('id'),
                              $job->get_parameter('jobid')

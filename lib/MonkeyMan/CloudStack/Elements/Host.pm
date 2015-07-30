@@ -1,11 +1,16 @@
 package MonkeyMan::CloudStack::Elements::Host;
 
+# Use pragmas
 use strict;
 use warnings;
-use feature "switch";
 
+# Use my own modules (supposing we know where to find them)
 use MonkeyMan::Constants;
 
+# Use 3rd-party libraries
+use experimental qw(switch);
+
+# Use Moose :)
 use Moose;
 use MooseX::UndefTolerant;
 use namespace::autoclean;
@@ -33,7 +38,7 @@ sub _load_dom_xpath_query {
 
     my($self, %parameters) = @_;
 
-    return($self->error("Required parameters haven't been defined"))
+    MonkeyMan::Exception->throw("Required parameters haven't been defined")
         unless(%parameters);
 
     if($parameters{'attribute'} eq 'FINAL') {
@@ -53,7 +58,7 @@ sub _get_parameter_xpath_query {
 
     my($self, $parameter) = @_;
 
-    return($self->error("The required parameter hasn't been defined"))
+    MonkeyMan::Exception->throw("The required parameter hasn't been defined")
         unless(defined($parameter));
 
     return("/host/$parameter");
@@ -66,7 +71,7 @@ sub _find_related_to_given_conditions {
 
     my($self, $key_element) = @_;
 
-    return($self->error("The key element hasn't been defined"))
+    MonkeyMan::Exception->throw("The key element hasn't been defined")
         unless(defined($key_element));
 
     given($key_element->element_type) {

@@ -1,14 +1,14 @@
 package MonkeyMan::Show;
 
+# Use pragmas
 use strict;
 use warnings;
-use feature "switch";
 
-use FindBin qw($Bin);
+# Use my own modules (supposing we know where to find them)
+use MonkeyMan::Constants qw(:ALL);
 
-use lib("$Bin/../lib");
-
-use MonkeyMan::Constants;
+# Use 3rd party libraries
+use experimental qw(switch);
 
 
 
@@ -104,7 +104,7 @@ __END_OF_MAKESNAPSHOTS_HELP_MESSAGE__
 
 
 sub version {
-    my $version = MMVersion ? MMVersion : 'X.3.9E6Y';
+    my $version = MM_VERSION ? MM_VERSION : 'X.3.9E6Y';
     print(<<__END_OF_VERSION_MESSAGE__
 MonkeyMan v$version by Vladimir Melnik <v.melnik\@tucha.ua>
 __END_OF_VERSION_MESSAGE__
