@@ -11,7 +11,6 @@ use warnings;
 
 # Use Moose and be happy :)
 use Moose;
-use MooseX::UndefTolerant;
 use namespace::autoclean;
 
 # Inherit some essentials
@@ -73,12 +72,12 @@ sub BUILD {
         my $log_console_level = $self->_has_console_verbosity ?
             $self->_get_console_verbosity : (
                 MM_VERBOSITY_LEVEL_BASE + (
-                    defined($self->mm->got_options->be_verbose) ?
-                            $self->mm->got_options->be_verbose :
+                    defined($self->mm->parameters->mm_be_verbose) ?
+                            $self->mm->parameters->mm_be_verbose :
                             0
                 ) - (
-                    defined($self->mm->got_options->be_quiet) ?
-                            $self->mm->got_options->be_quiet :
+                    defined($self->mm->parameters->mm_be_quiet) ?
+                            $self->mm->parameters->mm_be_quiet :
                             0
                 )
             );
@@ -94,7 +93,9 @@ sub BUILD {
 
         my $log_configuration_file = $self->_has_configuration_file ?
             $self->_get_configuration_file :
-            MM_CONFIG_LOGGER;
+            defined($self->mm->configuration->tree->{'log'}->{'conf'}) ?
+                    $self->mm->configuration->tree->{'log'}->{'conf'} :
+                    MM_CONFIG_LOGGER;
 
         my $log_configuration_template = $self->_has_configuration ?
             Text::Template->new(
@@ -110,8 +111,8 @@ sub BUILD {
                 MonkeyMan::Exception->throwf(
                     "Can't load logger's configuration from %s: %s",
                         $self->_has_configuration ?
-                            'from the string' :
-                            "from the $log_configuration_file file",
+                            'the string provided' :
+                            "the $log_configuration_file file",
                         $!
                 );
         my $log_configuration = $log_configuration_template->fill_in(
@@ -121,50 +122,41 @@ sub BUILD {
             }
         );
 
-        Log::Log4perl::init_once(\$log_configuration);
+        Log::Log4perl->init_once(\$log_configuration);
 
     }
 
-    $self->_set_log4perl(Log::Log4perl::get_logger(__PACKAGE__));
+    $self->_set_log4perl(Log::Log4perl->get_logger(__PACKAGE__));
 
-    foreach my $method_name (qw(error warn info debug trace)) {
-        $self->_create_wrapper($method_name);
+    # Initialize helpers
+
+    foreach my $helper_name (qw(fatal error warn info debug trace)) {
+
+        my $log_straight    = sub {
+            shift->get_log4perl->$helper_name(@_);
+        };
+        my $log_formatted   = sub {
+            shift->get_log4perl->$helper_name(mm_sprintf(@_));
+        };
+
+        $self->meta->add_method(
+            $helper_name => Class::MOP::Method->wrap(
+                $log_straight, (
+                    name            => $helper_name,
+                    package_name    => __PACKAGE__
+                )
+            )
+        );
+        $self->meta->add_method(
+            $helper_name . 'f' => Class::MOP::Method->wrap(
+                $log_formatted, (
+                    name            => $helper_name . 'f',
+                    package_name    => __PACKAGE__
+                )
+            )
+        );
+
     }
-
-}
-
-
-sub _create_wrapper {
-
-    my $self        = shift;
-    my $method_name = shift;
-
-    die("Haven't got a valid wrapper's name")
-        unless($method_name =~ /^[\w\d_]+$/);
-
-    my $log_straight    = sub {
-        shift->get_log4perl->$method_name(@_);
-    };
-    my $log_formatted   = sub {
-        shift->get_log4perl->$method_name(mm_sprintf(@_));
-    };
-
-    $self->meta->add_method(
-        $method_name => Class::MOP::Method->wrap(
-            $log_straight, (
-                name            => $method_name,
-                package_name    => __PACKAGE__
-            )
-        )
-    );
-    $self->meta->add_method(
-        $method_name . 'f' => Class::MOP::Method->wrap(
-            $log_formatted, (
-                name            => $method_name . 'f',
-                package_name    => __PACKAGE__
-            )
-        )
-    );
 
 }
 

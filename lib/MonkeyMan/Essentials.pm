@@ -21,12 +21,4 @@ has 'monkeyman' => (
 
 
 
-#sub f {
-#
-#    sprintf(@_);
-#
-#}
-
-
-
 1;

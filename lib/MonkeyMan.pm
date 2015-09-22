@@ -11,8 +11,8 @@ MonkeyMan - Apache CloudStack Management Framework
     my %opts;
 
     MonkeyMan->new(
-        application => \&MyCoolApplication,
-        get_options => {
+        application         => \&MyCoolApplication,
+        parse_parameters    => {
             'l|line=s' => 'what_to_say'
         }
     );
@@ -23,11 +23,11 @@ MonkeyMan - Apache CloudStack Management Framework
 
         $mm->log->info->f(
             "We were asked to say '%s'",
-            $mm->got_options->{'what_to_say'}
+            $mm->parameters->{'what_to_say'}
         );
 
         MonkeyMan::Expection::Bored->throw(
-            "I'm feeling bored, so I'm going to stop working"
+            "I'm feeling too bored, so I'm going to stop working"
         );
 
     }
@@ -39,13 +39,13 @@ use warnings;
 
 use MonkeyMan::Constants qw(:ALL);
 use MonkeyMan::Exception;
-use MonkeyMan::GotOptions;
+use MonkeyMan::Parameters;
+use MonkeyMan::Configuration;
 use MonkeyMan::Logger;
 
 # Use Moose and be happy :)
 use Moose;
 use MooseX::Aliases;
-use MooseX::UndefTolerant;
 use namespace::autoclean;
 
 # Use 3rd-party libraries
@@ -114,50 +114,69 @@ has 'app_usage_help' => (
     writer      => '_set_app_usage_help'
 );
 
-=head2 C<get_options>
+=head2 C<parse_parameters>
 
 This attribute requires a reference to a hash containing parameters to be
 passed to the C<Getopt::Long-E<gt>GetOptions()> method (on the left)
 corresponding names of sub-methods to get values of startup parameters. It
-creates the C<got_options> method which returns a reference to the
-C<MonkeyMan::GotOptions> object containing the information of startup
+creates the C<parameters> method which returns a reference to the
+C<MonkeyMan::Parameters> object containing the information of startup
 parameters accessible via corresponding methods. So,
 
-    'get_options'   => {
+    'parse_parameters'      => {
         'i|input=s'     => 'file_in',
         'o|output=s'    => 'file_out'
     }
 
-would create C<MonkeyMan::GotOptions> object with C<get_file_in> and
-C<get_file_out> methods, you could address them as
+would create C<MonkeyMan::Parameters> object with C<file_in> and C<file_out>
+methods, so you could address them as
 
-    $mm->got_options->file_in,
-    $mm->got_options->file_out
+    $mm->parameters->file_in,
+    $mm->parameters->file_out
 
 =cut
 
-has 'get_options' => (
+has 'parse_parameters' => (
     is          => 'ro',
     isa         => 'HashRef',
-    predicate   => '_has_get_options',
-    reader      => '_get_get_options'
+    predicate   => '_has_parse_parameters',
+    reader      => '_get_parse_parameters',
+    lazy        => 0
 );
 
-has 'got_options' => (
+has 'parameters' => (
     is          => 'ro',
-    isa         => 'MonkeyMan::GotOptions',
-    reader      => '_get_got_options',
-    alias       => 'got_options',
-    builder     => '_build_got_options',
-    lazy        => 1,
-    init_arg    => undef
+    isa         => 'MonkeyMan::Parameters',
+    reader      => '_get_parameters',
+    writer      => '_set_parameters',
+    alias       => 'parameters',
+    builder     => '_build_parameters',
+    lazy        => 1
 );
 
-sub _build_got_options {
+sub _build_parameters {
 
     my $self = shift;
 
-    MonkeyMan::GotOptions->new(mm => $self)
+    MonkeyMan::Parameters->new(mm => $self)
+
+}
+
+has 'configuration' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Configuration',
+    reader      => '_get_configuration',
+    writer      => '_set_configuration',
+    alias       => 'configuration',
+    builder     => '_build_configuration',
+    lazy        => 1
+);
+
+sub _build_configuration {
+
+    my $self = shift;
+
+    MonkeyMan::Configuration->new(mm => $self);
 
 }
 
@@ -181,35 +200,29 @@ sub _build_logger {
 
 
 
-sub _app_start {
+sub _mm_init {
 
     my $self = shift;
 
-    # We shall initialize option's parser, as we'll need to know some
-    # parameters shortly
-
-    if($self->got_options->show_help) {
+    if($self->parameters->mm_show_help) {
         $self->print_full_version_info;
         $self->print_full_usage_help;
         exit;
-    } elsif($self->got_options->show_version) {
+    } elsif($self->parameters->mm_show_version) {
         $self->print_full_version_info;
         exit;
     }
-
-    #FIXME: We should fetch it from the global configuration file
-
-    my $log4perl_conf;
-
-    $self->_set_logger(MonkeyMan::Logger->new(
-        mm                  => $self,
-        configuration_file  => $log4perl_conf
-    ));
 
     $self->logger->tracef(
         "The logger has been initialized: %s",
         $self->logger
     );
+
+}
+
+
+
+sub _app_start {
 
 }
 
@@ -226,6 +239,12 @@ sub _app_run {
 
 
 sub _app_finish {
+
+}
+
+
+
+sub _mm_shutdown {
 
 }
 
@@ -266,7 +285,7 @@ sub print_full_usage_help {
         [opt]       Print usage help text and do nothing
     -V, --version
         [opt]       Print version number and do nothing
-    -c <file>, --config <file>
+    -c <file>, --configuration <file>
         [opt]       The main configuration file
     -v, --verbose
         [opt] [mul] Increases verbosity
@@ -287,6 +306,12 @@ sub BUILD {
     my $self = shift;
 
     try {
+        $self->_mm_init;
+    } catch($e) {
+        MonkeyMan::Exception->throwf("Can't initialize the framework: %s", $e),
+    }
+
+    try {
         $self->_app_start;
     } catch($e) {
         MonkeyMan::Exception->throwf("Can't initialize the application: %s", $e),
@@ -304,6 +329,12 @@ sub BUILD {
         die("An error occuried while finishing the application: $e");
     }
 
+    try {
+        $self->_mm_shutdown;
+    } catch($e) {
+        die("An error occuried while shutting the framework down: $e");
+    }
+
 }
 
 
@@ -313,10 +344,11 @@ sub BUILDARGS {
     my $self = shift;
     my %args = @_;
 
-    $args{'get_options'}->{'h|help'}        = 'show_help';
-    $args{'get_options'}->{'V|version'}     = 'show_version';
-    $args{'get_options'}->{'v|verbose+'}    = 'be_verbose';
-    $args{'get_options'}->{'q|quiet+'}      = 'be_quiet';
+    $args{'parse_parameters'}->{'h|help'}           = 'mm_show_help';
+    $args{'parse_parameters'}->{'V|version'}        = 'mm_show_version';
+    $args{'parse_parameters'}->{'c|configuration'}  = 'mm_configuration';
+    $args{'parse_parameters'}->{'v|verbose+'}       = 'mm_be_verbose';
+    $args{'parse_parameters'}->{'q|quiet+'}         = 'mm_be_quiet';
 
     return(\%args);
 

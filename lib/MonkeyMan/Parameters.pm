@@ -1,8 +1,8 @@
-package MonkeyMan::GotOptions;
+package MonkeyMan::Parameters;
 
 =head1 NAME
 
-MonkeyMan::GotOptions - options passed to a MonkeyMan-driven application
+MonkeyMan::Parameters - options passed to a MonkeyMan-driven application
 
 =cut
 
@@ -11,7 +11,6 @@ use warnings;
 
 # Use Moose and be happy :)
 use Moose;
-use MooseX::UndefTolerant;
 use namespace::autoclean;
 
 # Inherit some essentials
@@ -23,18 +22,19 @@ use Getopt::Long;
 
 
 
-has 'got_options' => (
+has 'parameters' => (
     is          => 'ro',
     isa         => 'HashRef',
     init_arg    => undef,
-    builder     => '_build_got_options',
-    reader      => '_get_got_options',
+    builder     => '_build_parameters',
+    reader      => '_get_parameters',
+    predicate   => '_has_parameters',
     lazy        => 1
 );
 
 
 
-sub _build_got_options {
+sub _build_parameters {
 
     return({});
 
@@ -47,29 +47,30 @@ sub BUILD {
     my $self    = shift;
     my $mm      = $self->mm;
 
-    my %options;
+    my $parameters = $self->_get_parameters;
 
     # Parsing options
-    while(my($option_parameters, $option_name) = each(%{$mm->_get_get_options})) {
-        $options{$option_parameters} = \($self->_get_got_options->{$option_name});
+    my %options;
+    while(my($option, $parameter_name) = each(%{$mm->_get_parse_parameters})) {
+        $options{$option} = \($parameters->{$parameter_name});
     }
     GetOptions(%options);
 
     # Adding methods
     my $meta = $self->meta;
-    foreach my $option_name (keys(%{$self->_get_got_options})) {
-        my $reader    =      "$option_name";
-        my $writer    = "_set_$option_name";
+    foreach my $parameter_name (keys(%{$parameters})) {
+        my $reader    =      "$parameter_name";
+        my $writer    = "_set_$parameter_name";
         $meta->add_attribute(
             Class::MOP::Attribute->new(
-                $option_name => (
+                $parameter_name => (
                     reader      => $reader,
                     writer      => $writer,
                     is          => 'ro'
                 )
             )
         );
-        $self->$writer($self->_get_got_options->{$option_name});
+        $self->$writer($parameters->{$parameter_name});
     }
 
 }

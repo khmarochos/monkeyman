@@ -14,12 +14,12 @@ use MonkeyMan;
 
 
 MonkeyMan->new(
-    app_name        => 'vminfo',
-    app_description => 'The utility to get information about a virtual machine',
-    app_version     => '3.0.0',
-    app_usage_help  => \&vminfo_usage,
-    application     => \&vminfo_app,
-    get_options => {
+    app_name            => 'vminfo',
+    app_description     => 'The utility to get information about a virtual machine',
+    app_version         => '2.0.0-rc.1',
+    app_usage_help      => \&vminfo_usage,
+    application         => \&vminfo_app,
+    parse_parameters    => {
         'o|cond|conditions=s%{,}'   => 'conditions',
         'x|xpath=s@'                => 'xpath',
         's|short+'                  => 'short'
@@ -31,6 +31,8 @@ MonkeyMan->new(
 sub vminfo_app {
 
     my $mm = shift;
+
+    $mm->logger->trace("Hello, world!");
 
 }
 
