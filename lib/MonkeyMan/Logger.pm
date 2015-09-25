@@ -22,17 +22,16 @@ use MonkeyMan::Exception;
 
 # Use 3rd-party libraries
 use TryCatch;
-use Text::Template;
 use Log::Log4perl qw(:no_extra_logdie_message);
 
 
 
-has 'configuration' => (
+has 'configuration_string' => (
     is          => 'ro',
     isa         => 'Str',
-    reader      => '_get_configuration',
-    writer      => '_set_configuration',
-    predicate   => '_has_configuration'
+    reader      => '_get_configuration_string',
+    writer      => '_set_configuration_string',
+    predicate   => '_has_configuration_string'
 );
 
 has 'configuration_file' => (
@@ -56,7 +55,25 @@ has 'log4perl' => (
     isa         => 'Log::Log4perl::Logger',
     reader      => 'get_log4perl',
     writer      => '_set_log4perl',
+    predicate   => '_has_log4perl'
 );
+
+has 'log4perl_loggers' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    init_arg    => undef,
+    reader      => '_get_log4perl_loggers',
+    writer      => '_set_log4perl_loggers',
+    predicate   => '_has_log4perl_loggers',
+    builder     => '_build_log4perl_loggers',
+    lazy        => 1
+);
+
+sub _build_log4perl_loggers {
+
+    return({});
+
+}
 
 
 
@@ -66,77 +83,78 @@ sub BUILD {
 
     unless(Log::Log4perl->initialized) {
 
-        # If the console log-level haven't been defined with the corresponding
-        # parrameter, we'll need to calculate it leaning on -q and -v parameters
+        # Okay, shall we any some certain configuration or we should get it
+        # from some configuration file?
 
-        my $log_console_level = $self->_has_console_verbosity ?
-            $self->_get_console_verbosity : (
-                MM_VERBOSITY_LEVEL_BASE + (
-                    defined($self->mm->parameters->mm_be_verbose) ?
-                            $self->mm->parameters->mm_be_verbose :
-                            0
-                ) - (
-                    defined($self->mm->parameters->mm_be_quiet) ?
-                            $self->mm->parameters->mm_be_quiet :
-                            0
-                )
-            );
-
-        # We should be more informative on higher levels
-
-        my $log_console_pattern = ($log_console_level > 4) ?
-            '%d %m%n' :
-            '%d [%p{2}] %m%n';
-
-        # Okay, shall we use some certain configuration or we should get it from
-        # some configuration file?
-
-        my $log_configuration_file = $self->_has_configuration_file ?
-            $self->_get_configuration_file :
-            defined($self->mm->configuration->tree->{'log'}->{'conf'}) ?
-                    $self->mm->configuration->tree->{'log'}->{'conf'} :
-                    MM_CONFIG_LOGGER;
-
-        my $log_configuration_template = $self->_has_configuration ?
-            Text::Template->new(
-                TYPE        => 'STRING',
-                SOURCE      => $self->_get_configuration,
-                DELIMITERS  => ['<%', '%>']
-            ) :
-            Text::Template->new(
-                TYPE        => 'FILE',
-                SOURCE      => $log_configuration_file,
-                DELIMITERS  => ['<%', '%>']
+        my $log_configuration;
+        if($self->_has_configuration_string) {
+            $log_configuration = $self->_get_configuration_string;
+        } else {
+            my $log_configuration_file = $self->_has_configuration_file ?
+                $self->_get_configuration_file :
+                defined($self->mm->configuration->tree->{'log'}->{'conf'}) ?
+                        $self->mm->configuration->tree->{'log'}->{'conf'} :
+                        MM_CONFIG_LOGGER;
+            open(
+                my $log_configuration_filehandle, '<', $log_configuration_file
             ) ||
                 MonkeyMan::Exception->throwf(
                     "Can't load logger's configuration from %s: %s",
-                        $self->_has_configuration ?
-                            'the string provided' :
-                            "the $log_configuration_file file",
-                        $!
+                    $log_configuration_file,
+                    $!
                 );
-        my $log_configuration = $log_configuration_template->fill_in(
-            HASH => {
-                log_console_loglevel => (&MM_VERBOSITY_LEVELS)[$log_console_level],
-                log_console_pattern  => $log_console_pattern
+            while(<$log_configuration_filehandle>) {
+                $log_configuration .= $_;
             }
-        );
+            close($log_configuration_filehandle);
+        }
 
         Log::Log4perl->init_once(\$log_configuration);
 
     }
 
-    $self->_set_log4perl(Log::Log4perl->get_logger(__PACKAGE__));
+    # If the console log-level haven't been defined with the corresponding
+    # parrameter, we'll need to calculate it leaning on -q and -v parameters
+
+    my $log_console_level = $self->_has_console_verbosity ?
+        $self->_get_console_verbosity : (
+            MM_VERBOSITY_LEVEL_BASE + (
+                defined($self->mm->parameters->mm_be_verbose) ?
+                        $self->mm->parameters->mm_be_verbose :
+                        0
+            ) - (
+                defined($self->mm->parameters->mm_be_quiet) ?
+                        $self->mm->parameters->mm_be_quiet :
+                        0
+            )
+        );
+
+    my $logger_console_appender = Log::Log4perl::Appender->new(
+        'Log::Log4perl::Appender::Screen',
+        name    => 'console',
+        stderr  => 1,
+    );
+    my $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
+        '%d [%p{1}] [%c] %m%n'
+    );
+    $logger_console_appender->layout($logger_console_layout);
+    $logger_console_appender->threshold((&MM_VERBOSITY_LEVELS)[$log_console_level]);
+    $self->find_log4perl_logger('main')->add_appender($logger_console_appender);
+    $self->find_log4perl_logger('MonkeyMan')->add_appender($logger_console_appender);
 
     # Initialize helpers
 
     foreach my $helper_name (qw(fatal error warn info debug trace)) {
 
         my $log_straight    = sub {
-            shift->get_log4perl->$helper_name(@_);
+            shift->find_log4perl_logger((caller(0))[0])->$helper_name(
+                @_
+            );
         };
         my $log_formatted   = sub {
-            shift->get_log4perl->$helper_name(mm_sprintf(@_));
+            shift->find_log4perl_logger((caller(0))[0])->$helper_name(
+                mm_sprintf(@_)
+            );
         };
 
         $self->meta->add_method(
@@ -158,6 +176,16 @@ sub BUILD {
 
     }
 
+}
+
+
+
+sub find_log4perl_logger {
+    my $self    = shift;
+    my $module  = shift;
+    $self->_get_log4perl_loggers->{$module} ?
+        $self->_get_log4perl_loggers->{$module} :
+       ($self->_get_log4perl_loggers->{$module} = Log::Log4perl->get_logger($module));
 }
 
 

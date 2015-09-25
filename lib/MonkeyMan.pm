@@ -213,11 +213,6 @@ sub _mm_init {
         exit;
     }
 
-    $self->logger->tracef(
-        "The logger has been initialized: %s",
-        $self->logger
-    );
-
 }
 
 
@@ -310,6 +305,7 @@ sub BUILD {
     } catch($e) {
         MonkeyMan::Exception->throwf("Can't initialize the framework: %s", $e),
     }
+    $self->logger->tracef("The framework has been initialized: %s", $self);
 
     try {
         $self->_app_start;
@@ -329,6 +325,7 @@ sub BUILD {
         die("An error occuried while finishing the application: $e");
     }
 
+    $self->logger->trace("The framework is going to shut itself down");
     try {
         $self->_mm_shutdown;
     } catch($e) {
