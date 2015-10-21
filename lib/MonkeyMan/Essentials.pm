@@ -15,6 +15,7 @@ has 'monkeyman' => (
     isa         => 'MonkeyMan',
     reader      => '_get_monkeyman',
     writer      => '_set_monkeyman',
+    predicate   => '_has_monkeyman',
     required    => 1,
     alias       => 'mm'
 );

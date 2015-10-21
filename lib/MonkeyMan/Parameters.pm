@@ -11,6 +11,7 @@ use warnings;
 
 # Use Moose and be happy :)
 use Moose;
+use MooseX::Aliases;
 use namespace::autoclean;
 
 # Inherit some essentials
@@ -54,21 +55,25 @@ sub BUILD {
     while(my($option, $parameter_name) = each(%{$mm->_get_parse_parameters})) {
         $options{$option} = \($parameters->{$parameter_name});
     }
-    GetOptions(%options);
+    GetOptions(%options) ||
+        MonkeyMan::Exception->throw("Can't get command-line options");
 
     # Adding methods
     my $meta = $self->meta;
     foreach my $parameter_name (keys(%{$parameters})) {
-        my $reader    =      "$parameter_name";
+        my $reader    =  "get_$parameter_name";
         my $writer    = "_set_$parameter_name";
         $meta->add_attribute(
             Class::MOP::Attribute->new(
                 $parameter_name => (
-                    reader      => $reader,
-                    writer      => $writer,
-                    is          => 'ro'
+                    reader  => $reader,
+                    writer  => $writer,
+                    is      => 'ro'
                 )
             )
+        );
+        $meta->add_method(
+            $parameter_name => sub { shift->$reader(@_); }
         );
         $self->$writer($parameters->{$parameter_name});
     }

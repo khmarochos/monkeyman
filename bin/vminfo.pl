@@ -34,6 +34,8 @@ sub vminfo_app {
 
     $mm->logger->trace("Hello, world!");
 
+    $mm->cloudstack->api->craft_url("a" => "b");
+
 }
 
 

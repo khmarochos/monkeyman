@@ -1,4 +1,4 @@
-package MonkeyMan::Configuration;
+package MonkeyMan::CloudStack::Configuration;
 
 use strict;
 use warnings;
@@ -9,20 +9,15 @@ use MooseX::Aliases;
 use namespace::autoclean;
 
 # Inherit some essentials
-with 'MonkeyMan::Essentials';
-
-use MonkeyMan::Constants qw(:filenames);
-
-# Use 3rd-party libraries
-use Config::General qw(ParseConfig);
+with 'MonkeyMan::CloudStack::Essentials';
 
 
 
 has 'configuration_tree' => (
     is          => 'ro',
     isa         => 'HashRef',
-    reader      => 'get_configuration',
-    writer      => '_set_configuration',
+    reader      => 'get_configuration_tree',
+    writer      => '_set_configuration_tree',
     builder     => '_build_configuration_tree',
     alias       => 'tree',
     required    => 1

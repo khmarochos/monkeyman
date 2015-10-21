@@ -75,6 +75,14 @@ my @mm_constants_logging = qw(
     MM_DATE_TIME_FORMAT
 );
 
+# :cloudstack
+
+use constant MM_CLOUDSTACK_PRIMARY      => 'PRIMARY';
+
+my @mm_constants_cloudstack = qw(
+    MM_CLOUDSTACK_PRIMARY
+);
+
 # :ALL
 
 my @mm_constants_all = (
@@ -82,7 +90,8 @@ my @mm_constants_all = (
     @mm_constants_directories,
     @mm_constants_filenames,
     @mm_constants_timeouts,
-    @mm_constants_logging
+    @mm_constants_logging,
+    @mm_constants_cloudstack
 );
 
 
@@ -96,7 +105,8 @@ my @mm_constants_all = (
     directories => \@mm_constants_directories,
     filenames   => \@mm_constants_filenames,
     timeouts    => \@mm_constants_timeouts,
-    logging     => \@mm_constants_logging
+    logging     => \@mm_constants_logging,
+    cloudstack  => \@mm_constants_cloudstack
 );
 
 

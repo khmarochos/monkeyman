@@ -41,6 +41,7 @@ use MonkeyMan::Constants qw(:ALL);
 use MonkeyMan::Exception;
 use MonkeyMan::Parameters;
 use MonkeyMan::Configuration;
+use MonkeyMan::CloudStack;
 use MonkeyMan::Logger;
 
 # Use Moose and be happy :)
@@ -114,21 +115,21 @@ has 'app_usage_help' => (
     writer      => '_set_app_usage_help'
 );
 
-=head2 C<parse_parameters>
+=head2 C<parse_parameters>, C<parameters>
 
 This attribute requires a reference to a hash containing parameters to be
 passed to the C<Getopt::Long-E<gt>GetOptions()> method (on the left)
 corresponding names of sub-methods to get values of startup parameters. It
 creates the C<parameters> method which returns a reference to the
 C<MonkeyMan::Parameters> object containing the information of startup
-parameters accessible via corresponding methods. So,
+parameters accessible via corresponding methods. Thus,
 
     'parse_parameters'      => {
         'i|input=s'     => 'file_in',
         'o|output=s'    => 'file_out'
     }
 
-would create C<MonkeyMan::Parameters> object with C<file_in> and C<file_out>
+will create C<MonkeyMan::Parameters> object with C<file_in> and C<file_out>
 methods, so you could address them as
 
     $mm->parameters->file_in,
@@ -149,8 +150,8 @@ has 'parameters' => (
     isa         => 'MonkeyMan::Parameters',
     reader      => '_get_parameters',
     writer      => '_set_parameters',
-    alias       => 'parameters',
     builder     => '_build_parameters',
+    alias       => 'parameters',
     lazy        => 1
 );
 
@@ -165,10 +166,11 @@ sub _build_parameters {
 has 'configuration' => (
     is          => 'ro',
     isa         => 'MonkeyMan::Configuration',
-    reader      => '_get_configuration',
+    reader      => 'has_configuration',
+    reader      => 'get_configuration',
     writer      => '_set_configuration',
-    alias       => 'configuration',
     builder     => '_build_configuration',
+    alias       => 'configuration',
     lazy        => 1
 );
 
@@ -176,7 +178,22 @@ sub _build_configuration {
 
     my $self = shift;
 
-    MonkeyMan::Configuration->new(mm => $self);
+    my $config = Config::General->new(
+        -ConfigFile         => (
+            defined($self->parameters->mm_configuration) ?
+                    $self->parameters->mm_configuration :
+                    MM_CONFIG_MAIN
+        ),
+        -UseApacheInclude   => 1,
+        -ExtendedAccess     => 1
+    );
+
+    my %configuration = $config->getall;
+
+    MonkeyMan::Configuration->new(
+        mm      => $self,
+        tree    => \%configuration
+    );
 
 }
 
@@ -185,8 +202,8 @@ has 'logger' => (
     isa         => 'MonkeyMan::Logger',
     reader      => '_get_logger',
     writer      => '_set_logger',
-    alias       => 'logger',
     builder     => '_build_logger',
+    alias       => 'logger',
     lazy        => 1
 );
 
@@ -195,6 +212,36 @@ sub _build_logger {
     my $self = shift;
 
     MonkeyMan::Logger->new(mm => $self);
+
+}
+
+has 'cloudstacks' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    reader      => 'get_cloudstacks',
+    writer      => '_set_cloudstacks',
+    builder     => '_build_cloudstacks',
+    alias       => 'cloudstacks',
+    lazy        => 1
+);
+
+sub _build_cloudstacks {
+
+    my $self = shift;
+
+    my %cloudstacks = (
+        &MM_CLOUDSTACK_PRIMARY => MonkeyMan::CloudStack->new(
+            monkeyman           => $self,
+            configuration_tree  => $self->configuration->tree->{'cloudstack'}
+        )
+    );
+
+    my $meta = $self->meta;
+    $meta->add_method(
+        cloudstack  => sub { shift->cloudstacks->{&MM_CLOUDSTACK_PRIMARY}; }
+    );
+
+    return(\%cloudstacks);
 
 }
 
@@ -213,11 +260,33 @@ sub _mm_init {
         exit;
     }
 
+    $self->logger->tracef("We've got the set of command-line parameters: %s",
+        $self->parameters
+    );
+
+    $self->logger->tracef("We've got the configuration: %s",
+        $self->configuration
+    );
+
+    $self->logger->tracef("We've got the logger: %s",
+        $self->logger
+    );
+
+    $self->logger->tracef("We've got the primapy CloudStack instance: %s",
+        $self->get_cloudstacks->{&MM_CLOUDSTACK_PRIMARY}
+    );
+
+    $self->logger->debugf("The framework has been initialized: %s", $self);
+
 }
 
 
 
 sub _app_start {
+
+    my $self = shift;
+
+    $self->logger->debug("The application has been started");
 
 }
 
@@ -235,12 +304,19 @@ sub _app_run {
 
 sub _app_finish {
 
+    my $self = shift;
+
+    $self->logger->debug("The application has been finished");
+
 }
 
 
 
 sub _mm_shutdown {
 
+    my $self = shift;
+
+    $self->logger->debugf("The %s framework is shutting itself down", $self);
 }
 
 
@@ -300,37 +376,11 @@ sub BUILD {
 
     my $self = shift;
 
-    try {
-        $self->_mm_init;
-    } catch($e) {
-        MonkeyMan::Exception->throwf("Can't initialize the framework: %s", $e),
-    }
-    $self->logger->tracef("The framework has been initialized: %s", $self);
-
-    try {
-        $self->_app_start;
-    } catch($e) {
-        MonkeyMan::Exception->throwf("Can't initialize the application: %s", $e),
-    }
-
-    try {
-        $self->_app_run;
-    } catch($e) {
-        die("An error occuried while running the application: $e");
-    }
-
-    try {
-        $self->_app_finish;
-    } catch($e) {
-        die("An error occuried while finishing the application: $e");
-    }
-
-    $self->logger->trace("The framework is going to shut itself down");
-    try {
-        $self->_mm_shutdown;
-    } catch($e) {
-        die("An error occuried while shutting the framework down: $e");
-    }
+    $self->_mm_init;
+    $self->_app_start;
+    $self->_app_run;
+    $self->_app_finish;
+    $self->_mm_shutdown;
 
 }
 
@@ -353,6 +403,6 @@ sub BUILDARGS {
 
 
 
-__PACKAGE__->meta->make_immutable;
+#__PACKAGE__->meta->make_immutable;
 
 1;

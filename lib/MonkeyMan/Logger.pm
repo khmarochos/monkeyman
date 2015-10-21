@@ -50,14 +50,6 @@ has 'console_verbosity' => (
     predicate   => '_has_console_verbosity'
 );
 
-has 'log4perl' => (
-    is          => 'ro',
-    isa         => 'Log::Log4perl::Logger',
-    reader      => 'get_log4perl',
-    writer      => '_set_log4perl',
-    predicate   => '_has_log4perl'
-);
-
 has 'log4perl_loggers' => (
     is          => 'ro',
     isa         => 'HashRef',
@@ -111,36 +103,31 @@ sub BUILD {
 
         Log::Log4perl->init_once(\$log_configuration);
 
-    }
-
-    # If the console log-level haven't been defined with the corresponding
-    # parrameter, we'll need to calculate it leaning on -q and -v parameters
-
-    my $log_console_level = $self->_has_console_verbosity ?
-        $self->_get_console_verbosity : (
-            MM_VERBOSITY_LEVEL_BASE + (
-                defined($self->mm->parameters->mm_be_verbose) ?
-                        $self->mm->parameters->mm_be_verbose :
-                        0
-            ) - (
-                defined($self->mm->parameters->mm_be_quiet) ?
-                        $self->mm->parameters->mm_be_quiet :
-                        0
-            )
+        my $log_console_level = $self->_has_console_verbosity ?
+            $self->_get_console_verbosity : (
+                MM_VERBOSITY_LEVEL_BASE + (
+                    defined($self->mm->parameters->mm_be_verbose) ?
+                            $self->mm->parameters->mm_be_verbose :
+                            0
+                ) - (
+                    defined($self->mm->parameters->mm_be_quiet) ?
+                            $self->mm->parameters->mm_be_quiet :
+                            0
+                )
+            );
+        my $logger_console_appender = Log::Log4perl::Appender->new(
+            'Log::Log4perl::Appender::Screen',
+            name    => 'console',
+            stderr  => 1,
         );
+        my $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
+            '%d [%p{1}] [%c] %m%n'
+        );
+        $logger_console_appender->layout($logger_console_layout);
+        $logger_console_appender->threshold((&MM_VERBOSITY_LEVELS)[$log_console_level]);
+        $self->find_log4perl_logger('')->add_appender($logger_console_appender);
 
-    my $logger_console_appender = Log::Log4perl::Appender->new(
-        'Log::Log4perl::Appender::Screen',
-        name    => 'console',
-        stderr  => 1,
-    );
-    my $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
-        '%d [%p{1}] [%c] %m%n'
-    );
-    $logger_console_appender->layout($logger_console_layout);
-    $logger_console_appender->threshold((&MM_VERBOSITY_LEVELS)[$log_console_level]);
-    $self->find_log4perl_logger('main')->add_appender($logger_console_appender);
-    $self->find_log4perl_logger('MonkeyMan')->add_appender($logger_console_appender);
+    }
 
     # Initialize helpers
 
