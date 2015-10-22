@@ -43,6 +43,7 @@ use MonkeyMan::Parameters;
 use MonkeyMan::Configuration;
 use MonkeyMan::CloudStack;
 use MonkeyMan::Logger;
+use MonkeyMan::Timer;
 
 # Use Moose and be happy :)
 use Moose;
@@ -67,6 +68,21 @@ has 'mm_version' => (
 sub _build_mm_version {
 
     MM_VERSION;
+
+}
+
+has 'timer' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Timer',
+    reader      => 'get_timer',
+    writer      => '_set_timer',
+    builder     => '_build_timer',
+    alias       => 'timer'
+);
+
+sub _build_timer {
+
+    return(MonkeyMan::Timer->new(mm => shift));
 
 }
 
@@ -238,7 +254,11 @@ sub _build_cloudstacks {
 
     my $meta = $self->meta;
     $meta->add_method(
-        cloudstack  => sub { shift->cloudstacks->{&MM_CLOUDSTACK_PRIMARY}; }
+        cloudstack  => Class::MOP::Method->wrap(
+            sub { shift->cloudstacks->{&MM_CLOUDSTACK_PRIMARY}; },
+            name            => 'cloudstack',
+            package_name    => __PACKAGE__
+        )
     );
 
     return(\%cloudstacks);
@@ -276,7 +296,10 @@ sub _mm_init {
         $self->get_cloudstacks->{&MM_CLOUDSTACK_PRIMARY}
     );
 
-    $self->logger->debugf("The framework has been initialized: %s", $self);
+    $self->logger->debugf("%s The framework has been initialized: %s",
+        $self->timer->tell,
+        $self
+    );
 
 }
 
@@ -286,7 +309,9 @@ sub _app_start {
 
     my $self = shift;
 
-    $self->logger->debug("The application has been started");
+    $self->logger->debugf("%s The application has been started",
+        $self->timer->tell
+    );
 
 }
 
@@ -298,6 +323,10 @@ sub _app_run {
 
     &{ $self->{application}; }($self);
 
+    $self->logger->debugf("%s The application has run",
+        $self->timer->tell
+    );
+
 }
 
 
@@ -306,7 +335,9 @@ sub _app_finish {
 
     my $self = shift;
 
-    $self->logger->debug("The application has been finished");
+    $self->logger->debugf("%s The application has finished",
+        $self->timer->tell
+    );
 
 }
 
@@ -316,7 +347,10 @@ sub _mm_shutdown {
 
     my $self = shift;
 
-    $self->logger->debugf("The %s framework is shutting itself down", $self);
+    $self->logger->debugf("%s The %s framework is shutting itself down",
+        $self->timer->tell,
+        $self
+    );
 }
 
 
@@ -375,6 +409,8 @@ __END_OF_USAGE_HELP__
 sub BUILD {
 
     my $self = shift;
+
+    $self->logger->debugf("%s Hello, world!", $self->timer->tell);
 
     $self->_mm_init;
     $self->_app_start;

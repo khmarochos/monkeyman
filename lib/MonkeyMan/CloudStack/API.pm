@@ -16,6 +16,7 @@ use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
 
 
+
 sub craft_url {
 
     my $self            = shift;
@@ -35,7 +36,7 @@ sub craft_url {
     my @pairs_encoded;
     my @parameters = sort(keys(%parameters));
     while(my $parameter = shift(@parameters)) {
-        $logger->tracef('... encoding the "%s" parameter ("%s")',
+        $logger->tracef(' ... encoding the "%s" parameter ("%s")',
             $parameter,
             $parameters{$parameter}
         );
@@ -43,8 +44,8 @@ sub craft_url {
             uri_encode($parameter) . '=' . uri_encode($parameters{$parameter}, 1)
         );
         if(($parameter ne 'signature') && (0 == @parameters)) {
-            $logger->tracef("... have got all the parameters: %s", \@pairs_encoded);
-            $logger->tracef("... adding the signature");
+            $logger->tracef(" ... have got all the parameters: %s", \@pairs_encoded);
+            $logger->tracef(" ... adding the signature");
             $parameters{'signature'} =
                 encode_base64(
                     hmac_sha1(lc(join('&', @pairs_encoded)),
@@ -64,7 +65,38 @@ sub craft_url {
 
 
 
+sub test {
+
+    my $self = shift;
+
+    $self->run_command(
+        parameters  => {
+            command     => 'login'
+        },
+        options     => {
+            fatal_empty => 1,
+            fatal       => 1
+        }
+    );
+
+}
+
+
+
 sub run_command {
+
+    my $self            = shift;
+    my %input           = @_;
+    my $logger          = $self->cs->mm->logger;
+    my $configuration   = $self->cs->configuration->tree->{'api'};
+
+    my $url = defined(
+        $input{'url'}) ?
+        $input{'url'} :
+        $self->craft_url(%{ $input{'parameters'} }
+    );
+    MonkeyMan::Exception->throwf("The requested URL (%s) is invalid", \$url)
+        unless(index($url, $configuration->{'api_address'}) == 0);
 
 }
 

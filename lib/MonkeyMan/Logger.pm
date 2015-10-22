@@ -135,7 +135,7 @@ sub BUILD {
 
         my $log_straight    = sub {
             shift->find_log4perl_logger((caller(0))[0])->$helper_name(
-                @_
+                "@_"
             );
         };
         my $log_formatted   = sub {

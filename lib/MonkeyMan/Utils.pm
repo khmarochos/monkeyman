@@ -36,7 +36,11 @@ sub mm_sprintf {
             $values[$i] = "[UNDEF]";
         } elsif(blessed($value)) {
             $values[$i] = sprintf("[%s\@0x%x]", blessed($value), refaddr($value));
-        } elsif((ref($value) eq 'HASH') || (ref($value) eq 'ARRAY')) {
+        } elsif(
+            (ref($value) eq 'HASH')     || 
+            (ref($value) eq 'ARRAY')    ||
+            (ref($value) eq 'STRING')
+        ) {
             $values[$i] = Data::Dumper->new([$value])->Indent(0)->Terse(1)->Dump;
         }
     }
