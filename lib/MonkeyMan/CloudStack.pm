@@ -3,23 +3,23 @@ package MonkeyMan::CloudStack;
 use strict;
 use warnings;
 
-use MonkeyMan::CloudStack::Configuration;
-use MonkeyMan::CloudStack::API;
-
 # Use Moose and be happy :)
 use Moose;
-use MooseX::Aliases;
 use namespace::autoclean;
 
 # Inherit some essentials
 with 'MonkeyMan::Essentials';
+
+use MonkeyMan::CloudStack::Configuration;
+use MonkeyMan::CloudStack::API;
 
 
 
 has 'configuration_tree' => (
     is          => 'ro',
     isa         => 'HashRef',
-    reader      => 'get_configuration_tree',
+    reader      =>  'get_configuration_tree',
+    predicate   =>  'has_configuration_tree',
     writer      => '_set_configuration_tree',
     required    => 1
 );
@@ -27,10 +27,10 @@ has 'configuration_tree' => (
 has 'configuration' => (
     is          => 'ro',
     isa         => 'MonkeyMan::CloudStack::Configuration',
-    reader      => 'get_configuration',
-    writer      => '_set_configuration',
+    reader      =>    'get_configuration',
+    writer      =>   '_set_configuration',
+    predicate   =>    'has_configuration',
     builder     => '_build_configuration',
-    alias       => 'configuration',
     lazy        => 1
 );
 
@@ -48,10 +48,9 @@ sub _build_configuration {
 has 'api' => (
     is          => 'ro',
     isa         => 'MonkeyMan::CloudStack::API',
-    reader      => '_get_api',
-    writer      => '_set_api',
+    reader      =>    'get_api',
+    writer      =>   '_set_api',
     builder     => '_build_api',
-    alias       => 'api',
     lazy        => 1
 );
 

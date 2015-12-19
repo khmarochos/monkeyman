@@ -5,7 +5,6 @@ use warnings;
 
 # Use Moose and be happy :)
 use Moose;
-use MooseX::Aliases;
 use namespace::autoclean;
 
 # Inherit some essentials
@@ -18,13 +17,12 @@ use Config::General qw(ParseConfig);
 
 
 
-has 'configuration_tree' => (
+has 'tree' => (
     is          => 'ro',
     isa         => 'HashRef',
-    reader      => 'get_configuration',
-    writer      => '_set_configuration',
-    builder     => '_build_configuration_tree',
-    alias       => 'tree',
+    reader      =>  'get_tree',
+    writer      => '_set_tree',
+    predicate   => '_has_tree',
     required    => 1
 );
 

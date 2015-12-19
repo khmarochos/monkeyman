@@ -11,7 +11,6 @@ use warnings;
 
 # Use Moose and be happy :)
 use Moose;
-use MooseX::Aliases;
 use namespace::autoclean;
 
 # Inherit some essentials
@@ -27,9 +26,9 @@ has 'parameters' => (
     is          => 'ro',
     isa         => 'HashRef',
     init_arg    => undef,
+    predicate   =>   '_has_parameters',
+    reader      =>   '_get_parameters',
     builder     => '_build_parameters',
-    reader      => '_get_parameters',
-    predicate   => '_has_parameters',
     lazy        => 1
 );
 
@@ -46,36 +45,38 @@ sub _build_parameters {
 sub BUILD {
 
     my $self    = shift;
-    my $mm      = $self->mm;
+    my $mm      = $self->get_monkeyman;
 
-    my $parameters = $self->_get_parameters;
+    my $parameters_got = $self->_get_parameters;
 
     # Parsing options
     my %options;
-    while(my($option, $parameter_name) = each(%{$mm->_get_parse_parameters})) {
-        $options{$option} = \($parameters->{$parameter_name});
+    while(my($option, $parameter_name) = each(%{$mm->_get_parameters_to_get})) {
+        $options{$option} = \($parameters_got->{$parameter_name});
     }
     GetOptions(%options) ||
         MonkeyMan::Exception->throw("Can't get command-line options");
 
     # Adding methods
     my $meta = $self->meta;
-    foreach my $parameter_name (keys(%{$parameters})) {
+    foreach my $parameter_name (keys(%{$parameters_got})) {
         my $reader    =  "get_$parameter_name";
         my $writer    = "_set_$parameter_name";
+        my $predicate =  "has_$parameter_name";
         $meta->add_attribute(
             Class::MOP::Attribute->new(
                 $parameter_name => (
-                    reader  => $reader,
-                    writer  => $writer,
-                    is      => 'ro'
+                    reader      => $reader,
+                    writer      => $writer,
+                    predicate   => $predicate,
+                    is          => 'ro'
                 )
             )
         );
         $meta->add_method(
             $parameter_name => sub { shift->$reader(@_); }
         );
-        $self->$writer($parameters->{$parameter_name});
+        $self->$writer($parameters_got->{$parameter_name});
     }
 
 }

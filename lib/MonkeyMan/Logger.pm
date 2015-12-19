@@ -54,11 +54,17 @@ has 'log4perl_loggers' => (
     is          => 'ro',
     isa         => 'HashRef',
     init_arg    => undef,
-    reader      => '_get_log4perl_loggers',
-    writer      => '_set_log4perl_loggers',
-    predicate   => '_has_log4perl_loggers',
+    reader      =>   '_get_log4perl_loggers',
+    writer      =>   '_set_log4perl_loggers',
+    predicate   =>   '_has_log4perl_loggers',
     builder     => '_build_log4perl_loggers',
     lazy        => 1
+);
+
+has 'dumped' => (
+    is          => 'ro',
+    isa         => 'Str',
+    reader      => 'get_dumped'
 );
 
 sub _build_log4perl_loggers {
@@ -84,8 +90,8 @@ sub BUILD {
         } else {
             my $log_configuration_file = $self->_has_configuration_file ?
                 $self->_get_configuration_file :
-                defined($self->mm->configuration->tree->{'log'}->{'conf'}) ?
-                        $self->mm->configuration->tree->{'log'}->{'conf'} :
+                defined($self->get_monkeyman->get_configuration->get_tree->{'log'}->{'conf'}) ?
+                        $self->get_monkeyman->get_configuration->get_tree->{'log'}->{'conf'} :
                         MM_CONFIG_LOGGER;
             open(
                 my $log_configuration_filehandle, '<', $log_configuration_file
@@ -106,19 +112,19 @@ sub BUILD {
         my $log_console_level = $self->_has_console_verbosity ?
             $self->_get_console_verbosity : (
                 MM_VERBOSITY_LEVEL_BASE + (
-                    defined($self->mm->parameters->mm_be_verbose) ?
-                            $self->mm->parameters->mm_be_verbose :
+                    defined($self->get_monkeyman->get_parameters->mm_be_verbose) ?
+                            $self->get_monkeyman->get_parameters->mm_be_verbose :
                             0
                 ) - (
-                    defined($self->mm->parameters->mm_be_quiet) ?
-                            $self->mm->parameters->mm_be_quiet :
+                    defined($self->get_monkeyman->get_parameters->mm_be_quiet) ?
+                            $self->get_monkeyman->get_parameters->mm_be_quiet :
                             0
                 )
             );
         my $logger_console_appender = Log::Log4perl::Appender->new(
             'Log::Log4perl::Appender::Screen',
-            name    => 'console',
-            stderr  => 1,
+            name            => 'console',
+            stderr          => 1,
         );
         my $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
             '%d [%p{1}] [%c] %m%n'

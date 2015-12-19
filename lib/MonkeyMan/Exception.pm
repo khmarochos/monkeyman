@@ -16,10 +16,20 @@ use MonkeyMan::Utils;
 
 foreach my $subclass (qw(
     Initialization
+    Configuration
+    Configuration::Missing
+    CloudStack::API
+    CloudStack::API::Command
 )) {
-    my $subclass_fullname   = __PACKAGE__ . '::' . $subclass;
-    my $subclass_parent     = ($subclass_fullname =~ s/::((?!::).)+$//r);
+    subclass_create(__PACKAGE__ . '::' . $subclass)
+}
 
+sub subclass_create {
+    my $subclass_fullname   = shift;
+    my $subclass_parent     = ($subclass_fullname =~ s/::((?!::).)+$//r);
+    unless($subclass_parent->DOES(__PACKAGE__)) {
+        subclass_create($subclass_parent);
+    }
     Moose::Meta::Class->create(
         $subclass_fullname  => (superclasses => [$subclass_parent])
     );

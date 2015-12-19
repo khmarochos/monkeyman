@@ -68,19 +68,21 @@ my @mm_constants_timeouts = qw(
 use constant MM_VERBOSITY_LEVELS        => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
 use constant MM_VERBOSITY_LEVEL_BASE    => 4;
 use constant MM_DATE_TIME_FORMAT        => '%Y/%m/%d %H:%M:%S';
+use constant MM_PRIMARY_LOGGER          => 'PRIMARY';
 
 my @mm_constants_logging = qw(
     MM_VERBOSITY_LEVELS
     MM_VERBOSITY_LEVEL_BASE
     MM_DATE_TIME_FORMAT
+    MM_PRIMARY_LOGGER
 );
 
 # :cloudstack
 
-use constant MM_CLOUDSTACK_PRIMARY      => 'PRIMARY';
+use constant MM_PRIMARY_CLOUDSTACK => 'PRIMARY';
 
 my @mm_constants_cloudstack = qw(
-    MM_CLOUDSTACK_PRIMARY
+    MM_PRIMARY_CLOUDSTACK
 );
 
 # :ALL

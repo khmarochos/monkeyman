@@ -18,8 +18,8 @@ MonkeyMan->new(
     app_description     => 'The utility to get information about a virtual machine',
     app_version         => '2.0.0-rc.1',
     app_usage_help      => \&vminfo_usage,
-    application         => \&vminfo_app,
-    parse_parameters    => {
+    app_code            => \&vminfo_app,
+    parameters_to_get   => {
         'o|cond|conditions=s%{,}'   => 'conditions',
         'x|xpath=s@'                => 'xpath',
         's|short+'                  => 'short'
@@ -32,9 +32,17 @@ sub vminfo_app {
 
     my $mm = shift;
 
-    $mm->logger->trace("Hello, world!");
+    $mm->get_logger->trace("Hello, world!");
 
-    $mm->cloudstack->api->test;
+    $mm->get_cloudstack->get_api->run_command(
+        parameters => {
+            command     => 'disableUser',
+            id          => '2741357e-7ea9-4dfc-b3ff-43e2efd94736'
+        },
+        options => {
+            wait => 1
+        }
+    )
 
 }
 
