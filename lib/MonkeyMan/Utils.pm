@@ -22,6 +22,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 my @MM_utils_all = qw(
     mm_sprintf
+    mm_register_exceptions
 );
 
 @ISA                = qw(Exporter);
@@ -46,8 +47,6 @@ sub mm_sprintf {
     return(sprintf($message, @values));
 
 }
-
-
 
 sub _showref {
 
@@ -118,6 +117,16 @@ sub _showref {
 
     return("[$ref_id_short/$ref_id_long]");
 
+}
+
+
+
+sub mm_register_exceptions {
+    my @subclasses  = @_;
+    my $prefix      = (caller)[0];
+    foreach(@subclasses) {
+        ::MonkeyMan::Exception::register_exception($prefix .'::Exception::' .$_);
+    }
 }
 
 

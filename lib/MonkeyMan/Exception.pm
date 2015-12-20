@@ -12,27 +12,19 @@ extends 'Throwable::Error';
 
 use MonkeyMan::Utils;
 
+use TryCatch;
 
 
-foreach my $subclass (qw(
-    Initialization
-    Configuration
-    Configuration::Missing
-    CloudStack::API
-    CloudStack::API::Command
-)) {
-    subclass_create(__PACKAGE__ . '::' . $subclass)
-}
 
-sub subclass_create {
-    my $subclass_fullname   = shift;
-    my $subclass_parent     = ($subclass_fullname =~ s/::((?!::).)+$//r);
-    unless($subclass_parent->DOES(__PACKAGE__)) {
-        subclass_create($subclass_parent);
+sub register_exception {
+    my $exception = shift;
+    try {
+        $exception->DOES(__PACKAGE__);
+    } catch {
+        Moose::Meta::Class->create(
+            $exception => (superclasses => [__PACKAGE__])
+        );
     }
-    Moose::Meta::Class->create(
-        $subclass_fullname  => (superclasses => [$subclass_parent])
-    );
 }
 
 

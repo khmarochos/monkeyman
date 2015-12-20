@@ -10,12 +10,19 @@ use namespace::autoclean;
 # Inherit some essentials
 with 'MonkeyMan::CloudStack::API::Essentials';
 
+use MonkeyMan::Utils;
 
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
 use LWP::UserAgent;
 use HTTP::Request;
+
+
+mm_register_exceptions qw(
+    BadResponse
+);
+
 
 
 has parameters => (
@@ -162,7 +169,7 @@ sub run {
 
     # Is everything fine?
     if(! $self->get_http_response->is_success && $options{'fatal_fail'}) {
-        MonkeyMan::Exception::CloudStack::API::Command->throwf(
+        MonkeyMan::CloudStack::API::Command::Exception::BadResponse->throwf(
             "The command has failed to run: %s",
                 $self->get_http_response->status_line
         );

@@ -13,12 +13,21 @@ with 'MonkeyMan::CloudStack::Essentials';
 with 'MonkeyMan::Roles::Timerable';
 
 use MonkeyMan::Constants qw(:cloudstack);
+use MonkeyMan::Utils;
 use MonkeyMan::CloudStack::API::Command;
 
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
 use XML::LibXML;
+
+
+
+mm_register_exceptions qw(
+    NoParameters
+    Timeout
+    Timeout
+);
 
 
 
@@ -148,7 +157,9 @@ sub run_command {
     }
 
     unless(defined($command)) {
-        MonkeyMan::Exception::CloudStack::API->throw("Neither parameters, command nor URL are given");
+        MonkeyMan::CloudStack::API::Exception::NoParameters->throw(
+            "Neither parameters, command nor URL are given"
+        );
     }
 
     my $job_run = ${$self->get_time_current}[0];
@@ -187,7 +198,7 @@ sub run_command {
                     ($wait > 0) &&
                     ($wait + $job_run <= ${$self->get_time_current}[0])
                 ) {
-                    MonkeyMan::Exception::CloudStack::API->throwf(
+                    MonkeyMan::CloudStack::API::Exception::Timeout->throwf(
                         "We can't wait for the %s job to finish anymore: " .
                         "%d seconds have passed, which is more than %d",
                             $jobid,
