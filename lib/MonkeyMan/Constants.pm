@@ -80,9 +80,13 @@ my @mm_constants_logging = qw(
 # :cloudstack
 
 use constant MM_PRIMARY_CLOUDSTACK => 'PRIMARY';
+use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH => 3600;
+use constant MM_CLOUDSTACK_API_SLEEP => 10;
 
 my @mm_constants_cloudstack = qw(
     MM_PRIMARY_CLOUDSTACK
+    MM_CLOUDSTACK_API_WAIT_FOR_FINISH
+    MM_CLOUDSTACK_API_SLEEP
 );
 
 # :ALL

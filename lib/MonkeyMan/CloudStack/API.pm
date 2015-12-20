@@ -12,6 +12,7 @@ use namespace::autoclean;
 with 'MonkeyMan::CloudStack::Essentials';
 with 'MonkeyMan::Roles::Timerable';
 
+use MonkeyMan::Constants qw(:cloudstack);
 use MonkeyMan::CloudStack::API::Command;
 
 use URI::Encode qw(uri_encode uri_decode);
@@ -160,11 +161,22 @@ sub run_command {
 
         if(my $wait = $input{'options'}->{'wait'}) {
 
-            $logger->tracef("We'll wait for the result of the %s job", $jobid);
+            $wait = ($wait > 0) ?
+                $wait :
+                defined($configuration->{'wait'}) ?
+                        $configuration->{'wait'} :
+                        MM_CLOUDSTACK_API_WAIT_FOR_FINISH;
+
+            $logger->tracef(
+                "We'll wait %d seconds for the result of the %s job",
+                    $wait,
+                    $jobid
+            );
 
             while() {
 
                 my $job_result = $self->check_job($jobid);
+
                 if($job_result->findvalue('/*/jobstatus') ne '0') {
                     $logger->tracef("The job %s is finished", $jobid);
                     $dom = $job_result;
@@ -184,7 +196,11 @@ sub run_command {
                     );
                 }
 
-                sleep(1);
+                sleep(
+                    defined($configuration->{'sleep'}) ?
+                            $configuration->{'sleep'} :
+                            MM_CLOUDSTACK_API_SLEEP
+                );
 
             }
 

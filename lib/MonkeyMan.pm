@@ -130,7 +130,8 @@ sub _build_configuration {
                     MM_CONFIG_MAIN
         ),
         -UseApacheInclude   => 1,
-        -ExtendedAccess     => 1
+        -ExtendedAccess     => 1,
+        -InterPolateVars    => 1
     );
 
     my %configuration = $config->getall;

@@ -40,7 +40,7 @@ sub vminfo_app {
             id          => '2741357e-7ea9-4dfc-b3ff-43e2efd94736'
         },
         options => {
-            wait => 1
+            wait => -1
         }
     )
 
