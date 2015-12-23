@@ -39,9 +39,7 @@ func vminfo_app(MonkeyMan $mm!) {
 #            command     => 'disableUser',
 #            id          => '2741357e-7ea9-4dfc-b3ff-43e2efd94736'
 #        },
-#        options => {
-#            wait => 1
-#        }
+#        wait => 1
 #    );
 
     my $result = $mm->get_cloudstack->get_api->run_command(

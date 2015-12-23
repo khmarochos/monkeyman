@@ -45,17 +45,21 @@ method _build_parameters {
 
 method BUILD(...) {
 
-    my $mm      = $self->get_monkeyman;
+    my $mm              = $self->get_monkeyman;
+    my $parameters_got  = $self->_get_parameters;
 
-    my $parameters_got = $self->_get_parameters;
-
-    # Parsing options
-    my %options;
-    while(my($option, $parameter_name) = each(%{$mm->_get_parameters_to_get})) {
-        $options{$option} = \($parameters_got->{$parameter_name});
+    # Parsing parameters
+    my %parameters;
+    while(
+        my(
+            $parameter_definition,
+            $parameter_name
+        ) = each(%{$mm->_get_parameters_to_get})
+    ) {
+        $parameters{$parameter_definition} = \($parameters_got->{$parameter_name});
     }
-    GetOptions(%options) ||
-        MonkeyMan::Exception->throw("Can't get command-line options");
+    GetOptions(%parameters) ||
+        MonkeyMan::Exception->throw("Can't get command-line parameters");
 
     # Adding methods
     my $meta = $self->meta;
