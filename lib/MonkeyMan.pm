@@ -8,9 +8,9 @@ use Moose;
 use namespace::autoclean;
 
 # Add some roles
-with 'MonkeyMan::Roles::Timerable';
-# This is a role to implement the timer attributes for the MonkeyMan
-# object (the time_started attribute and some methods to work with it
+with 'MonkeyMan::Roles::WithTimer';
+# This is a role to implement the timer attributes for the MonkeyMan class
+# (the time_started attribute and some methods to work with it)
 
 use MonkeyMan::Constants qw(:ALL);
 use MonkeyMan::Exception;
@@ -22,6 +22,7 @@ use MonkeyMan::Logger;
 # Use 3rd-party libraries
 use MooseX::Handies;
 use MooseX::Singleton;
+use Method::Signatures;
 use TryCatch;
 use Getopt::Long qw(:config no_ignore_case);
 use Data::Dumper; # Only for debugging
@@ -36,7 +37,7 @@ has 'mm_version' => (
     init_arg    => undef
 );
 
-sub _build_mm_version {
+method _build_mm_version {
 
     MM_VERSION;
 
@@ -99,11 +100,9 @@ has 'parameters' => (
     lazy        => 1
 );
 
-sub _build_parameters {
+method _build_parameters {
 
-    my $self = shift;
-
-    MonkeyMan::Parameters->new(monkeyman => $self)
+    return(MonkeyMan::Parameters->new(monkeyman => $self));
 
 }
 
@@ -119,9 +118,7 @@ has 'configuration' => (
     lazy        => 1
 );
 
-sub _build_configuration {
-
-    my $self = shift;
+method _build_configuration {
 
     my $config = Config::General->new(
         -ConfigFile         => (
@@ -158,9 +155,7 @@ has 'loggers' => (
     }]
 );
 
-sub _build_loggers {
-
-    my $self = shift;
+method _build_loggers {
 
     my %loggers = (
         &MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(
@@ -189,9 +184,7 @@ has 'cloudstacks' => (
     }]
 );
 
-sub _build_cloudstacks {
-
-    my $self = shift;
+method _build_cloudstacks {
 
     my %cloudstacks = (
         &MM_PRIMARY_CLOUDSTACK => MonkeyMan::CloudStack->new(
@@ -206,9 +199,8 @@ sub _build_cloudstacks {
 
 
 
-sub _mm_init {
+method _mm_init {
 
-    my $self        = shift;
     my $parameters  = $self->get_parameters;
     my $logger      = $self->get_logger;
 
@@ -252,9 +244,7 @@ sub _mm_init {
 
 
 
-sub _app_start {
-
-    my $self = shift;
+method _app_start {
 
     $self->get_logger->debugf("%s The application has been started",
         $self->get_time_passed_formatted
@@ -264,9 +254,7 @@ sub _app_start {
 
 
 
-sub _app_run {
-
-    my $self = shift;
+method _app_run {
 
     &{ $self->{app_code}; }($self);
 
@@ -278,9 +266,7 @@ sub _app_run {
 
 
 
-sub _app_finish {
-
-    my $self = shift;
+method _app_finish {
 
     $self->get_logger->debugf("%s The application has finished",
         $self->get_time_passed_formatted
@@ -290,12 +276,9 @@ sub _app_finish {
 
 
 
-sub _mm_shutdown {
+method _mm_shutdown {
 
-    my $self = shift;
-    my $logger = $self->get_logger;
-
-    $logger->debugf("%s The framework is shutting itself down",
+    $self->get_logger->debugf("%s The framework is shutting itself down",
         $self->get_time_passed_formatted,
         $self
     );
@@ -304,9 +287,7 @@ sub _mm_shutdown {
 
 
 
-sub print_full_version_info {
-
-    my $self = shift;
+method print_full_version_info {
 
     printf(<<__END_OF_VERSION_INFO__
 %s (v%s) driven by MonkeyMan (v%s):
@@ -324,9 +305,7 @@ __END_OF_VERSION_INFO__
 
 
 
-sub print_full_usage_help {
-
-    my $self = shift;
+method print_full_usage_help {
 
     my $app_usage_help = (
             $self->has_app_usage_help &&
@@ -358,9 +337,7 @@ __END_OF_USAGE_HELP__
 
 
 
-sub BUILD {
-
-    my $self = shift;
+method BUILD(...) {
 
     $self->get_logger->debugf("%s Hello, world!", $self->get_time_passed_formatted);
 
@@ -374,9 +351,8 @@ sub BUILD {
 
 
 
-sub BUILDARGS {
+method BUILDARGS(...) {
 
-    my $self = shift;
     my %args = @_;
 
     $args{'parameters_to_get'}->{'h|help'}           = 'mm_show_help';

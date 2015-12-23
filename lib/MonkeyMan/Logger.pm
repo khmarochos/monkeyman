@@ -21,6 +21,7 @@ use MonkeyMan::Utils;
 use MonkeyMan::Exception;
 
 # Use 3rd-party libraries
+use Method::Signatures;
 use TryCatch;
 use Log::Log4perl qw(:no_extra_logdie_message);
 
@@ -67,7 +68,7 @@ has 'dumped' => (
     reader      => 'get_dumped'
 );
 
-sub _build_log4perl_loggers {
+method _build_log4perl_loggers {
 
     return({});
 
@@ -75,9 +76,7 @@ sub _build_log4perl_loggers {
 
 
 
-sub BUILD {
-
-    my $self = shift;
+method BUILD(...) {
 
     unless(Log::Log4perl->initialized) {
 
@@ -173,9 +172,7 @@ sub BUILD {
 
 
 
-sub find_log4perl_logger {
-    my $self    = shift;
-    my $module  = shift;
+method find_log4perl_logger(Str $module!) {
     $self->_get_log4perl_loggers->{$module} ?
         $self->_get_log4perl_loggers->{$module} :
        ($self->_get_log4perl_loggers->{$module} = Log::Log4perl->get_logger($module));

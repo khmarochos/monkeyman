@@ -17,6 +17,7 @@ use namespace::autoclean;
 with 'MonkeyMan::Essentials';
 
 # Use 3rd-party libraries
+use Method::Signatures;
 use TryCatch;
 use Getopt::Long;
 
@@ -34,7 +35,7 @@ has 'parameters' => (
 
 
 
-sub _build_parameters {
+method _build_parameters {
 
     return({});
 
@@ -42,9 +43,8 @@ sub _build_parameters {
 
 
 
-sub BUILD {
+method BUILD(...) {
 
-    my $self    = shift;
     my $mm      = $self->get_monkeyman;
 
     my $parameters_got = $self->_get_parameters;

@@ -5,17 +5,18 @@ use warnings;
 
 # Use Moose and be happy :)
 use Moose;
-use MooseX::Params::Validate;
 use namespace::autoclean;
 
 # Inherit some essentials
 with 'MonkeyMan::CloudStack::Essentials';
-with 'MonkeyMan::Roles::Timerable';
+with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::Constants qw(:cloudstack);
 use MonkeyMan::Utils;
+use MonkeyMan::Exception;
 use MonkeyMan::CloudStack::API::Command;
 
+use Method::Signatures;
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
@@ -25,7 +26,6 @@ use XML::LibXML;
 
 mm_register_exceptions qw(
     NoParameters
-    Timeout
     Timeout
 );
 
@@ -41,9 +41,8 @@ has useragent_signature => (
     lazy        => 1
 );
 
-sub _build_useragent_signature {
+method _build_useragent_signature {
 
-    my $self = shift;
     my $monkeyman = $self->get_cloudstack->get_monkeyman;
 
     return(sprintf(
@@ -65,9 +64,7 @@ has useragent => (
     builder     => '_build_useragent',
 );
 
-sub _build_useragent {
-
-    my $self = shift;
+method _build_useragent {
 
     return(LWP::UserAgent->new(
         agent       => $self->get_useragent_signature,
@@ -79,9 +76,7 @@ sub _build_useragent {
 
 
 
-sub test {
-
-    my $self = shift;
+method test {
 
     $self->run_command(
         parameters  => {
@@ -98,79 +93,73 @@ sub test {
 
 
 
-sub run_command {
+method run_command(
+    MonkeyMan::CloudStack::API::Command :$command,
+    HashRef :$parameters,
+    HashRef :$options,
+    Str :$url
+) {
 
-    my($self, %input) = validated_hash(
-        \@_,
-        command     => { optional => 1, isa => 'MonkeyMan::CloudStack::API::Command' },
-        parameters  => { optional => 1, isa => 'HashRef' },
-        url         => { optional => 1, isa => 'String' },
-        options     => { optional => 1, isa => 'HashRef' }
-    );
     my $cloudstack      = $self->get_cloudstack;
     my $logger          = $cloudstack->get_monkeyman->get_logger;
     my $configuration   = $cloudstack->get_configuration->get_tree->{'api'};
 
-    my $command;
+    my $command_to_run;
 
-    if(defined($input{'command'})) {
-        $logger->tracef("The %s API-command is given to be run",
-            $input{'command'}
-        );
-        $command = $input{'command'};
+    if(defined($command)) {
+        $logger->tracef("The %s API-command is given to be run", $command);
+        $command_to_run = $command;
     }
 
-    if(defined($input{'url'})) {
-        $logger->tracef("The %s URL is given to be run as a command",
-            $input{'url'}
-        );
-        unless(defined($command)) {
-            $command = MonkeyMan::CloudStack::API::Command->new(
-                api         => $self,
-                url         => $input{'url'}
+    if(defined($url)) {
+        $logger->tracef("The %s URL is given to be run as a command", $url);
+        unless(defined($command_to_run)) {
+            $command_to_run = MonkeyMan::CloudStack::API::Command->new(
+                api => $self,
+                url => $url
             );
         } else {
             $logger->warnf(
                 "The %s API-command is already present, " .
                 "the %s URL will be ignored",
-                    $command, \{$input{'url'}}
+                    $command_to_run, \$url
             );
         }
     }
 
-    if(defined($input{'parameters'})) {
+    if(defined($parameters)) {
         $logger->tracef("The %s set of parameters is given to be run as a command",
-            $input{'parameters'}
+            $parameters
         );
-        unless(defined($command)) {
-            $command = MonkeyMan::CloudStack::API::Command->new(
+        unless(defined($command_to_run)) {
+            $command_to_run = MonkeyMan::CloudStack::API::Command->new(
                 api         => $self,
-                parameters  => $input{'parameters'}
+                parameters  => $parameters
             );
         } else {
             $logger->warnf(
                 "The %s API-command is already present, " .
                 "the %s set of parameters will be ignored",
-                    $command, \{$input{'url'}}
+                    $command_to_run, $parameters
             );
         }
     }
 
-    unless(defined($command)) {
+    unless(defined($command_to_run)) {
         MonkeyMan::CloudStack::API::Exception::NoParameters->throw(
             "Neither parameters, command nor URL are given"
         );
     }
 
     my $job_run = ${$self->get_time_current}[0];
-    my $result  = $command->run(%{$input{'options'}});
+    my $result  = $command_to_run->run(%{ $options });
     my $dom     = $self->get_dom($result);
 
     if(my $jobid = $dom->findvalue('/*/jobid')) {
 
         $logger->tracef("We've got an asynchronous job, the job ID is: %s", $jobid);
 
-        if(my $wait = $input{'options'}->{'wait'}) {
+        if(my $wait = $options->{'wait'}) {
 
             $wait = ($wait > 0) ?
                 $wait :
@@ -186,7 +175,7 @@ sub run_command {
 
             while() {
 
-                my $job_result = $self->check_job($jobid);
+                my $job_result = $self->get_job_result($jobid);
 
                 if($job_result->findvalue('/*/jobstatus') ne '0') {
                     $logger->tracef("The job %s is finished", $jobid);
@@ -228,10 +217,7 @@ sub run_command {
 
 
 
-sub get_dom {
-
-    my $self    = shift;
-    my $xml     = shift;
+method get_dom(Str $xml!) {
 
     my $dom = XML::LibXML->new->load_xml(string => $xml);
 
@@ -245,10 +231,7 @@ sub get_dom {
 
 
 
-sub check_job {
-
-    my $self    = shift;
-    my $jobid   = shift;
+method get_job_result(Str $jobid!) {
 
     $self->run_command(
         parameters  => {
@@ -258,10 +241,15 @@ sub check_job {
         options => {
             wait        => 0,
             fatal_fail  => 1,
-            fatai_empty => 1
+            fatal_empty => 1
         }
     );
 
+}
+
+
+
+method create_element {
 }
 
 

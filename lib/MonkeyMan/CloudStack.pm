@@ -13,6 +13,8 @@ with 'MonkeyMan::Essentials';
 use MonkeyMan::CloudStack::Configuration;
 use MonkeyMan::CloudStack::API;
 
+use Method::Signatures;
+
 
 
 has 'configuration_tree' => (
@@ -34,9 +36,7 @@ has 'configuration' => (
     lazy        => 1
 );
 
-sub _build_configuration {
-
-    my $self = shift;
+method _build_configuration {
 
     MonkeyMan::CloudStack::Configuration->new(
         cloudstack  => $self,
@@ -54,9 +54,7 @@ has 'api' => (
     lazy        => 1
 );
 
-sub _build_api {
-
-    my $self = shift;
+method _build_api {
 
     MonkeyMan::CloudStack::API->new(
         cloudstack  => $self

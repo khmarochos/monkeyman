@@ -10,6 +10,8 @@ use lib("$Bin/../lib");
 
 # Use my own modules
 use MonkeyMan;
+use MonkeyMan::Utils;
+use MonkeyMan::CloudStack::API::Element::VirtualMachine;
 
 
 
@@ -32,8 +34,6 @@ sub vminfo_app {
 
     my $mm = shift;
 
-    $mm->get_logger->trace("Hello, world!");
-
     $mm->get_cloudstack->get_api->run_command(
         parameters => {
             command     => 'disableUser',
@@ -42,7 +42,23 @@ sub vminfo_app {
         options => {
             wait => 1
         }
-    )
+    );
+
+    my $result = $mm->get_cloudstack->get_api->run_command(
+        parameters => {
+            command     => 'listVirtualMachines',
+            domainid    => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d'
+        }
+    );
+    print(mm_sprintf("%s\n", $result->toString(1)));
+
+#    my $vm = MonkeyMan::CloudStack::API::Element::VirtualMachine->new(
+#        api => $mm->get_cloudstack->get_api
+#    );
+#    $vm->find_by_criterions(
+#        criterions  => { id => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d' },
+#        options     => { return_as => 'DOM' }
+#    );
 
 }
 

@@ -1,6 +1,5 @@
 package MonkeyMan::Exception;
 
-
 use strict;
 use warnings;
 
@@ -12,15 +11,13 @@ extends 'Throwable::Error';
 
 use MonkeyMan::Utils;
 
+use Method::Signatures;
 use TryCatch;
 
 
 
-sub register_exception {
-    my $exception = shift;
-    try {
-        $exception->DOES(__PACKAGE__);
-    } catch {
+func register_exception(Str $exception!) {
+    unless ( $exception->DOES(__PACKAGE__) ) {
         Moose::Meta::Class->create(
             $exception => (superclasses => [__PACKAGE__])
         );
@@ -44,7 +41,7 @@ has 'stack_trace_args' => (
 
 
 
-around 'throw' => sub {
+around 'throw' => func(...){
 
     my $method  = shift;
     my $class   = shift;
@@ -82,9 +79,8 @@ around 'throw' => sub {
 
 
 
-sub throwf {
+method throwf(...) {
 
-    my $self    = shift;
     my $message = shift;
     my @values;
     my @exceptions;
@@ -107,7 +103,7 @@ sub throwf {
 
 
 
-sub _build_timestamp {
+method _build_timestamp {
 
     return(time);
 
@@ -115,7 +111,7 @@ sub _build_timestamp {
 
 
 
-sub _build_stack_trace_args {
+func _build_stack_trace_args(...) {
 
     my $talktalk = 0;
 
@@ -144,7 +140,7 @@ sub _build_stack_trace_args {
 
 
 
-sub find_exceptions {
+func find_exceptions(...) {
     my @result;
     foreach (@_) {
         push(@result, $_)

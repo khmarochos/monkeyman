@@ -9,9 +9,11 @@ use namespace::autoclean;
 
 # Inherit some essentials
 with 'MonkeyMan::CloudStack::API::Essentials';
+with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::Utils;
 
+use Method::Signatures;
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
@@ -35,7 +37,7 @@ has parameters => (
     lazy        => 1
 );
 
-sub _build_parameters {
+method _build_parameters(...) {
 
     return({});
 
@@ -53,10 +55,8 @@ has url => (
     lazy        => 1
 );
 
-sub _build_url {
+method _build_url {
     
-    my $self = shift;
-
     unless($self->has_parameters) {
         MonkeyMan::Exception->throw("The command isn't defined");
     }
@@ -65,11 +65,8 @@ sub _build_url {
 
 }
 
+method craft_url(...) {
 
-
-sub craft_url {
-
-    my $self            = shift;
     my %parameters      = @_;
     my $logger          = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
     my $configuration   = $self->get_api->get_cloudstack->get_configuration->get_tree->{'api'};
@@ -135,11 +132,9 @@ has http_response => (
     lazy        => 1
 );
 
-sub run {
+method run(Bool :$fatal_fail = 1, Bool :$fatal_empty = 0, :$wait) {
 
-    my $self    = shift;
-    my %options = @_;
-    my $logger  = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
 
     $logger->debugf("Running the %s command", $self);
 
@@ -168,7 +163,7 @@ sub run {
     );
 
     # Is everything fine?
-    if(! $self->get_http_response->is_success && $options{'fatal_fail'}) {
+    if(! $self->get_http_response->is_success && $fatal_fail) {
         MonkeyMan::CloudStack::API::Command::Exception::BadResponse->throwf(
             "The command has failed to run: %s",
                 $self->get_http_response->status_line
