@@ -82,11 +82,9 @@ method test {
         parameters  => {
             command     => 'listApis'
         },
-        options     => {
-            wait        => 0,
-            fatal_empty => 1,
-            fatal_fail  => 1,
-        }
+        wait        => 0,
+        fatal_empty => 1,
+        fatal_fail  => 1,
     );
 
 }
@@ -96,8 +94,10 @@ method test {
 method run_command(
     MonkeyMan::CloudStack::API::Command :$command,
     HashRef :$parameters,
-    HashRef :$options,
-    Str :$url
+    Str     :$url,
+    Bool    :$wait          = 0,
+    Bool    :$fatal_empty   = 0,
+    Bool    :$fatal_fail    = 1
 ) {
 
     my $cloudstack      = $self->get_cloudstack;
@@ -152,14 +152,14 @@ method run_command(
     }
 
     my $job_run = ${$self->get_time_current}[0];
-    my $result  = $command_to_run->run(%{ $options });
+    my $result  = $command_to_run->run(fatal_fail => $fatal_fail);
     my $dom     = $self->get_dom($result);
 
     if(my $jobid = $dom->findvalue('/*/jobid')) {
 
         $logger->tracef("We've got an asynchronous job, the job ID is: %s", $jobid);
 
-        if(my $wait = $options->{'wait'}) {
+        if($wait) {
 
             $wait = ($wait > 0) ?
                 $wait :
@@ -238,11 +238,8 @@ method get_job_result(Str $jobid!) {
             command     => 'queryAsyncJobResult',
             jobid       => $jobid
         },
-        options => {
-            wait        => 0,
-            fatal_fail  => 1,
-            fatal_empty => 1
-        }
+        fatal_fail  => 1,
+        fatal_empty => 1
     );
 
 }
@@ -277,11 +274,9 @@ MonkeyMan::CloudStack::API - Apache CloudStack API class
             password    => '1z@Lo0pA3',
             domain      => 'ZALOOPA'
         },
-        options     => {
-            wait        => 0,
-            fatal_empty => 1,
-            fatal_fail  => 1,
-        }
+        wait        => 0,
+        fatal_empty => 1,
+        fatal_fail  => 1
     );
 
 =head1 DESCRIPTION

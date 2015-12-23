@@ -13,6 +13,8 @@ use MonkeyMan;
 use MonkeyMan::Utils;
 use MonkeyMan::CloudStack::API::Element::VirtualMachine;
 
+use Method::Signatures;
+
 
 
 MonkeyMan->new(
@@ -30,19 +32,17 @@ MonkeyMan->new(
 
 
 
-sub vminfo_app {
+func vminfo_app(MonkeyMan $mm!) {
 
-    my $mm = shift;
-
-    $mm->get_cloudstack->get_api->run_command(
-        parameters => {
-            command     => 'disableUser',
-            id          => '2741357e-7ea9-4dfc-b3ff-43e2efd94736'
-        },
-        options => {
-            wait => 1
-        }
-    );
+#    $mm->get_cloudstack->get_api->run_command(
+#        parameters => {
+#            command     => 'disableUser',
+#            id          => '2741357e-7ea9-4dfc-b3ff-43e2efd94736'
+#        },
+#        options => {
+#            wait => 1
+#        }
+#    );
 
     my $result = $mm->get_cloudstack->get_api->run_command(
         parameters => {
@@ -52,19 +52,19 @@ sub vminfo_app {
     );
     print(mm_sprintf("%s\n", $result->toString(1)));
 
-#    my $vm = MonkeyMan::CloudStack::API::Element::VirtualMachine->new(
-#        api => $mm->get_cloudstack->get_api
-#    );
-#    $vm->find_by_criterions(
-#        criterions  => { id => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d' },
-#        options     => { return_as => 'DOM' }
-#    );
+    my $vm = MonkeyMan::CloudStack::API::Element::VirtualMachine->new(
+        api => $mm->get_cloudstack->get_api
+    );
+    $vm->find_by_criterions(
+        return_as   => 'DOM',
+        criterions  => { id => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d' }
+    );
 
 }
 
 
 
-sub vminfo_usage {
+func vminfo_usage {
 
     return(<<__END_OF_USAGE_HELP__
 This application recognizes the following parameters:

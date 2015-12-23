@@ -35,25 +35,8 @@ has 'dom' => (
 
 
 
-method find_by_criterions {
+method find_by_criterions(HashRef :$criterions!, Str :$return_as = 'DOM') {
 
-#    my($self, %input) = validated_hash(
-#        \@_,
-#        criterions  => { optional => 0, isa => 'HashRef' },
-#        options     => { optional => 1, isa => 'HashRef', default => { return_as => 'DOM' } },
-#        MX_PARAMS_VALIDATE_CACHE_KEY => _generate_MX_PARAMS_VALIDATE_CACHE_KEY(1)
-#    );
-#    my %criterions = validated_hash(
-#        [ %{ $input{'criterions'} } ],
-#        id          => { optional => 1, isa => 'Str' },
-#        domainid    => { optional => 1, isa => 'Str' },
-#        MX_PARAMS_VALIDATE_CACHE_KEY => _generate_MX_PARAMS_VALIDATE_CACHE_KEY(2)
-#    );
-#    my %options = validated_hash(
-#        [ %{ $input{'options'} } ],
-#        return_as   => { optional => 0, isa => 'Str', default => 'DOM' },
-#        MX_PARAMS_VALIDATE_CACHE_KEY => _generate_MX_PARAMS_VALIDATE_CACHE_KEY(3)
-#    );
 
 }
 

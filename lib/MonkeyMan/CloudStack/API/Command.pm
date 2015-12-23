@@ -132,7 +132,7 @@ has http_response => (
     lazy        => 1
 );
 
-method run(Bool :$fatal_fail = 1, Bool :$fatal_empty = 0, :$wait) {
+method run(Bool :$fatal_fail = 1, Bool :$fatal_empty = 0) {
 
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
 
