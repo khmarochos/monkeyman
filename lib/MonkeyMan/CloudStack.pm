@@ -57,7 +57,8 @@ has 'api' => (
 method _build_api {
 
     MonkeyMan::CloudStack::API->new(
-        cloudstack  => $self
+        cloudstack          => $self,
+        configuration_tree  => $self->get_configuration->get_tree->{'api'}
     );
 
 }

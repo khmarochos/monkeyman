@@ -16,13 +16,14 @@ use TryCatch;
 
 
 
-func register_exception(Str $exception!) {
+func _register_exception(Str $exception!) {
     unless ( $exception->DOES(__PACKAGE__) ) {
         Moose::Meta::Class->create(
             $exception => (superclasses => [__PACKAGE__])
         );
     }
 }
+
 
 
 

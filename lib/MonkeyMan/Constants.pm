@@ -21,7 +21,7 @@ my @mm_constants_version = qw(
 # :directories
 
 sub MM_DIRECTORY_ROOT {
-    if($Bin =~ m{((/.+)?/monkeyman)/((?!monkeyman).)+$}) {
+    if($Bin =~ m{^((/.+)?/monkeyman\W)}) {
         return($1);
     } else {
         die("Can't find the root directory");

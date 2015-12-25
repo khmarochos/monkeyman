@@ -42,21 +42,21 @@ func vminfo_app(MonkeyMan $mm!) {
 #        wait => 1
 #    );
 
-    my $result = $mm->get_cloudstack->get_api->run_command(
-        parameters => {
-            command     => 'listVirtualMachines',
-            domainid    => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d'
-        }
-    );
-    print(mm_sprintf("%s\n", $result->toString(1)));
+#    my $result = $mm->get_cloudstack->get_api->run_command(
+#        parameters => {
+#            command     => 'listVirtualMachines',
+#            domainid    => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d'
+#        }
+#    );
+#    print(mm_sprintf("%s\n", $result->toString(1)));
 
     my $vm = MonkeyMan::CloudStack::API::Element::VirtualMachine->new(
         api => $mm->get_cloudstack->get_api
     );
-    $vm->find_by_criterions(
-        return_as   => 'DOM',
-        criterions  => { id => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d' }
-    );
+    print(mm_sprintf("%s\n", $vm->find_by_criterions(
+        return_as   => 'ID',
+        criterions  => { id => 'e0d2d1ba-b0c0-4746-878e-176345de1f69' }
+    )));
 
 }
 

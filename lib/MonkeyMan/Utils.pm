@@ -9,6 +9,7 @@ use MonkeyMan::Constants qw(:ALL);
 use MonkeyMan::Exception;
 
 # Use 3rd party libraries
+use Method::Signatures;
 use Scalar::Util qw(blessed refaddr);
 use Data::Dumper;
 use Exporter;
@@ -48,17 +49,15 @@ sub mm_sprintf {
 
 }
 
-sub _showref {
+func _showref(Ref $ref!) {
 
-    my $ref = shift;
     my $ref_id_short;
 
-    if(ref($ref)) {
-        $ref_id_short = sprintf(
-            "%s\@0x%x",
-            blessed($ref) ? blessed($ref) : ref($ref),
-            refaddr($ref));
-    }
+    $ref_id_short = sprintf(
+        "%s\@0x%x",
+        blessed($ref) ? blessed($ref) : ref($ref),
+        refaddr($ref)
+    );
 
     my $monkeyman;
     my $monkeyman_started;
@@ -121,11 +120,14 @@ sub _showref {
 
 
 
-sub mm_register_exceptions {
-    my @subclasses  = @_;
-    my $prefix      = (caller)[0];
+func mm_register_exceptions(@subclasses!) {
+    my $prefix = (caller)[0];
     foreach(@subclasses) {
-        ::MonkeyMan::Exception::register_exception($prefix .'::Exception::' .$_);
+        if($_ =~ /^::/) {
+            MonkeyMan::Exception::_register_exception($_);
+        } else {
+            MonkeyMan::Exception::_register_exception($prefix . '::Exception::' . $_);
+        }
     }
 }
 

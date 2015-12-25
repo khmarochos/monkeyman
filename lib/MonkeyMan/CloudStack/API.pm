@@ -14,6 +14,7 @@ with 'MonkeyMan::Roles::WithTimer';
 use MonkeyMan::Constants qw(:cloudstack);
 use MonkeyMan::Utils;
 use MonkeyMan::Exception;
+use MonkeyMan::CloudStack::API::Configuration;
 use MonkeyMan::CloudStack::API::Command;
 
 use Method::Signatures;
@@ -31,6 +32,36 @@ mm_register_exceptions qw(
 
 
 
+has 'configuration_tree' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    reader      =>  'get_configuration_tree',
+    predicate   =>  'has_configuration_tree',
+    writer      => '_set_configuration_tree',
+    required    => 1
+);
+
+has 'configuration' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::CloudStack::API::Configuration',
+    reader      =>    'get_configuration',
+    writer      =>   '_set_configuration',
+    predicate   =>    'has_configuration',
+    builder     => '_build_configuration',
+    lazy        => 1
+);
+
+method _build_configuration {
+
+    MonkeyMan::CloudStack::API::Configuration::->new(
+        api     => $self,
+        tree    => $self->get_configuration_tree
+    );
+
+}
+
+
+
 has useragent_signature => (
     is          => 'ro',
     isa         => 'Str',
@@ -43,14 +74,20 @@ has useragent_signature => (
 
 method _build_useragent_signature {
 
-    my $monkeyman = $self->get_cloudstack->get_monkeyman;
+    my $useragent_signature =
+        $self->get_configuration->get_tree->{'useragent_signature'};
 
-    return(sprintf(
-        "%s-%s (powered by MonkeyMan-%s) (libwww-perl/#.###)",
-            $monkeyman->get_app_name,
-            $monkeyman->get_app_version,
-            $monkeyman->get_mm_version
-    ));
+    unless(defined($useragent_signature)) {
+        my $monkeyman = $self->get_cloudstack->get_monkeyman;
+        $useragent_signature = sprintf(
+            "%s-%s (powered by MonkeyMan-%s) (libwww-perl/#.###)",
+                $monkeyman->get_app_name,
+                $monkeyman->get_app_version,
+                $monkeyman->get_mm_version
+        );
+    }
+
+    return($useragent_signature)
 }
 
 
@@ -75,7 +112,6 @@ method _build_useragent {
 
 
 
-
 method test {
 
     $self->run_command(
@@ -97,7 +133,7 @@ method run_command(
     Str     :$url,
     Bool    :$wait          = 0,
     Bool    :$fatal_empty   = 0,
-    Bool    :$fatal_fail    = 1
+    Bool    :$fatal_fail    = 1,
 ) {
 
     my $cloudstack      = $self->get_cloudstack;
