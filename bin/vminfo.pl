@@ -53,10 +53,15 @@ func vminfo_app(MonkeyMan $mm!) {
     my $vm = MonkeyMan::CloudStack::API::Element::VirtualMachine->new(
         api => $mm->get_cloudstack->get_api
     );
-    print(mm_sprintf("%s\n", $vm->find_by_criterions(
-        return_as   => 'ID',
-        criterions  => { id => 'e0d2d1ba-b0c0-4746-878e-176345de1f69' }
-    )));
+    print(mm_sprintf(
+        "%s\n%s's ID is %s\n",
+        $vm->load_by_criterions(
+            return_as   => 'DOM',
+            criterions  => { id => 'e0d2d1ba-b0c0-4746-878e-176345de1f69' }
+        )->toString(1),
+        $vm->get_type(noun => 1),
+        $vm->get_id,
+    ));
 
 }
 
