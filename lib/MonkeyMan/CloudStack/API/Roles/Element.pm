@@ -112,7 +112,7 @@ has 'id' => (
 );
 
 method _build_id {
-    $self->get_parameter('/id');
+    $self->get_id;
 }
 
 around 'get_id' => sub {
@@ -131,7 +131,6 @@ method get_parameter(Str $xquery_postfix) {
         unless($self->has_dom);
 
     my $value = $self->get_dom->findvalue(
-        '/' . $self->get_magic_words->{'list_tag_global'} .
         '/' . $self->get_magic_words->{'list_tag_entity'} .
         $xquery_postfix
     );
@@ -142,6 +141,16 @@ method get_parameter(Str $xquery_postfix) {
 
 }
 
+has 'criterions' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    reader      =>    'get_criterions',
+    writer      =>   '_set_criterions',
+    predicate   =>    'has_criterions',
+    builder     => '_build_criterions',
+    lazy        => 1
+);
+
 has 'dom' => (
     is          => 'rw',
     isa         => 'XML::LibXML::Document',
@@ -149,6 +158,7 @@ has 'dom' => (
     writer      =>   '_set_dom',
     predicate   =>    'has_dom',
     builder     => '_build_dom',
+    clearer     => '_clear_dom',
     lazy        => 1
 );
 
@@ -173,19 +183,25 @@ method load_by_criterions(
     Str     :$return_as = 'DOM'
 ) {
 
-    my $dom = $self->find_by_criterions(
-        criterions  => $criterions,
-        return_as   => 'DOM'
-    );
-    if(defined($dom)) {
+    $self->_set_criterions($criterions);
+    $self->_clear_dom;
+    foreach my $dom ($self->find_doms_by_criterions(
+        criterions  => $criterions
+    )) {
         $self->load_dom($dom);
     }
 
-    return($self->_return_as($dom, $return_as));
+    $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+        "The %s %s has been loaded with the %s DOM " .
+        "as it matched the %s set of criterions",
+        $self, $self->get_type(noun => 1), $self->get_dom, $criterions
+    );
+
+    return($self->_return_as($self->get_dom, $return_as));
 
 }
 
-method find_by_criterions(
+method find_doms_by_criterions(
     HashRef :$criterions!,
     Str     :$return_as = 'DOM'
 ) {
@@ -200,13 +216,25 @@ method find_by_criterions(
     my %parameters = ($self->_criterions_to_parameters(%{ $criterions }));
        $parameters{'command'} = $self->get_magic_words->{'find_command'};
 
-    my $dom = $self->get_api->run_command(
+    my $doms = $self->get_api->run_command(
         parameters => \%parameters,
     );
 
-    #FIXME Make it returning an array of DOM-elements
+    my @result;
 
-    return($self->_return_as($dom, $return_as));
+    foreach my $node ($doms->findnodes(
+        '/' . $self->get_magic_words->{'list_tag_global'} .
+        '/' . $self->get_magic_words->{'list_tag_entity'}
+    )->get_nodelist) {
+        my $new_node = $node->cloneNode(1);
+        my $new_dom = XML::LibXML::Document->new();
+        $new_dom->addChild($new_node);
+        $logger->tracef(" ... The %s DOM has been initialized", $new_dom);
+
+        push(@result, $self->_return_as($new_dom, $return_as));
+    }
+
+    return(@result);
 
 }
 
@@ -235,7 +263,6 @@ method _return_as(
 
     if($return_as eq 'ID') {
         my $id = $dom->findvalue(
-            '/' . $magic_words{'list_tag_global'} .
             '/' . $magic_words{'list_tag_entity'} .
             '/id'
         );
@@ -259,6 +286,15 @@ method find_related_to_me {
 
 
 method filter_by_xpath {
+}
+
+
+
+sub BUILD {
+    my $self = shift;
+    my $criterions = $self->get_criterions;
+    $self->load_by_criterions(criterions => $criterions)
+        if(defined($criterions));
 }
 
 

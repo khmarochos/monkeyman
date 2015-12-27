@@ -64,12 +64,14 @@ func _showref(Ref $ref!) {
     my $conftree;
     my $dumped;
     my $dumpdir;
+    my $dumpxml;
     my $dumpfile;
     try {
         $monkeyman  = MonkeyMan->instance;
         $monkeyman_started = $monkeyman->get_time_started_formatted;
         $conftree   = $monkeyman->get_configuration->get_tree;
         $dumped     = $conftree->{'log'}->{'dump'}->{'enabled'};
+        $dumpxml    = $conftree->{'log'}->{'dump'}->{'add_xml'};
         $dumpdir    = $conftree->{'log'}->{'dump'}->{'directory'};
     } catch($e) {
         warn(sprintf(
@@ -84,6 +86,9 @@ func _showref(Ref $ref!) {
     return("[$ref_id_short]") unless(defined($dumped) && defined($dumpdir));
 
     my $dump = Data::Dumper->new([$ref])->Indent(1)->Terse(0)->Dump;
+    if($dumpxml && ref($ref) && blessed($ref) && $ref->DOES('XML::LibXML::Node')) {
+        $dump = $dump . "\n" . $ref->toString(1);
+    }
     my $ref_id_long = md5_hex($dump);
 
     $dumpfile = ($dumpdir = sprintf(
