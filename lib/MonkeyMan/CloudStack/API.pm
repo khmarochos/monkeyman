@@ -258,7 +258,7 @@ method get_dom(Str $xml!) {
     my $dom = XML::LibXML->new->load_xml(string => $xml);
 
     $self->get_cloudstack->get_monkeyman->get_logger->tracef(
-        "The DOM has been loaded: %s", $dom
+        "The result has been loaded as a DOM: %s", $dom
     );
 
     return($dom);
@@ -282,7 +282,54 @@ method get_job_result(Str $jobid!) {
 
 
 
-method create_element {
+method new_elements(
+    Str                             :$type!,
+    HashRef                         :$criterions,
+    ArrayRef[XML::LibXML::Document] :$doms
+) {
+
+    no strict 'refs';
+
+    my $class_name = __PACKAGE__ . '::Element::' . $type;
+    my $to_require = $class_name;
+       $to_require =~ s#::#/#g;
+       $to_require .= '.pm';
+    require($to_require);
+
+    my @results;
+
+    if(defined($doms)) {
+
+        foreach my $dom (@{ $doms }) {
+            my $element = $class_name->new(
+                api => $self,
+                dom => $dom
+            );
+            push(@results, $element);
+        }
+
+    } elsif(defined($criterions)) {
+
+        my $element = $class_name->new(api => $self);
+        foreach my $dom ($element->find_by_criterions(
+            criterions => $criterions
+        )) {
+            $element = $class_name->new(
+                api => $self,
+                dom => $dom
+            );
+            push(@results, $element);
+        }
+
+    } else {
+
+        my $element = $class_name->new;
+        push(@results, $element);
+
+    }
+
+    return(@results);
+
 }
 
 

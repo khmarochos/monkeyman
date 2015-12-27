@@ -8,12 +8,13 @@ use Moose::Role;
 use namespace::autoclean;
 
 with 'MonkeyMan::CloudStack::API::Essentials';
+with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::Utils;
 use MonkeyMan::Exception;
 
 use Method::Signatures;
-use Lingua::EN::Inflect qw(A);
+use Lingua::EN::Inflect qw(A PL);
 
 
 
@@ -59,11 +60,18 @@ around 'get_type' => sub {
 
 };
 
-func _translate_type(Str $type!, Bool :$a, Bool :$noun = 1) {
+func _translate_type(
+    Str     $type!,
+    Bool   :$a      = 0,
+    Bool   :$noun   = 1,
+    Bool   :$plural = 0
+) {
     if($noun) {
         $type =~ s/(?:\b|(?<=([a-z])))([A-Z][a-z]+)/(defined($1) ? ' ' : '') . lc($2)/eg;
+        $type = PL($type)
+            if($plural);
         $type = A($type)
-            if($a);
+            if($a && !$plural);
     }
     return($type);
 }
@@ -84,16 +92,17 @@ method _build_magic_words {
     no strict 'refs';
     my $class_name = blessed($self);
     my %magic_words = %{'::' . $class_name . '::_magic_words'};
-    unless(
-        defined($magic_words{'find_command'}) &&
-        defined($magic_words{'list_tag_global'}) &&
-        defined($magic_words{'list_tag_entity'})
-    ) {
+    foreach my $magic_word (qw(
+        find_command
+        list_tag_global
+        list_tag_entity
+    )) {
         (__PACKAGE__ . '::Exception::MagicWordsArentDefined')->throwf(
-            "The %s class doesn't have all magic words defined. " .
+            "The %s class doesn't have the %s magic word defined. " .
             "Sorry, but I can not use it.",
-            $class_name
-        );
+            $class_name, $magic_word
+        )
+            unless(defined($magic_words{$magic_word}));
     }
     return(\%magic_words);
 
@@ -141,6 +150,8 @@ method get_parameter(Str $xquery_postfix) {
 
 }
 
+
+
 has 'criterions' => (
     is          => 'ro',
     isa         => 'HashRef',
@@ -151,16 +162,22 @@ has 'criterions' => (
     lazy        => 1
 );
 
+
+
 has 'dom' => (
     is          => 'rw',
     isa         => 'XML::LibXML::Document',
     reader      =>    'get_dom',
     writer      =>   '_set_dom',
     predicate   =>    'has_dom',
-    builder     => '_build_dom',
     clearer     => '_clear_dom',
+    builder     => '_build_dom',
     lazy        => 1
 );
+
+method _build_dom {
+    XML::LibXML::Document->new;
+}
 
 method load_dom(XML::LibXML::Document $dom!) {
 
@@ -178,30 +195,33 @@ method load_dom(XML::LibXML::Document $dom!) {
 
 }
 
-method load_by_criterions(
+method load_dom_by_criterions(
     HashRef :$criterions!,
     Str     :$return_as = 'DOM'
 ) {
 
-    $self->_set_criterions($criterions);
+### $self->_set_criterions($criterions);
     $self->_clear_dom;
-    foreach my $dom ($self->find_doms_by_criterions(
+    foreach my $dom ($self->find_by_criterions(
         criterions  => $criterions
     )) {
         $self->load_dom($dom);
     }
+    if($self->has_dom) {
+        $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+            "The %s %s has been loaded with the %s DOM " .
+            "as it matched the %s set of criterions",
+            $self, $self->get_type(noun => 1), $self->get_dom, $criterions
+        );
+        return($self->_return_as($self->get_dom, $return_as));
+    } else {
+        return(undef);
+    }
 
-    $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
-        "The %s %s has been loaded with the %s DOM " .
-        "as it matched the %s set of criterions",
-        $self, $self->get_type(noun => 1), $self->get_dom, $criterions
-    );
-
-    return($self->_return_as($self->get_dom, $return_as));
 
 }
 
-method find_doms_by_criterions(
+method find_by_criterions(
     HashRef :$criterions!,
     Str     :$return_as = 'DOM'
 ) {
@@ -209,7 +229,7 @@ method find_doms_by_criterions(
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
 
     $logger->tracef("Looking for %s matching the %s set of criterias",
-        $self->get_type(a => 1, noun => 1),
+        $self->get_type(a => 1, noun => 1, plural => 1),
         $criterions
     );
 
@@ -229,7 +249,7 @@ method find_doms_by_criterions(
         my $new_node = $node->cloneNode(1);
         my $new_dom = XML::LibXML::Document->new();
         $new_dom->addChild($new_node);
-        $logger->tracef(" ... The %s DOM has been initialized", $new_dom);
+        $logger->tracef("The %s DOM has been initialized", $new_dom);
 
         push(@result, $self->_return_as($new_dom, $return_as));
     }
@@ -280,7 +300,34 @@ method _return_as(
 
 
 
-method find_related_to_me {
+method find_related(Str $type!) {
+
+    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+
+    no strict 'refs';
+    my $class = blessed($self);
+    my %related = %{'::' . $class . '::_related'};
+
+    my $related_class_name  = $related{$type}->{'class_name'};
+    my $related_local_key   = $related{$type}->{'local_key'};
+    my $related_foreign_key = $related{$type}->{'foreign_key'};
+
+    $logger->tracef(
+        "Looking for %s relative to %s, " .
+        "their %s value shall be equal to our %s value",
+        _translate_type($type, noun => 1, plural => 1),
+        $self,
+        $related_local_key,
+        $related_foreign_key
+    );
+
+    return($self->get_api->new_elements(
+        type        => $type,
+        criterions  => {
+            $related_foreign_key => $self->get_parameter('/id') # FIXME
+        }
+    ));
+
 }
 
 
@@ -290,11 +337,8 @@ method filter_by_xpath {
 
 
 
-sub BUILD {
-    my $self = shift;
-    my $criterions = $self->get_criterions;
-    $self->load_by_criterions(criterions => $criterions)
-        if(defined($criterions));
+method refresh_dom {
+    $self->load_dom_by_criterions(id => $self->get_id);
 }
 
 

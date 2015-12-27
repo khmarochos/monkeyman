@@ -18,6 +18,14 @@ our %_magic_words = (
     list_tag_entity => 'virtualmachine',
 );
 
+our %_related = (
+    Domain  => {
+        class_name  => 'MonkeyMan::CloudStack::API::Element::Domain',
+        local_key   => 'domainid',
+        foreign_key => 'id'
+    }
+);
+
 
 
 __PACKAGE__->meta->make_immutable;

@@ -11,7 +11,7 @@ use lib("$Bin/../lib");
 # Use my own modules
 use MonkeyMan;
 use MonkeyMan::Utils;
-use MonkeyMan::CloudStack::API::Element::VirtualMachine;
+use MonkeyMan::CloudStack::API::Element::Domain;
 
 use Method::Signatures;
 
@@ -50,18 +50,17 @@ func vminfo_app(MonkeyMan $mm!) {
 #    );
 #    print(mm_sprintf("%s\n", $result->toString(1)));
 
-    my $vm = MonkeyMan::CloudStack::API::Element::VirtualMachine->new(
-        api         => $mm->get_cloudstack->get_api,
-        criterions  => {
-            id          => '797f4f8d-a54c-4ab8-9d82-4e84a4e16719',
-            domainid    => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d'
+    foreach my $d ($mm->get_cloudstack->get_api->new_elements(
+        type        => 'Domain',
+        criterions  => { id  => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d' }
+    )) {
+        print(mm_sprintf("The %s %s's ID is %s\n", $d, $d->get_type(noun => 1), $d->get_id));
+        foreach my $vm ($d->find_related('VirtualMachine')) {
+            print(mm_sprintf("The %s %s's ID is %s\n", $vm, $vm->get_type(noun => 1), $vm->get_id));
         }
-    );
-    print(mm_sprintf(
-        "The %s's ID is %s\n",
-        $vm->get_type(noun => 1),
-        $vm->get_id,
-    ));
+    }
+
+
 
 }
 
