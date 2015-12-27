@@ -179,7 +179,10 @@ method _build_dom {
     XML::LibXML::Document->new;
 }
 
-method load_dom(XML::LibXML::Document $dom!) {
+around '_set_dom' => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $dom = shift;
 
     if($self->has_dom) {
         $self->get_api->get_cloudstack->get_monkeyman->get_logger->warnf(
@@ -191,35 +194,11 @@ method load_dom(XML::LibXML::Document $dom!) {
         );
     }
 
-    return($self->_set_dom($dom));
+    $self->$orig($dom);
 
-}
-
-method load_dom_by_criterions(
-    HashRef :$criterions!,
-    Str     :$return_as = 'DOM'
-) {
-
-### $self->_set_criterions($criterions);
-    $self->_clear_dom;
-    foreach my $dom ($self->find_by_criterions(
-        criterions  => $criterions
-    )) {
-        $self->load_dom($dom);
-    }
-    if($self->has_dom) {
-        $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
-            "The %s %s has been loaded with the %s DOM " .
-            "as it matched the %s set of criterions",
-            $self, $self->get_type(noun => 1), $self->get_dom, $criterions
-        );
-        return($self->_return_as($self->get_dom, $return_as));
-    } else {
-        return(undef);
-    }
+};
 
 
-}
 
 method find_by_criterions(
     HashRef :$criterions!,
@@ -338,7 +317,24 @@ method filter_by_xpath {
 
 
 method refresh_dom {
-    $self->load_dom_by_criterions(id => $self->get_id);
+
+    my $id = $self->get_id;
+
+    $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+        "Refreshing the %s %s's (has ID) DOM",
+        $self,
+        $self->get_type(noun => '1'),
+        $id
+    );
+
+#    $self->_clear_dom;
+
+    foreach my $dom ($self->find_by_criterions(criterions => { id => $id })) {
+        $self->_set_dom($dom);
+    }
+
+    return($self->get_dom);
+
 }
 
 

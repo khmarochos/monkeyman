@@ -56,6 +56,7 @@ func vminfo_app(MonkeyMan $mm!) {
     )) {
         print(mm_sprintf("The %s %s's ID is %s\n", $d, $d->get_type(noun => 1), $d->get_id));
         foreach my $vm ($d->find_related('VirtualMachine')) {
+            $vm->refresh_dom;
             print(mm_sprintf("The %s %s's ID is %s\n", $vm, $vm->get_type(noun => 1), $vm->get_id));
         }
     }
