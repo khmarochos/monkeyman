@@ -50,12 +50,12 @@ func vminfo_app(MonkeyMan $mm!) {
 #    );
 #    print(mm_sprintf("%s\n", $result->toString(1)));
 
-    foreach my $d ($mm->get_cloudstack->get_api->new_elements(
+    foreach my $d ($mm->get_cloudstack->get_api->find_elements(
         type        => 'Domain',
         criterions  => { id  => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d' }
     )) {
         print(mm_sprintf("The %s %s's ID is %s\n", $d, $d->get_type(noun => 1), $d->get_id));
-        foreach my $vm ($d->find_related('VirtualMachine')) {
+        foreach my $vm ($d->find_related(type => 'VirtualMachine')) {
             $vm->refresh_dom;
             print(mm_sprintf("The %s %s's ID is %s\n", $vm, $vm->get_type(noun => 1), $vm->get_id));
         }

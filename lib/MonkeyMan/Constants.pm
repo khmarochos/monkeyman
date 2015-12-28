@@ -40,14 +40,14 @@ my @mm_constants_directories = qw(
 
 use constant MM_CONFIG_MAIN     => MM_DIRECTORY_CONFIG_MAIN . '/monkeyman.conf';
 use constant MM_CONFIG_LOGGER   => MM_DIRECTORY_CONFIG_MAIN . '/logger.conf';
-use constant MM_ELEMENT_MODULE  => {
-    domain          => 'Domain',
-    virtualmachine  => 'VirtualMachine',
-    host            => 'Host',
-    volume          => 'Volume',
-    snapshot        => 'Snapshot',
-    storagepool     => 'StoragePool'
-};
+#use constant MM_ELEMENT_MODULE  => {
+#    domain          => 'Domain',
+#    virtualmachine  => 'VirtualMachine',
+#    host            => 'Host',
+#    volume          => 'Volume',
+#    snapshot        => 'Snapshot',
+#    storagepool     => 'StoragePool'
+#};
 
 my @mm_constants_filenames = qw(
     MM_CONFIG_MAIN
@@ -82,11 +82,13 @@ my @mm_constants_logging = qw(
 use constant MM_PRIMARY_CLOUDSTACK => 'PRIMARY';
 use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH => 3600;
 use constant MM_CLOUDSTACK_API_SLEEP => 10;
+use constant MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME => 100;
 
 my @mm_constants_cloudstack = qw(
     MM_PRIMARY_CLOUDSTACK
     MM_CLOUDSTACK_API_WAIT_FOR_FINISH
     MM_CLOUDSTACK_API_SLEEP
+    MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME
 );
 
 # :ALL

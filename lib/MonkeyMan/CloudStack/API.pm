@@ -26,6 +26,7 @@ use XML::LibXML;
 
 
 mm_register_exceptions qw(
+    InvalidParametersValue
     NoParameters
     Timeout
 );
@@ -88,6 +89,24 @@ method _build_useragent_signature {
     }
 
     return($useragent_signature)
+}
+
+
+
+has cache => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::CloudStack::API::Cache',
+    reader      =>    'get_cache',
+    writer      =>   '_set_cache',
+    predicate   =>    'has_cache',
+    builder     => '_build_cache',
+    lazy        => 1
+);
+
+method _build_cache {
+    return(MonkeyMan::CloudStack::API::Cache->new(
+        api         => $self
+    ));
 }
 
 
@@ -258,7 +277,7 @@ method get_dom(Str $xml!) {
     my $dom = XML::LibXML->new->load_xml(string => $xml);
 
     $self->get_cloudstack->get_monkeyman->get_logger->tracef(
-        "The result has been loaded as a DOM: %s", $dom
+        "The result has been fetched as a DOM: %s", $dom
     );
 
     return($dom);
@@ -282,10 +301,12 @@ method get_job_result(Str $jobid!) {
 
 
 
-method new_elements(
-    Str                             :$type!,
-    HashRef                         :$criterions,
-    ArrayRef[XML::LibXML::Document] :$doms
+method find_elements(
+    Str                                     :$type!,
+    Str                                     :$return_as = 'ELEMENT',
+    Maybe[Int]                              :$best_before,
+    Maybe[HashRef]                          :$criterions,
+    Maybe[ArrayRef[XML::LibXML::Document]]  :$doms,
 ) {
 
     no strict 'refs';
@@ -302,35 +323,61 @@ method new_elements(
 
         foreach my $dom (@{ $doms }) {
             my $element = $class_name->new(
-                api => $self,
-                dom => $dom
+                api         => $self,
+                dom         => $dom
             );
-            push(@results, $element);
+            push(@results, $self->_return_as($element, $return_as));
         }
 
     } elsif(defined($criterions)) {
 
         my $element = $class_name->new(api => $self);
+
         foreach my $dom ($element->find_by_criterions(
-            criterions => $criterions
+            best_before => $best_before,
+            criterions  => $criterions
         )) {
             $element = $class_name->new(
-                api => $self,
-                dom => $dom
+                api         => $self,
+                dom         => $dom
             );
-            push(@results, $element);
+            push(@results, $self->_return_as($element, $return_as));
         }
 
     } else {
 
-        my $element = $class_name->new;
-        push(@results, $element);
+        my $element = $class_name->new(api => $self);
+
+        push(@results, $self->_return_as($element, $return_as));
 
     }
 
     return(@results);
 
 }
+
+
+
+method _return_as(
+    MonkeyMan::CloudStack::API::Roles::Element  $element!,
+    Str                                         $return_as = 'ELEMENT'
+) {
+
+    if($return_as eq 'ELEMENT') {
+        return($element);
+    } elsif($return_as eq 'DOM') {
+        return($element->get_dom);
+    } elsif($return_as eq 'ID') {
+        return($element->get_id);
+    } else {
+        (__PACKAGE__ . '::Exception::InvalidParametersValue')->throwf(
+            "The return_as parameter's value is invalid (%s).",
+            $return_as
+        );
+    }
+
+}
+
 
 
 

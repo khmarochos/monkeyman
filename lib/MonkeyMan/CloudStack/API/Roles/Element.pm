@@ -201,8 +201,9 @@ around '_set_dom' => sub {
 
 
 method find_by_criterions(
-    HashRef :$criterions!,
-    Str     :$return_as = 'DOM'
+    HashRef     :$criterions!,
+    Str         :$return_as = 'DOM',
+    Maybe[Int]  :$best_before
 ) {
 
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
@@ -279,7 +280,10 @@ method _return_as(
 
 
 
-method find_related(Str $type!) {
+method find_related(
+    Str         :$type!,
+    Maybe[Int]  :$best_before
+) {
 
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
 
@@ -300,10 +304,11 @@ method find_related(Str $type!) {
         $related_foreign_key
     );
 
-    return($self->get_api->new_elements(
+    return($self->get_api->find_elements(
         type        => $type,
+        best_before => $best_before,
         criterions  => {
-            $related_foreign_key => $self->get_parameter('/id') # FIXME
+            $related_foreign_key => $self->get_parameter('/' . $related_local_key)
         }
     ));
 
@@ -327,9 +332,12 @@ method refresh_dom {
         $id
     );
 
-#    $self->_clear_dom;
+    $self->_clear_dom;
 
-    foreach my $dom ($self->find_by_criterions(criterions => { id => $id })) {
+    foreach my $dom ($self->find_by_criterions(
+        best_before => 0,
+        criterions  => { id => $id }
+    )) {
         $self->_set_dom($dom);
     }
 
