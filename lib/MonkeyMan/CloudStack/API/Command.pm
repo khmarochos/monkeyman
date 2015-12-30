@@ -133,10 +133,10 @@ has http_response => (
 );
 
 method run(
-    Bool :$fatal_fail = 1,
-    Bool :$fatal_empty = 0,
-    Bool :$fatal_431 = ! $self->get_api->get_configuration->get_tree->
-                                {'ignore_431_code'}
+    Maybe[Bool] :$fatal_fail    = 1,
+    Maybe[Bool] :$fatal_empty   = 0,
+    Maybe[Bool] :$fatal_431     =
+        ! $self->get_api->get_configuration->get_tree->{'ignore_431_code'}
 ) {
 
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
