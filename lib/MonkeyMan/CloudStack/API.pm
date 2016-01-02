@@ -579,7 +579,7 @@ MonkeyMan::CloudStack::API - Apache CloudStack API class
 =head1 SYNOPSIS
 
     my $api = MonkeyMan::CloudStack::API->new(
-        monkeyman   => $monkeyman
+        cloudstack = 
     );
 
     my $result = $api->run_command(
@@ -596,35 +596,35 @@ MonkeyMan::CloudStack::API - Apache CloudStack API class
 
 =head1 DESCRIPTION
 
-The C<MonkeyMan::CloudStack::API> class encapsulates the interface to the
+The L<MonkeyMan::CloudStack::API> class encapsulates the interface to the
 Apache CloudStack.
 
 =head1 METHODS
 
-=over
+=head2 C<new>
 
-=item new()
+    $api = MonkeyMan::CloudStack::API->new(%parameters);
 
-This method initializes the framework and runs the application.
+This method initializes the Apache CloudStack's API;
 
 There are a few parameters that can (and need to) be defined:
 
 =over
 
-=item cloudstack => MonkeyMan::CloudStack
+=item C<cloudstack> (L<MonkeyMan::CloudStack>)
 
-MANDATORY. The reference to the MonkeyMan::CloudStack object.
+MANDATORY. The reference to the L<MonkeyMan::CloudStack> object.
 
 The value is readable by C<get_cloudstack()>.
 
-=item configuration_tree => HashRef
+=item C<configuration_tree> (HashRef)
 
 Optional. The configuration tree. If it's not defined, the builder will fetch
 it from the MonkeyMan::CloudStack's configuration tree.
 
 The value is readable by C<get_configuration_tree()>.
 
-=item useragent => Object
+=item C<useragent> (Object)
 
 Optional. By default it will create a new LWP::UserAgent object and use it for
 making calls to Apache CloudStack API. I don't recommend you to redefine it,
@@ -632,7 +632,7 @@ but who I am to teach you, huh? :)
 
 The value is readable by C<get_configuration_tree()>.
 
-=item useragent_signature => Str
+=item C<useragent_signature> (Str)
 
 Optional. The signature that will be used as the User-Agent header in all
 outgoing HTTP requests. By default it will looke like that:
@@ -651,15 +651,13 @@ of this parameter.
 
 =back
 
-=item run_command()
+=head2 C<run_command>
 
-=item get_doms()
+=head2 C<get_doms>
 
-=item get_elements()
+=head2 C<get_elements>
 
-=item qxp()
-
-=back
+=head2 C<qxp>
 
 =cut
 

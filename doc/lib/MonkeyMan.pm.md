@@ -45,7 +45,7 @@ sub MyCoolApplication {
 
 # METHODS
 
-## new
+## `new`
 
 ```perl
 MonkeyMan->new(%parameters => %Hash)

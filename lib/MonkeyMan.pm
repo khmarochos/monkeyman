@@ -418,7 +418,7 @@ MonkeyMan - Apache CloudStack Management Framework
 
 =head1 METHODS
 
-=head2 new
+=head2 C<new>
 
     MonkeyMan->new(%parameters => %Hash)
 

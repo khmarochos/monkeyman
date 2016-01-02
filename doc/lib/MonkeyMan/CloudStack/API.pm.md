@@ -6,7 +6,7 @@ MonkeyMan::CloudStack::API - Apache CloudStack API class
 
 ```perl
 my $api = MonkeyMan::CloudStack::API->new(
-    monkeyman   => $monkeyman
+    cloudstack = 
 );
 
 my $result = $api->run_command(
@@ -24,52 +24,59 @@ my $result = $api->run_command(
 
 # DESCRIPTION
 
-The `MonkeyMan::CloudStack::API` class encapsulates the interface to the
+The [MonkeyMan::CloudStack::API](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack::API) class encapsulates the interface to the
 Apache CloudStack.
 
 # METHODS
 
-- new()
+## `new`
 
-    This method initializes the framework and runs the application.
+```
+$api = MonkeyMan::CloudStack::API->new(%parameters);
+```
 
-    There are a few parameters that can (and need to) be defined:
+This method initializes the Apache CloudStack's API;
 
-    - cloudstack => MonkeyMan::CloudStack
+There are a few parameters that can (and need to) be defined:
 
-        MANDATORY. The reference to the MonkeyMan::CloudStack object.
+- `cloudstack` ([MonkeyMan::CloudStack](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack))
 
-        The value is readable by `get_cloudstack()`.
+    MANDATORY. The reference to the [MonkeyMan::CloudStack](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack) object.
 
-    - configuration\_tree => HashRef
+    The value is readable by `get_cloudstack()`.
 
-        Optional. The configuration tree. If it's not defined, the builder will fetch
-        it from the MonkeyMan::CloudStack's configuration tree.
+- `configuration_tree` (HashRef)
 
-        The value is readable by `get_configuration_tree()`.
+    Optional. The configuration tree. If it's not defined, the builder will fetch
+    it from the MonkeyMan::CloudStack's configuration tree.
 
-    - useragent => Object
+    The value is readable by `get_configuration_tree()`.
 
-        Optional. By default it will create a new LWP::UserAgent object and use it for
-        making calls to Apache CloudStack API. I don't recommend you to redefine it,
-        but who I am to teach you, huh? :)
+- `useragent` (Object)
 
-        The value is readable by `get_configuration_tree()`.
+    Optional. By default it will create a new LWP::UserAgent object and use it for
+    making calls to Apache CloudStack API. I don't recommend you to redefine it,
+    but who I am to teach you, huh? :)
 
-    - useragent\_signature => Str
+    The value is readable by `get_configuration_tree()`.
 
-        Optional. The signature that will be used as the User-Agent header in all
-        outgoing HTTP requests. By default it will looke like that:
+- `useragent_signature` (Str)
 
-        The value is readable by `get_useragent_signature()`, writeable as
-        `set_useragent_signature()`.
+    Optional. The signature that will be used as the User-Agent header in all
+    outgoing HTTP requests. By default it will looke like that:
 
-        >         APP-6.6.6 (powered by MonkeyMan-6.6.6) (libwww-perl/6.6.6)
+    The value is readable by `get_useragent_signature()`, writeable as
+    `set_useragent_signature()`.
 
-        Please, note: if you don't use the default useragent, your one should be aware
-        of this parameter.
+    >     APP-6.6.6 (powered by MonkeyMan-6.6.6) (libwww-perl/6.6.6)
 
-- run\_command()
-- get\_doms()
-- get\_elements()
-- qxp()
+    Please, note: if you don't use the default useragent, your one should be aware
+    of this parameter.
+
+## `run_command`
+
+## `get_doms`
+
+## `get_elements`
+
+## `qxp`
