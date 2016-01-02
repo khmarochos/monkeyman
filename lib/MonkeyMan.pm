@@ -377,6 +377,12 @@ method BUILDARGS(...) {
 
 MonkeyMan - Apache CloudStack Management Framework
 
+=begin markdown
+
+![The mascot has been originaly created by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
+
+=end markdown
+
 =head1 SYNOPSIS
 
     MonkeyMan->new(
@@ -469,11 +475,5 @@ methods, so you could address them as
     $monkeyman->get_parameters->file_out
 
 =back
-
-=begin markdown
-
-![Nice drawing by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
-
-=end markdown
 
 =cut

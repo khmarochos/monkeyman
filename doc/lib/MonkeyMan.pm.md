@@ -2,6 +2,8 @@
 
 MonkeyMan - Apache CloudStack Management Framework
 
+![The mascot has been originaly created by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
+
 # SYNOPSIS
 
 ```perl
@@ -98,5 +100,3 @@ There are a few parameters that can (and need to) be defined:
     $monkeyman->get_parameters->file_in,
     $monkeyman->get_parameters->file_out
     ```
-
-![Nice drawing by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
