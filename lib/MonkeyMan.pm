@@ -400,7 +400,9 @@ MonkeyMan - Apache CloudStack Management Framework
 
 =over
 
-=item new()
+=head2 new()
+
+    MonkeyMan->new(%parameters => %Hash)
 
 This method initializes the framework and runs the application.
 
@@ -408,27 +410,27 @@ There are a few parameters that can (and need to) be defined:
 
 =over
 
-=item C<app_code> => CodeRef
+=item C<app_code> (CodeRef)
 
-MANDATORY. The reference to the subroutine that will do all the job.
+MANDATORY.  The reference to the subroutine that will do all the job.
 
-=item app_name => Str
+=item C<app_name> (Str)
 
 MANDATORY. The application's full name.
 
-=item app_description => Str
+=item C<app_description> (Str)
 
 MANDATORY. The application's description.
 
-=item app_version => Str
+=item C<app_version> (Str)
 
 MANDATORY. The application's version number.
 
-=item app_usage_help => Str
+=item C<app_usage_help> (Str)
 
 Optional. The text to be displayed when the user asks for help.
 
-=item parameters_to_get => HashRef
+=item C<parameters_to_get> (HashRef)
 
 This attribute requires a reference to a hash containing parameters to be
 passed to the C<Getopt::Long-E<gt>GetOptions()> method (on the left

@@ -25,52 +25,70 @@ sub MyCoolApplication {
 
 # METHODS
 
-- new()
 
-    This method initializes the framework and runs the application.
 
-    There are a few parameters that can (and need to) be defined:
+## new()
 
-    - `app_code` => CodeRef
+```perl
+MonkeyMan->new(%parameters => %Hash)
+```
 
-        MANDATORY. The reference to the subroutine that will do all the job.
+This method initializes the framework and runs the application.
 
-    - app\_name => Str
+There are a few parameters that can (and need to) be defined:
 
-        MANDATORY. The application's full name.
+- `app_code` (CodeRef)
 
-    - app\_description => Str
+    MANDATORY.  The reference to the subroutine that will do all the job.
 
-        MANDATORY. The application's description.
+- `app_name` (Str)
 
-    - app\_version => Str
+    MANDATORY. The application's full name.
 
-        MANDATORY. The application's version number.
+- `app_description` (Str)
 
-    - app\_usage\_help => Str
+    MANDATORY. The application's description.
 
-        Optional. The text to be displayed when the user asks for help.
+- `app_version` (Str)
 
-    - parameters\_to\_get => HashRef
+    MANDATORY. The application's version number.
 
-        This attribute requires a reference to a hash containing parameters to be
-        passed to the `Getopt::Long->GetOptions()` method (on the left
-        corresponding names of sub-methods to get values of startup parameters. It
-        creates the `parameters` method which returns a reference to the
-        `MonkeyMan::Parameters` object containing the information of startup
-        parameters accessible via corresponding methods. Thus,
+- `app_usage_help` (Str)
 
-        ```perl
-        parameters_to_get => {
-            'i|input=s'     => 'file_in',
-            'o|output=s'    => 'file_out'
-        }
-        ```
+    Optional. The text to be displayed when the user asks for help.
 
-        will create `MonkeyMan::Parameters` object with `file_in` and `file_out`
-        methods, so you could address them as
+- `parameters_to_get` (HashRef)
 
-        ```
-        $monkeyman->get_parameters->file_in,
-        $monkeyman->get_parameters->file_out
-        ```
+    This attribute requires a reference to a hash containing parameters to be
+    passed to the `Getopt::Long->GetOptions()` method (on the left
+    corresponding names of sub-methods to get values of startup parameters. It
+    creates the `parameters` method which returns a reference to the
+    `MonkeyMan::Parameters` object containing the information of startup
+    parameters accessible via corresponding methods. Thus,
+
+    ```perl
+    parameters_to_get => {
+        'i|input=s'     => 'file_in',
+        'o|output=s'    => 'file_out'
+    }
+    ```
+
+    will create `MonkeyMan::Parameters` object with `file_in` and `file_out`
+    methods, so you could address them as
+
+    ```
+    $monkeyman->get_parameters->file_in,
+    $monkeyman->get_parameters->file_out
+    ```
+
+# POD ERRORS
+
+Hey! **The above document had some coding errors, which are explained below:**
+
+- Around line 403:
+
+    You forgot a '=back' before '=head2'
+
+- Around line 455:
+
+    &#x3d;back without =over
