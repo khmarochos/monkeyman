@@ -4,22 +4,24 @@ MonkeyMan - Apache CloudStack Management Framework
 
 # SYNOPSIS
 
-    MonkeyMan->new(
-        app_code            => \&MyCoolApplication,
-        parse_parameters    => {
-            'l|line=s' => 'what_to_say'
-        }
+```perl
+MonkeyMan->new(
+    app_code            => \&MyCoolApplication,
+    parse_parameters    => {
+        'l|line=s' => 'what_to_say'
+    }
+);
+
+sub MyCoolApplication {
+
+    my $mm = shift;
+
+    $mm->get_logger->debugf("We were asked to say '%s'",
+        $mm->get_parameters->what_to_say
     );
 
-    sub MyCoolApplication {
-
-        my $mm = shift;
-
-        $mm->get_logger->debugf("We were asked to say '%s'",
-            $mm->get_parameters->what_to_say
-        );
-
-    }
+}
+```
 
 # METHODS
 
@@ -58,13 +60,17 @@ MonkeyMan - Apache CloudStack Management Framework
         `MonkeyMan::Parameters` object containing the information of startup
         parameters accessible via corresponding methods. Thus,
 
-            parameters_to_get => {
-                'i|input=s'     => 'file_in',
-                'o|output=s'    => 'file_out'
-            }
+        ```perl
+        parameters_to_get => {
+            'i|input=s'     => 'file_in',
+            'o|output=s'    => 'file_out'
+        }
+        ```
 
         will create `MonkeyMan::Parameters` object with `file_in` and `file_out`
         methods, so you could address them as
 
-            $monkeyman->get_parameters->file_in,
-            $monkeyman->get_parameters->file_out
+        ```
+        $monkeyman->get_parameters->file_in,
+        $monkeyman->get_parameters->file_out
+        ```
