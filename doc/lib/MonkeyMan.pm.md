@@ -14,18 +14,36 @@ MonkeyMan->new(
 
 sub MyCoolApplication {
 
-    my $mm = shift;
+    my $mm  = shift;
+    my $log = $mm->get_logger;
 
-    $mm->get_logger->debugf("We were asked to say '%s'",
+    $log->debugf("We were asked to say '%s'",
         $mm->get_parameters->what_to_say
     );
+
+    my $api = $mm->get_cloudstack->get_api;
+
+    foreach my $domain ($api->get_elements(
+        type        => 'Domain',
+        criterions  => { id  => '01234567-89ab-cdef-0123-456789abcdef' }
+    )) {
+
+        foreach my $vm ($d->get_related(type => 'VirtualMachine')) {
+            $log->infof("The %s %s's ID is %s\n",
+                $vm,
+                $vm->get_type(noun => 1),
+                $vm->get_id
+            );
+        }
+
+    }
 
 }
 ```
 
 # METHODS
 
-## new()
+## new
 
 ```perl
 MonkeyMan->new(%parameters => %Hash)
