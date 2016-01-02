@@ -626,19 +626,16 @@ The value is readable by C<get_configuration_tree()>.
 
 =item C<useragent> (Object)
 
-Optional. By default it will create a new LWP::UserAgent object and use it for
-making calls to Apache CloudStack API. I don't recommend you to redefine it,
-but who I am to teach you, huh? :)
+Optional. By default it will create a new L<LWP::UserAgent> object and use it 
+for making calls to Apache CloudStack API. I don't recommend you to redefine
+it, but who I am to teach you, huh? :)
 
-The value is readable by C<get_configuration_tree()>.
+The value is readable by C<get_useragent()>.
 
 =item C<useragent_signature> (Str)
 
 Optional. The signature that will be used as the User-Agent header in all
 outgoing HTTP requests. By default it will looke like that:
-
-The value is readable by C<get_useragent_signature()>, writeable as
-C<set_useragent_signature()>.
 
 =over
 
@@ -646,12 +643,84 @@ APP-6.6.6 (powered by MonkeyMan-6.6.6) (libwww-perl/6.6.6)
 
 =back
 
-Please, note: if you don't use the default useragent, your one should be aware
-of this parameter.
+The value is readable by C<get_useragent_signature()>, writeable as
+C<set_useragent_signature()>.
+
+Please, note: if you use your own useragent instead of the default one, you
+should make it always taking into consideration this parameter's value!
 
 =back
 
+=head2 C<test>
+
+    $api->test;
+
+This method doesn't do anything but testing connection to the API. It raises
+an exception if something's wrong with it.
+
 =head2 C<run_command>
+
+    This method is needed to run an API command.
+
+    # Defining some options
+    my %options = (
+        wait        => 0,
+        fatal_empty => 1,
+        fatal_fail  => 1,
+        fatal_431   => 0
+    );
+
+    # Running a command with a list of parameters
+    my $parameters => {
+        command => 'listApis',
+        listAll => 'true'
+    };
+    $api->run_command(
+        parameters => $parameters,
+        %options
+    );
+
+    # Running a pre-defined command object
+    my $command = MonkeyMan::CloudStack::API::Command->new(
+        parameters => $parameters
+    );
+    $api->run_command(
+        command => $command,
+        %options
+    );
+
+    # Touching a pre-defined URL
+    my $url = $command->get_url;
+    $api->run_command(
+        url => $url,
+        %options
+    );
+
+This method recognizes the following parameters:
+
+=over
+
+=item C<url> (Str)
+
+The command can be run by touching an URL containing the command, its
+parameters, the key and the signature.
+
+=item C<command> (L<MonkeyMan::CloudStack::API::Command>)
+
+The command can be set as a pre-created object.
+
+=item C<parameters> (HashRef)
+
+The command can be based on a hash of parameters. The key and the signature
+will be applied automatically.
+
+=back
+
+It's mandatory to set one of 3 above-mentioned parameters. If there are no
+C<url>, C<command> or C<parameters> defined, the exception will be raised.
+
+Other parameters are being passed to L<MonkeyMan::CloudStack::API::Command>,
+so you're welcome to refer to its documentation.
 
 =head2 C<get_doms>
 
