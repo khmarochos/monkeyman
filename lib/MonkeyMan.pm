@@ -470,11 +470,11 @@ methods, so you could address them as
 
 =back
 
-=begin md
+=begin :markdown
 
 ![Nice drawing by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
 
-=end md
+=end :markdown
 
 =cut
 
