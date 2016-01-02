@@ -109,25 +109,26 @@ There are a few parameters that can (and need to) be defined:
 
     There are some special parameters that shouldn't be redefined:
 
-    - `-h|--help`
+    - `-h`|`--help`
 
-        The print-help-and-exit mode.
+        The print-help-and-exit mode. Sets the `mm_show_help` attribute.
 
-    - `-V|--version`
+    - `-V`|`--version`
 
-        The print-version-and-exit mode.
+        The print-version-and-exit mode. Sets the `mm_show_version` attribute.
 
-    - `-c|--configuration`
+    - `-c [filename]`|`--configuration [filename]`
 
-        The name of the main configuration file.
+        The name of the main configuration file. Sets the `mm_configuration`
+        attribute.
 
-    - `-q|--quiet`
+    - `-v`|`--verbose`
 
-        Decreases the debug level (INFO is the default)
+        Increases the debug level. Sets the `mm_be_verbose` attribute.
 
-    - `-v|--verbose`
+    - `-q`|`--quiet`
 
-        Increases the debug level (INFO is the default)
+        Decreases the debug level. Sets the `mm_be_quiet` attribute.
 
 - `configuration` ([MonkeyMan::Configuration](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Configuration))
 

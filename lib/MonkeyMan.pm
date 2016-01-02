@@ -484,25 +484,26 @@ There are some special parameters that shouldn't be redefined:
 
 =over
 
-=item C<-h|--help>
+=item C<-h>|C<--help>
 
-The print-help-and-exit mode.
+The print-help-and-exit mode. Sets the C<mm_show_help> attribute.
 
-=item C<-V|--version>
+=item C<-V>|C<--version>
 
-The print-version-and-exit mode.
+The print-version-and-exit mode. Sets the C<mm_show_version> attribute.
 
-=item C<-c|--configuration>
+=item C<-c [filename]>|C<--configuration [filename]>
 
-The name of the main configuration file.
+The name of the main configuration file. Sets the C<mm_configuration>
+attribute.
 
-=item C<-q|--quiet>
+=item C<-v>|C<--verbose>
 
-Decreases the debug level (INFO is the default)
+Increases the debug level. Sets the C<mm_be_verbose> attribute.
 
-=item C<-v|--verbose>
+=item C<-q>|C<--quiet>
 
-Increases the debug level (INFO is the default)
+Decreases the debug level. Sets the C<mm_be_quiet> attribute.
 
 =back
 
