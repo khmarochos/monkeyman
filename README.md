@@ -1,1 +1,1 @@
-lib/MonkeyMan.md
+doc/lib/MonkeyMan.pm.md
