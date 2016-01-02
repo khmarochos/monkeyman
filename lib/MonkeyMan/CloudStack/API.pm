@@ -83,7 +83,7 @@ has useragent_signature => (
     is          => 'ro',
     isa         => 'Str',
     reader      =>    'get_useragent_signature',
-    writer      =>   '_set_useragent_signature',
+    writer      =>    'set_useragent_signature',
     predicate   =>    'has_useragent_signature',
     builder     => '_build_useragent_signature',
     lazy        => 1
@@ -615,10 +615,14 @@ There are a few parameters that can (and need to) be defined:
 
 MANDATORY. The reference to the MonkeyMan::CloudStack object.
 
+The value is readable by C<get_cloudstack()>.
+
 =item configuration_tree => HashRef
 
 Optional. The configuration tree. If it's not defined, the builder will fetch
 it from the MonkeyMan::CloudStack's configuration tree.
+
+The value is readable by C<get_configuration_tree()>.
 
 =item useragent => Object
 
@@ -626,10 +630,15 @@ Optional. By default it will create a new LWP::UserAgent object and use it for
 making calls to Apache CloudStack API. I don't recommend you to redefine it,
 but who I am to teach you, huh? :)
 
+The value is readable by C<get_configuration_tree()>.
+
 =item useragent_signature => Str
 
 Optional. The signature that will be used as the User-Agent header in all
 outgoing HTTP requests. By default it will looke like that:
+
+The value is readable by C<get_useragent_signature()>, writeable as
+C<set_useragent_signature()>.
 
 =over
 
