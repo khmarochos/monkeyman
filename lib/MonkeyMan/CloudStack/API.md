@@ -4,21 +4,23 @@ MonkeyMan::CloudStack::API - Apache CloudStack API class
 
 # SYNOPSIS
 
-    my $api = MonkeyMan::CloudStack::API->new(
-        monkeyman   => $monkeyman
-    );
+```perl
+my $api = MonkeyMan::CloudStack::API->new(
+    monkeyman   => $monkeyman
+);
 
-    my $result = $api->run_command(
-        parameters  => {
-            command     => 'login',
-            username    => 'admin',
-            password    => '1z@Lo0pA3',
-            domain      => 'ZALOOPA'
-        },
-        wait        => 0,
-        fatal_empty => 1,
-        fatal_fail  => 1
-    );
+my $result = $api->run_command(
+    parameters  => {
+        command     => 'login',
+        username    => 'admin',
+        password    => '1z@Lo0pA3',
+        domain      => 'ZALOOPA'
+    },
+    wait        => 0,
+    fatal_empty => 1,
+    fatal_fail  => 1
+);
+```
 
 # DESCRIPTION
 
