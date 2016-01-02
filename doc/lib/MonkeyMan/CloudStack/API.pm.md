@@ -24,7 +24,7 @@ my $result = $api->run_command(
 
 # DESCRIPTION
 
-The [MonkeyMan::CloudStack::API](https://metacpan.org/pod/MonkeyMan::CloudStack::API) class encapsulates the interface to the
+The [MonkeyMan::CloudStack::API](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack::API) class encapsulates the interface to the
 Apache CloudStack.
 
 # METHODS
@@ -39,9 +39,9 @@ This method initializes the Apache CloudStack's API;
 
 There are a few parameters that can (and need to) be defined:
 
-- `cloudstack` ([MonkeyMan::CloudStack](https://metacpan.org/pod/MonkeyMan::CloudStack))
+- `cloudstack` ([MonkeyMan::CloudStack](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack))
 
-    MANDATORY. The reference to the [MonkeyMan::CloudStack](https://metacpan.org/pod/MonkeyMan::CloudStack) object.
+    MANDATORY. The reference to the [MonkeyMan::CloudStack](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack) object.
 
     The value is readable by `get_cloudstack()`.
 
@@ -54,7 +54,7 @@ There are a few parameters that can (and need to) be defined:
 
 - `useragent` (Object)
 
-    Optional. By default it will create a new [LWP::UserAgent](https://metacpan.org/pod/LWP::UserAgent) object and use it 
+    Optional. By default it will create a new [LWP::UserAgent](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/LWP::UserAgent) object and use it 
     for making calls to Apache CloudStack API. I don't recommend you to redefine
     it, but who I am to teach you, huh? :)
 
@@ -129,7 +129,7 @@ This method recognizes the following parameters:
     The command can be run with a hash of parameters including the command's name.
     The key and the signature will be applied automatically.
 
-- `command` ([MonkeyMan::CloudStack::API::Command](https://metacpan.org/pod/MonkeyMan::CloudStack::API::Command))
+- `command` ([MonkeyMan::CloudStack::API::Command](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack::API::Command))
 
     The command can be set as a pre-created object. Although, it's being created
     automatically when `parameters` are set.
