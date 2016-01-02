@@ -25,8 +25,6 @@ sub MyCoolApplication {
 
 # METHODS
 
-
-
 ## new()
 
 ```perl
@@ -80,15 +78,3 @@ There are a few parameters that can (and need to) be defined:
     $monkeyman->get_parameters->file_in,
     $monkeyman->get_parameters->file_out
     ```
-
-# POD ERRORS
-
-Hey! **The above document had some coding errors, which are explained below:**
-
-- Around line 403:
-
-    You forgot a '=back' before '=head2'
-
-- Around line 455:
-
-    &#x3d;back without =over

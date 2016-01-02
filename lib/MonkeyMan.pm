@@ -398,8 +398,6 @@ MonkeyMan - Apache CloudStack Management Framework
 
 =head1 METHODS
 
-=over
-
 =head2 new()
 
     MonkeyMan->new(%parameters => %Hash)
@@ -449,8 +447,6 @@ methods, so you could address them as
 
     $monkeyman->get_parameters->file_in,
     $monkeyman->get_parameters->file_out
-
-=back
 
 =back
 
