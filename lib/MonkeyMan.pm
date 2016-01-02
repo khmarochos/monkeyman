@@ -408,7 +408,7 @@ There are a few parameters that can (and need to) be defined:
 
 =over
 
-=item app_code => CodeRef
+=item C<app_code> => CodeRef
 
 MANDATORY. The reference to the subroutine that will do all the job.
 

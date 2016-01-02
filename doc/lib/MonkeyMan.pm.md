@@ -31,7 +31,7 @@ sub MyCoolApplication {
 
     There are a few parameters that can (and need to) be defined:
 
-    - app\_code => CodeRef
+    - `app_code` => CodeRef
 
         MANDATORY. The reference to the subroutine that will do all the job.
 
