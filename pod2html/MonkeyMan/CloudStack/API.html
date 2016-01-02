@@ -1,0 +1,143 @@
+<HTML>
+<HEAD>
+<TITLE>MonkeyMan::CloudStack::API</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<UL>
+<LI><A HREF="#NAME">NAME
+
+</A><LI><A HREF="#SYNOPSIS">SYNOPSIS
+
+</A><LI><A HREF="#DESCRIPTION">DESCRIPTION
+
+</A><LI><A HREF="#METHODS">METHODS
+
+</A></UL>
+<HR>
+<H1><A NAME="NAME">NAME
+
+</A></H1>
+
+<P>MonkeyMan::CloudStack::API - Apache CloudStack API class
+
+</P><H1><A NAME="SYNOPSIS">SYNOPSIS
+
+</A></H1>
+
+<PRE>    my $api = MonkeyMan::CloudStack::API-&gt;new(
+        monkeyman   =&gt; $monkeyman
+    );
+
+    my $result = $api-&gt;run_command(
+        parameters  =&gt; {
+            command     =&gt; 'login',
+            username    =&gt; 'admin',
+            password    =&gt; '1z@Lo0pA3',
+            domain      =&gt; 'ZALOOPA'
+        },
+        wait        =&gt; 0,
+        fatal_empty =&gt; 1,
+        fatal_fail  =&gt; 1
+    );</PRE>
+<H1><A NAME="DESCRIPTION">DESCRIPTION
+
+</A></H1>
+
+<P>The <CODE>MonkeyMan::CloudStack::API</CODE> class encapsulates the interface to the
+Apache CloudStack.
+
+</P><H1><A NAME="METHODS">METHODS
+
+</A></H1>
+<DL><DT><A NAME="new()">new()
+
+</A></DT>
+<DD>
+
+<P>This method initializes the framework and runs the application.
+
+</P>
+<P>There are a few parameters that can (and need to) be defined:
+
+</P><DL><DT><A NAME="cloudstack%20%3d%3e%20MonkeyMan%3a%3aCloudStack">cloudstack =&gt; MonkeyMan::CloudStack
+
+</A></DT>
+<DD>
+
+<P>MANDATORY. The reference to the MonkeyMan::CloudStack object.
+
+</P>
+<P>The value is readable by <CODE>get_cloudstack()</CODE>.
+
+</P></DD>
+<DT><A NAME="configuration_tree%20%3d%3e%20HashRef">configuration_tree =&gt; HashRef
+
+</A></DT>
+<DD>
+
+<P>Optional. The configuration tree. If it's not defined, the builder will fetch
+it from the MonkeyMan::CloudStack's configuration tree.
+
+</P>
+<P>The value is readable by <CODE>get_configuration_tree()</CODE>.
+
+</P></DD>
+<DT><A NAME="useragent%20%3d%3e%20Object">useragent =&gt; Object
+
+</A></DT>
+<DD>
+
+<P>Optional. By default it will create a new LWP::UserAgent object and use it for
+making calls to Apache CloudStack API. I don't recommend you to redefine it,
+but who I am to teach you, huh? :)
+
+</P>
+<P>The value is readable by <CODE>get_configuration_tree()</CODE>.
+
+</P></DD>
+<DT><A NAME="useragent_signature%20%3d%3e%20Str">useragent_signature =&gt; Str
+
+</A></DT>
+<DD>
+
+<P>Optional. The signature that will be used as the User-Agent header in all
+outgoing HTTP requests. By default it will looke like that:
+
+</P>
+<P>The value is readable by <CODE>get_useragent_signature()</CODE>, writeable as
+<CODE>set_useragent_signature()</CODE>.
+
+</P>
+<P>APP-6.6.6 (powered by MonkeyMan-6.6.6) (libwww-perl/6.6.6)
+
+</P>
+<P>Please, note: if you don't use the default useragent, your one should be aware
+of this parameter.
+
+</P></DD>
+</DL>
+</DD>
+<DT><A NAME="run_command()">run_command()
+
+</A></DT>
+<DD>
+</DD>
+<DT><A NAME="get_doms()">get_doms()
+
+</A></DT>
+<DD>
+</DD>
+<DT><A NAME="get_elements()">get_elements()
+
+</A></DT>
+<DD>
+</DD>
+<DT><A NAME="qxp()">qxp()
+
+</A></DT>
+<DD>
+</DD>
+</DL>
+
+</BODY>
+</HTML>

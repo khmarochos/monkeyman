@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<TITLE>MonkeyMan</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<UL>
+<LI><A HREF="#NAME">NAME
+
+</A><LI><A HREF="#SYNOPSIS">SYNOPSIS
+
+</A><LI><A HREF="#METHODS">METHODS
+
+</A></UL>
+<HR>
+<H1><A NAME="NAME">NAME
+
+</A></H1>
+
+<P>MonkeyMan - Apache CloudStack Management Framework
+
+</P><H1><A NAME="SYNOPSIS">SYNOPSIS
+
+</A></H1>
+
+<PRE>    MonkeyMan-&gt;new(
+        app_code            =&gt; \&amp;MyCoolApplication,
+        parse_parameters    =&gt; {
+            'l|line=s' =&gt; 'what_to_say'
+        }
+    );
+
+    sub MyCoolApplication {
+
+        my $mm = shift;
+
+        $mm-&gt;get_logger-&gt;debugf(&quot;We were asked to say '%s'&quot;,
+            $mm-&gt;get_parameters-&gt;what_to_say
+        );
+
+    }</PRE>
+<H1><A NAME="METHODS">METHODS
+
+</A></H1>
+<DL><DT><A NAME="new()">new()
+
+</A></DT>
+<DD>
+
+<P>This method initializes the framework and runs the application.
+
+</P>
+<P>There are a few parameters that can (and need to) be defined:
+
+</P><DL><DT><A NAME="app_code%20%3d%3e%20CodeRef">app_code =&gt; CodeRef
+
+</A></DT>
+<DD>
+MANDATORY. The reference to the subroutine that will do all the job.
+
+</DD>
+<DT><A NAME="app_name%20%3d%3e%20Str">app_name =&gt; Str
+
+</A></DT>
+<DD>
+MANDATORY. The application's full name.
+
+</DD>
+<DT><A NAME="app_description%20%3d%3e%20Str">app_description =&gt; Str
+
+</A></DT>
+<DD>
+MANDATORY. The application's description.
+
+</DD>
+<DT><A NAME="app_version%20%3d%3e%20Str">app_version =&gt; Str
+
+</A></DT>
+<DD>
+MANDATORY. The application's version number.
+
+</DD>
+<DT><A NAME="app_usage_help%20%3d%3e%20Str">app_usage_help =&gt; Str
+
+</A></DT>
+<DD>
+Optional. The text to be displayed when the user asks for help.
+
+</DD>
+<DT><A NAME="parameters_to_get%20%3d%3e%20HashRef">parameters_to_get =&gt; HashRef
+
+</A></DT>
+<DD>
+
+<P>This attribute requires a reference to a hash containing parameters to be
+passed to the <CODE>Getopt::Long-&gt;GetOptions()</CODE> method (on the left
+corresponding names of sub-methods to get values of startup parameters. It
+creates the <CODE>parameters</CODE> method which returns a reference to the
+<CODE>MonkeyMan::Parameters</CODE> object containing the information of startup
+parameters accessible via corresponding methods. Thus,
+
+</P>
+<PRE>    parameters_to_get =&gt; {
+        'i|input=s'     =&gt; 'file_in',
+        'o|output=s'    =&gt; 'file_out'
+    }</PRE>
+
+<P>will create <CODE>MonkeyMan::Parameters</CODE> object with <CODE>file_in</CODE> and <CODE>file_out</CODE>
+methods, so you could address them as
+
+</P>
+<PRE>    $monkeyman-&gt;get_parameters-&gt;file_in,
+    $monkeyman-&gt;get_parameters-&gt;file_out</PRE>
+</DD>
+</DL>
+</DD>
+</DL>
+
+</BODY>
+</HTML>
