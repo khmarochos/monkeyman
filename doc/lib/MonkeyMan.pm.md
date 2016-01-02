@@ -78,10 +78,10 @@ There are a few parameters that can (and need to) be defined:
 - `parameters_to_get` (HashRef)
 
     This attribute requires a reference to a hash containing parameters to be
-    passed to the `Getopt::Long->GetOptions()` method (on the left
+    passed to the [Getopt::Long->GetOptions()](https://metacpan.org/pod/Getopt::Long->GetOptions\(\)) method (on the left
     corresponding names of sub-methods to get values of startup parameters. It
     creates the `parameters` method which returns a reference to the
-    `MonkeyMan::Parameters` object containing the information of startup
+    [MonkeyMan::Parameters](https://metacpan.org/pod/MonkeyMan::Parameters) object containing the information of startup
     parameters accessible via corresponding methods. Thus,
 
     ```perl
@@ -91,7 +91,7 @@ There are a few parameters that can (and need to) be defined:
     }
     ```
 
-    will create `MonkeyMan::Parameters` object with `file_in` and `file_out`
+    will create [MonkeyMan::Parameters](https://metacpan.org/pod/MonkeyMan::Parameters) object with `file_in` and `file_out`
     methods, so you could address them as
 
     ```

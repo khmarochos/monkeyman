@@ -451,10 +451,10 @@ Optional. The text to be displayed when the user asks for help.
 =item C<parameters_to_get> (HashRef)
 
 This attribute requires a reference to a hash containing parameters to be
-passed to the C<Getopt::Long-E<gt>GetOptions()> method (on the left
+passed to the L<Getopt::Long-E<gt>GetOptions()> method (on the left
 corresponding names of sub-methods to get values of startup parameters. It
 creates the C<parameters> method which returns a reference to the
-C<MonkeyMan::Parameters> object containing the information of startup
+L<MonkeyMan::Parameters> object containing the information of startup
 parameters accessible via corresponding methods. Thus,
 
     parameters_to_get => {
@@ -462,13 +462,19 @@ parameters accessible via corresponding methods. Thus,
         'o|output=s'    => 'file_out'
     }
 
-will create C<MonkeyMan::Parameters> object with C<file_in> and C<file_out>
+will create L<MonkeyMan::Parameters> object with C<file_in> and C<file_out>
 methods, so you could address them as
 
     $monkeyman->get_parameters->file_in,
     $monkeyman->get_parameters->file_out
 
 =back
+
+=begin md
+
+![Nice drawing by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
+
+=end md
 
 =cut
 
