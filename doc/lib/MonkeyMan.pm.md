@@ -2,6 +2,8 @@
 
 MonkeyMan - Apache CloudStack Management Framework
 
+# DESCRIPTION
+
 This is a framework that makes possible to manage the
 [Apache CloudStack](http://cloudstack.apache.org/)-based cloud infrastructure
 with high-level Perl5-applications.
@@ -83,8 +85,8 @@ There are a few parameters that can (and need to) be defined:
 
 - `parameters_to_get` (HashRef)
 
-    This attribute requires a reference to a hash containing parameters to be
-    passed to the [Getopt::Long->GetOptions()](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/Getopt::Long->GetOptions\(\)) method (on the left
+    Optional. This parameter shall be a reference to a hash containing parameters
+    to be passed to the [Getopt::Long->GetOptions()](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/Getopt::Long->GetOptions\(\)) method (on the left
     corresponding names of sub-methods to get values of startup parameters. It
     creates the `parameters` method which returns a reference to the
     [MonkeyMan::Parameters](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Parameters) object containing the information of startup
@@ -104,3 +106,34 @@ There are a few parameters that can (and need to) be defined:
     $monkeyman->get_parameters->file_in,
     $monkeyman->get_parameters->file_out
     ```
+
+    There are some special parameters that shouldn't be redefined:
+
+    - `-h|--help`
+
+        The print-help-and-exit mode.
+
+    - `-V|--version`
+
+        The print-version-and-exit mode.
+
+    - `-c|--configuration`
+
+        The name of the main configuration file.
+
+    - `-q|--quiet`
+
+        Decreases the debug level (INFO is the default)
+
+    - `-v|--verbose`
+
+        Increases the debug level (INFO is the default)
+
+- `configuration` ([MonkeyMan::Configuration](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Configuration))
+
+    Optional. You can create a configuration object and pass its reference to
+    the framework. If it's not defined, the framework will try to fetch the
+    configuration from the file. The name of the configuration file can be passed
+    with the `-c|--configuration` startup parameter.
+
+## 

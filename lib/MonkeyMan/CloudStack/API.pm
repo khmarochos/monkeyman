@@ -576,6 +576,11 @@ __PACKAGE__->meta->make_immutable;
 
 MonkeyMan::CloudStack::API - Apache CloudStack API class
 
+=head1 DESCRIPTION
+
+The L<MonkeyMan::CloudStack::API> class encapsulates the interface to the
+Apache CloudStack.
+
 =head1 SYNOPSIS
 
     my $api = MonkeyMan::CloudStack::API->new(
@@ -593,11 +598,6 @@ MonkeyMan::CloudStack::API - Apache CloudStack API class
         fatal_empty => 1,
         fatal_fail  => 1
     );
-
-=head1 DESCRIPTION
-
-The L<MonkeyMan::CloudStack::API> class encapsulates the interface to the
-Apache CloudStack.
 
 =head1 METHODS
 

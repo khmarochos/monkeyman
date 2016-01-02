@@ -2,6 +2,11 @@
 
 MonkeyMan::CloudStack::API - Apache CloudStack API class
 
+# DESCRIPTION
+
+The [MonkeyMan::CloudStack::API](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack::API) class encapsulates the interface to the
+Apache CloudStack.
+
 # SYNOPSIS
 
 ```perl
@@ -21,11 +26,6 @@ my $result = $api->run_command(
     fatal_fail  => 1
 );
 ```
-
-# DESCRIPTION
-
-The [MonkeyMan::CloudStack::API](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack::API) class encapsulates the interface to the
-Apache CloudStack.
 
 # METHODS
 

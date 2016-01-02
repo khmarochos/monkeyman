@@ -377,6 +377,8 @@ method BUILDARGS(...) {
 
 MonkeyMan - Apache CloudStack Management Framework
 
+=head1 DESCRIPTION
+
 This is a framework that makes possible to manage the
 L<Apache CloudStack|http://cloudstack.apache.org/>-based cloud infrastructure
 with high-level Perl5-applications.
@@ -460,8 +462,8 @@ Optional. The text to be displayed when the user asks for help.
 
 =item C<parameters_to_get> (HashRef)
 
-This attribute requires a reference to a hash containing parameters to be
-passed to the L<Getopt::Long-E<gt>GetOptions()> method (on the left
+Optional. This parameter shall be a reference to a hash containing parameters
+to be passed to the L<Getopt::Long-E<gt>GetOptions()> method (on the left
 corresponding names of sub-methods to get values of startup parameters. It
 creates the C<parameters> method which returns a reference to the
 L<MonkeyMan::Parameters> object containing the information of startup
@@ -478,6 +480,41 @@ methods, so you could address them as
     $monkeyman->get_parameters->file_in,
     $monkeyman->get_parameters->file_out
 
+There are some special parameters that shouldn't be redefined:
+
+=over
+
+=item C<-h|--help>
+
+The print-help-and-exit mode.
+
+=item C<-V|--version>
+
+The print-version-and-exit mode.
+
+=item C<-c|--configuration>
+
+The name of the main configuration file.
+
+=item C<-q|--quiet>
+
+Decreases the debug level (INFO is the default)
+
+=item C<-v|--verbose>
+
+Increases the debug level (INFO is the default)
+
 =back
+
+=item C<configuration> (L<MonkeyMan::Configuration>)
+
+Optional. You can create a configuration object and pass its reference to
+the framework. If it's not defined, the framework will try to fetch the
+configuration from the file. The name of the configuration file can be passed
+with the C<-c|--configuration> startup parameter.
+
+=back
+
+=head2
 
 =cut
