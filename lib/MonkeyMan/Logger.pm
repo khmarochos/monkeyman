@@ -111,12 +111,12 @@ method BUILD(...) {
         my $log_console_level = $self->_has_console_verbosity ?
             $self->_get_console_verbosity : (
                 MM_VERBOSITY_LEVEL_BASE + (
-                    defined($self->get_monkeyman->get_parameters->mm_be_verbose) ?
-                            $self->get_monkeyman->get_parameters->mm_be_verbose :
+                    defined($self->get_monkeyman->get_parameters->get_mm_be_verbose) ?
+                            $self->get_monkeyman->get_parameters->get_mm_be_verbose :
                             0
                 ) - (
-                    defined($self->get_monkeyman->get_parameters->mm_be_quiet) ?
-                            $self->get_monkeyman->get_parameters->mm_be_quiet :
+                    defined($self->get_monkeyman->get_parameters->get_mm_be_quiet) ?
+                            $self->get_monkeyman->get_parameters->get_mm_be_quiet :
                             0
                 )
             );

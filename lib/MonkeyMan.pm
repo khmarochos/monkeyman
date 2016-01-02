@@ -79,6 +79,7 @@ has 'app_usage_help' => (
     isa         => 'CodeRef',
     required    => 0,
     reader      =>  'get_app_usage_help',
+    predicate   =>  'has_app_usage_help',
     writer      => '_set_app_usage_help'
 );
 
@@ -122,8 +123,8 @@ method _build_configuration {
 
     my $config = Config::General->new(
         -ConfigFile         => (
-            defined($self->get_parameters->mm_configuration) ?
-                    $self->get_parameters->mm_configuration :
+            defined($self->get_parameters->get_mm_configuration) ?
+                    $self->get_parameters->get_mm_configuration :
                     MM_CONFIG_MAIN
         ),
         -UseApacheInclude   => 1,
@@ -204,11 +205,11 @@ method _mm_init {
     my $parameters  = $self->get_parameters;
     my $logger      = $self->get_logger;
 
-    if($parameters->mm_show_help) {
+    if($parameters->get_mm_show_help) {
         $self->print_full_version_info;
         $self->print_full_usage_help;
         exit;
-    } elsif($parameters->mm_show_version) {
+    } elsif($parameters->get_mm_show_version) {
         $self->print_full_version_info;
         exit;
     }
@@ -355,11 +356,11 @@ method BUILDARGS(...) {
 
     my %args = @_;
 
-    $args{'parameters_to_get'}->{'h|help'}           = 'mm_show_help';
-    $args{'parameters_to_get'}->{'V|version'}        = 'mm_show_version';
-    $args{'parameters_to_get'}->{'c|configuration'}  = 'mm_configuration';
-    $args{'parameters_to_get'}->{'v|verbose+'}       = 'mm_be_verbose';
-    $args{'parameters_to_get'}->{'q|quiet+'}         = 'mm_be_quiet';
+    $args{'parameters_to_get'}->{'h|help'}              = 'mm_show_help';
+    $args{'parameters_to_get'}->{'V|version'}           = 'mm_show_version';
+    $args{'parameters_to_get'}->{'c|configuration=s'}   = 'mm_configuration';
+    $args{'parameters_to_get'}->{'v|verbose+'}          = 'mm_be_verbose';
+    $args{'parameters_to_get'}->{'q|quiet+'}            = 'mm_be_quiet';
 
     return(\%args);
 
@@ -464,10 +465,10 @@ Optional. The text to be displayed when the user asks for help.
 
 Optional. This parameter shall be a reference to a hash containing parameters
 to be passed to the L<Getopt::Long-E<gt>GetOptions()> method (on the left
-corresponding names of sub-methods to get values of startup parameters. It
-creates the C<parameters> method which returns a reference to the
-L<MonkeyMan::Parameters> object containing the information of startup
-parameters accessible via corresponding methods. Thus,
+corresponding names of accessors to values of startup parameters. It sets the
+the C<parameters> attribute which returns a reference to the
+L<MonkeyMan::Parameters> object containing the information about startup
+parameters. Thus,
 
     parameters_to_get => {
         'i|input=s'     => 'file_in',
@@ -475,33 +476,34 @@ parameters accessible via corresponding methods. Thus,
     }
 
 will create L<MonkeyMan::Parameters> object with C<file_in> and C<file_out>
-methods, so you could address them as
+read-only accessors, so you could address them as
 
-    $monkeyman->get_parameters->file_in,
-    $monkeyman->get_parameters->file_out
+    $monkeyman->get_parameters->get_file_in,
+    $monkeyman->get_parameters->get_file_out
 
-There are some special parameters that shouldn't be redefined:
+You can define various startup parameters, but there are some special
+ones that shouldn't be redefined:
 
 =over
 
-=item C<-h>|C<--help>
+=item C<-h>, C<--help>
 
 The print-help-and-exit mode. Sets the C<mm_show_help> attribute.
 
-=item C<-V>|C<--version>
+=item C<-V>, C<--version>
 
 The print-version-and-exit mode. Sets the C<mm_show_version> attribute.
 
-=item C<-c [filename]>|C<--configuration [filename]>
+=item C<-c [filename]>, C<--configuration [filename]>
 
 The name of the main configuration file. Sets the C<mm_configuration>
 attribute.
 
-=item C<-v>|C<--verbose>
+=item C<-v>, C<--verbose>
 
 Increases the debug level. Sets the C<mm_be_verbose> attribute.
 
-=item C<-q>|C<--quiet>
+=item C<-q>, C<--quiet>
 
 Decreases the debug level. Sets the C<mm_be_quiet> attribute.
 
