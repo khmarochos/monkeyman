@@ -377,6 +377,10 @@ method BUILDARGS(...) {
 
 MonkeyMan - Apache CloudStack Management Framework
 
+This is a framework that makes possible to manage the
+L<Apache CloudStack|http://cloudstack.apache.org/>-based cloud infrastructure
+with high-level Perl5-applications.
+
 =begin markdown
 
 ![The mascot has been originaly created by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
