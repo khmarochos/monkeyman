@@ -382,7 +382,7 @@ MonkeyMan - Apache CloudStack Management Framework
     MonkeyMan->new(
         app_code            => \&MyCoolApplication,
         parse_parameters    => {
-            'l|line=s' => 'what_to_say'
+            'd|domain_id=s' => 'domain_id'
         }
     );
 
@@ -391,17 +391,19 @@ MonkeyMan - Apache CloudStack Management Framework
         my $mm  = shift;
         my $log = $mm->get_logger;
 
-        $log->debugf("We were asked to say '%s'",
-            $mm->get_parameters->what_to_say
+        $log->debugf("We were asked to find the '%s' domain",
+            $mm->get_parameters->domain_id
         );
 
         my $api = $mm->get_cloudstack->get_api;
 
-        foreach my $domain ($api->get_elements(
+        # Find the domain by its ID
+        foreach my $d ($api->get_elements(
             type        => 'Domain',
             criterions  => { id  => '01234567-89ab-cdef-0123-456789abcdef' }
         )) {
 
+            # Find the virtual machines related to the domain
             foreach my $vm ($d->get_related(type => 'VirtualMachine')) {
                 $log->infof("The %s %s's ID is %s\n",
                     $vm,
