@@ -115,34 +115,37 @@ $api->run_command(
 );
 
 # Touching a pre-defined URL
-my $url = $command->get_url;
+$url = $command->get_url;
 $api->run_command(
-    url => $url,
+    url => $url
     %options
 );
 ```
 
 This method recognizes the following parameters:
 
+- `parameters` (HashRef)
+
+    The command can be run with a hash of parameters including the command's name.
+    The key and the signature will be applied automatically.
+
+- `command` ([MonkeyMan::CloudStack::API::Command](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack::API::Command))
+
+    The command can be set as a pre-created object. Although, it's being created
+    automatically when `parameters` are set.
+
 - `url` (Str)
 
     The command can be run by touching an URL containing the command, its
     parameters, the key and the signature.
 
-- `command` ([MonkeyMan::CloudStack::API::Command](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack::API::Command))
-
-    The command can be set as a pre-created object.
-
-- `parameters` (HashRef)
-
-    The command can be based on a hash of parameters. The key and the signature
-    will be applied automatically.
-
 It's mandatory to set one of 3 above-mentioned parameters. If there are no
-`url`, `command` or `parameters` defined, the exception will be raised.
+`parameters`, `command` or `url` defined, the exception will be raised.
 
-Other parameters are being passed to [MonkeyMan::CloudStack::API::Command](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack::API::Command),
-so you're welcome to refer to its documentation.
+- `wait` (Int)
+- `fatal_empty` (Bool)
+- `fatal_fail` (Bool)
+- `fatal_431` (Bool)
 
 ## `get_doms`
 

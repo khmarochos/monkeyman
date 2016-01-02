@@ -690,9 +690,9 @@ an exception if something's wrong with it.
     );
 
     # Touching a pre-defined URL
-    my $url = $command->get_url;
+    $url = $command->get_url;
     $api->run_command(
-        url => $url,
+        url => $url
         %options
     );
 
@@ -700,27 +700,37 @@ This method recognizes the following parameters:
 
 =over
 
+=item C<parameters> (HashRef)
+
+The command can be run with a hash of parameters including the command's name.
+The key and the signature will be applied automatically.
+
+=item C<command> (L<MonkeyMan::CloudStack::API::Command>)
+
+The command can be set as a pre-created object. Although, it's being created
+automatically when C<parameters> are set.
+
 =item C<url> (Str)
 
 The command can be run by touching an URL containing the command, its
 parameters, the key and the signature.
 
-=item C<command> (L<MonkeyMan::CloudStack::API::Command>)
-
-The command can be set as a pre-created object.
-
-=item C<parameters> (HashRef)
-
-The command can be based on a hash of parameters. The key and the signature
-will be applied automatically.
-
 =back
 
 It's mandatory to set one of 3 above-mentioned parameters. If there are no
-C<url>, C<command> or C<parameters> defined, the exception will be raised.
+C<parameters>, C<command> or C<url> defined, the exception will be raised.
 
-Other parameters are being passed to L<MonkeyMan::CloudStack::API::Command>,
-so you're welcome to refer to its documentation.
+=over
+
+=item C<wait> (Int)
+
+=item C<fatal_empty> (Bool)
+
+=item C<fatal_fail> (Bool)
+
+=item C<fatal_431> (Bool)
+
+=back
 
 =head2 C<get_doms>
 
