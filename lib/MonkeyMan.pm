@@ -475,8 +475,8 @@ parameters. Thus,
         'o|output=s'    => 'file_out'
     }
 
-will create L<MonkeyMan::Parameters> object with C<file_in> and C<file_out>
-read-only accessors, so you could address them as
+will create L<MonkeyMan::Parameters> object with C<get_file_in> and
+C<get_file_out> read-only accessors, so you could address them as
 
     $monkeyman->get_parameters->get_file_in,
     $monkeyman->get_parameters->get_file_out
@@ -488,24 +488,28 @@ ones that shouldn't be redefined:
 
 =item C<-h>, C<--help>
 
-The print-help-and-exit mode. Sets the C<mm_show_help> attribute.
+The print-help-and-exit mode. Sets the C<mm_show_help> attribute, the accessor
+is C<get_mm_show_help>.
 
 =item C<-V>, C<--version>
 
-The print-version-and-exit mode. Sets the C<mm_show_version> attribute.
+The print-version-and-exit mode. Sets the C<mm_show_version> attribute, the
+accessor is C<get_mm_show_version>.
 
-=item C<-c [filename]>, C<--configuration [filename]>
+=item C<-c [filename]>, C<--configuration=[filename]>
 
 The name of the main configuration file. Sets the C<mm_configuration>
-attribute.
+attribute. The accessor is C<get_mm_configuration>.
 
 =item C<-v>, C<--verbose>
 
-Increases the debug level. Sets the C<mm_be_verbose> attribute.
+Increases the debug level. Sets the C<mm_be_verbose> attribute, the accessor is
+C<get_mm_be_verbose>.
 
 =item C<-q>, C<--quiet>
 
-Decreases the debug level. Sets the C<mm_be_quiet> attribute.
+Decreases the debug level. Sets the C<mm_be_quiet> attribute, the accessor is
+is C<get_mm_be_quiet>.
 
 =back
 

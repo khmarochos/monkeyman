@@ -99,8 +99,8 @@ There are a few parameters that can (and need to) be defined:
     }
     ```
 
-    will create [MonkeyMan::Parameters](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Parameters) object with `file_in` and `file_out`
-    read-only accessors, so you could address them as
+    will create [MonkeyMan::Parameters](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Parameters) object with `get_file_in` and
+    `get_file_out` read-only accessors, so you could address them as
 
     ```
     $monkeyman->get_parameters->get_file_in,
@@ -112,24 +112,28 @@ There are a few parameters that can (and need to) be defined:
 
     - `-h`, `--help`
 
-        The print-help-and-exit mode. Sets the `mm_show_help` attribute.
+        The print-help-and-exit mode. Sets the `mm_show_help` attribute, the accessor
+        is `get_mm_show_help`.
 
     - `-V`, `--version`
 
-        The print-version-and-exit mode. Sets the `mm_show_version` attribute.
+        The print-version-and-exit mode. Sets the `mm_show_version` attribute, the
+        accessor is `get_mm_show_version`.
 
-    - `-c [filename]`, `--configuration [filename]`
+    - `-c [filename]`, `--configuration=[filename]`
 
         The name of the main configuration file. Sets the `mm_configuration`
-        attribute.
+        attribute. The accessor is `get_mm_configuration`.
 
     - `-v`, `--verbose`
 
-        Increases the debug level. Sets the `mm_be_verbose` attribute.
+        Increases the debug level. Sets the `mm_be_verbose` attribute, the accessor is
+        `get_mm_be_verbose`.
 
     - `-q`, `--quiet`
 
-        Decreases the debug level. Sets the `mm_be_quiet` attribute.
+        Decreases the debug level. Sets the `mm_be_quiet` attribute, the accessor is
+        is `get_mm_be_quiet`.
 
 - `configuration` ([MonkeyMan::Configuration](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Configuration))
 
