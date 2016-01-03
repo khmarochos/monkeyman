@@ -451,27 +451,29 @@ This method initializes the framework and runs the application.
 
 There are a few parameters that can (and need to) be defined:
 
-=head3 C<app_code>
+=head3 MonkeyMan Application Parameters
+
+=head4 C<app_code>
 
 MANDATORY. Contains a C<CodeRef> pointing to the code of the application that
 needs to be run. The reader's name is C<get_app_code>.
 
-=head3 C<app_name>
+=head4 C<app_name>
 
 MANDATORY. Contains a C<Str> of the application's full name. The reader's name
 is C<get_app_name>.
 
-=head3 C<app_description>
+=head4 C<app_description>
 
 MANDATORY. Contains a C<Str> of the application's description. The reader's name
 is C<get_app_description>.
 
-=head3 C<app_version>
+=head4 C<app_version>
 
 MANDATORY. Contains a C<Str> of the application's version number. The reader's
 name is C<get_app_version>.
 
-=head3 C<app_usage_help>
+=head4 C<app_usage_help>
 
 Optional. Contains a C<Str> to be displayed when the user asks for help. The
 reader's name is C<get_app_usage_help>.
@@ -566,8 +568,10 @@ C<get_logger()> method described below.
 The C<PRIMARY> logger is being initialized proactively by the framework, but
 it's also possible to initialize it by oneself with some alternative settings.
 
-    %monkeymanloggers = (PRIMARY => MonkeyMan::Logger->new(...));
-    $mm = MonkeyMan->new(loggers => \%monkeymanloggers, ...);
+    %my_loggers = (&MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(...));
+    $mm = MonkeyMan->new(loggers => \%my_loggers, ...);
+    ok($mm->get_logger == $mm->get_logger(&MM_PRIMARY_LOGGER));
+    ok($mm->get_logger == $mm->get_logger('PRIMARY');
 
 Please, keep in mind that C<PRIMARY> is the default logger's handle, it's
 defined by the C<MM_PRIMARY_LOGGER> constant.
@@ -592,7 +596,7 @@ the C<MM_PRIMARY_CLOUDSTACK> constant.
 
 =head2 get_app_version()
 
-...
+See L</MonkeyMan Application Parmeters>
 
 =head2 get_parameters_to_get()
 
