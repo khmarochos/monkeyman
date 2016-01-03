@@ -65,7 +65,7 @@ sub MyCoolApplication {
 
 # METHODS
 
-## `new` - to constructor the object
+## `new()`
 
 ```perl
 MonkeyMan->new(%parameters => %Hash)
@@ -75,25 +75,26 @@ This method initializes the framework and runs the application.
 
 There are a few parameters that can (and need to) be defined:
 
-- `app_code` (CodeRef)
+### `app_code`
 
-    MANDATORY.  The reference to the subroutine that will do all the job.
+MANDATORY. Contains a `CodeRef` pointing to the code of the application that
+needs to be run.
 
-- `app_name` (Str)
+### `app_name`
 
-    MANDATORY. The application's full name.
+MANDATORY. Contains a `Str` of the application's full name.
 
-- `app_description` (Str)
+### `app_description`
 
-    MANDATORY. The application's description.
+MANDATORY. Contains a `Str` of the application's description.
 
-- `app_version` (Str)
+### `app_version`
 
-    MANDATORY. The application's version number.
+MANDATORY. Contains a `Str` of the application's version number.
 
-- `app_usage_help` (Str)
+### `app_usage_help`
 
-    Optional. The text to be displayed when the user asks for help.
+Optional. Contains a `Str` to be displayed when the user asks for help.
 
 - `parameters_to_get` (HashRef)
 
@@ -178,7 +179,12 @@ There are a few parameters that can (and need to) be defined:
     ```
 
 - `loggers` (HashRef)
+
+    ...
+
 - `cloudstacks` (HashRef)
+
+    ...
 
 # HOW IT WORKS
 

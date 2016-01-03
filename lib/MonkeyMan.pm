@@ -443,7 +443,7 @@ with high-level Perl5-applications.
 
 =head1 METHODS
 
-=head2 C<new> - to constructor the object
+=head2 C<new()>
 
     MonkeyMan->new(%parameters => %Hash)
 
@@ -451,27 +451,28 @@ This method initializes the framework and runs the application.
 
 There are a few parameters that can (and need to) be defined:
 
+=head3 C<app_code>
+
+MANDATORY. Contains a C<CodeRef> pointing to the code of the application that
+needs to be run.
+
+=head3 C<app_name>
+
+MANDATORY. Contains a C<Str> of the application's full name.
+
+=head3 C<app_description>
+
+MANDATORY. Contains a C<Str> of the application's description.
+
+=head3 C<app_version>
+
+MANDATORY. Contains a C<Str> of the application's version number.
+
+=head3 C<app_usage_help>
+
+Optional. Contains a C<Str> to be displayed when the user asks for help.
+
 =over
-
-=item C<app_code> (CodeRef)
-
-MANDATORY.  The reference to the subroutine that will do all the job.
-
-=item C<app_name> (Str)
-
-MANDATORY. The application's full name.
-
-=item C<app_description> (Str)
-
-MANDATORY. The application's description.
-
-=item C<app_version> (Str)
-
-MANDATORY. The application's version number.
-
-=item C<app_usage_help> (Str)
-
-Optional. The text to be displayed when the user asks for help.
 
 =item C<parameters_to_get> (HashRef)
 
@@ -555,7 +556,11 @@ the reference to the hash containing all the configuration loaded.
 
 =item C<loggers> (HashRef)
 
+...
+
 =item C<cloudstacks> (HashRef)
+
+...
 
 =back
 
