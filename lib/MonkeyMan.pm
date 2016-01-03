@@ -561,7 +561,7 @@ the reference to the hash containing all the configuration loaded.
                         ->{'enabled'} ? 'enabled' : 'disabled'
     );
 
-=head3 Helpers Indexes Parameters
+=head3 Helpers' Indexes Parameters
 
 =head4 C<loggers>
 

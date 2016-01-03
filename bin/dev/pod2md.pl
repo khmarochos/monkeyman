@@ -7,34 +7,36 @@ use warnings;
 use autodie qw(open close);
 
 use File::Find;
-use File::Path;
+use File::Path qw(make_path);
 use Pod::Markdown::Github;
 
-my $monkeyman_pod_directory = '/home/mmkeeper/monkeyman';
-my $monkeyman_doc_directory = $monkeyman_pod_directory . '/doc';
-my $podmarkdown = Pod::Markdown::Github->new;
-
-find(\&wanted, "/home/mmkeeper/monkeyman");
+my $pod_directoryname = '/home/mmkeeper/monkeyman';
+my $doc_directoryname = $pod_directoryname . '/doc';
+find(\&wanted, $pod_directoryname);
 
 sub wanted {
     my $pod_filename_short = $_;
     my $pod_filename_short_new = $pod_filename_short;
     if($pod_filename_short_new =~ s#^(.+\.p[lm])$#$1.md#) {
-        my $pod_filename = $File::Find::name;
-        if($pod_filename =~ qr#^${monkeyman_pod_directory}/(?:(.+)/)?(${pod_filename_short})$#) {
-            my $md_directoryname = sprintf("%s/%s",
-                $monkeyman_doc_directory,
-                $1,
+        my $pod_filename_long = $File::Find::name;
+        if($pod_filename_long =~ qr#^${pod_directoryname}/(?:(.+)/)?(${pod_filename_short})$#) {
+            my $md_string;
+            my $convertor = Pod::Markdown::Github->new(
+                perldoc_url_prefix => 'https://melnik13.github.io/monkeyman/doc/'
             );
-            my $md_filename = sprintf("%s/%s",
-                $md_directoryname,
-                $pod_filename_short_new
-            );
-            if(defined($output)) {
-                mkpath($md_directoryname);
-                open(my $fh, '>', $md_filename);
-                $parser->output_fh($out_file);
-                close($fh);
+            $convertor->output_string(\$md_string);
+            $convertor->parse_file($pod_filename_long);
+            if(length($md_string) > 1) {
+                my $md_directoryname = sprintf("%s/%s", $doc_directoryname, $1);
+                my $md_filename_long = sprintf("%s/%s", $md_directoryname, $pod_filename_short_new);
+                make_path($md_directoryname);
+                open(my $md_filehandle, '>', $md_filename_long);
+                print($md_filehandle $md_string);
+                close($md_filehandle);
+                printf("%s --> %s\n",
+                    $pod_filename_long,
+                    $md_filename_long
+               );
             }
         }
     }
