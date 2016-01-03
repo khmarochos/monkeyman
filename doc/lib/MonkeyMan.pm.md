@@ -25,8 +25,8 @@ MonkeyMan->new(
 
 sub MyCoolApplication {
 
-    my $mm  = shift;
-    my $log = $mm->get_logger;
+    $mm  = shift;
+    $log = $mm->get_logger;
 
     $log->debugf("We were asked to find the '%s' domain",
         $mm->get_parameters->get_domain_id
@@ -34,7 +34,7 @@ sub MyCoolApplication {
 
     # The CloudStack API is amazingly easy to use, refer to the
     # MonkeyMan::CloudStack::API documentation
-    my $api = $mm->get_cloudstack->get_api;
+    $api = $mm->get_cloudstack->get_api;
 
     # Let's find the domain by its ID
     foreach my $d ($api->get_elements(
@@ -46,7 +46,7 @@ sub MyCoolApplication {
 
         # Okay, now let's find all the virtual machines
         # related to the domain we found
-        foreach my $vm ($d->get_related(type => 'VirtualMachine')) {
+        foreach $vm ($d->get_related(type => 'VirtualMachine')) {
             $log->infof("The %s %s's ID is %s\n",
                 $vm,
                 $vm->get_type(noun => 1),
@@ -78,32 +78,36 @@ There are a few parameters that can (and need to) be defined:
 ### `app_code`
 
 MANDATORY. Contains a `CodeRef` pointing to the code of the application that
-needs to be run.
+needs to be run. The reader's name is `get_app_code`.
 
 ### `app_name`
 
-MANDATORY. Contains a `Str` of the application's full name.
+MANDATORY. Contains a `Str` of the application's full name. The reader's name
+is `get_app_name`.
 
 ### `app_description`
 
-MANDATORY. Contains a `Str` of the application's description.
+MANDATORY. Contains a `Str` of the application's description. The reader's name
+is `get_app_description`.
 
 ### `app_version`
 
-MANDATORY. Contains a `Str` of the application's version number.
+MANDATORY. Contains a `Str` of the application's version number. The reader's
+name is `get_app_version`.
 
 ### `app_usage_help`
 
-Optional. Contains a `Str` to be displayed when the user asks for help.
+Optional. Contains a `Str` to be displayed when the user asks for help. The
+reader's name is `get_app_usage_help`.
 
 ### `parameters_to_get`
 
 Optional. Contains a `HashRef`. This parameter shall be a reference to a hash
 containing parameters to be passed to the [Getopt::Long->GetOptions()](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/Getopt::Long->GetOptions\(\))
 method (on the left corresponding names of accessors to values of startup
-parameters. It sets the the `parameters` attribute which returns a reference to
-the [MonkeyMan::Parameters](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Parameters) object containing the information about startup
-parameters. Thus,
+parameters. It sets the the `parameters` attribute with the `get_parameters()`
+accessor which returns a reference to the [MonkeyMan::Parameters](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Parameters) object
+containing the information about startup parameters. Thus,
 
 ```perl
 parameters_to_get => {
@@ -125,12 +129,12 @@ ones that shouldn't be redefined:
 
 - `-h`, `--help`
 
-    The print-help-and-exit mode. Sets the `mm_show_help` attribute, the accessor
-    is `get_mm_show_help()`.
+    The show-help-and-terminate mode. Sets the `mm_show_help` attribute, the
+    accessor is `get_mm_show_help()`.
 
 - `-V`, `--version`
 
-    The print-version-and-exit mode. Sets the `mm_show_version` attribute, the
+    The show-version-and-terminate mode. Sets the `mm_show_version` attribute, the
     accessor is `get_mm_show_version()`.
 
 - `-c [filename]`, `--configuration=[filename]`
@@ -179,13 +183,58 @@ $log->infof("The dumper is %s,
 );
 ```
 
-### `loggers` (HashRef)
+### `loggers`
 
-Optional. Contains a `HashRef`.
+Optional. Contains a `HashRef` with links to [MonkeyMan::Logger](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Logger)
+modules, so you can use multiple interfaces to multiple cloudstack with the
+`get_logger()` method described below.
 
-### `cloudstacks` (HashRef)
+The `PRIMARY` logger is being initialized proactively by the framework, but
+it's also possible to initialize it by oneself with some alternative settings.
 
-Optional. Contains a `HashRef`.
+```perl
+%monkeymanloggers = (PRIMARY => MonkeyMan::Logger->new(...));
+$mm = MonkeyMan->new(loggers => \%monkeymanloggers, ...);
+```
+
+Please, keep in mind that `PRIMARY` is the default logger's handle, it's
+defined by the `MM_PRIMARY_LOGGER` constant.
+
+### `cloudstacks`
+
+Optional. Contains a `HashRef` with links to [MonkeyMan::CloudStack](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack) modules.
+The `get_cloudstack()` method helps to get the CloudStack instance by its
+handle is described below.
+
+Its behaves very similar to the `loggers` attribute and the `get_logger()`
+method. The default CloudStack instance's name is `PRIMARY`, it's defined as
+the `MM_PRIMARY_CLOUDSTACK` constant.
+
+## get\_app\_code()
+
+## get\_app\_name()
+
+## get\_app\_description()
+
+## get\_app\_usage\_help()
+
+## get\_app\_version()
+
+...
+
+## get\_parameters\_to\_get()
+
+## get\_parameters()
+
+...
+
+## get\_logger()
+
+...
+
+## get\_cloudstack()
+
+...
 
 # HOW IT WORKS
 

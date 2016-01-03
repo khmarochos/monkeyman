@@ -404,8 +404,8 @@ with high-level Perl5-applications.
 
     sub MyCoolApplication {
 
-        my $mm  = shift;
-        my $log = $mm->get_logger;
+        $mm  = shift;
+        $log = $mm->get_logger;
 
         $log->debugf("We were asked to find the '%s' domain",
             $mm->get_parameters->get_domain_id
@@ -413,7 +413,7 @@ with high-level Perl5-applications.
 
         # The CloudStack API is amazingly easy to use, refer to the
         # MonkeyMan::CloudStack::API documentation
-        my $api = $mm->get_cloudstack->get_api;
+        $api = $mm->get_cloudstack->get_api;
 
         # Let's find the domain by its ID
         foreach my $d ($api->get_elements(
@@ -425,7 +425,7 @@ with high-level Perl5-applications.
 
             # Okay, now let's find all the virtual machines
             # related to the domain we found
-            foreach my $vm ($d->get_related(type => 'VirtualMachine')) {
+            foreach $vm ($d->get_related(type => 'VirtualMachine')) {
                 $log->infof("The %s %s's ID is %s\n",
                     $vm,
                     $vm->get_type(noun => 1),
@@ -454,32 +454,36 @@ There are a few parameters that can (and need to) be defined:
 =head3 C<app_code>
 
 MANDATORY. Contains a C<CodeRef> pointing to the code of the application that
-needs to be run.
+needs to be run. The reader's name is C<get_app_code>.
 
 =head3 C<app_name>
 
-MANDATORY. Contains a C<Str> of the application's full name.
+MANDATORY. Contains a C<Str> of the application's full name. The reader's name
+is C<get_app_name>.
 
 =head3 C<app_description>
 
-MANDATORY. Contains a C<Str> of the application's description.
+MANDATORY. Contains a C<Str> of the application's description. The reader's name
+is C<get_app_description>.
 
 =head3 C<app_version>
 
-MANDATORY. Contains a C<Str> of the application's version number.
+MANDATORY. Contains a C<Str> of the application's version number. The reader's
+name is C<get_app_version>.
 
 =head3 C<app_usage_help>
 
-Optional. Contains a C<Str> to be displayed when the user asks for help.
+Optional. Contains a C<Str> to be displayed when the user asks for help. The
+reader's name is C<get_app_usage_help>.
 
 =head3 C<parameters_to_get>
 
 Optional. Contains a C<HashRef>. This parameter shall be a reference to a hash
 containing parameters to be passed to the L<Getopt::Long-E<gt>GetOptions()>
 method (on the left corresponding names of accessors to values of startup
-parameters. It sets the the C<parameters> attribute which returns a reference to
-the L<MonkeyMan::Parameters> object containing the information about startup
-parameters. Thus,
+parameters. It sets the the C<parameters> attribute with the C<get_parameters()>
+accessor which returns a reference to the L<MonkeyMan::Parameters> object
+containing the information about startup parameters. Thus,
 
     parameters_to_get => {
         'i|input=s'     => 'file_in',
@@ -499,12 +503,12 @@ ones that shouldn't be redefined:
 
 =item C<-h>, C<--help>
 
-The print-help-and-exit mode. Sets the C<mm_show_help> attribute, the accessor
-is C<get_mm_show_help()>.
+The show-help-and-terminate mode. Sets the C<mm_show_help> attribute, the
+accessor is C<get_mm_show_help()>.
 
 =item C<-V>, C<--version>
 
-The print-version-and-exit mode. Sets the C<mm_show_version> attribute, the
+The show-version-and-terminate mode. Sets the C<mm_show_version> attribute, the
 accessor is C<get_mm_show_version()>.
 
 =item C<-c [filename]>, C<--configuration=[filename]>
@@ -553,13 +557,56 @@ the reference to the hash containing all the configuration loaded.
                         ->{'enabled'} ? 'enabled' : 'disabled'
     );
 
-=head3 C<loggers> (HashRef)
+=head3 C<loggers>
 
-Optional. Contains a C<HashRef>.
+Optional. Contains a C<HashRef> with links to L<MonkeyMan::Logger>
+modules, so you can use multiple interfaces to multiple cloudstack with the
+C<get_logger()> method described below.
 
-=head3 C<cloudstacks> (HashRef)
+The C<PRIMARY> logger is being initialized proactively by the framework, but
+it's also possible to initialize it by oneself with some alternative settings.
 
-Optional. Contains a C<HashRef>.
+    %monkeymanloggers = (PRIMARY => MonkeyMan::Logger->new(...));
+    $mm = MonkeyMan->new(loggers => \%monkeymanloggers, ...);
+
+Please, keep in mind that C<PRIMARY> is the default logger's handle, it's
+defined by the C<MM_PRIMARY_LOGGER> constant.
+
+=head3 C<cloudstacks>
+
+Optional. Contains a C<HashRef> with links to L<MonkeyMan::CloudStack> modules.
+The C<get_cloudstack()> method helps to get the CloudStack instance by its
+handle is described below.
+
+Its behaves very similar to the C<loggers> attribute and the C<get_logger()>
+method. The default CloudStack instance's name is C<PRIMARY>, it's defined as
+the C<MM_PRIMARY_CLOUDSTACK> constant.
+
+=head2 get_app_code()
+
+=head2 get_app_name()
+
+=head2 get_app_description()
+
+=head2 get_app_usage_help()
+
+=head2 get_app_version()
+
+...
+
+=head2 get_parameters_to_get()
+
+=head2 get_parameters()
+
+...
+
+=head2 get_logger()
+
+...
+
+=head2 get_cloudstack()
+
+...
 
 =head1 HOW IT WORKS
 
