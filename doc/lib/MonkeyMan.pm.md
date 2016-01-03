@@ -5,7 +5,7 @@ MonkeyMan - Apache CloudStack Management Framework
 # DESCRIPTION
 
 This is a framework that makes possible to manage the
-[Apache CloudStack](http://cloudstack.apache.org/)-based cloud infrastructure
+[Apache CloudStack](http://cloudstack.apache.org/) based cloud infrastructure
 with high-level Perl5-applications.
 
 ![The mascot has been originaly created by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
@@ -26,18 +26,23 @@ sub MyCoolApplication {
     my $log = $mm->get_logger;
 
     $log->debugf("We were asked to find the '%s' domain",
-        $mm->get_parameters->domain_id
+        $mm->get_parameters->get_domain_id
     );
 
+    # The CloudStack API is amazingly easy to use, refer to the
+    # MonkeyMan::CloudStack::API documentation
     my $api = $mm->get_cloudstack->get_api;
 
-    # Find the domain by its ID
+    # Let's find the domain by its ID
     foreach my $d ($api->get_elements(
         type        => 'Domain',
-        criterions  => { id  => '01234567-89ab-cdef-0123-456789abcdef' }
+        criterions  => {
+            id  => $mm->get_parameters->get_domain_id
+        }
     )) {
 
-        # Find the virtual machines related to the domain
+        # Okay, now let's find all the virtual machines
+        # related to the domain we found
         foreach my $vm ($d->get_related(type => 'VirtualMachine')) {
             $log->infof("The %s %s's ID is %s\n",
                 $vm,
@@ -127,19 +132,24 @@ There are a few parameters that can (and need to) be defined:
 
     - `-v`, `--verbose`
 
-        Increases the debug level. Sets the `mm_be_verbose` attribute, the accessor is
-        `get_mm_be_verbose`.
+        Increases the debug level, the more times you add it, the higher level is. The
+        default level is INFO, for more information about logging see
+        [MonkeyMan::Logger](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Logger) documentation. Sets the `mm_be_verbose` attribute, the
+        accessor is `get_mm_be_verbose`.
 
     - `-q`, `--quiet`
 
-        Decreases the debug level. Sets the `mm_be_quiet` attribute, the accessor is
-        is `get_mm_be_quiet`.
+        Does the opposite of what the previous one does - it decreases the debug level.
+        Sets the `mm_be_quiet` attribute, the accessor is is `get_mm_be_quiet`.
 
 - `configuration` ([MonkeyMan::Configuration](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Configuration))
 
     Optional. You can create a configuration object and pass its reference to
     the framework. If it's not defined, the framework will try to fetch the
     configuration from the file. The name of the configuration file can be passed
-    with the `-c|--configuration` startup parameter.
+    with the `-c|--configuration` startup parameter. If it isn't hasn't defined at
+    the framework initialization and hasn't defined by the startup parameter, the
+    framework attempts to find the configuration file at the location defined as the
+    `MM_CONFIG_MAIN` constant.
 
 ## 

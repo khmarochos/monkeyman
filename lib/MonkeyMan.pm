@@ -381,7 +381,7 @@ MonkeyMan - Apache CloudStack Management Framework
 =head1 DESCRIPTION
 
 This is a framework that makes possible to manage the
-L<Apache CloudStack|http://cloudstack.apache.org/>-based cloud infrastructure
+L<Apache CloudStack|http://cloudstack.apache.org/> based cloud infrastructure
 with high-level Perl5-applications.
 
 =begin markdown
@@ -405,18 +405,23 @@ with high-level Perl5-applications.
         my $log = $mm->get_logger;
 
         $log->debugf("We were asked to find the '%s' domain",
-            $mm->get_parameters->domain_id
+            $mm->get_parameters->get_domain_id
         );
 
+        # The CloudStack API is amazingly easy to use, refer to the
+        # MonkeyMan::CloudStack::API documentation
         my $api = $mm->get_cloudstack->get_api;
 
-        # Find the domain by its ID
+        # Let's find the domain by its ID
         foreach my $d ($api->get_elements(
             type        => 'Domain',
-            criterions  => { id  => '01234567-89ab-cdef-0123-456789abcdef' }
+            criterions  => {
+                id  => $mm->get_parameters->get_domain_id
+            }
         )) {
 
-            # Find the virtual machines related to the domain
+            # Okay, now let's find all the virtual machines
+            # related to the domain we found
             foreach my $vm ($d->get_related(type => 'VirtualMachine')) {
                 $log->infof("The %s %s's ID is %s\n",
                     $vm,
@@ -503,13 +508,15 @@ attribute. The accessor is C<get_mm_configuration>.
 
 =item C<-v>, C<--verbose>
 
-Increases the debug level. Sets the C<mm_be_verbose> attribute, the accessor is
-C<get_mm_be_verbose>.
+Increases the debug level, the more times you add it, the higher level is. The
+default level is INFO, for more information about logging see
+L<MonkeyMan::Logger> documentation. Sets the C<mm_be_verbose> attribute, the
+accessor is C<get_mm_be_verbose>.
 
 =item C<-q>, C<--quiet>
 
-Decreases the debug level. Sets the C<mm_be_quiet> attribute, the accessor is
-is C<get_mm_be_quiet>.
+Does the opposite of what the previous one does - it decreases the debug level.
+Sets the C<mm_be_quiet> attribute, the accessor is is C<get_mm_be_quiet>.
 
 =back
 
@@ -518,7 +525,10 @@ is C<get_mm_be_quiet>.
 Optional. You can create a configuration object and pass its reference to
 the framework. If it's not defined, the framework will try to fetch the
 configuration from the file. The name of the configuration file can be passed
-with the C<-c|--configuration> startup parameter.
+with the C<-c|--configuration> startup parameter. If it isn't hasn't defined at
+the framework initialization and hasn't defined by the startup parameter, the
+framework attempts to find the configuration file at the location defined as the
+C<MM_CONFIG_MAIN> constant.
 
 =back
 
