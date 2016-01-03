@@ -75,32 +75,36 @@ This method initializes the framework and runs the application.
 
 There are a few parameters that can (and need to) be defined:
 
-### `app_code`
+### MonkeyMan Application Parameters
+
+#### `app_code`
 
 MANDATORY. Contains a `CodeRef` pointing to the code of the application that
 needs to be run. The reader's name is `get_app_code`.
 
-### `app_name`
+#### `app_name`
 
 MANDATORY. Contains a `Str` of the application's full name. The reader's name
 is `get_app_name`.
 
-### `app_description`
+#### `app_description`
 
 MANDATORY. Contains a `Str` of the application's description. The reader's name
 is `get_app_description`.
 
-### `app_version`
+#### `app_version`
 
 MANDATORY. Contains a `Str` of the application's version number. The reader's
 name is `get_app_version`.
 
-### `app_usage_help`
+#### `app_usage_help`
 
 Optional. Contains a `Str` to be displayed when the user asks for help. The
 reader's name is `get_app_usage_help`.
 
-### `parameters_to_get`
+### MonkeyMan Configuration Parameters
+
+#### `parameters_to_get`
 
 Optional. Contains a `HashRef`. This parameter shall be a reference to a hash
 containing parameters to be passed to the [Getopt::Long->GetOptions()](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/Getopt::Long->GetOptions\(\))
@@ -154,7 +158,7 @@ ones that shouldn't be redefined:
     Does the opposite of what the previous one does - it decreases the debug level.
     Sets the `mm_be_quiet` attribute, the accessor is is `get_mm_be_quiet()`.
 
-### `configuration`
+#### `configuration`
 
 Optional. Contains a reference to the [MonkeyMan::Configuration](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Configuration) object. So you
 can create a configuration object beforehand and then pass its reference to the
@@ -183,7 +187,9 @@ $log->infof("The dumper is %s,
 );
 ```
 
-### `loggers`
+### Helpers Indexes Parameters
+
+#### `loggers`
 
 Optional. Contains a `HashRef` with links to [MonkeyMan::Logger](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Logger)
 modules, so you can use multiple interfaces to multiple cloudstack with the
@@ -193,14 +199,16 @@ The `PRIMARY` logger is being initialized proactively by the framework, but
 it's also possible to initialize it by oneself with some alternative settings.
 
 ```perl
-%monkeymanloggers = (PRIMARY => MonkeyMan::Logger->new(...));
-$mm = MonkeyMan->new(loggers => \%monkeymanloggers, ...);
+%my_loggers = (&MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(...));
+$mm = MonkeyMan->new(loggers => \%my_loggers, ...);
+ok($mm->get_logger == $mm->get_logger(&MM_PRIMARY_LOGGER));
+ok($mm->get_logger == $mm->get_logger('PRIMARY');
 ```
 
 Please, keep in mind that `PRIMARY` is the default logger's handle, it's
 defined by the `MM_PRIMARY_LOGGER` constant.
 
-### `cloudstacks`
+#### `cloudstacks`
 
 Optional. Contains a `HashRef` with links to [MonkeyMan::CloudStack](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::CloudStack) modules.
 The `get_cloudstack()` method helps to get the CloudStack instance by its
@@ -220,7 +228,7 @@ the `MM_PRIMARY_CLOUDSTACK` constant.
 
 ## get\_app\_version()
 
-...
+See ["MonkeyMan Application Parmeters"](#monkeyman-application-parmeters)
 
 ## get\_parameters\_to\_get()
 
