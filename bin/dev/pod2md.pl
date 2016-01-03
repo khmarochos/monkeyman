@@ -21,9 +21,7 @@ sub wanted {
         my $pod_filename_long = $File::Find::name;
         if($pod_filename_long =~ qr#^${pod_directoryname}/(?:(.+)/)?(${pod_filename_short})$#) {
             my $md_string;
-            my $convertor = Pod::Markdown::Github->new(
-                perldoc_url_prefix => 'https://melnik13.github.io/monkeyman/doc/'
-            );
+            my $convertor = Pod::Markdown::Github->new();
             $convertor->output_string(\$md_string);
             $convertor->parse_file($pod_filename_long);
             if(length($md_string) > 1) {

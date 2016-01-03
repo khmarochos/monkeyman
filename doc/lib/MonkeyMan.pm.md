@@ -107,10 +107,10 @@ reader's name is `get_app_usage_help`.
 #### `parameters_to_get`
 
 Optional. Contains a `HashRef`. This parameter shall be a reference to a hash
-containing parameters to be passed to the [Getopt::Long->GetOptions()](https://melnik13.github.io/monkeyman/doc/Getopt::Long->GetOptions\(\))
+containing parameters to be passed to the [Getopt::Long->GetOptions()](https://metacpan.org/pod/Getopt::Long->GetOptions\(\))
 method (on the left corresponding names of accessors to values of startup
 parameters. It sets the the `parameters` attribute with the `get_parameters()`
-accessor which returns a reference to the [MonkeyMan::Parameters](https://melnik13.github.io/monkeyman/doc/MonkeyMan::Parameters) object
+accessor which returns a reference to the [MonkeyMan::Parameters](https://metacpan.org/pod/MonkeyMan::Parameters) object
 containing the information about startup parameters. Thus,
 
 ```perl
@@ -120,7 +120,7 @@ parameters_to_get => {
 }
 ```
 
-will create [MonkeyMan::Parameters](https://melnik13.github.io/monkeyman/doc/MonkeyMan::Parameters) object with `get_file_in` and
+will create [MonkeyMan::Parameters](https://metacpan.org/pod/MonkeyMan::Parameters) object with `get_file_in` and
 `get_file_out` read-only accessors, so you could address them as
 
 ```
@@ -150,7 +150,7 @@ ones that shouldn't be redefined:
 
     Increases the debug level, the more times you add it, the higher level is. The
     default level is INFO, for more information about logging see
-    [MonkeyMan::Logger](https://melnik13.github.io/monkeyman/doc/MonkeyMan::Logger) documentation. Sets the `mm_be_verbose` attribute, the
+    [MonkeyMan::Logger](https://metacpan.org/pod/MonkeyMan::Logger) documentation. Sets the `mm_be_verbose` attribute, the
     accessor is `get_mm_be_verbose()`.
 
 - `-q`, `--quiet`
@@ -160,7 +160,7 @@ ones that shouldn't be redefined:
 
 #### `configuration`
 
-Optional. Contains a reference to the [MonkeyMan::Configuration](https://melnik13.github.io/monkeyman/doc/MonkeyMan::Configuration) object. So you
+Optional. Contains a reference to the [MonkeyMan::Configuration](https://metacpan.org/pod/MonkeyMan::Configuration) object. So you
 can create a configuration object beforehand and then pass its reference to the
 framework. If it's not defined, the framework will try to fetch the
 configuration from the file. The name of the configuration file can be passed
@@ -169,7 +169,7 @@ this constructor parameter and hasn't been defined by the startup parameter, the
 framework attempts to find the configuration file at the location defined as the
 `MM_CONFIG_MAIN` constant.
 
-[MonkeyMan::Configuration](https://melnik13.github.io/monkeyman/doc/MonkeyMan::Configuration) provides the `get_tree()` accessor, which returns
+[MonkeyMan::Configuration](https://metacpan.org/pod/MonkeyMan::Configuration) provides the `get_tree()` accessor, which returns
 the reference to the hash containing all the configuration loaded.
 
 ```
@@ -191,7 +191,7 @@ $log->infof("The dumper is %s,
 
 #### `loggers`
 
-Optional. Contains a `HashRef` with links to [MonkeyMan::Logger](https://melnik13.github.io/monkeyman/doc/MonkeyMan::Logger)
+Optional. Contains a `HashRef` with links to [MonkeyMan::Logger](https://metacpan.org/pod/MonkeyMan::Logger)
 modules, so you can use multiple interfaces to multiple cloudstack with the
 `get_logger()` method described below.
 
@@ -210,7 +210,7 @@ defined by the `MM_PRIMARY_LOGGER` constant.
 
 #### `cloudstacks`
 
-Optional. Contains a `HashRef` with links to [MonkeyMan::CloudStack](https://melnik13.github.io/monkeyman/doc/MonkeyMan::CloudStack) modules.
+Optional. Contains a `HashRef` with links to [MonkeyMan::CloudStack](https://metacpan.org/pod/MonkeyMan::CloudStack) modules.
 The `get_cloudstack()` method helps to get the CloudStack instance by its
 handle is described below.
 
