@@ -600,13 +600,15 @@ the C<MM_PRIMARY_CLOUDSTACK> constant.
 
 =head2 get_app_version()
 
-See L</MonkeyMan Application Parmeters>
+See L</MonkeyMan Application Parameters>
 
 =head2 get_parameters_to_get()
 
 =head2 get_parameters()
 
-...
+=head2 get_configuration
+
+See L</MonkeyMan Configuration Parameters>
 
 =head2 get_logger()
 

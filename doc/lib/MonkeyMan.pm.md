@@ -228,13 +228,15 @@ the `MM_PRIMARY_CLOUDSTACK` constant.
 
 ## get\_app\_version()
 
-See ["MonkeyMan Application Parmeters"](#monkeyman-application-parmeters)
+See ["MonkeyMan Application Parameters"](#monkeyman-application-parameters)
 
 ## get\_parameters\_to\_get()
 
 ## get\_parameters()
 
-...
+## get\_configuration
+
+See ["MonkeyMan Configuration Parameters"](#monkeyman-configuration-parameters)
 
 ## get\_logger()
 
