@@ -437,9 +437,13 @@ with high-level Perl5-applications.
 
     }
 
+=head1 MODULE HIERARCHY
+
+...
+
 =head1 METHODS
 
-=head2 C<new>
+=head2 C<new> - to constructor the object
 
     MonkeyMan->new(%parameters => %Hash)
 
@@ -537,19 +541,26 @@ L<MonkeyMan::Configuration> provides the C<get_tree()> accessor, which returns
 the reference to the hash containing all the configuration loaded.
 
     # MM_DIRECTORY_ROOT/etc/monkeyman.conf contains:
-    #   <log>
-    #     <PRIMARY>
-    #       <dump>
-    #         enabled = 1
+    #          <log>
+    #  .           <PRIMARY>
+    #                  <dump>
+    #                      enabled = 1
     $log->infof("The dumper is %s,
         $mm->get_configuration->get_tree
             ->{'log'}
                 ->{'PRIMARY'}
-                    ->{'dump'} ? 'enabled' | 'disabled'
+                    ->{'dump'}
+                        ->{'enabled'} ? 'enabled' : 'disabled'
     );
+
+=item C<loggers> (HashRef)
+
+=item C<cloudstacks> (HashRef)
 
 =back
 
-=head2
+=head1 HOW IT WORKS
+
+...
 
 =cut

@@ -59,9 +59,13 @@ sub MyCoolApplication {
 }
 ```
 
+# MODULE HIERARCHY
+
+...
+
 # METHODS
 
-## `new`
+## `new` - to constructor the object
 
 ```perl
 MonkeyMan->new(%parameters => %Hash)
@@ -160,16 +164,22 @@ There are a few parameters that can (and need to) be defined:
 
     ```
     # MM_DIRECTORY_ROOT/etc/monkeyman.conf contains:
-    #   <log>
-    #     <PRIMARY>
-    #       <dump>
-    #         enabled = 1
+    #          <log>
+    #  .           <PRIMARY>
+    #                  <dump>
+    #                      enabled = 1
     $log->infof("The dumper is %s,
         $mm->get_configuration->get_tree
             ->{'log'}
                 ->{'PRIMARY'}
-                    ->{'dump'} ? 'enabled' | 'disabled'
+                    ->{'dump'}
+                        ->{'enabled'} ? 'enabled' : 'disabled'
     );
     ```
 
-## 
+- `loggers` (HashRef)
+- `cloudstacks` (HashRef)
+
+# HOW IT WORKS
+
+...
