@@ -478,7 +478,9 @@ name is C<get_app_version>.
 Optional. Contains a C<Str> to be displayed when the user asks for help. The
 reader's name is C<get_app_usage_help>.
 
-=head3 C<parameters_to_get>
+=head3 MonkeyMan Configuration Parameters
+
+=head4 C<parameters_to_get>
 
 Optional. Contains a C<HashRef>. This parameter shall be a reference to a hash
 containing parameters to be passed to the L<Getopt::Long-E<gt>GetOptions()>
@@ -532,7 +534,7 @@ Sets the C<mm_be_quiet> attribute, the accessor is is C<get_mm_be_quiet()>.
 
 =back
 
-=head3 C<configuration>
+=head4 C<configuration>
 
 Optional. Contains a reference to the L<MonkeyMan::Configuration> object. So you
 can create a configuration object beforehand and then pass its reference to the
@@ -559,7 +561,9 @@ the reference to the hash containing all the configuration loaded.
                         ->{'enabled'} ? 'enabled' : 'disabled'
     );
 
-=head3 C<loggers>
+=head3 Helpers Indexes Parameters
+
+=head4 C<loggers>
 
 Optional. Contains a C<HashRef> with links to L<MonkeyMan::Logger>
 modules, so you can use multiple interfaces to multiple cloudstack with the
@@ -576,7 +580,7 @@ it's also possible to initialize it by oneself with some alternative settings.
 Please, keep in mind that C<PRIMARY> is the default logger's handle, it's
 defined by the C<MM_PRIMARY_LOGGER> constant.
 
-=head3 C<cloudstacks>
+=head4 C<cloudstacks>
 
 Optional. Contains a C<HashRef> with links to L<MonkeyMan::CloudStack> modules.
 The C<get_cloudstack()> method helps to get the CloudStack instance by its
