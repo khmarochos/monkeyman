@@ -15,6 +15,9 @@ with high-level Perl5-applications.
 ```perl
 MonkeyMan->new(
     app_code            => \&MyCoolApplication,
+    app_name            => 'apps/cool/mine',
+    app_description     => 'It does good job',
+    app_version         => '6.6.6',
     parse_parameters    => {
         'd|domain_id=s' => 'domain_id'
     }
@@ -118,38 +121,55 @@ There are a few parameters that can (and need to) be defined:
     - `-h`, `--help`
 
         The print-help-and-exit mode. Sets the `mm_show_help` attribute, the accessor
-        is `get_mm_show_help`.
+        is `get_mm_show_help()`.
 
     - `-V`, `--version`
 
         The print-version-and-exit mode. Sets the `mm_show_version` attribute, the
-        accessor is `get_mm_show_version`.
+        accessor is `get_mm_show_version()`.
 
     - `-c [filename]`, `--configuration=[filename]`
 
         The name of the main configuration file. Sets the `mm_configuration`
-        attribute. The accessor is `get_mm_configuration`.
+        attribute. The accessor is `get_mm_configuration()`.
 
     - `-v`, `--verbose`
 
         Increases the debug level, the more times you add it, the higher level is. The
         default level is INFO, for more information about logging see
         [MonkeyMan::Logger](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Logger) documentation. Sets the `mm_be_verbose` attribute, the
-        accessor is `get_mm_be_verbose`.
+        accessor is `get_mm_be_verbose()`.
 
     - `-q`, `--quiet`
 
         Does the opposite of what the previous one does - it decreases the debug level.
-        Sets the `mm_be_quiet` attribute, the accessor is is `get_mm_be_quiet`.
+        Sets the `mm_be_quiet` attribute, the accessor is is `get_mm_be_quiet()`.
 
 - `configuration` ([MonkeyMan::Configuration](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Configuration))
 
     Optional. You can create a configuration object and pass its reference to
     the framework. If it's not defined, the framework will try to fetch the
     configuration from the file. The name of the configuration file can be passed
-    with the `-c|--configuration` startup parameter. If it isn't hasn't defined at
-    the framework initialization and hasn't defined by the startup parameter, the
+    with the `-c|--configuration` startup parameter. If it isn't hasn't defined as
+    this constructor parameter and hasn't been defined by the startup parameter, the
     framework attempts to find the configuration file at the location defined as the
     `MM_CONFIG_MAIN` constant.
+
+    [MonkeyMan::Configuration](https://github.com/melnik13/monkeyman/tree/dev_melnik13_v3/doc/lib/MonkeyMan::Configuration) provides the `get_tree()` accessor, which returns
+    the reference to the hash containing all the configuration loaded.
+
+    ```
+    # MM_DIRECTORY_ROOT/etc/monkeyman.conf contains:
+    #   <log>
+    #     <PRIMARY>
+    #       <dump>
+    #         enabled = 1
+    $log->infof("The dumper is %s,
+        $mm->get_configuration->get_tree
+            ->{'log'}
+                ->{'PRIMARY'}
+                    ->{'dump'} ? 'enabled' | 'disabled'
+    );
+    ```
 
 ## 

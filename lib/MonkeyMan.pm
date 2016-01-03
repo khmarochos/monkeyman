@@ -394,6 +394,9 @@ with high-level Perl5-applications.
 
     MonkeyMan->new(
         app_code            => \&MyCoolApplication,
+        app_name            => 'apps/cool/mine',
+        app_description     => 'It does good job',
+        app_version         => '6.6.6',
         parse_parameters    => {
             'd|domain_id=s' => 'domain_id'
         }
@@ -494,29 +497,29 @@ ones that shouldn't be redefined:
 =item C<-h>, C<--help>
 
 The print-help-and-exit mode. Sets the C<mm_show_help> attribute, the accessor
-is C<get_mm_show_help>.
+is C<get_mm_show_help()>.
 
 =item C<-V>, C<--version>
 
 The print-version-and-exit mode. Sets the C<mm_show_version> attribute, the
-accessor is C<get_mm_show_version>.
+accessor is C<get_mm_show_version()>.
 
 =item C<-c [filename]>, C<--configuration=[filename]>
 
 The name of the main configuration file. Sets the C<mm_configuration>
-attribute. The accessor is C<get_mm_configuration>.
+attribute. The accessor is C<get_mm_configuration()>.
 
 =item C<-v>, C<--verbose>
 
 Increases the debug level, the more times you add it, the higher level is. The
 default level is INFO, for more information about logging see
 L<MonkeyMan::Logger> documentation. Sets the C<mm_be_verbose> attribute, the
-accessor is C<get_mm_be_verbose>.
+accessor is C<get_mm_be_verbose()>.
 
 =item C<-q>, C<--quiet>
 
 Does the opposite of what the previous one does - it decreases the debug level.
-Sets the C<mm_be_quiet> attribute, the accessor is is C<get_mm_be_quiet>.
+Sets the C<mm_be_quiet> attribute, the accessor is is C<get_mm_be_quiet()>.
 
 =back
 
@@ -525,10 +528,25 @@ Sets the C<mm_be_quiet> attribute, the accessor is is C<get_mm_be_quiet>.
 Optional. You can create a configuration object and pass its reference to
 the framework. If it's not defined, the framework will try to fetch the
 configuration from the file. The name of the configuration file can be passed
-with the C<-c|--configuration> startup parameter. If it isn't hasn't defined at
-the framework initialization and hasn't defined by the startup parameter, the
+with the C<-c|--configuration> startup parameter. If it isn't hasn't defined as
+this constructor parameter and hasn't been defined by the startup parameter, the
 framework attempts to find the configuration file at the location defined as the
 C<MM_CONFIG_MAIN> constant.
+
+L<MonkeyMan::Configuration> provides the C<get_tree()> accessor, which returns
+the reference to the hash containing all the configuration loaded.
+
+    # MM_DIRECTORY_ROOT/etc/monkeyman.conf contains:
+    #   <log>
+    #     <PRIMARY>
+    #       <dump>
+    #         enabled = 1
+    $log->infof("The dumper is %s,
+        $mm->get_configuration->get_tree
+            ->{'log'}
+                ->{'PRIMARY'}
+                    ->{'dump'} ? 'enabled' | 'disabled'
+    );
 
 =back
 
