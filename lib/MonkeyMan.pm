@@ -472,15 +472,13 @@ MANDATORY. Contains a C<Str> of the application's version number.
 
 Optional. Contains a C<Str> to be displayed when the user asks for help.
 
-=over
+=head3 C<parameters_to_get>
 
-=item C<parameters_to_get> (HashRef)
-
-Optional. This parameter shall be a reference to a hash containing parameters
-to be passed to the L<Getopt::Long-E<gt>GetOptions()> method (on the left
-corresponding names of accessors to values of startup parameters. It sets the
-the C<parameters> attribute which returns a reference to the
-L<MonkeyMan::Parameters> object containing the information about startup
+Optional. Contains a C<HashRef>. This parameter shall be a reference to a hash
+containing parameters to be passed to the L<Getopt::Long-E<gt>GetOptions()>
+method (on the left corresponding names of accessors to values of startup
+parameters. It sets the the C<parameters> attribute which returns a reference to
+the L<MonkeyMan::Parameters> object containing the information about startup
 parameters. Thus,
 
     parameters_to_get => {
@@ -528,10 +526,11 @@ Sets the C<mm_be_quiet> attribute, the accessor is is C<get_mm_be_quiet()>.
 
 =back
 
-=item C<configuration> (L<MonkeyMan::Configuration>)
+=head3 C<configuration>
 
-Optional. You can create a configuration object and pass its reference to
-the framework. If it's not defined, the framework will try to fetch the
+Optional. Contains a reference to the L<MonkeyMan::Configuration> object. So you
+can create a configuration object beforehand and then pass its reference to the
+framework. If it's not defined, the framework will try to fetch the
 configuration from the file. The name of the configuration file can be passed
 with the C<-c|--configuration> startup parameter. If it isn't hasn't defined as
 this constructor parameter and hasn't been defined by the startup parameter, the
@@ -554,15 +553,13 @@ the reference to the hash containing all the configuration loaded.
                         ->{'enabled'} ? 'enabled' : 'disabled'
     );
 
-=item C<loggers> (HashRef)
+=head3 C<loggers> (HashRef)
 
-...
+Optional. Contains a C<HashRef>.
 
-=item C<cloudstacks> (HashRef)
+=head3 C<cloudstacks> (HashRef)
 
-...
-
-=back
+Optional. Contains a C<HashRef>.
 
 =head1 HOW IT WORKS
 
