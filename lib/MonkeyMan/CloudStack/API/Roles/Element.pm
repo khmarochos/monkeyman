@@ -10,7 +10,7 @@ use namespace::autoclean;
 with 'MonkeyMan::CloudStack::API::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
-use MonkeyMan::Utils;
+use MonkeyMan::Utils qw(mm_register_exceptions);
 use MonkeyMan::Exception;
 
 use Method::Signatures;

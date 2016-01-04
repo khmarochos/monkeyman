@@ -191,7 +191,7 @@ method _build_cloudstacks {
             configuration   => $self
                                 ->get_configuration
                                     ->{'cloudstack'}
-                                            ->{&MM_PRIMARY_CLOUDSTACK}
+                                        ->{&MM_PRIMARY_CLOUDSTACK}
         )
     });
 
@@ -603,7 +603,8 @@ method's documentation for more information.
 
 =head2 get_configuration()
 
-This accessor returns the reference to the hash containing the framework's configuration tree.
+This accessor returns the reference to the hash containing the framework's
+configuration tree.
 
 =head2 get_logger()
 

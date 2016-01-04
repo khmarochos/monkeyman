@@ -30,7 +30,7 @@ my @MM_utils_all = qw(
 );
 
 @ISA                = qw(Exporter);
-@EXPORT             = @MM_utils_all;
+@EXPORT             = qw();
 @EXPORT_OK          = @MM_utils_all;
 
 

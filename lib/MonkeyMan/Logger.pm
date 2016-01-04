@@ -17,7 +17,7 @@ use namespace::autoclean;
 with 'MonkeyMan::Essentials';
 
 use MonkeyMan::Constants qw(:filenames :logging);
-use MonkeyMan::Utils;
+use MonkeyMan::Utils qw(mm_sprintf);
 use MonkeyMan::Exception;
 
 # Use 3rd-party libraries

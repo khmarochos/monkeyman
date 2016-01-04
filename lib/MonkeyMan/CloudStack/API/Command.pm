@@ -11,7 +11,7 @@ use namespace::autoclean;
 with 'MonkeyMan::CloudStack::API::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
-use MonkeyMan::Utils;
+use MonkeyMan::Utils qw(mm_register_exceptions);
 
 use Method::Signatures;
 use URI::Encode qw(uri_encode uri_decode);
@@ -21,9 +21,9 @@ use LWP::UserAgent;
 use HTTP::Request;
 
 
-mm_register_exceptions qw(
+mm_register_exceptions(qw(
     BadResponse
-);
+));
 
 
 

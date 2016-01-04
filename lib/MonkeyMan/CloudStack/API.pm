@@ -12,7 +12,7 @@ with 'MonkeyMan::CloudStack::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::Constants qw(:cloudstack);
-use MonkeyMan::Utils;
+use MonkeyMan::Utils qw(mm_register_exceptions mm_load_package);
 use MonkeyMan::Exception;
 use MonkeyMan::CloudStack::API::Command;
 
@@ -343,7 +343,7 @@ method load_element_package(Str $type) {
     try {
         return(mm_load_package(__PACKAGE__ . '::Element::' . $type));
     } catch($e) {
-        (__PACKAGE__ . '::CanNotLoadPackage')->throwf(
+        (__PACKAGE__ . '::Exception::CanNotLoadPackage')->throwf(
             "Can't load the package for operating %s. %s",
             $self->translate_type(type => $type, plural => 1),
             $e
