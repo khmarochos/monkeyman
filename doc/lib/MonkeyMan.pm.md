@@ -75,7 +75,7 @@ This method initializes the framework and runs the application.
 
 There are a few parameters that can (and need to) be defined:
 
-### MonkeyMan Application Parameters
+### MonkeyMan Application-Related Parameters
 
 #### `app_code`
 
@@ -102,14 +102,13 @@ name is `get_app_version`.
 Optional. Contains a `Str` to be displayed when the user asks for help. The
 reader's name is `get_app_usage_help`.
 
-### MonkeyMan Configuration Parameters
+### MonkeyMan Configuration-Related Parameters
 
 #### `parameters_to_get`
 
 Optional. Contains a `HashRef`. This parameter shall be a reference to a hash
-containing parameters to be passed to the [Getopt::Long->GetOptions()](https://metacpan.org/pod/Getopt::Long->GetOptions\(\))
-method (on the left corresponding names of accessors to values of startup
-parameters. It sets the the `parameters` attribute with the `get_parameters()`
+containing parameters to be passed to the [Getopt::Long](https://metacpan.org/pod/Getopt::Long)::GetOptions()
+function.  It sets the the `parameters` attribute with the `get_parameters()`
 accessor which returns a reference to the [MonkeyMan::Parameters](https://metacpan.org/pod/MonkeyMan::Parameters) object
 containing the information about startup parameters. Thus,
 
@@ -141,7 +140,7 @@ ones that shouldn't be redefined:
     The show-version-and-terminate mode. Sets the `mm_show_version` attribute, the
     accessor is `get_mm_show_version()`.
 
-- `-c [filename]`, `--configuration=[filename]`
+- `<-c <filename` >>, `--configuration=<filename>`
 
     The name of the main configuration file. Sets the `mm_configuration`
     attribute. The accessor is `get_mm_configuration()`.
@@ -187,7 +186,7 @@ $log->infof("The dumper is %s,
 );
 ```
 
-### Helpers' Indexes Parameters
+### MonkeyMan Helpers-Related Parameters
 
 #### `loggers`
 
@@ -195,28 +194,11 @@ Optional. Contains a `HashRef` with links to [MonkeyMan::Logger](https://metacpa
 modules, so you can use multiple interfaces to multiple cloudstack with the
 `get_logger()` method described below.
 
-The `PRIMARY` logger is being initialized proactively by the framework, but
-it's also possible to initialize it by oneself with some alternative settings.
-
-```perl
-%my_loggers = (&MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(...));
-$mm = MonkeyMan->new(loggers => \%my_loggers, ...);
-ok($mm->get_logger == $mm->get_logger(&MM_PRIMARY_LOGGER));
-ok($mm->get_logger == $mm->get_logger('PRIMARY');
-```
-
-Please, keep in mind that `PRIMARY` is the default logger's handle, it's
-defined by the `MM_PRIMARY_LOGGER` constant.
-
 #### `cloudstacks`
 
 Optional. Contains a `HashRef` with links to [MonkeyMan::CloudStack](https://metacpan.org/pod/MonkeyMan::CloudStack) modules.
 The `get_cloudstack()` method helps to get the CloudStack instance by its
 handle is described below.
-
-Its behaves very similar to the `loggers` attribute and the `get_logger()`
-method. The default CloudStack instance's name is `PRIMARY`, it's defined as
-the `MM_PRIMARY_CLOUDSTACK` constant.
 
 ## get\_app\_code()
 
@@ -228,23 +210,76 @@ the `MM_PRIMARY_CLOUDSTACK` constant.
 
 ## get\_app\_version()
 
-See ["MonkeyMan Application Parameters"](#monkeyman-application-parameters)
-
-## get\_parameters\_to\_get()
+Readers for corresponding modules attributes. These attributes are being set
+when initializing the framework, so see ["MonkeyMan Application-Related
+Parameters"](#monkeyman-application-related-parameters) for details.
 
 ## get\_parameters()
 
-## get\_configuration
+## get\_parameters\_to\_get()
 
-See ["MonkeyMan Configuration Parameters"](#monkeyman-configuration-parameters)
+The first accessor returns the reference to the [MonkeyMan::Parameters](https://metacpan.org/pod/MonkeyMan::Parameters) object
+containing **results** of parsing command-line parameters according to the rules
+defined by the `parameters_to_get` initialization parameter.
+
+The second one returns the reference to the hash containing the **ruleset** of
+parsing the command-line parameters that have been defined by the
+&lt;parameters\_to\_get> initialization parameter, but with addition of some default
+rules (such as `'h|help'`, `'V|version'` and so on) added by the framework on
+its own.
+
+See ["MonkeyMan Configuration-Related Parameters"](#monkeyman-configuration-related-parameters) section of the ["new()"](#new)
+method's documentation for more information.
+
+## get\_configuration()
+
+This accessor returns the [MonkeyMan::Configuration](https://metacpan.org/pod/MonkeyMan::Configuration) object initialized by the
+framrwork. It contains 
 
 ## get\_logger()
 
-...
+## get\_loggers()
+
+The `get_logger()` accessor returns the reference to [MonkeyMan::Logger](https://metacpan.org/pod/MonkeyMan::Logger)
+requested. If the ID hasn't been specified, it returns the instance identified
+as `PRIMARY`.
+
+```
+ok($mm->get_logger() == $mm->get_logger(&MM_PRIMARY_LOGGER));
+ok($mm->get_logger() == $mm->get_logger('PRIMARY');
+```
+
+The `PRIMARY` logger is being initialized proactively by the framework, but
+it's also possible to initialize it by oneself in the case will you need it.
+
+```perl
+%my_loggers = (&MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(...));
+$mm = MonkeyMan->new(loggers => \%my_loggers, ...);
+```
+
+Please, keep in mind that `PRIMARY` is the default logger's handle, it's
+defined by the `MM_PRIMARY_LOGGER` constant.
+
+The `get_loggers` returns the reference to the hash containing the loggers'
+index, which means the following:
+
+```
+ok($mm->get_logger('Log-13') == $mm->get_loggers->{'Log-13'});
+```
 
 ## get\_cloudstack()
 
-...
+## get\_cloudstacks()
+
+These accessors behaves very similar to `get_logger()` and `get_loggers()`,
+but the index contains references to [MonkeyMan::CloudStack](https://metacpan.org/pod/MonkeyMan::CloudStack) objects
+initialized. The default CloudStack instance's name is `PRIMARY`, it's defined
+as the `MM_PRIMARY_CLOUDSTACK` constant.
+
+## get\_mm\_version()
+
+The name of the method is pretty self-descriptive: the accessor returns the
+framework's version ID.
 
 # HOW IT WORKS
 

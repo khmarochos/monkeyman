@@ -19,7 +19,7 @@ sub wanted {
     my $pod_filename_short_new = $pod_filename_short;
     if($pod_filename_short_new =~ s#^(.+\.p[lm])$#$1.md#) {
         my $pod_filename_long = $File::Find::name;
-        if($pod_filename_long =~ qr#^${pod_directoryname}/(?:(.+)/)?(${pod_filename_short})$#) {
+        if($pod_filename_long =~ qr#^\Q${pod_directoryname}\E/(?:(.+)/)?(\Q${pod_filename_short}\E)$#) {
             my $md_string;
             my $convertor = Pod::Markdown::Github->new();
             $convertor->output_string(\$md_string);

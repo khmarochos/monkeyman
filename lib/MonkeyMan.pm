@@ -322,7 +322,7 @@ method print_full_usage_help {
         [opt]       Print usage help text and do nothing
     -V, --version
         [opt]       Print version number and do nothing
-    -c <file>, --configuration <file>
+    -c <filename>, --configuration <filename>
         [opt]       The main configuration file
     -v, --verbose
         [opt] [mul] Increases verbosity
@@ -451,7 +451,7 @@ This method initializes the framework and runs the application.
 
 There are a few parameters that can (and need to) be defined:
 
-=head3 MonkeyMan Application Parameters
+=head3 MonkeyMan Application-Related Parameters
 
 =head4 C<app_code>
 
@@ -478,14 +478,13 @@ name is C<get_app_version>.
 Optional. Contains a C<Str> to be displayed when the user asks for help. The
 reader's name is C<get_app_usage_help>.
 
-=head3 MonkeyMan Configuration Parameters
+=head3 MonkeyMan Configuration-Related Parameters
 
 =head4 C<parameters_to_get>
 
 Optional. Contains a C<HashRef>. This parameter shall be a reference to a hash
-containing parameters to be passed to the L<Getopt::Long-E<gt>GetOptions()>
-method (on the left corresponding names of accessors to values of startup
-parameters. It sets the the C<parameters> attribute with the C<get_parameters()>
+containing parameters to be passed to the L<Getopt::Long>::GetOptions()
+function.  It sets the the C<parameters> attribute with the C<get_parameters()>
 accessor which returns a reference to the L<MonkeyMan::Parameters> object
 containing the information about startup parameters. Thus,
 
@@ -515,7 +514,7 @@ accessor is C<get_mm_show_help()>.
 The show-version-and-terminate mode. Sets the C<mm_show_version> attribute, the
 accessor is C<get_mm_show_version()>.
 
-=item C<-c [filename]>, C<--configuration=[filename]>
+=item C<<-c <filename> >>, C<< --configuration=<filename> >>
 
 The name of the main configuration file. Sets the C<mm_configuration>
 attribute. The accessor is C<get_mm_configuration()>.
@@ -561,7 +560,7 @@ the reference to the hash containing all the configuration loaded.
                         ->{'enabled'} ? 'enabled' : 'disabled'
     );
 
-=head3 Helpers' Indexes Parameters
+=head3 MonkeyMan Helpers-Related Parameters
 
 =head4 C<loggers>
 
@@ -569,26 +568,11 @@ Optional. Contains a C<HashRef> with links to L<MonkeyMan::Logger>
 modules, so you can use multiple interfaces to multiple cloudstack with the
 C<get_logger()> method described below.
 
-The C<PRIMARY> logger is being initialized proactively by the framework, but
-it's also possible to initialize it by oneself with some alternative settings.
-
-    %my_loggers = (&MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(...));
-    $mm = MonkeyMan->new(loggers => \%my_loggers, ...);
-    ok($mm->get_logger == $mm->get_logger(&MM_PRIMARY_LOGGER));
-    ok($mm->get_logger == $mm->get_logger('PRIMARY');
-
-Please, keep in mind that C<PRIMARY> is the default logger's handle, it's
-defined by the C<MM_PRIMARY_LOGGER> constant.
-
 =head4 C<cloudstacks>
 
 Optional. Contains a C<HashRef> with links to L<MonkeyMan::CloudStack> modules.
 The C<get_cloudstack()> method helps to get the CloudStack instance by its
 handle is described below.
-
-Its behaves very similar to the C<loggers> attribute and the C<get_logger()>
-method. The default CloudStack instance's name is C<PRIMARY>, it's defined as
-the C<MM_PRIMARY_CLOUDSTACK> constant.
 
 =head2 get_app_code()
 
@@ -600,23 +584,70 @@ the C<MM_PRIMARY_CLOUDSTACK> constant.
 
 =head2 get_app_version()
 
-See L</MonkeyMan Application Parameters>
-
-=head2 get_parameters_to_get()
+Readers for corresponding modules attributes. These attributes are being set
+when initializing the framework, so see L</MonkeyMan Application-Related
+Parameters> for details.
 
 =head2 get_parameters()
 
-=head2 get_configuration
+=head2 get_parameters_to_get()
 
-See L</MonkeyMan Configuration Parameters>
+The first accessor returns the reference to the L<MonkeyMan::Parameters> object
+containing B<results> of parsing command-line parameters according to the rules
+defined by the C<parameters_to_get> initialization parameter.
+
+The second one returns the reference to the hash containing the B<ruleset> of
+parsing the command-line parameters that have been defined by the
+<parameters_to_get> initialization parameter, but with addition of some default
+rules (such as C<'h|help'>, C<'V|version'> and so on) added by the framework on
+its own.
+
+See L</MonkeyMan Configuration-Related Parameters> section of the L</new()>
+method's documentation for more information.
+
+=head2 get_configuration()
+
+This accessor returns the L<MonkeyMan::Configuration> object initialized by the
+framrwork. It contains 
 
 =head2 get_logger()
 
-...
+=head2 get_loggers()
+
+The C<get_logger()> accessor returns the reference to L<MonkeyMan::Logger>
+requested. If the ID hasn't been specified, it returns the instance identified
+as C<PRIMARY>.
+
+    ok($mm->get_logger() == $mm->get_logger(&MM_PRIMARY_LOGGER));
+    ok($mm->get_logger() == $mm->get_logger('PRIMARY');
+
+The C<PRIMARY> logger is being initialized proactively by the framework, but
+it's also possible to initialize it by oneself in the case will you need it.
+
+    %my_loggers = (&MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(...));
+    $mm = MonkeyMan->new(loggers => \%my_loggers, ...);
+
+Please, keep in mind that C<PRIMARY> is the default logger's handle, it's
+defined by the C<MM_PRIMARY_LOGGER> constant.
+
+The C<get_loggers> returns the reference to the hash containing the loggers'
+index, which means the following:
+
+    ok($mm->get_logger('Log-13') == $mm->get_loggers->{'Log-13'});
 
 =head2 get_cloudstack()
 
-...
+=head2 get_cloudstacks()
+
+These accessors behaves very similar to C<get_logger()> and C<get_loggers()>,
+but the index contains references to L<MonkeyMan::CloudStack> objects
+initialized. The default CloudStack instance's name is C<PRIMARY>, it's defined
+as the C<MM_PRIMARY_CLOUDSTACK> constant.
+
+=head2 get_mm_version()
+
+The name of the method is pretty self-descriptive: the accessor returns the
+framework's version ID.
 
 =head1 HOW IT WORKS
 
