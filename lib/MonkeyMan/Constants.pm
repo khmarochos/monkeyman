@@ -38,21 +38,14 @@ my @mm_constants_directories = qw(
 
 # :filenames
 
-use constant MM_CONFIG_MAIN     => MM_DIRECTORY_CONFIG_MAIN . '/monkeyman.conf';
-use constant MM_CONFIG_LOGGER   => MM_DIRECTORY_CONFIG_MAIN . '/logger.conf';
-#use constant MM_ELEMENT_MODULE  => {
-#    domain          => 'Domain',
-#    virtualmachine  => 'VirtualMachine',
-#    host            => 'Host',
-#    volume          => 'Volume',
-#    snapshot        => 'Snapshot',
-#    storagepool     => 'StoragePool'
-#};
+use constant MM_CONFIG_MAIN         => MM_DIRECTORY_CONFIG_MAIN . '/monkeyman.conf';
+use constant MM_CONFIG_LOGGER       => MM_DIRECTORY_CONFIG_MAIN . '/logger.conf';
+use constant MM_CONFIG_CLOUDSTACK   => MM_DIRECTORY_CONFIG_MAIN . '/cloudstack.conf';
 
 my @mm_constants_filenames = qw(
     MM_CONFIG_MAIN
     MM_CONFIG_LOGGER
-    MM_ELEMENT_MODULE
+    MM_CONFIG_CLOUDSTACK
 );
 
 # :timeouts

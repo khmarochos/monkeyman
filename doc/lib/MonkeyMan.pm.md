@@ -159,17 +159,10 @@ ones that shouldn't be redefined:
 
 #### `configuration`
 
-Optional. Contains a reference to the [MonkeyMan::Configuration](https://metacpan.org/pod/MonkeyMan::Configuration) object. So you
-can create a configuration object beforehand and then pass its reference to the
-framework. If it's not defined, the framework will try to fetch the
-configuration from the file. The name of the configuration file can be passed
-with the `-c|--configuration` startup parameter. If it isn't hasn't defined as
-this constructor parameter and hasn't been defined by the startup parameter, the
-framework attempts to find the configuration file at the location defined as the
-`MM_CONFIG_MAIN` constant.
-
-[MonkeyMan::Configuration](https://metacpan.org/pod/MonkeyMan::Configuration) provides the `get_tree()` accessor, which returns
-the reference to the hash containing all the configuration loaded.
+Optional. Contains a reference to the hash containing the framework's
+configuration tree. If it's not defined (in most cases), the framework will try
+to parse the configuration file. The name of the file can be passed with the
+`-c|--configuration` startup parameter.
 
 ```
 # MM_DIRECTORY_ROOT/etc/monkeyman.conf contains:
@@ -177,14 +170,18 @@ the reference to the hash containing all the configuration loaded.
 #  .           <PRIMARY>
 #                  <dump>
 #                      enabled = 1
-$log->infof("The dumper is %s,
-    $mm->get_configuration->get_tree
+$log->debugf("The dumper is %s,
+    $mm->get_configuration
         ->{'log'}
             ->{'PRIMARY'}
                 ->{'dump'}
                     ->{'enabled'} ? 'enabled' : 'disabled'
 );
 ```
+
+If the configuration is neither defined as the constructor parameter nor
+defined by the startup parameter, the framework attempts to find the
+configuration file at the location defined as the `MM_CONFIG_MAIN` constant.
 
 ### MonkeyMan Helpers-Related Parameters
 
@@ -233,8 +230,7 @@ method's documentation for more information.
 
 ## get\_configuration()
 
-This accessor returns the [MonkeyMan::Configuration](https://metacpan.org/pod/MonkeyMan::Configuration) object initialized by the
-framrwork. It contains 
+This accessor returns the reference to the hash containing the framework's configuration tree.
 
 ## get\_logger()
 

@@ -39,9 +39,8 @@ method _build_cache_time {
     $cache_time = $self
         ->get_api
             ->get_configuration
-                ->get_tree
-                    ->{'cache'}
-                        ->{'default_cache_time'};
+                ->{'cache'}
+                    ->{'default_cache_time'};
     $cache_time = MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME
         unless(defined($cache_time));
     return($cache_time);

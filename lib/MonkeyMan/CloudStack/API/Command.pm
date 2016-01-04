@@ -69,7 +69,7 @@ method craft_url(...) {
 
     my %parameters      = @_;
     my $logger          = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
-    my $configuration   = $self->get_api->get_configuration->get_tree;
+    my $configuration   = $self->get_api->get_configuration;
 
     my $parameters_string;
     my $output;
@@ -136,7 +136,7 @@ method run(
     Maybe[Bool] :$fatal_fail    = 1,
     Maybe[Bool] :$fatal_empty   = 0,
     Maybe[Bool] :$fatal_431     =
-        ! $self->get_api->get_configuration->get_tree->{'ignore_431_code'}
+        ! $self->get_api->get_configuration->{'ignore_431_code'}
 ) {
 
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;

@@ -9,7 +9,7 @@ use namespace::autoclean;
 
 extends 'Throwable::Error';
 
-use MonkeyMan::Utils;
+use MonkeyMan::Utils qw(mm_sprintf);
 
 use Method::Signatures;
 use TryCatch;
@@ -23,7 +23,6 @@ func _register_exception(Str $exception!) {
         );
     }
 }
-
 
 
 

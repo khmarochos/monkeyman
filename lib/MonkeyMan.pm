@@ -13,9 +13,9 @@ with 'MonkeyMan::Roles::WithTimer';
 # (the time_started attribute and some methods to work with it)
 
 use MonkeyMan::Constants qw(:ALL);
+use MonkeyMan::Utils qw(mm_register_exceptions);
 use MonkeyMan::Exception;
 use MonkeyMan::Parameters;
-use MonkeyMan::Configuration;
 use MonkeyMan::CloudStack;
 use MonkeyMan::Logger;
 
@@ -25,7 +25,13 @@ use MooseX::Singleton;
 use Method::Signatures;
 use TryCatch;
 use Getopt::Long qw(:config no_ignore_case);
-use Data::Dumper; # Only for debugging
+use Config::General;
+
+
+
+mm_register_exceptions(qw(
+    CanNotLoadPackage
+));
 
 
 
@@ -111,7 +117,7 @@ method _build_parameters {
 
 has 'configuration' => (
     is          => 'ro',
-    isa         => 'MonkeyMan::Configuration',
+    isa         => 'HashRef',
     predicate   =>    'has_configuration',
     reader      =>    'get_configuration',
     writer      =>   '_set_configuration',
@@ -130,13 +136,7 @@ method _build_configuration {
         -UseApacheInclude   => 1,
         -ExtendedAccess     => 1
     );
-
-    my %configuration = $config->getall;
-
-    MonkeyMan::Configuration->new(
-        monkeyman   => $self,
-        tree        => \%configuration
-    );
+    return({ $config->getall });
 
 }
 
@@ -158,13 +158,11 @@ has 'loggers' => (
 
 method _build_loggers {
 
-    my %loggers = (
+    return({ 
         &MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(
             monkeyman => $self
         )
-    );
-
-    \%loggers;
+    });
 
 }
 
@@ -187,14 +185,15 @@ has 'cloudstacks' => (
 
 method _build_cloudstacks {
 
-    my %cloudstacks = (
+    return({
         &MM_PRIMARY_CLOUDSTACK => MonkeyMan::CloudStack->new(
-            monkeyman           => $self,
-            configuration_tree  => $self->get_configuration->get_tree->{'cloudstack'}
+            monkeyman       => $self,
+            configuration   => $self
+                                ->get_configuration
+                                    ->{'cloudstack'}
+                                            ->{&MM_PRIMARY_CLOUDSTACK}
         )
-    );
-
-    \%cloudstacks;
+    });
 
 }
 
@@ -535,30 +534,27 @@ Sets the C<mm_be_quiet> attribute, the accessor is is C<get_mm_be_quiet()>.
 
 =head4 C<configuration>
 
-Optional. Contains a reference to the L<MonkeyMan::Configuration> object. So you
-can create a configuration object beforehand and then pass its reference to the
-framework. If it's not defined, the framework will try to fetch the
-configuration from the file. The name of the configuration file can be passed
-with the C<-c|--configuration> startup parameter. If it isn't hasn't defined as
-this constructor parameter and hasn't been defined by the startup parameter, the
-framework attempts to find the configuration file at the location defined as the
-C<MM_CONFIG_MAIN> constant.
-
-L<MonkeyMan::Configuration> provides the C<get_tree()> accessor, which returns
-the reference to the hash containing all the configuration loaded.
+Optional. Contains a reference to the hash containing the framework's
+configuration tree. If it's not defined (in most cases), the framework will try
+to parse the configuration file. The name of the file can be passed with the
+C<-c|--configuration> startup parameter.
 
     # MM_DIRECTORY_ROOT/etc/monkeyman.conf contains:
     #          <log>
     #  .           <PRIMARY>
     #                  <dump>
     #                      enabled = 1
-    $log->infof("The dumper is %s,
-        $mm->get_configuration->get_tree
+    $log->debugf("The dumper is %s,
+        $mm->get_configuration
             ->{'log'}
                 ->{'PRIMARY'}
                     ->{'dump'}
                         ->{'enabled'} ? 'enabled' : 'disabled'
     );
+
+If the configuration is neither defined as the constructor parameter nor
+defined by the startup parameter, the framework attempts to find the
+configuration file at the location defined as the C<MM_CONFIG_MAIN> constant.
 
 =head3 MonkeyMan Helpers-Related Parameters
 
@@ -607,8 +603,7 @@ method's documentation for more information.
 
 =head2 get_configuration()
 
-This accessor returns the L<MonkeyMan::Configuration> object initialized by the
-framrwork. It contains 
+This accessor returns the reference to the hash containing the framework's configuration tree.
 
 =head2 get_logger()
 

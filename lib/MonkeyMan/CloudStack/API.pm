@@ -14,12 +14,10 @@ with 'MonkeyMan::Roles::WithTimer';
 use MonkeyMan::Constants qw(:cloudstack);
 use MonkeyMan::Utils;
 use MonkeyMan::Exception;
-use MonkeyMan::CloudStack::API::Configuration;
 use MonkeyMan::CloudStack::API::Command;
 
 use TryCatch;
 use Method::Signatures;
-use Module::Loaded;
 use Lingua::EN::Inflect qw(A PL);
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
@@ -29,7 +27,7 @@ use XML::LibXML;
 
 
 mm_register_exceptions qw(
-    CantLoadPackage
+    CanNotLoadPackage
     InvalidParametersValue
     NoParameters
     Timeout
@@ -41,35 +39,19 @@ mm_register_exceptions qw(
 # Attributes and methods responsible for the configuration set
 #
 
-has 'configuration_tree' => (
-    is          => 'ro',
-    isa         => 'HashRef',
-    reader      =>    'get_configuration_tree',
-    predicate   =>    'has_configuration_tree',
-    writer      =>   '_set_configuration_tree',
-    builder     => '_build_configuration_tree'
-);
-
-method _build_configuration_tree {
-    return($self->get_cloudstack->get_configuration->get_tree);
-}
-
 has 'configuration' => (
     is          => 'ro',
-    isa         => 'MonkeyMan::CloudStack::API::Configuration',
+    isa         => 'HashRef',
     reader      =>    'get_configuration',
     writer      =>   '_set_configuration',
-    predicate   =>    'has_configuration',
+    predicate   =>   '_has_configuration',
     builder     => '_build_configuration',
     lazy        => 1
 );
 
 method _build_configuration {
 
-    MonkeyMan::CloudStack::API::Configuration::->new(
-        api     => $self,
-        tree    => $self->get_configuration_tree
-    );
+    return($self->get_cloudstack->get_configuration->{'api'});
 
 }
 
@@ -92,7 +74,7 @@ has useragent_signature => (
 method _build_useragent_signature {
 
     my $useragent_signature =
-        $self->get_configuration->get_tree->{'useragent_signature'};
+        $self->get_configuration->{'useragent_signature'};
 
     unless(defined($useragent_signature)) {
         my $monkeyman = $self->get_cloudstack->get_monkeyman;
@@ -177,7 +159,7 @@ method run_command(
 
     my $cloudstack      = $self->get_cloudstack;
     my $logger          = $cloudstack->get_monkeyman->get_logger;
-    my $configuration   = $cloudstack->get_configuration->get_tree->{'api'};
+    my $configuration   = $cloudstack->get_configuration->{'api'};
 
     my $command_to_run;
 
@@ -358,22 +340,15 @@ method get_job_result(Str $jobid!) {
 
 method load_element_package(Str $type) {
 
-    my $class_name = __PACKAGE__ . '::Element::' . $type;
-    my $to_require = $class_name;
-       $to_require =~ s#::#/#g;
-       $to_require .= '.pm';
-    if(! is_loaded($class_name)) {
-        try {
-            require($to_require)
-        } catch($e) {
-            (__PACKAGE__ . '::Exception::CantLoadPackage')->throwf(
-                "Can't load the package for %s. %s",
-                $self->translate_type(type => $type, plural => 1),
-                $e
-            );
-        }
+    try {
+        return(mm_load_package(__PACKAGE__ . '::Element::' . $type));
+    } catch($e) {
+        (__PACKAGE__ . '::CanNotLoadPackage')->throwf(
+            "Can't load the package for operating %s. %s",
+            $self->translate_type(type => $type, plural => 1),
+            $e
+        );
     }
-    return($class_name);
 
 }
 

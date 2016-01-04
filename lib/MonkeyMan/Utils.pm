@@ -10,6 +10,7 @@ use MonkeyMan::Exception;
 
 # Use 3rd party libraries
 use Method::Signatures;
+use Module::Loaded;
 use Scalar::Util qw(blessed refaddr);
 use Data::Dumper;
 use Exporter;
@@ -24,6 +25,8 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 my @MM_utils_all = qw(
     mm_sprintf
     mm_register_exceptions
+    mm_find_package
+    mm_load_package
 );
 
 @ISA                = qw(Exporter);
@@ -69,7 +72,7 @@ func _showref(Ref $ref!) {
     try {
         $monkeyman  = MonkeyMan->instance;
         $monkeyman_started = $monkeyman->get_time_started_formatted;
-        $conftree   = $monkeyman->get_configuration->get_tree;
+        $conftree   = $monkeyman->get_configuration;
         $dumped     = $conftree->{'log'}->{'dump'}->{'enabled'};
         $dumpxml    = $conftree->{'log'}->{'dump'}->{'add_xml'};
         $dumpdir    = $conftree->{'log'}->{'dump'}->{'directory'};
@@ -134,6 +137,34 @@ func mm_register_exceptions(@subclasses!) {
             MonkeyMan::Exception::_register_exception($prefix . '::Exception::' . $_);
         }
     }
+}
+
+
+
+func mm_find_package(Str $package_name!) {
+    my $file_name = $package_name;
+       $file_name =~ s#::#/#g;
+       $file_name .= '.pm';
+    return($file_name);
+}
+
+func mm_load_package(Str $package_name!) {
+
+    my $file_name = mm_find_package($package_name);
+
+    unless(is_loaded($package_name)) {
+        try {
+            require($file_name);
+        } catch($e) {
+            MonkeyMan::Exception::CanNotLoadPackage->throwf(
+                "Can't load the %s package from the %s file. %s",
+                $package_name,
+                $file_name,
+                $e
+            );
+        }
+    }
+    return($package_name);
 }
 
 

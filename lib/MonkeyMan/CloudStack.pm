@@ -10,40 +10,21 @@ use namespace::autoclean;
 # Inherit some essentials
 with 'MonkeyMan::Essentials';
 
-use MonkeyMan::CloudStack::Configuration;
 use MonkeyMan::CloudStack::API;
 
 use Method::Signatures;
 
 
 
-has 'configuration_tree' => (
+has 'configuration' => (
     is          => 'ro',
     isa         => 'HashRef',
-    reader      =>  'get_configuration_tree',
-    predicate   =>  'has_configuration_tree',
-    writer      => '_set_configuration_tree',
+    reader      =>    'get_configuration',
+    writer      =>   '_set_configuration',
     required    => 1
 );
 
-has 'configuration' => (
-    is          => 'ro',
-    isa         => 'MonkeyMan::CloudStack::Configuration',
-    reader      =>    'get_configuration',
-    writer      =>   '_set_configuration',
-    predicate   =>    'has_configuration',
-    builder     => '_build_configuration',
-    lazy        => 1
-);
 
-method _build_configuration {
-
-    MonkeyMan::CloudStack::Configuration->new(
-        cloudstack  => $self,
-        tree        => $self->get_configuration_tree
-    );
-
-}
 
 has 'api' => (
     is          => 'ro',
@@ -57,11 +38,13 @@ has 'api' => (
 method _build_api {
 
     MonkeyMan::CloudStack::API->new(
-        cloudstack          => $self,
-        configuration_tree  => $self->get_configuration->get_tree->{'api'}
+        cloudstack      => $self,
+        configuration   => $self->get_configuration->{'api'}
     );
 
 }
+
+
 
 #has 'cache' => (
 #    is          => 'ro',
