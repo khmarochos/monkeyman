@@ -12,8 +12,13 @@ with 'MonkeyMan::CloudStack::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::Constants qw(:cloudstack);
-use MonkeyMan::Utils qw(mm_register_exceptions mm_load_package);
-use MonkeyMan::Exception;
+use MonkeyMan::Utils qw(mm_load_package);
+use MonkeyMan::Exception qw(
+    CanNotLoadPackage
+    InvalidParametersValue
+    NoParameters
+    Timeout
+);
 use MonkeyMan::CloudStack::API::Command;
 
 use TryCatch;
@@ -23,15 +28,6 @@ use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
 use XML::LibXML;
-
-
-
-mm_register_exceptions qw(
-    CanNotLoadPackage
-    InvalidParametersValue
-    NoParameters
-    Timeout
-);
 
 
 
@@ -157,9 +153,9 @@ method run_command(
     Bool    :$fatal_431
 ) {
 
+    my $configuration   = $self->get_configuration;
     my $cloudstack      = $self->get_cloudstack;
     my $logger          = $cloudstack->get_monkeyman->get_logger;
-    my $configuration   = $cloudstack->get_configuration->{'api'};
 
     my $command_to_run;
 

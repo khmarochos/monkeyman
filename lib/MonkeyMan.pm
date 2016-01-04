@@ -13,8 +13,7 @@ with 'MonkeyMan::Roles::WithTimer';
 # (the time_started attribute and some methods to work with it)
 
 use MonkeyMan::Constants qw(:ALL);
-use MonkeyMan::Utils qw(mm_register_exceptions);
-use MonkeyMan::Exception;
+use MonkeyMan::Exception qw(CanNotLoadPackage);
 use MonkeyMan::Parameters;
 use MonkeyMan::CloudStack;
 use MonkeyMan::Logger;
@@ -26,12 +25,6 @@ use Method::Signatures;
 use TryCatch;
 use Getopt::Long qw(:config no_ignore_case);
 use Config::General;
-
-
-
-mm_register_exceptions(qw(
-    CanNotLoadPackage
-));
 
 
 
@@ -393,8 +386,8 @@ with high-level Perl5-applications.
 
     MonkeyMan->new(
         app_code            => \&MyCoolApplication,
-        app_name            => 'apps/cool/mine',
-        app_description     => 'It does good job',
+        app_name            => 'apps/cool/mine.pl',
+        app_description     => "Discovers objects' relations",
         app_version         => '6.6.6',
         parse_parameters    => {
             'd|domain_id=s' => 'domain_id'
@@ -405,10 +398,6 @@ with high-level Perl5-applications.
 
         $mm  = shift;
         $log = $mm->get_logger;
-
-        $log->debugf("We were asked to find the '%s' domain",
-            $mm->get_parameters->get_domain_id
-        );
 
         # The CloudStack API is amazingly easy to use, refer to the
         # MonkeyMan::CloudStack::API documentation
@@ -425,16 +414,22 @@ with high-level Perl5-applications.
             # Okay, now let's find all the virtual machines
             # related to the domain we found
             foreach $vm ($d->get_related(type => 'VirtualMachine')) {
-                $log->infof("The %s %s's ID is %s\n",
-                    $vm,
+                $log->infof("The %s's ID is %s - got as %s\n",
                     $vm->get_type(noun => 1),
-                    $vm->get_id
+                    $vm->get_id,
+                    $vm,
                 );
             }
 
         }
 
     }
+
+    # > apps/cool/mine.pl -d 01234567-89ab-cdef-fedc-ba9876543210
+    # 2016/01/04 15:15:55 [I] [main] The  virtual machine's ID is 01234567-dead-beef-cafe-899123456789 - got as [MonkeyMan::CloudStack::API::Element::VirtualMachine@0xdeadbee/badcaffedeadfacefeeddeafbeefbabe]
+    # 
+    # Hope you'll enjoy it :)
+    #
 
 =head1 MODULE HIERARCHY
 

@@ -24,7 +24,6 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 my @MM_utils_all = qw(
     mm_sprintf
-    mm_register_exceptions
     mm_find_package
     mm_load_package
 );
@@ -124,19 +123,6 @@ func _showref(Ref $ref!) {
 
     return("[$ref_id_short/$ref_id_long]");
 
-}
-
-
-
-func mm_register_exceptions(@subclasses!) {
-    my $prefix = (caller)[0];
-    foreach(@subclasses) {
-        if($_ =~ /^::/) {
-            MonkeyMan::Exception::_register_exception($_);
-        } else {
-            MonkeyMan::Exception::_register_exception($prefix . '::Exception::' . $_);
-        }
-    }
 }
 
 

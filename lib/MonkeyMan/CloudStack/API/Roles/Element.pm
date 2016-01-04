@@ -10,18 +10,14 @@ use namespace::autoclean;
 with 'MonkeyMan::CloudStack::API::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
-use MonkeyMan::Utils qw(mm_register_exceptions);
-use MonkeyMan::Exception;
-
-use Method::Signatures;
-
-
-
-mm_register_exceptions qw(
+use MonkeyMan::Utils qw(mm_sprintf);
+use MonkeyMan::Exception qw(
     UndeterminableElementType
     MagicWordsArentDefined
     InvalidParametersValue
 );
+
+use Method::Signatures;
 
 
 
@@ -91,6 +87,10 @@ has 'criterions' => (
     lazy        => 1
 );
 
+method _build_criterions {
+    return({});
+}
+
 
 
 has 'dom_updated' => (
@@ -103,6 +103,29 @@ has 'dom_updated' => (
     builder     => '_build_dom_updated',
     lazy        => 1
 );
+
+method _build_dom_updated {
+    return(0);
+}
+
+has 'dom_best_before' => (
+    is          => 'rw',
+    isa         => 'Int',
+    reader      =>    'get_dom_best_before',
+    writer      =>   '_set_dom_best_before',
+    predicate   =>    'has_dom_best_before',
+    clearer     => '_clear_dom_best_before',
+    builder     => '_build_dom_best_before',
+    lazy        => 1
+);
+
+method _build_dom_best_before {
+    my $default_cache_time = $self
+                                ->get_api
+                                    ->get_configuration
+                                        ->{'cache'}
+                                            ->{'default_cache_time'};
+}
 
 has 'dom' => (
     is          => 'rw',
@@ -155,9 +178,19 @@ before 'get_dom' => sub {
 
 method refresh_dom {
 
-    my $id = $self->get_id;
+    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
 
-    $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+    my $id = $self->get_id;
+    unless(defined($id)) {
+        $logger->tracef(
+            "The %s %s can't be refreshed, as it's ID hasn't been set",
+            $self,
+            $self->get_type(noun => '1')
+        );
+        return(undef);
+    }
+
+    $logger->tracef(
         "Refreshing the %s %s's (has ID = %s) DOM",
         $self,
         $self->get_type(noun => '1'),
@@ -174,6 +207,27 @@ method refresh_dom {
     }
 
     return($self->get_dom);
+
+}
+
+method is_dom_expired(Str $best_before = $self->get_dom_best_before) {
+
+    if     ($best_before =~ /^\s*never\s*$/i) {
+        $dom_expires = $self->get_dom_updated +
+    } elsif($best_before =~ /^\s*([\+\-])?\s*(\d+)\s*$/) {
+        if     (defined($1) && $1 eq '+') {
+            $dom_expires = $self->get_dom_updated + $2,
+        } elsif(defined($1) && $1 eq '-') {
+            $dom_expires = $self->get_dom_updated - $2,
+        } else {
+            $dom_expires = $2;
+        }
+    } else {
+        (__PACKAGE__ . '::Exception::InvalidParametersValue')->throwf(
+            "Invalid parameter's value: %s", $best_before
+        )
+    }
+    return($self->get_dom_updated >= $dom_expires);
 
 }
 
@@ -223,7 +277,7 @@ method get_related(
 
 has 'id' => (
     is          => 'rw',
-    isa         => 'Str',
+    isa         => 'Maybe[Str]',
     reader      =>    'get_id',
     writer      =>   '_set_id',
     predicate   =>    'has_id',
@@ -254,12 +308,8 @@ method qxp(
     Maybe[Str]              :$best_before
 ) {
 
-    if(0 || defined($best_before)) {
-        # 
-        # Here be cache tricks
-        #
-        $self->refresh_dom;
-    }
+    $self->refresh_dom
+        if($self->is_dom_expired($best_before));
 
     if($return_as =~ /^(id|element)$/) {
         $return_as .= '[' . $self->get_type . ']'; # Looks rude, FIXME, please

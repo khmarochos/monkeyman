@@ -16,6 +16,18 @@ use TryCatch;
 
 
 
+func import (@exceptions) {
+
+    foreach(@exceptions) {
+        if($_ =~ /^::/) {
+            _register_exception($_);
+        } else {
+            _register_exception((caller)[0] . '::Exception::' . $_);
+        }
+    }
+
+}
+
 func _register_exception(Str $exception!) {
     unless ( $exception->DOES(__PACKAGE__) ) {
         Moose::Meta::Class->create(

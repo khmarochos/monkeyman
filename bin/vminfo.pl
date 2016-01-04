@@ -55,6 +55,7 @@ func vminfo_app(MonkeyMan $mm!) {
         criterions  => { id  => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d' }
     )) {
         foreach my $vm ($d->get_related(type => 'VirtualMachine')) {
+            $vm->refresh_dom;
             $mm->get_logger->infof(
                 "The %s %s's ID is %s\n",
                 $vm, $vm->get_type(noun => 1), $vm->get_id
