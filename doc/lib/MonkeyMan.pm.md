@@ -15,8 +15,8 @@ with high-level Perl5-applications.
 ```perl
 MonkeyMan->new(
     app_code            => \&MyCoolApplication,
-    app_name            => 'apps/cool/mine',
-    app_description     => 'It does good job',
+    app_name            => 'apps/cool/mine.pl',
+    app_description     => "Discovers objects' relations",
     app_version         => '6.6.6',
     parse_parameters    => {
         'd|domain_id=s' => 'domain_id'
@@ -27,10 +27,6 @@ sub MyCoolApplication {
 
     $mm  = shift;
     $log = $mm->get_logger;
-
-    $log->debugf("We were asked to find the '%s' domain",
-        $mm->get_parameters->get_domain_id
-    );
 
     # The CloudStack API is amazingly easy to use, refer to the
     # MonkeyMan::CloudStack::API documentation
@@ -47,16 +43,22 @@ sub MyCoolApplication {
         # Okay, now let's find all the virtual machines
         # related to the domain we found
         foreach $vm ($d->get_related(type => 'VirtualMachine')) {
-            $log->infof("The %s %s's ID is %s\n",
-                $vm,
+            $log->infof("The %s's ID is %s - got as %s\n",
                 $vm->get_type(noun => 1),
-                $vm->get_id
+                $vm->get_id,
+                $vm,
             );
         }
 
     }
 
 }
+
+# > apps/cool/mine.pl -d 01234567-89ab-cdef-fedc-ba9876543210
+# 2016/01/04 15:15:55 [I] [main] The  virtual machine's ID is 01234567-dead-beef-cafe-899123456789 - got as [MonkeyMan::CloudStack::API::Element::VirtualMachine@0xdeadbee/badcaffedeadfacefeeddeafbeefbabe]
+# 
+# Hope you'll enjoy it :)
+#
 ```
 
 # MODULE HIERARCHY
@@ -230,7 +232,8 @@ method's documentation for more information.
 
 ## get\_configuration()
 
-This accessor returns the reference to the hash containing the framework's configuration tree.
+This accessor returns the reference to the hash containing the framework's
+configuration tree.
 
 ## get\_logger()
 
