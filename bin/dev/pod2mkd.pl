@@ -12,12 +12,6 @@ use MonkeyMan;
 use MonkeyMan::Constants qw(:directories);
 use MonkeyMan::Exception;
 
-use autodie qw(open close);
-use Cwd qw(abs_path);
-use File::Find;
-use File::Path qw(make_path);
-use Pod::Markdown::Github;
-
 MonkeyMan->new(
     app_name => 'pod2mkd',
     app_description => 'Updates markdown documentation',
@@ -43,12 +37,18 @@ __END_OF_APP_USAGE_HELP__
 
 ### THE CODE GOES HERE ###
 
+use autodie qw(open close);
+use Cwd qw(abs_path);
+use File::Find;
+use File::Path qw(make_path);
+use Pod::Markdown::Github;
+
 my $mm = shift;
 my $log = $mm->get_logger;
 my $conf = $mm->get_configuration;
 my $parameters = $mm->get_parameters;
 
-unless($parameters->get_pod_directories) {
+unless(defined($parameters->get_pod_directories)) {
     MonkeyMan::Exception->throwf("No POD directories defined");
 }
 
@@ -57,6 +57,9 @@ my $pod_root_directoryname = abs_path(
         $parameters->get_pod_root_directory :
         MM_DIRECTORY_ROOT
 );
+unless(defined($pod_root_directoryname)) {
+    MonkeyMan::Exception->throwf("Can't find the project's root directory's absolute path");
+}
 $log->tracef("The project's root directory is %s", $pod_root_directoryname);
 
 my $doc_root_directoryname = abs_path(
@@ -65,7 +68,7 @@ my $doc_root_directoryname = abs_path(
         $pod_root_directoryname . '/doc'
 );
 unless(defined($doc_root_directoryname)) {
-    MonkeyMan::Exception->throwf("Can't find the documentation directory's absolute path");
+    MonkeyMan::Exception->throwf("Can't find the documentation root directory's absolute path");
 }
 $log->tracef("The documentation root directory is %s", $doc_root_directoryname);
 
@@ -79,8 +82,8 @@ foreach my $pod_directoryname (@{ $parameters->get_pod_directories }) {
             my $pod_filename_short_new = $pod_filename_short;
             if($pod_filename_short_new =~ s#^(.+\.p[lm])$#$1.md#) {
                 my $pod_filename_long = $File::Find::name;
-                $log->debugf("Have found the %s file (%s)", $pod_filename_long, $pod_filename_short);
                 if($pod_filename_long =~ qr#^\Q${pod_root_directoryname}\E(/(.+)/)?\Q${pod_filename_short}\E$#) {
+                    $log->debugf("Have found the %s file", $pod_filename_long);
                     my $mkd_directoryname = sprintf("%s/%s", $doc_root_directoryname, $2);
                     my $mkd_filename_long = sprintf("%s/%s", $mkd_directoryname, $pod_filename_short_new);
                     my $pod_file_mtime = (stat($pod_filename_long))[9];
@@ -101,6 +104,8 @@ foreach my $pod_directoryname (@{ $parameters->get_pod_directories }) {
                             );
                         }
                     }
+                } else {
+                    $log->warnf("The %s file didn't match the verifying regex", $pod_filename_long);
                 }
             }
         }
