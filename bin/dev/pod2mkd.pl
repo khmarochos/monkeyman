@@ -27,11 +27,15 @@ Understands the following parameters:
 
     -m, --markdown-direcrory <dir>
         [req]       Where to put MD results
+
+    -f, --force
+        [opt]       To ignore mtime
 __END_OF_APP_USAGE_HELP__
     parameters_to_get => {
         'p|pod-directories=s@'      => 'pod_directories',
         'r|pod-root-directory=s'    => 'pod_root_directory',
-        'm|markdown-directory=s'    => 'markdown_directory'
+        'm|markdown-directory=s'    => 'markdown_directory',
+        'f|force'                   => 'force'
     },
     app_code => sub {
 
@@ -82,13 +86,17 @@ foreach my $pod_directoryname (@{ $parameters->get_pod_directories }) {
             my $pod_filename_short_new = $pod_filename_short;
             if($pod_filename_short_new =~ s#^(.+\.p[lm])$#$1.md#) {
                 my $pod_filename_long = $File::Find::name;
-                if($pod_filename_long =~ qr#^\Q${pod_root_directoryname}\E(/(.+)/)?\Q${pod_filename_short}\E$#) {
+                unless($pod_filename_long =~ qr#^\Q${pod_root_directoryname}\E(/(.+)/)?\Q${pod_filename_short}\E$#) {
+                    $log->warnf("The %s file didn't match the verifying regex", $pod_filename_long);
+                } else {
                     $log->debugf("Have found the %s file", $pod_filename_long);
                     my $mkd_directoryname = sprintf("%s/%s", $doc_root_directoryname, $2);
                     my $mkd_filename_long = sprintf("%s/%s", $mkd_directoryname, $pod_filename_short_new);
                     my $pod_file_mtime = (stat($pod_filename_long))[9];
                     my $mkd_file_mtime = (stat($mkd_filename_long))[9] || 0;
-                    if($pod_file_mtime >= $mkd_file_mtime) {
+                    unless($parameters->get_force || $pod_file_mtime >= $mkd_file_mtime) {
+                        $log->tracef("The source doesn't seem to be updated")
+                    } else {
                         my $mkd_string;
                         my $convertor = Pod::Markdown::Github->new();
                         $convertor->output_string(\$mkd_string);
@@ -104,8 +112,6 @@ foreach my $pod_directoryname (@{ $parameters->get_pod_directories }) {
                             );
                         }
                     }
-                } else {
-                    $log->warnf("The %s file didn't match the verifying regex", $pod_filename_long);
                 }
             }
         }
