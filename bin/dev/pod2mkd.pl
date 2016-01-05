@@ -20,7 +20,7 @@ use File::Path qw(make_path);
 use Pod::Markdown::Github;
 
 MonkeyMan->new(
-    app_name => 'pod2md',
+    app_name => 'pod2mkd',
     app_description => 'Updates markdown documentation',
     app_version => '0.0.1',
     app_usage_help => sub { <<__END_OF_APP_USAGE_HELP__ },
@@ -73,26 +73,24 @@ __END_OF_APP_USAGE_HELP__
                         my $pod_filename_long = $File::Find::name;
                         $log->debugf("Have found the %s file (%s)", $pod_filename_long, $pod_filename_short);
                         if($pod_filename_long =~ qr#^\Q${pod_root_directoryname}\E(/(.+)/)?\Q${pod_filename_short}\E$#) {
-                            my $md_directoryname = sprintf("%s/%s", $doc_root_directoryname, $2);
-                            my $md_filename_long = sprintf("%s/%s", $md_directoryname, $pod_filename_short_new);
-                            if($log->tracef(
-                                "It would be nice to make sure if %s is newer than %s",
-                                $pod_filename_long,
-                                $md_filename_long
-                            ) || 1) {
-                                my $md_string;
+                            my $mkd_directoryname = sprintf("%s/%s", $doc_root_directoryname, $2);
+                            my $mkd_filename_long = sprintf("%s/%s", $mkd_directoryname, $pod_filename_short_new);
+                            my $pod_file_mtime  = (stat($pod_filename_long))[9];
+                            my $mkd_file_mtime   = (stat($mkd_filename_long))[9] || 0;
+                            if($pod_file_mtime >= $mkd_file_mtime) {
+                                my $mkd_string;
                                 my $convertor = Pod::Markdown::Github->new();
-                                $convertor->output_string(\$md_string);
+                                $convertor->output_string(\$mkd_string);
                                 $convertor->parse_file($pod_filename_long);
-                                if(length($md_string) > 1) {
+                                if(length($mkd_string) > 1) {
                                     $log->infof("%s --> %s",
                                         $pod_filename_long,
-                                        $md_filename_long
+                                        $mkd_filename_long
                                     );
-                                    make_path($md_directoryname);
-                                    open(my $md_filehandle, '>', $md_filename_long);
-                                    print($md_filehandle $md_string);
-                                    close($md_filehandle);
+                                    make_path($mkd_directoryname);
+                                    open(my $mkd_filehandle, '>', $mkd_filename_long);
+                                    print($mkd_filehandle $mkd_string);
+                                    close($mkd_filehandle);
                                 }
                             }
                         }
