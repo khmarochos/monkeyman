@@ -283,7 +283,7 @@ method _mm_shutdown {
 method print_full_version_info {
 
     printf(<<__END_OF_VERSION_INFO__
-%s (v%s) driven by MonkeyMan (v%s):
+%s (%s) driven by MonkeyMan (%s):
 
     %s
 
