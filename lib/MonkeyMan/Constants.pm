@@ -12,7 +12,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 # :version
 
-use constant MM_VERSION => '2.0.0-rc.1'; # See http://semver.org/
+use constant MM_VERSION => 'v2.1.0-dev_melnik13_v3'; # See http://semver.org/
 
 my @mm_constants_version = qw(
     MM_VERSION

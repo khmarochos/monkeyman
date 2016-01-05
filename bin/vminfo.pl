@@ -20,7 +20,7 @@ use Method::Signatures;
 MonkeyMan->new(
     app_name            => 'vminfo',
     app_description     => 'The utility to get information about a virtual machine',
-    app_version         => '2.0.0-rc.1',
+    app_version         => 'v2.1.0-dev_melnik13_v3',
     app_usage_help      => \&vminfo_usage,
     app_code            => \&vminfo_app,
     parameters_to_get   => {
