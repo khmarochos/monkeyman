@@ -251,7 +251,7 @@ method _app_run {
 
     &{ $self->{app_code}; }($self);
 
-    $self->get_logger->debugf("%s The application has run",
+    $self->get_logger->debugf("%s The application has been executed",
         $self->get_time_passed_formatted
     );
 
@@ -261,7 +261,7 @@ method _app_run {
 
 method _app_finish {
 
-    $self->get_logger->debugf("%s The application has finished",
+    $self->get_logger->debugf("%s The application has been finished",
         $self->get_time_passed_formatted
     );
 

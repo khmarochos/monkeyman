@@ -95,7 +95,7 @@ foreach my $pod_directoryname (@{ $parameters->get_pod_directories }) {
                     my $pod_file_mtime = (stat($pod_filename_long))[9];
                     my $mkd_file_mtime = (stat($mkd_filename_long))[9] || 0;
                     unless($parameters->get_force || $pod_file_mtime >= $mkd_file_mtime) {
-                        $log->tracef("The source doesn't seem to be updated")
+                        $log->tracef("The source doesn't seem to be updated since the target had")
                     } else {
                         my $mkd_string;
                         my $convertor = Pod::Markdown::Github->new();
