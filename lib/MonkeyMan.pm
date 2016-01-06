@@ -1,5 +1,74 @@
 package MonkeyMan;
 
+=head1 NAME
+
+MonkeyMan - Apache CloudStack Management Framework
+
+=head1 DESCRIPTION
+
+This is a framework that makes possible to manage the
+L<Apache CloudStack|http://cloudstack.apache.org/> based cloud infrastructure
+with high-level Perl5-applications.
+
+=begin markdown
+
+![The mascot has been originaly created by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
+
+=end markdown
+
+=head1 SYNOPSIS
+
+    MonkeyMan->new(
+        app_code            => \&MyCoolApplication,
+        app_name            => 'apps/cool/mine.pl',
+        app_description     => "Discovers objects' relations",
+        app_version         => '6.6.6',
+        parse_parameters    => {
+            'd|domain_id=s' => 'domain_id'
+        }
+    );
+
+    sub MyCoolApplication {
+
+        $mm  = shift;
+        $log = $mm->get_logger;
+
+        # The CloudStack API is amazingly easy to use, refer to the
+        # MonkeyMan::CloudStack::API documentation
+        $api = $mm->get_cloudstack->get_api;
+
+        # Let's find the domain by its ID
+        foreach my $d ($api->get_elements(
+            type        => 'Domain',
+            criterions  => {
+                id  => $mm->get_parameters->get_domain_id
+            }
+        )) {
+
+            # Okay, now let's find all the virtual machines
+            # related to the domain we found
+            foreach $vm ($d->get_related(type => 'VirtualMachine')) {
+                $log->infof("The %s's ID is %s - got as %s\n",
+                    $vm->get_type(noun => 1),
+                    $vm->get_id,
+                    $vm,
+                );
+            }
+
+        }
+
+    }
+
+    # > apps/cool/mine.pl -d 01234567-89ab-cdef-fedc-ba9876543210
+    # 2040/04/20 04:20:00 [I] [main] The  virtual machine's ID is 01234567-dead-beef-cafe-899123456789 - got as [MonkeyMan::CloudStack::API::Element::VirtualMachine@0xdeadbee/badcaffedeadfacefeeddeafbeefbabe]
+    # 
+    # Hope you'll enjoy it :)
+    #
+
+=head1 MODULES' HIERARCHY
+
+...
+
 use strict;
 use warnings;
 
@@ -365,75 +434,6 @@ method BUILDARGS(...) {
 1;
 
 
-
-=head1 NAME
-
-MonkeyMan - Apache CloudStack Management Framework
-
-=head1 DESCRIPTION
-
-This is a framework that makes possible to manage the
-L<Apache CloudStack|http://cloudstack.apache.org/> based cloud infrastructure
-with high-level Perl5-applications.
-
-=begin markdown
-
-![The mascot has been originaly created by D.Kolesnichenko for Tucha.UA](http://tucha.ua/wp-content/uploads/2013/08/monk.png)
-
-=end markdown
-
-=head1 SYNOPSIS
-
-    MonkeyMan->new(
-        app_code            => \&MyCoolApplication,
-        app_name            => 'apps/cool/mine.pl',
-        app_description     => "Discovers objects' relations",
-        app_version         => '6.6.6',
-        parse_parameters    => {
-            'd|domain_id=s' => 'domain_id'
-        }
-    );
-
-    sub MyCoolApplication {
-
-        $mm  = shift;
-        $log = $mm->get_logger;
-
-        # The CloudStack API is amazingly easy to use, refer to the
-        # MonkeyMan::CloudStack::API documentation
-        $api = $mm->get_cloudstack->get_api;
-
-        # Let's find the domain by its ID
-        foreach my $d ($api->get_elements(
-            type        => 'Domain',
-            criterions  => {
-                id  => $mm->get_parameters->get_domain_id
-            }
-        )) {
-
-            # Okay, now let's find all the virtual machines
-            # related to the domain we found
-            foreach $vm ($d->get_related(type => 'VirtualMachine')) {
-                $log->infof("The %s's ID is %s - got as %s\n",
-                    $vm->get_type(noun => 1),
-                    $vm->get_id,
-                    $vm,
-                );
-            }
-
-        }
-
-    }
-
-    # > apps/cool/mine.pl -d 01234567-89ab-cdef-fedc-ba9876543210
-    # 2040/04/20 04:20:00 [I] [main] The  virtual machine's ID is 01234567-dead-beef-cafe-899123456789 - got as [MonkeyMan::CloudStack::API::Element::VirtualMachine@0xdeadbee/badcaffedeadfacefeeddeafbeefbabe]
-    # 
-    # Hope you'll enjoy it :)
-    #
-
-=head1 MODULE HIERARCHY
-
-...
 
 =head1 METHODS
 
