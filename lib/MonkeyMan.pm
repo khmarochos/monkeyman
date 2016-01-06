@@ -69,6 +69,8 @@ with high-level Perl5-applications.
 
 ...
 
+=cut
+
 use strict;
 use warnings;
 
@@ -97,6 +99,52 @@ use Config::General;
 
 
 
+=head1 METHODS
+
+=head2 C<new()>
+
+    MonkeyMan->new(%parameters => %Hash)
+
+This method initializes the framework and runs the application.
+
+=cut
+
+method BUILD(...) {
+
+    $self->get_logger->debugf("%s Hello, world!", $self->get_time_passed_formatted);
+
+    $self->_mm_init;
+    $self->_app_start;
+    $self->_app_run;
+    $self->_app_finish;
+    $self->_mm_shutdown;
+
+}
+
+method BUILDARGS(...) {
+
+    my %args = @_;
+
+    $args{'parameters_to_get'}->{'h|help'}              = 'mm_show_help';
+    $args{'parameters_to_get'}->{'V|version'}           = 'mm_show_version';
+    $args{'parameters_to_get'}->{'c|configuration=s'}   = 'mm_configuration';
+    $args{'parameters_to_get'}->{'v|verbose+'}          = 'mm_be_verbose';
+    $args{'parameters_to_get'}->{'q|quiet+'}            = 'mm_be_quiet';
+
+    return(\%args);
+
+}
+
+
+
+=pod
+
+There are a few parameters that can (and need to) be defined:
+
+=head3 MonkeyMan Application-Related Parameters
+
+=cut
+
 has 'mm_version' => (
     is          => 'ro',
     isa         => 'Str',
@@ -111,12 +159,26 @@ method _build_mm_version {
 
 }
 
+=head4 C<app_code>
+
+MANDATORY. Contains a C<CodeRef> pointing to the code of the application that
+needs to be run. The reader's name is C<get_app_code>.
+
+=cut
+
 has 'app_code' => (
     is          => 'ro',
     isa         => 'CodeRef',
     reader      => 'get_app_code',
     predicate   => 'has_app_code'
 );
+
+=head4 C<app_name>
+
+MANDATORY. Contains a C<Str> of the application's full name. The reader's name
+is C<get_app_name>.
+
+=cut
 
 has 'app_name' => (
     is          => 'ro',
@@ -126,6 +188,13 @@ has 'app_name' => (
     writer      => '_set_app_name'
 );
 
+=head4 C<app_description>
+
+MANDATORY. Contains a C<Str> of the application's description. The reader's name
+is C<get_app_description>.
+
+=cut
+
 has 'app_description' => (
     is          => 'ro',
     isa         => 'Str',
@@ -133,6 +202,12 @@ has 'app_description' => (
     reader      =>  'get_app_description',
     writer      => '_set_app_description'
 );
+
+=head4 C<app_version>
+
+MANDATORY. Contains a C<Str> of the application's version number. The reader's
+name is C<get_app_version>.
+
 
 has 'app_version' => (
     is          => 'ro',
@@ -142,6 +217,13 @@ has 'app_version' => (
     writer      => '_set_app_version'
 );
 
+=head4 C<app_usage_help>
+
+Optional. Contains a C<Str> to be displayed when the user asks for help. The
+reader's name is C<get_app_usage_help>.
+
+=cut
+
 has 'app_usage_help' => (
     is          => 'ro',
     isa         => 'CodeRef',
@@ -150,6 +232,65 @@ has 'app_usage_help' => (
     predicate   =>  'has_app_usage_help',
     writer      => '_set_app_usage_help'
 );
+
+
+
+=head3 MonkeyMan Configuration-Related Parameters
+
+=head4 C<parameters_to_get>
+
+Optional. Contains a C<HashRef>. This parameter shall be a reference to a hash
+containing parameters to be passed to the L<Getopt::Long>::GetOptions()
+function.  It sets the the C<parameters> attribute with the C<get_parameters()>
+accessor which returns a reference to the L<MonkeyMan::Parameters> object
+containing the information about startup parameters. Thus,
+
+    parameters_to_get => {
+        'i|input=s'     => 'file_in',
+        'o|output=s'    => 'file_out'
+    }
+
+will create L<MonkeyMan::Parameters> object with C<get_file_in> and
+C<get_file_out> read-only accessors, so you could address them as
+
+    $monkeyman->get_parameters->get_file_in,
+    $monkeyman->get_parameters->get_file_out
+
+You can define various startup parameters, but there are some special
+ones that shouldn't be redefined:
+
+=over
+
+=item C<-h>, C<--help>
+
+The show-help-and-terminate mode. Sets the C<mm_show_help> attribute, the
+accessor is C<get_mm_show_help()>.
+
+=item C<-V>, C<--version>
+
+The show-version-and-terminate mode. Sets the C<mm_show_version> attribute, the
+accessor is C<get_mm_show_version()>.
+
+=item C<<-c <filename> >>, C<< --configuration=<filename> >>
+
+The name of the main configuration file. Sets the C<mm_configuration>
+attribute. The accessor is C<get_mm_configuration()>.
+
+=item C<-v>, C<--verbose>
+
+Increases the debug level, the more times you add it, the higher level is. The
+default level is INFO, for more information about logging see
+L<MonkeyMan::Logger> documentation. Sets the C<mm_be_verbose> attribute, the
+accessor is C<get_mm_be_verbose()>.
+
+=item C<-q>, C<--quiet>
+
+Does the opposite of what the previous one does - it decreases the debug level.
+Sets the C<mm_be_quiet> attribute, the accessor is is C<get_mm_be_quiet()>.
+
+=back
+
+=cut
 
 has 'parameters_to_get' => (
     is          => 'ro',
@@ -176,6 +317,32 @@ method _build_parameters {
 }
 
 
+
+=head4 C<configuration>
+
+Optional. Contains a reference to the hash containing the framework's
+configuration tree. If it's not defined (in most cases), the framework will try
+to parse the configuration file. The name of the file can be passed with the
+C<-c|--configuration> startup parameter.
+
+    # MM_DIRECTORY_ROOT/etc/monkeyman.conf contains:
+    #          <log>
+    #  .           <PRIMARY>
+    #                  <dump>
+    #                      enabled = 1
+    $log->debugf("The dumper is %s,
+        $mm->get_configuration
+            ->{'log'}
+                ->{'PRIMARY'}
+                    ->{'dump'}
+                        ->{'enabled'} ? 'enabled' : 'disabled'
+    );
+
+If the configuration is neither defined as the constructor parameter nor
+defined by the startup parameter, the framework attempts to find the
+configuration file at the location defined as the C<MM_CONFIG_MAIN> constant.
+
+=cut
 
 has 'configuration' => (
     is          => 'ro',
@@ -204,6 +371,16 @@ method _build_configuration {
 
 
 
+=head3 MonkeyMan Helpers-Related Parameters
+
+=head4 C<loggers>
+
+Optional. Contains a C<HashRef> with links to L<MonkeyMan::Logger>
+modules, so you can use multiple interfaces to multiple cloudstack with the
+C<get_logger()> method described below.
+
+=cut
+
 has 'loggers' => (
     is          => 'ro',
     isa         => 'HashRef[MonkeyMan::Logger]',
@@ -230,6 +407,13 @@ method _build_loggers {
 
 
 
+=head4 C<cloudstacks>
+
+Optional. Contains a C<HashRef> with links to L<MonkeyMan::CloudStack> modules.
+The C<get_cloudstack()> method helps to get the CloudStack instance by its
+handle is described below.
+
+=cut
 
 has 'cloudstacks' => (
     is          => 'ro',
@@ -399,171 +583,13 @@ __END_OF_USAGE_HELP__
 
 
 
-method BUILD(...) {
-
-    $self->get_logger->debugf("%s Hello, world!", $self->get_time_passed_formatted);
-
-    $self->_mm_init;
-    $self->_app_start;
-    $self->_app_run;
-    $self->_app_finish;
-    $self->_mm_shutdown;
-
-}
-
-
-
-method BUILDARGS(...) {
-
-    my %args = @_;
-
-    $args{'parameters_to_get'}->{'h|help'}              = 'mm_show_help';
-    $args{'parameters_to_get'}->{'V|version'}           = 'mm_show_version';
-    $args{'parameters_to_get'}->{'c|configuration=s'}   = 'mm_configuration';
-    $args{'parameters_to_get'}->{'v|verbose+'}          = 'mm_be_verbose';
-    $args{'parameters_to_get'}->{'q|quiet+'}            = 'mm_be_quiet';
-
-    return(\%args);
-
-}
-
-
-
 #__PACKAGE__->meta->make_immutable;
 
 1;
 
 
 
-=head1 METHODS
 
-=head2 C<new()>
-
-    MonkeyMan->new(%parameters => %Hash)
-
-This method initializes the framework and runs the application.
-
-There are a few parameters that can (and need to) be defined:
-
-=head3 MonkeyMan Application-Related Parameters
-
-=head4 C<app_code>
-
-MANDATORY. Contains a C<CodeRef> pointing to the code of the application that
-needs to be run. The reader's name is C<get_app_code>.
-
-=head4 C<app_name>
-
-MANDATORY. Contains a C<Str> of the application's full name. The reader's name
-is C<get_app_name>.
-
-=head4 C<app_description>
-
-MANDATORY. Contains a C<Str> of the application's description. The reader's name
-is C<get_app_description>.
-
-=head4 C<app_version>
-
-MANDATORY. Contains a C<Str> of the application's version number. The reader's
-name is C<get_app_version>.
-
-=head4 C<app_usage_help>
-
-Optional. Contains a C<Str> to be displayed when the user asks for help. The
-reader's name is C<get_app_usage_help>.
-
-=head3 MonkeyMan Configuration-Related Parameters
-
-=head4 C<parameters_to_get>
-
-Optional. Contains a C<HashRef>. This parameter shall be a reference to a hash
-containing parameters to be passed to the L<Getopt::Long>::GetOptions()
-function.  It sets the the C<parameters> attribute with the C<get_parameters()>
-accessor which returns a reference to the L<MonkeyMan::Parameters> object
-containing the information about startup parameters. Thus,
-
-    parameters_to_get => {
-        'i|input=s'     => 'file_in',
-        'o|output=s'    => 'file_out'
-    }
-
-will create L<MonkeyMan::Parameters> object with C<get_file_in> and
-C<get_file_out> read-only accessors, so you could address them as
-
-    $monkeyman->get_parameters->get_file_in,
-    $monkeyman->get_parameters->get_file_out
-
-You can define various startup parameters, but there are some special
-ones that shouldn't be redefined:
-
-=over
-
-=item C<-h>, C<--help>
-
-The show-help-and-terminate mode. Sets the C<mm_show_help> attribute, the
-accessor is C<get_mm_show_help()>.
-
-=item C<-V>, C<--version>
-
-The show-version-and-terminate mode. Sets the C<mm_show_version> attribute, the
-accessor is C<get_mm_show_version()>.
-
-=item C<<-c <filename> >>, C<< --configuration=<filename> >>
-
-The name of the main configuration file. Sets the C<mm_configuration>
-attribute. The accessor is C<get_mm_configuration()>.
-
-=item C<-v>, C<--verbose>
-
-Increases the debug level, the more times you add it, the higher level is. The
-default level is INFO, for more information about logging see
-L<MonkeyMan::Logger> documentation. Sets the C<mm_be_verbose> attribute, the
-accessor is C<get_mm_be_verbose()>.
-
-=item C<-q>, C<--quiet>
-
-Does the opposite of what the previous one does - it decreases the debug level.
-Sets the C<mm_be_quiet> attribute, the accessor is is C<get_mm_be_quiet()>.
-
-=back
-
-=head4 C<configuration>
-
-Optional. Contains a reference to the hash containing the framework's
-configuration tree. If it's not defined (in most cases), the framework will try
-to parse the configuration file. The name of the file can be passed with the
-C<-c|--configuration> startup parameter.
-
-    # MM_DIRECTORY_ROOT/etc/monkeyman.conf contains:
-    #          <log>
-    #  .           <PRIMARY>
-    #                  <dump>
-    #                      enabled = 1
-    $log->debugf("The dumper is %s,
-        $mm->get_configuration
-            ->{'log'}
-                ->{'PRIMARY'}
-                    ->{'dump'}
-                        ->{'enabled'} ? 'enabled' : 'disabled'
-    );
-
-If the configuration is neither defined as the constructor parameter nor
-defined by the startup parameter, the framework attempts to find the
-configuration file at the location defined as the C<MM_CONFIG_MAIN> constant.
-
-=head3 MonkeyMan Helpers-Related Parameters
-
-=head4 C<loggers>
-
-Optional. Contains a C<HashRef> with links to L<MonkeyMan::Logger>
-modules, so you can use multiple interfaces to multiple cloudstack with the
-C<get_logger()> method described below.
-
-=head4 C<cloudstacks>
-
-Optional. Contains a C<HashRef> with links to L<MonkeyMan::CloudStack> modules.
-The C<get_cloudstack()> method helps to get the CloudStack instance by its
-handle is described below.
 
 =head2 get_app_code()
 
