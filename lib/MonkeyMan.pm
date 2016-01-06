@@ -445,6 +445,85 @@ method _build_cloudstacks {
 
 
 
+=head2 get_app_code()
+
+=head2 get_app_name()
+
+=head2 get_app_description()
+
+=head2 get_app_usage_help()
+
+=head2 get_app_version()
+
+Readers for corresponding modules attributes. These attributes are being set
+when initializing the framework, so see L</MonkeyMan Application-Related
+Parameters> for details.
+
+=head2 get_parameters()
+
+=head2 get_parameters_to_get()
+
+The first accessor returns the reference to the L<MonkeyMan::Parameters> object
+containing B<results> of parsing command-line parameters according to the rules
+defined by the C<parameters_to_get> initialization parameter.
+
+The second one returns the reference to the hash containing the B<ruleset> of
+parsing the command-line parameters that have been defined by the
+<parameters_to_get> initialization parameter, but with addition of some default
+rules (such as C<'h|help'>, C<'V|version'> and so on) added by the framework on
+its own.
+
+See L</MonkeyMan Configuration-Related Parameters> section of the L</new()>
+method's documentation for more information.
+
+=head2 get_configuration()
+
+This accessor returns the reference to the hash containing the framework's
+configuration tree.
+
+=head2 get_logger()
+
+=head2 get_loggers()
+
+The C<get_logger()> accessor returns the reference to L<MonkeyMan::Logger>
+requested. If the ID hasn't been specified, it returns the instance identified
+as C<PRIMARY>.
+
+    ok($mm->get_logger() == $mm->get_logger(&MM_PRIMARY_LOGGER));
+    ok($mm->get_logger() == $mm->get_logger('PRIMARY');
+
+The C<PRIMARY> logger is being initialized proactively by the framework, but
+it's also possible to initialize it by oneself in the case will you need it.
+
+    %my_loggers = (&MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(...));
+    $mm = MonkeyMan->new(loggers => \%my_loggers, ...);
+
+Please, keep in mind that C<PRIMARY> is the default logger's handle, it's
+defined by the C<MM_PRIMARY_LOGGER> constant.
+
+The C<get_loggers> returns the reference to the hash containing the loggers'
+index, which means the following:
+
+    ok($mm->get_logger('Log-13') == $mm->get_loggers->{'Log-13'});
+
+=head2 get_cloudstack()
+
+=head2 get_cloudstacks()
+
+These accessors behaves very similar to C<get_logger()> and C<get_loggers()>,
+but the index contains references to L<MonkeyMan::CloudStack> objects
+initialized. The default CloudStack instance's name is C<PRIMARY>, it's defined
+as the C<MM_PRIMARY_CLOUDSTACK> constant.
+
+=head2 get_mm_version()
+
+The name of the method is pretty self-descriptive: the accessor returns the
+framework's version ID.
+
+=cut
+
+
+
 method _mm_init {
 
     my $parameters  = $self->get_parameters;
@@ -588,83 +667,6 @@ __END_OF_USAGE_HELP__
 1;
 
 
-
-
-
-=head2 get_app_code()
-
-=head2 get_app_name()
-
-=head2 get_app_description()
-
-=head2 get_app_usage_help()
-
-=head2 get_app_version()
-
-Readers for corresponding modules attributes. These attributes are being set
-when initializing the framework, so see L</MonkeyMan Application-Related
-Parameters> for details.
-
-=head2 get_parameters()
-
-=head2 get_parameters_to_get()
-
-The first accessor returns the reference to the L<MonkeyMan::Parameters> object
-containing B<results> of parsing command-line parameters according to the rules
-defined by the C<parameters_to_get> initialization parameter.
-
-The second one returns the reference to the hash containing the B<ruleset> of
-parsing the command-line parameters that have been defined by the
-<parameters_to_get> initialization parameter, but with addition of some default
-rules (such as C<'h|help'>, C<'V|version'> and so on) added by the framework on
-its own.
-
-See L</MonkeyMan Configuration-Related Parameters> section of the L</new()>
-method's documentation for more information.
-
-=head2 get_configuration()
-
-This accessor returns the reference to the hash containing the framework's
-configuration tree.
-
-=head2 get_logger()
-
-=head2 get_loggers()
-
-The C<get_logger()> accessor returns the reference to L<MonkeyMan::Logger>
-requested. If the ID hasn't been specified, it returns the instance identified
-as C<PRIMARY>.
-
-    ok($mm->get_logger() == $mm->get_logger(&MM_PRIMARY_LOGGER));
-    ok($mm->get_logger() == $mm->get_logger('PRIMARY');
-
-The C<PRIMARY> logger is being initialized proactively by the framework, but
-it's also possible to initialize it by oneself in the case will you need it.
-
-    %my_loggers = (&MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(...));
-    $mm = MonkeyMan->new(loggers => \%my_loggers, ...);
-
-Please, keep in mind that C<PRIMARY> is the default logger's handle, it's
-defined by the C<MM_PRIMARY_LOGGER> constant.
-
-The C<get_loggers> returns the reference to the hash containing the loggers'
-index, which means the following:
-
-    ok($mm->get_logger('Log-13') == $mm->get_loggers->{'Log-13'});
-
-=head2 get_cloudstack()
-
-=head2 get_cloudstacks()
-
-These accessors behaves very similar to C<get_logger()> and C<get_loggers()>,
-but the index contains references to L<MonkeyMan::CloudStack> objects
-initialized. The default CloudStack instance's name is C<PRIMARY>, it's defined
-as the C<MM_PRIMARY_CLOUDSTACK> constant.
-
-=head2 get_mm_version()
-
-The name of the method is pretty self-descriptive: the accessor returns the
-framework's version ID.
 
 =head1 HOW IT WORKS
 
