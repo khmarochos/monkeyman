@@ -61,7 +61,7 @@ sub MyCoolApplication {
 #
 ```
 
-# MODULE HIERARCHY
+# MODULES' HIERARCHY
 
 ...
 
@@ -98,6 +98,14 @@ is `get_app_description`.
 
 MANDATORY. Contains a `Str` of the application's version number. The reader's
 name is `get_app_version`.
+
+has 'app\_version' => (
+    is          => 'ro',
+    isa         => 'Str',
+    required    => 1,
+    reader      =>  'get\_app\_version',
+    writer      => '\_set\_app\_version'
+);
 
 #### `app_usage_help`
 
