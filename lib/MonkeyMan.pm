@@ -208,6 +208,7 @@ has 'app_description' => (
 MANDATORY. Contains a C<Str> of the application's version number. The reader's
 name is C<get_app_version>.
 
+=cut
 
 has 'app_version' => (
     is          => 'ro',

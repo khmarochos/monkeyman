@@ -77,7 +77,7 @@ This method initializes the framework and runs the application.
 
 There are a few parameters that can (and need to) be defined:
 
-### MonkeyMan Application-Related Parameters
+### Application-Related Parameters
 
 #### `app_code`
 
@@ -99,20 +99,12 @@ is `get_app_description`.
 MANDATORY. Contains a `Str` of the application's version number. The reader's
 name is `get_app_version`.
 
-has 'app\_version' => (
-    is          => 'ro',
-    isa         => 'Str',
-    required    => 1,
-    reader      =>  'get\_app\_version',
-    writer      => '\_set\_app\_version'
-);
-
 #### `app_usage_help`
 
 Optional. Contains a `Str` to be displayed when the user asks for help. The
 reader's name is `get_app_usage_help`.
 
-### MonkeyMan Configuration-Related Parameters
+### Configuration-Related Parameters
 
 #### `parameters_to_get`
 
@@ -193,7 +185,7 @@ If the configuration is neither defined as the constructor parameter nor
 defined by the startup parameter, the framework attempts to find the
 configuration file at the location defined as the `MM_CONFIG_MAIN` constant.
 
-### MonkeyMan Helpers-Related Parameters
+### Helpers-Related Parameters
 
 #### `loggers`
 
