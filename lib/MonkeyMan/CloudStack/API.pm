@@ -62,15 +62,13 @@ use XML::LibXML;
 
 =head1 METHODS
 
-=head2 C<new>
+=head2 C<new()>
 
     $api = MonkeyMan::CloudStack::API->new(%parameters);
 
 This method initializes the Apache CloudStack's API connector;
 
 There are a few parameters that can (and need to) be defined:
-
-=over
 
 =head3 Parental Object Parameters
 
@@ -167,8 +165,6 @@ C<set_useragent_signature()>.
 Please, note: if you use your own useragent instead of the default one, you
 should make it always taking into consideration this parameter's value!
 
-=back
-
 =cut
 
 has useragent_signature => (
@@ -223,7 +219,7 @@ method _build_cache {
 
 
 
-=head2 C<test>
+=head2 C<test()>
 
     $api->test;
 
@@ -248,7 +244,7 @@ method test {
 
 
 
-=head2 C<run_command>
+=head2 C<run_command()>
 
     This method is needed to run an API command.
 
@@ -351,12 +347,12 @@ exception, we'll just pass the result to the caller as is.
 Contains C<Bool>. Raises an exception if the result is empty. Deafault value is
 0.
 
-=head4 C<fatal_fail> (Bool)
+=head4 C<fatal_fail>
 
 Contains C<Bool>. Raises an exception if the failure is occured. Deafault value
 is 1.
 
-=head4 C<fatal_431> (Bool)
+=head4 C<fatal_431>
 
 ...
 
@@ -504,7 +500,7 @@ method get_dom(Str $xml!) {
 
 }
 
-=head2 C<get_doms>
+=head2 C<get_doms()>
 
 =cut
 
@@ -595,7 +591,7 @@ method get_magic_words(Str $type!) {
 
 }
 
-=head2 C<get_elements>
+=head2 C<get_elements()>
 
 =cut
 
@@ -632,7 +628,7 @@ method get_elements(
 
 
 
-=head2 C<qxp>
+=head2 C<qxp()>
 
 =cut
 

@@ -29,7 +29,7 @@ my $result = $api->run_command(
 
 # METHODS
 
-## `new`
+## `new()`
 
 ```
 $api = MonkeyMan::CloudStack::API->new(%parameters);
@@ -38,8 +38,6 @@ $api = MonkeyMan::CloudStack::API->new(%parameters);
 This method initializes the Apache CloudStack's API connector;
 
 There are a few parameters that can (and need to) be defined:
-
-
 
 ### Parental Object Parameters
 
@@ -88,7 +86,7 @@ should make it always taking into consideration this parameter's value!
 
 #### `cache`
 
-## `test`
+## `test()`
 
 ```
 $api->test;
@@ -97,7 +95,7 @@ $api->test;
 This method doesn't do anything but testing connection to the API. It raises
 an exception if something's wrong with it.
 
-## `run_command`
+## `run_command()`
 
 ```perl
 This method is needed to run an API command.
@@ -208,29 +206,17 @@ $api->run(
 Contains `Bool`. Raises an exception if the result is empty. Deafault value is
 0.
 
-#### `fatal_fail` (Bool)
+#### `fatal_fail`
 
 Contains `Bool`. Raises an exception if the failure is occured. Deafault value
 is 1.
 
-#### `fatal_431` (Bool)
+#### `fatal_431`
 
 ...
 
-## `get_doms`
+## `get_doms()`
 
-## `get_elements`
+## `get_elements()`
 
-## `qxp`
-
-# POD ERRORS
-
-Hey! **The above document had some coding errors, which are explained below:**
-
-- Around line 75:
-
-    You forgot a '=back' before '=head3'
-
-- Around line 170:
-
-    &#x3d;back without =over
+## `qxp()`
