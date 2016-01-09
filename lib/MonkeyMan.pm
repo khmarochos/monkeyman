@@ -141,7 +141,7 @@ method BUILDARGS(...) {
 
 There are a few parameters that can (and need to) be defined:
 
-=head3 MonkeyMan Application-Related Parameters
+=head3 Application-Related Parameters
 
 =cut
 
@@ -226,7 +226,7 @@ reader's name is C<get_app_usage_help>.
 
 has 'app_usage_help' => (
     is          => 'ro',
-    isa         => 'CodeRef',
+    isa         => 'CodeRef|Str',
     required    => 0,
     reader      =>  'get_app_usage_help',
     predicate   =>  'has_app_usage_help',
@@ -235,7 +235,7 @@ has 'app_usage_help' => (
 
 
 
-=head3 MonkeyMan Configuration-Related Parameters
+=head3 Configuration-Related Parameters
 
 =head4 C<parameters_to_get>
 
@@ -371,7 +371,7 @@ method _build_configuration {
 
 
 
-=head3 MonkeyMan Helpers-Related Parameters
+=head3 Helpers-Related Parameters
 
 =head4 C<loggers>
 
@@ -632,12 +632,9 @@ __END_OF_VERSION_INFO__
 
 method print_full_usage_help {
 
-    my $app_usage_help = (
-            $self->has_app_usage_help &&
-        ref($self->get_app_usage_help) eq 'CODE'
-    ) ?
+    my $app_usage_help = ref($self->get_app_usage_help) eq 'CODE' ?
         &{ $self->get_app_usage_help } :
-        '';
+           $self->get_app_usage_help;
 
     printf(<<__END_OF_USAGE_HELP__
 %sIt%shandles the following set of MonkeyMan-wide parameteters:

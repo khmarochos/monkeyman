@@ -21,13 +21,10 @@ Understands the following parameters:
 
     -p, --pod-directories <dir>
         [req] [mul] Where POD sources are located
-
     -r, --pod-root-directory <dir>
         [opt]       Where is the directory tree's root
-
     -m, --markdown-direcrory <dir>
         [req]       Where to put MD results
-
     -f, --force
         [opt]       To ignore mtime
 __END_OF_APP_USAGE_HELP__

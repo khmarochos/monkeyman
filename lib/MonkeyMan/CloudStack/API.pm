@@ -1,5 +1,34 @@
 package MonkeyMan::CloudStack::API;
 
+=head1 NAME
+
+MonkeyMan::CloudStack::API - Apache CloudStack API class
+
+=head1 DESCRIPTION
+
+The L<MonkeyMan::CloudStack::API> class encapsulates the interface to the
+Apache CloudStack.
+
+=head1 SYNOPSIS
+
+    my $api = MonkeyMan::CloudStack::API->new(
+        cloudstack = 
+    );
+
+    my $result = $api->run_command(
+        parameters  => {
+            command     => 'login',
+            username    => 'admin',
+            password    => '1z@Lo0pA3',
+            domain      => 'ZALOOPA'
+        },
+        wait        => 0,
+        fatal_empty => 1,
+        fatal_fail  => 1
+    );
+
+=cut
+
 use strict;
 use warnings;
 
@@ -31,9 +60,44 @@ use XML::LibXML;
 
 
 
-#
-# Attributes and methods responsible for the configuration set
-#
+=head1 METHODS
+
+=head2 C<new>
+
+    $api = MonkeyMan::CloudStack::API->new(%parameters);
+
+This method initializes the Apache CloudStack's API connector;
+
+There are a few parameters that can (and need to) be defined:
+
+=over
+
+=head3 Parental Object Parameters
+
+=head4 C<cloudstack>
+
+MANDATORY. Supposed to be a reference to the L<MonkeyMan::CloudStack> object. The
+connecter can't be initialized outside of MonkeyMan, so you need to have the
+parental object initialized if you need to use CloudStack's API.
+
+The value is readable by C<get_cloudstack()>.
+
+=cut
+
+# See the MonkeyMan::CloudStack::Essentials role manual
+
+
+=head3 Configuration-Related Parameters
+
+=head4 C<configuration>
+
+Optional. A C<HashRef> pointing to the configuration tree. If it's not defined,
+the builder will try to fetch it from the parental L<MonkeyMan::CloudStack>'s
+configuration tree.
+
+The value is readable by C<get_configuration()>.
+
+=cut
 
 has 'configuration' => (
     is          => 'ro',
@@ -53,9 +117,59 @@ method _build_configuration {
 
 
 
-#
-# Attributes and methods responsible for the useragent
-#
+=head3 Useragent-Related Parameters
+
+=head4 C<useragent>
+
+Optional. By default the builder creates a new L<LWP::UserAgent> object and use it
+for making calls to Apache CloudStack API. I don't recommend you to redefine it,
+but you can do it.
+
+The value is readable by C<get_useragent()>.
+
+=cut
+
+has useragent => (
+    is          => 'ro',
+    isa         => 'Object',
+    reader      =>    'get_useragent',
+    writer      =>   '_set_useragent',
+    predicate   =>    'has_useragent',
+    builder     => '_build_useragent',
+);
+
+method _build_useragent {
+
+    return(LWP::UserAgent->new(
+        agent       => $self->get_useragent_signature,
+        ssl_opts    => { verify_hostname => 0 } #FIXME 20151219
+    ));
+
+}
+
+
+
+
+=head4 C<useragent_signature>
+
+Optional. Contains a C<Str> of the signature that will be used as the User-Agent
+header in all outgoing HTTP requests. By default it looks like that:
+
+=over
+
+APP-6.6.6 (powered by MonkeyMan-6.6.6) (libwww-perl/6.6.6)
+
+=back
+
+The value is readable by C<get_useragent_signature()>, writeable as
+C<set_useragent_signature()>.
+
+Please, note: if you use your own useragent instead of the default one, you
+should make it always taking into consideration this parameter's value!
+
+=back
+
+=cut
 
 has useragent_signature => (
     is          => 'ro',
@@ -85,29 +199,11 @@ method _build_useragent_signature {
     return($useragent_signature)
 }
 
-has useragent => (
-    is          => 'ro',
-    isa         => 'Object',
-    reader      =>    'get_useragent',
-    writer      =>   '_set_useragent',
-    predicate   =>    'has_useragent',
-    builder     => '_build_useragent',
-);
+=head3 Caching Parameters
 
-method _build_useragent {
+=head4 C<cache>
 
-    return(LWP::UserAgent->new(
-        agent       => $self->get_useragent_signature,
-        ssl_opts    => { verify_hostname => 0 } #FIXME 20151219
-    ));
-
-}
-
-
-
-#
-# Attributes and methods responsible for caching
-#
+=cut
 
 has cache => (
     is          => 'ro',
@@ -127,6 +223,15 @@ method _build_cache {
 
 
 
+=head2 C<test>
+
+    $api->test;
+
+This method doesn't do anything but testing connection to the API. It raises
+an exception if something's wrong with it.
+
+=cut
+
 method test {
 
     $self->run_command(
@@ -142,6 +247,120 @@ method test {
 }
 
 
+
+=head2 C<run_command>
+
+    This method is needed to run an API command.
+
+    # Defining some options
+    my %options = (
+        wait        => 0,
+        fatal_empty => 1,
+        fatal_fail  => 1,
+        fatal_431   => 0
+    );
+
+    # Running a command with a list of parameters
+    my $parameters => {
+        command => 'listApis',
+        listAll => 'true'
+    };
+    $api->run_command(
+        parameters => $parameters,
+        %options
+    );
+
+    # Running a pre-defined command object
+    my $command = MonkeyMan::CloudStack::API::Command->new(
+        parameters => $parameters
+    );
+    $api->run_command(
+        command => $command,
+        %options
+    );
+
+    # Touching a pre-defined URL
+    $url = $command->get_url;
+    $api->run_command(
+        url => $url
+        %options
+    );
+
+This method recognizes the following parameters:
+
+=head3 What To Run?
+
+It's mandatory to set one of below-mentioned parameters. If there are no
+C<parameters>, C<command> or C<url> defined, the exception will be raised.
+
+=head4 C<parameters>
+
+The command can be run with a hash of parameters including the command's name.
+The key and the signature will be applied automatically.
+
+=head4 C<command>
+
+The command can be set as a pre-created L<MonkeyMan::CloudStack::API::Command>
+object. Although, it's being created automatically when C<parameters> are set.
+
+=head4 C<url>
+
+The command can be run by touching an URL containing the command, its
+parameters, the key and the signature.
+
+=head3 How To Run?
+
+Also it accepts the following optional parameters.
+
+=head4 C<wait>
+
+Contains and C<Int>. If it turns out to be an asynchronous job, how much time
+should we wait for the result.
+
+If it's greater than 0, we'll wait N seconds for the asynchronous job
+to complete, where N is the parameter's value.
+
+    $api->run(
+        parameters => { command => 'performSomeCoolThing', id => '...' },
+        wait => 300
+    );
+    # Will wait for 300 seconds and either return the result or raise an
+    # exception if timeout occures.
+
+If it less than 0, we'll wait N seconds, where N will be got either
+from the C<$self->get_configuration->{'wait'}> configuration optopm or from the
+C<MM_CLOUDSTACK_API_WAIT_FOR_FINISH> constant.
+
+    $api->run(
+        parameters => { command => 'performSomeCoolThing', id => '...' },
+        wait => -1
+    );
+    # Will wait as long as possible.
+
+If it eqials 0, we won't wait for the result, but we won't raise an
+exception, we'll just pass the result to the caller as is.
+
+    $api->run(
+        parameters => { command => 'performSomeCoolThing', id => '...' },
+        wait => 0
+    );
+    # Won't wait for anything, just returns the job information.
+
+=head4 C<fatal_empty>
+
+Contains C<Bool>. Raises an exception if the result is empty. Deafault value is
+0.
+
+=head4 C<fatal_fail> (Bool)
+
+Contains C<Bool>. Raises an exception if the failure is occured. Deafault value
+is 1.
+
+=head4 C<fatal_431> (Bool)
+
+...
+
+=cut
 
 method run_command(
     MonkeyMan::CloudStack::API::Command :$command,
@@ -218,11 +437,12 @@ method run_command(
 
         if($wait) {
 
-            $wait = ($wait > 0) ?
-                $wait :
-                defined($configuration->{'wait'}) ?
-                        $configuration->{'wait'} :
-                        MM_CLOUDSTACK_API_WAIT_FOR_FINISH;
+            $wait =
+                ($wait > 0) ?
+                    $wait :
+                    defined($configuration->{'wait'}) ?
+                            $configuration->{'wait'} :
+                            MM_CLOUDSTACK_API_WAIT_FOR_FINISH;
 
             $logger->tracef(
                 "We'll wait %d seconds for the result of the %s job",
@@ -283,6 +503,10 @@ method get_dom(Str $xml!) {
     return($dom);
 
 }
+
+=head2 C<get_doms>
+
+=cut
 
 method get_doms(
     Str     :$type!,
@@ -371,6 +595,10 @@ method get_magic_words(Str $type!) {
 
 }
 
+=head2 C<get_elements>
+
+=cut
+
 method get_elements(
     Str                                     :$type!,
     Maybe[Str]                              :$return_as = 'element',
@@ -403,6 +631,10 @@ method get_elements(
 }
 
 
+
+=head2 C<qxp>
+
+=cut
 
 method qxp(
     Str                     :$query!,
@@ -542,172 +774,4 @@ __PACKAGE__->meta->make_immutable;
 1;
 
 
-
-=head1 NAME
-
-MonkeyMan::CloudStack::API - Apache CloudStack API class
-
-=head1 DESCRIPTION
-
-The L<MonkeyMan::CloudStack::API> class encapsulates the interface to the
-Apache CloudStack.
-
-=head1 SYNOPSIS
-
-    my $api = MonkeyMan::CloudStack::API->new(
-        cloudstack = 
-    );
-
-    my $result = $api->run_command(
-        parameters  => {
-            command     => 'login',
-            username    => 'admin',
-            password    => '1z@Lo0pA3',
-            domain      => 'ZALOOPA'
-        },
-        wait        => 0,
-        fatal_empty => 1,
-        fatal_fail  => 1
-    );
-
-=head1 METHODS
-
-=head2 C<new>
-
-    $api = MonkeyMan::CloudStack::API->new(%parameters);
-
-This method initializes the Apache CloudStack's API;
-
-There are a few parameters that can (and need to) be defined:
-
-=over
-
-=item C<cloudstack> (L<MonkeyMan::CloudStack>)
-
-MANDATORY. The reference to the L<MonkeyMan::CloudStack> object.
-
-The value is readable by C<get_cloudstack()>.
-
-=item C<configuration_tree> (HashRef)
-
-Optional. The configuration tree. If it's not defined, the builder will fetch
-it from the MonkeyMan::CloudStack's configuration tree.
-
-The value is readable by C<get_configuration_tree()>.
-
-=item C<useragent> (Object)
-
-Optional. By default it will create a new L<LWP::UserAgent> object and use it 
-for making calls to Apache CloudStack API. I don't recommend you to redefine
-it, but who I am to teach you, huh? :)
-
-The value is readable by C<get_useragent()>.
-
-=item C<useragent_signature> (Str)
-
-Optional. The signature that will be used as the User-Agent header in all
-outgoing HTTP requests. By default it will looke like that:
-
-=over
-
-APP-6.6.6 (powered by MonkeyMan-6.6.6) (libwww-perl/6.6.6)
-
-=back
-
-The value is readable by C<get_useragent_signature()>, writeable as
-C<set_useragent_signature()>.
-
-Please, note: if you use your own useragent instead of the default one, you
-should make it always taking into consideration this parameter's value!
-
-=back
-
-=head2 C<test>
-
-    $api->test;
-
-This method doesn't do anything but testing connection to the API. It raises
-an exception if something's wrong with it.
-
-=head2 C<run_command>
-
-    This method is needed to run an API command.
-
-    # Defining some options
-    my %options = (
-        wait        => 0,
-        fatal_empty => 1,
-        fatal_fail  => 1,
-        fatal_431   => 0
-    );
-
-    # Running a command with a list of parameters
-    my $parameters => {
-        command => 'listApis',
-        listAll => 'true'
-    };
-    $api->run_command(
-        parameters => $parameters,
-        %options
-    );
-
-    # Running a pre-defined command object
-    my $command = MonkeyMan::CloudStack::API::Command->new(
-        parameters => $parameters
-    );
-    $api->run_command(
-        command => $command,
-        %options
-    );
-
-    # Touching a pre-defined URL
-    $url = $command->get_url;
-    $api->run_command(
-        url => $url
-        %options
-    );
-
-This method recognizes the following parameters:
-
-=over
-
-=item C<parameters> (HashRef)
-
-The command can be run with a hash of parameters including the command's name.
-The key and the signature will be applied automatically.
-
-=item C<command> (L<MonkeyMan::CloudStack::API::Command>)
-
-The command can be set as a pre-created object. Although, it's being created
-automatically when C<parameters> are set.
-
-=item C<url> (Str)
-
-The command can be run by touching an URL containing the command, its
-parameters, the key and the signature.
-
-=back
-
-It's mandatory to set one of 3 above-mentioned parameters. If there are no
-C<parameters>, C<command> or C<url> defined, the exception will be raised.
-
-=over
-
-=item C<wait> (Int)
-
-=item C<fatal_empty> (Bool)
-
-=item C<fatal_fail> (Bool)
-
-=item C<fatal_431> (Bool)
-
-=back
-
-=head2 C<get_doms>
-
-=head2 C<get_elements>
-
-=head2 C<qxp>
-
-=cut
 
