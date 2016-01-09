@@ -73,6 +73,9 @@ with high-level Perl5-applications.
 
 use strict;
 use warnings;
+use 5.20.1;
+
+our $VERSION='v2.1.0-dev_melnik13_v3';
 
 # Use Moose and be happy :)
 use Moose;

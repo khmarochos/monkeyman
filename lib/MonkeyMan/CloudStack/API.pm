@@ -282,6 +282,8 @@ method test {
         %options
     );
 
+Reurns an reference to the L<LibXML::Document> DOM containing the responce.
+
 This method recognizes the following parameters:
 
 =head3 What To Run?

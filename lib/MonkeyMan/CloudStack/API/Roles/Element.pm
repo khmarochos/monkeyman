@@ -105,7 +105,11 @@ has 'dom_updated' => (
 );
 
 method _build_dom_updated {
-    return(0);
+    if($self->has_dom) {
+        return(${$self->get_time_started}[0]);
+    } else {
+        return(0);
+    }
 }
 
 has 'dom_best_before' => (
@@ -210,24 +214,91 @@ method refresh_dom {
 
 }
 
-method is_dom_expired(Str $best_before = $self->get_dom_best_before) {
+=head2 C<is_dom_expired()>
 
-    if     ($best_before =~ /^\s*never\s*$/i) {
-        $dom_expires = $self->get_dom_updated +
-    } elsif($best_before =~ /^\s*([\+\-])?\s*(\d+)\s*$/) {
-        if     (defined($1) && $1 eq '+') {
-            $dom_expires = $self->get_dom_updated + $2,
-        } elsif(defined($1) && $1 eq '-') {
-            $dom_expires = $self->get_dom_updated - $2,
-        } else {
-            $dom_expires = $2;
-        }
+Requires the anonymous C<Str> to be passed as the only parameter. Finds out if
+the element's DOM expired and needs to be refreshed.
+
+If it equals to 'C<never>', the method always returns false, so the DOM is
+always being considered as up to date.
+
+    ok(!$self->is_dom_expired('never') );
+
+If it equals to 'C<always>', the method always returns true, so the DOM is being
+considered as outdated at any moment.
+
+    ok( $self->is_dom_expired('always') );
+
+If it equals to some number (C<N>), the method returns true if the DOM has been
+refreshed not later than at C<N> seconds of Unix Epoch, so it's considered as
+expired.
+
+    # Let's assume it's 1000 seconds of Unix Epoch now
+    # and the DOM has been refreshed at 300
+    #
+    ok( $self->is_dom_expired(299) );
+    ok( $self->is_dom_expired(300) );
+    ok(!$self->is_dom_expired(301) );
+
+If it equals to C<+N>, the method returns true (expired) if the DOM update time
+plus C<N> is not greater than the current time.
+
+    # Let's assume it's 1000 seconds of Unix Epoch now
+    # and the DOM has been refreshed at 300
+    #
+    ok( $self->is_dom_expired('+699) );
+    ok( $self->is_dom_expired('+700) );
+    ok(!$self->is_dom_expired('+701) );
+
+If equals to C<-N>, the method returns true (expired) if the DOM has been
+refreshed not less than N seconds ago.
+
+    # Let's assume it's 1000 seconds of Unix Epoch now
+    # and the DOM has been refreshed at 300
+    #
+    ok( $self->is_dom_expired('-701') );
+    ok( $self->is_dom_expired('-700') );
+    ok(!$self->is_dom_expired('-699') );
+
+=cut
+
+method is_dom_expired(Maybe[Str] $best_before) {
+
+    $best_before = '+' . $self->get_dom_best_before
+        unless(defined($best_before));
+    my $is_expired = 0;
+    my $now = ${$self->get_time_current}[0];
+    if($best_before =~ /^\s*([\+\-])?\s*(\d+)\s*$/) {
+        $is_expired = 1 if(
+            (
+                defined($1) && ($1 eq '+') &&
+                    ($self->get_dom_updated + $2 <= $now)
+            ) || (
+                defined($1) && ($1 eq '-') &&
+                    ($self->get_dom_updated <= $now - $2)
+            ) || (
+              ! defined($1) &&
+                    ($self->get_dom_updated <= $2)
+            )
+        );
+    } elsif ($best_before =~ /^\s*never\s*$/i) {
+        $is_expired = 0;
+    } elsif ($best_before =~ /^\s*always\s*$/i) {
+        $is_expired = 1;
     } else {
         (__PACKAGE__ . '::Exception::InvalidParametersValue')->throwf(
             "Invalid parameter's value: %s", $best_before
         )
     }
-    return($self->get_dom_updated >= $dom_expires);
+    $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+        "The DOM of %s has been refreshed at %s, " .
+        "so it's considered as %s if it's best before %s",
+            $self,
+            $self->get_dom_updated,
+            ($is_expired ? 'expired' : 'up to date'),
+            $best_before
+    );
+    return($is_expired);
 
 }
 
