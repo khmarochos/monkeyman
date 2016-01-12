@@ -53,9 +53,7 @@ sub mm_sprintf {
 
 func _showref(Ref $ref!) {
 
-    my $ref_id_short;
-
-    $ref_id_short = sprintf(
+    my $ref_id_short = sprintf(
         "%s\@0x%x",
         blessed($ref) ? blessed($ref) : ref($ref),
         refaddr($ref)
@@ -63,6 +61,7 @@ func _showref(Ref $ref!) {
 
     my $monkeyman;
     my $monkeyman_started;
+    my $logger;
     my $conftree;
     my $dumped;
     my $dumpdir;
@@ -71,57 +70,71 @@ func _showref(Ref $ref!) {
     try {
         $monkeyman  = MonkeyMan->instance;
         $monkeyman_started = $monkeyman->get_time_started_formatted;
+        $logger     = $monkeyman->get_logger;
         $conftree   = $monkeyman->get_configuration;
         $dumped     = $conftree->{'log'}->{'dump'}->{'enabled'};
         $dumpxml    = $conftree->{'log'}->{'dump'}->{'add_xml'};
         $dumpdir    = $conftree->{'log'}->{'dump'}->{'directory'};
     } catch($e) {
-        warn(sprintf(
+        $logger->warnf(
             "Can't determine if I should dump the data structure. " .
             "It seems that MonkeyMan isn't initialized properly. " .
             "%s",
                 $e
-        ));
+        );
         return("[$ref_id_short]");
     }
 
-    return("[$ref_id_short]") unless(defined($dumped) && defined($dumpdir));
+    my $result;
 
-    my $dump = Data::Dumper->new([$ref])->Indent(1)->Terse(0)->Dump;
-    if($dumpxml && ref($ref) && blessed($ref) && $ref->DOES('XML::LibXML::Node')) {
-        $dump = $dump . "\n" . $ref->toString(1);
+    if(defined($dumped) && defined($dumpdir)) {
+
+        my $dump = Data::Dumper->new([$ref])->Indent(1)->Terse(0)->Dump;
+        $dump .= ("\n" . $ref->toString(1)) if(
+            $dumpxml &&
+                ref($ref) &&
+                    blessed($ref) &&
+                        $ref->DOES('XML::LibXML::Node'));
+
+        my $ref_id_long = md5_hex($dump);
+
+        $dumpfile = ($dumpdir = sprintf(
+            '%s/%s/%d/%s',
+                $dumpdir,
+                $monkeyman_started,
+                $$,
+                $ref_id_short
+        )) . "/$ref_id_long";
+
+        try {
+            make_path($dumpdir);
+            open(my($filehandle), '>', $dumpfile) ||
+                MonkeyMan::Exception->throwf(
+                    "Can't open the %s file for writing: %s",
+                        $dumpfile,
+                        $!
+                );
+            print({$filehandle} $dump);
+            close($filehandle) ||
+                MonkeyMan::Exception->throwf(
+                    "Can't close the %s file: %s",
+                        $dumpfile,
+                        $!
+                );
+        } catch($e) {
+            $logger->warnf("Can't dump: %s", $e);
+            return("[$ref_id_short]");
+        }
+
+        $result = sprintf("%s/%s", $ref_id_short, $ref_id_long);
+
     }
-    my $ref_id_long = md5_hex($dump);
 
-    $dumpfile = ($dumpdir = sprintf(
-        '%s/%s/%d/%s',
-            $dumpdir,
-            $monkeyman_started,
-            $$,
-            $ref_id_short
-    )) . "/$ref_id_long";
-
-    try {
-        make_path($dumpdir);
-        open(my($filehandle), '>', $dumpfile) ||
-            MonkeyMan::Exception->throwf(
-                "Can't open the %s file for writing: %s",
-                    $dumpfile,
-                    $!
-            );
-        print({$filehandle} $dump);
-        close($filehandle) ||
-            MonkeyMan::Exception->throwf(
-                "Can't close the %s file: %s",
-                    $dumpfile,
-                    $!
-            );
-    } catch($e) {
-        warn(sprintf('Can\'t dump: %s', $e));
-        return("[$ref_id_short]");
+    if(blessed($ref) && $ref->DOES('MonkeyMan::Exception')) {
+        $result = sprintf('%s - %s', $result, $ref->message);
     }
 
-    return("[$ref_id_short/$ref_id_long]");
+    return(sprintf("[%s]", $result));
 
 }
 
