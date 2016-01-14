@@ -246,7 +246,7 @@ method test {
 
 =head2 C<run_command()>
 
-    This method is needed to run an API command.
+This method is needed to run an API command.
 
     # Defining some options
     my %options = (
@@ -282,7 +282,7 @@ method test {
         %options
     );
 
-Reurns an reference to the L<LibXML::Document> DOM containing the responce.
+Reurns a reference to the L<XML::LibXML::Document> DOM containing the responce.
 
 This method recognizes the following parameters:
 
@@ -632,15 +632,88 @@ method get_elements(
 
 =head2 C<qxp()>
 
+This method queries the DOM (as L<XML::LibXML::Document>) provided 
+with the XPath-query provided.
+
+    $dom = $api->run(
+        command     => 'listVirtualMachines',
+        listAll     => 'true'
+    );
+
+It can give you values:
+
+    foreach my $id ($api->qxp(
+        dom         => $dom,
+        query       => '/listvirtualmachinesresponse' .
+                            '/virtualmachine' .
+                            '[nic/ipaddress = "13.13.13.13"]' .
+                            '/id',
+        return_as   => 'value'
+    ) {
+        $log->tracef("Found %s", $id);
+    }
+
+It can give you elements:
+
+    foreach my $vm ($api->qxp(
+        dom         => $dom,
+        query       => '/listvirtualmachinesresponse' .
+                            '/virtualmachine' .
+                            '[nic/ipaddress = "13.13.13.13"]'
+        return_as   => 'element[VirtualMachine]'
+    ) {
+        $log->tracef("Found %s", $vm->get_id);
+    }
+
+See below the full list of possible values for the C<return_as> parameter.
+
+=head4 C<dom>
+
+=head4 C<query>
+
+=head4 C<return_as>
+
+This parameter defines what kind of results are expected.
+
+=over 4
+
+=item C<value>
+
+Returns results as regular scalars.
+
+=item C<dom>
+
+Returns results as new L<XML::LibXML::Document> DOMs.
+
+=item C<hashref>
+
+Returns results as hashes tied to new L<XML::LibXML::Document> DOMs.
+
+=item C<element[TYPE]>
+
+Returns results as C<MonkeyMan::CloudStack::API::Element::TYPE> objects.
+
+=item C<id[TYPE]>
+
+Returns results as IDs fetched from freshly-created
+C<MonkeyMan::CloudStack::API::Element::TYPE> objects.
+
+=back
+
 =cut
 
 method qxp(
-    Str                     :$query!,
-    XML::LibXML::Document   :$dom!,
-    Maybe[Str]              :$return_as,
+    Str         :$query!,
+    Object      :$dom!,
+    Maybe[Str]  :$return_as,
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+
+    unless($dom->DOES('XML::LibXML::Document')) {
+        $logger->warnf("%s isn't a XML::LibXML::Document object");
+        return;
+    }
 
     $logger->tracef(
         'Querying the %s DOM with the "%s" XPath-query',
@@ -690,7 +763,7 @@ method qxp(
                 type        => $type,
                 doms        => [ $new_dom ],
             )) {
-                push(@results, $self->_return_element_as($return_as, $result));
+                push(@results, $self->_return_element_as($element, $return_as));
                 $logger->tracef(
                     "Added the %s based on the %s DOM to the list of results",
                     $element->get_type(noun => 1),

@@ -114,14 +114,21 @@ This method initializes the framework and runs the application.
 
 method BUILD(...) {
 
-    $self->get_logger->debugf("%s Hello, world!", $self->get_time_passed_formatted);
-
+    $self->get_logger->debugf("%s Hello world!", $self->get_time_passed_formatted);
     $self->_mm_init;
-    $self->_app_start;
-    $self->_app_run;
-    $self->_app_finish;
-    $self->_mm_shutdown;
 
+    if(defined($self->get_app_code)) {
+        $self->_app_start;
+        $self->_app_run;
+        $self->_app_finish;
+    }
+
+}
+
+END {
+    my $mm = MonkeyMan->instance;
+    $mm->_mm_shutdown;
+    $mm->get_logger->debugf("%s Goodbye world!", $mm->get_time_passed_formatted);
 }
 
 method BUILDARGS(...) {
@@ -171,7 +178,7 @@ needs to be run. The reader's name is C<get_app_code>.
 
 has 'app_code' => (
     is          => 'ro',
-    isa         => 'CodeRef',
+    isa         => 'Maybe[CodeRef]',
     reader      => 'get_app_code',
     predicate   => 'has_app_code'
 );

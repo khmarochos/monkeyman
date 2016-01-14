@@ -97,9 +97,9 @@ an exception if something's wrong with it.
 
 ## `run_command()`
 
-```perl
 This method is needed to run an API command.
 
+```perl
 # Defining some options
 my %options = (
     wait        => 0,
@@ -134,6 +134,8 @@ $api->run_command(
     %options
 );
 ```
+
+Reurns a reference to the [XML::LibXML::Document](https://metacpan.org/pod/XML::LibXML::Document) DOM containing the responce.
 
 This method recognizes the following parameters:
 
@@ -220,3 +222,73 @@ is 1.
 ## `get_elements()`
 
 ## `qxp()`
+
+This method queries the DOM (as [XML::LibXML::Document](https://metacpan.org/pod/XML::LibXML::Document)) provided 
+with the XPath-query provided.
+
+```perl
+$dom = $api->run(
+    command     => 'listVirtualMachines',
+    listAll     => 'true'
+);
+```
+
+It can give you values:
+
+```perl
+foreach my $id ($api->qxp(
+    dom         => $dom,
+    query       => '/listvirtualmachinesresponse' .
+                        '/virtualmachine' .
+                        '[nic/ipaddress = "13.13.13.13"]' .
+                        '/id',
+    return_as   => 'value'
+) {
+    $log->tracef("Found %s", $id);
+}
+```
+
+It can give you elements:
+
+```perl
+foreach my $vm ($api->qxp(
+    dom         => $dom,
+    query       => '/listvirtualmachinesresponse' .
+                        '/virtualmachine' .
+                        '[nic/ipaddress = "13.13.13.13"]'
+    return_as   => 'element[VirtualMachine]'
+) {
+    $log->tracef("Found %s", $vm->get_id);
+}
+```
+
+See below the full list of possible values for the `return_as` parameter.
+
+#### `dom`
+
+#### `query`
+
+#### `return_as`
+
+This parameter defines what kind of results are expected.
+
+- `value`
+
+    Returns results as regular scalars.
+
+- `dom`
+
+    Returns results as new [XML::LibXML::Document](https://metacpan.org/pod/XML::LibXML::Document) DOMs.
+
+- `hashref`
+
+    Returns results as hashes tied to new [XML::LibXML::Document](https://metacpan.org/pod/XML::LibXML::Document) DOMs.
+
+- `element[TYPE]`
+
+    Returns results as `MonkeyMan::CloudStack::API::Element::TYPE` objects.
+
+- `id[TYPE]`
+
+    Returns results as IDs fetched from freshly-created
+    `MonkeyMan::CloudStack::API::Element::TYPE` objects.

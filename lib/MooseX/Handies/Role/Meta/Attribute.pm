@@ -56,7 +56,7 @@ after install_accessors => sub {
                             );
 
                         my $hashref = &{$read_method_ref};
-                        confess("The attribute doesn't containt a HashRef as it's supposed to")
+                        confess("The attribute doesn't contain a HashRef as it's supposed to")
                             unless(ref($hashref) eq 'HASH');
 
                         my $self = shift;
@@ -67,7 +67,7 @@ after install_accessors => sub {
                         confess(sprintf("The %s slot is empty", $slot))
                             if($handy_strict && !defined($result));
 
-                        $result;
+                        return($result);
 
                     }, (
                         name            => $handy_name,

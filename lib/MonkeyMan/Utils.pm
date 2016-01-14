@@ -78,7 +78,7 @@ func _showref(Ref $ref!) {
     } catch($e) {
         $logger->warnf(
             "Can't determine if I should dump the data structure. " .
-            "It seems that MonkeyMan isn't initialized properly. " .
+            "It seems that MonkeyMan hasn't been initialized properly yet. " .
             "%s",
                 $e
         );
