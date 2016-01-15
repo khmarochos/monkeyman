@@ -221,6 +221,17 @@ is 1.
 
 ## `get_elements()`
 
+This method finds infrastructure elements by the criterions defined.
+
+```perl
+foreach my $vm ($api->get_elements(
+    type        => 'VirtualMachine',
+    criterions  => { host => 'hX.cX.pX.zX' },
+)) {
+    ok($vm->get_id, $vm->get_dom->findvalue('/virtualmachine/id');
+}
+```
+
 ## `qxp()`
 
 This method queries the DOM (as [XML::LibXML::Document](https://metacpan.org/pod/XML::LibXML::Document)) provided 
@@ -280,10 +291,6 @@ This parameter defines what kind of results are expected.
 
     Returns results as new [XML::LibXML::Document](https://metacpan.org/pod/XML::LibXML::Document) DOMs.
 
-- `hashref`
-
-    Returns results as hashes tied to new [XML::LibXML::Document](https://metacpan.org/pod/XML::LibXML::Document) DOMs.
-
 - `element[TYPE]`
 
     Returns results as `MonkeyMan::CloudStack::API::Element::TYPE` objects.
@@ -292,3 +299,11 @@ This parameter defines what kind of results are expected.
 
     Returns results as IDs fetched from freshly-created
     `MonkeyMan::CloudStack::API::Element::TYPE` objects.
+
+# POD ERRORS
+
+Hey! **The above document had some coding errors, which are explained below:**
+
+- Around line 687:
+
+    '=item' outside of any '=over'
