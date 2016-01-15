@@ -595,6 +595,15 @@ method get_magic_words(Str $type!) {
 
 =head2 C<get_elements()>
 
+This method finds infrastructure elements by the criterions defined.
+
+    foreach my $vm ($api->get_elements(
+        type        => 'VirtualMachine',
+        criterions  => { host => 'hX.cX.pX.zX' },
+    )) {
+        ok($vm->get_id, $vm->get_dom->findvalue('/virtualmachine/id');
+    }
+
 =cut
 
 method get_elements(
@@ -807,12 +816,15 @@ method _return_element_as(
 }
 
 method _criterions_to_parameters(
+        :$all,
     Str :$id,
     Str :$domainid
 ) {
 
     my %parameters;
 
+    $parameters{'listall'} = 'true'
+        if(defined($all));
     $parameters{'id'} = $id
         if(defined($id));
     $parameters{'domainid'} = $domainid

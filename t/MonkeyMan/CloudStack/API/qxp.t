@@ -118,7 +118,3 @@ ok(!array_diff(@ids_local, @ids_global));
 
 
 done_testing;
-
-
-
-1;
