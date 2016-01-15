@@ -675,8 +675,6 @@ See below the full list of possible values for the C<return_as> parameter.
 
 This parameter defines what kind of results are expected.
 
-=over 4
-
 =item C<value>
 
 Returns results as regular scalars.
@@ -684,10 +682,6 @@ Returns results as regular scalars.
 =item C<dom>
 
 Returns results as new L<XML::LibXML::Document> DOMs.
-
-=item C<hashref>
-
-Returns results as hashes tied to new L<XML::LibXML::Document> DOMs.
 
 =item C<element[TYPE]>
 
@@ -742,16 +736,6 @@ method qxp(
             push(@results, $new_dom);
             $logger->tracef(
                 "Added the %s DOM to the list of results",
-                $new_dom
-            );
-
-        } elsif($return_as =~ /^hashref$/i) {
-
-            tie(my %new_hash, 'XML::LibXML::AttributeHash', $new_dom);
-            push(@results, \%new_hash);
-            $logger->tracef(
-                "Added the %s hash tied to the %s DOM to the list of results",
-               \%new_hash,
                 $new_dom
             );
 

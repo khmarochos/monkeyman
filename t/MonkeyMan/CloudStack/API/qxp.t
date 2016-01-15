@@ -3,12 +3,14 @@
 use strict;
 use warnings;
 
-use FindBin qw($Bin);
-use lib("$Bin/../../../../../lib");
+use FindBin qw($RealBin);
+use lib("$RealBin/../../../../lib");
 
 use MonkeyMan;
+use MonkeyMan::Constants qw(:version);
 
 use Test::More;
+use Array::Utils qw(array_diff);
 
 
 
@@ -16,48 +18,104 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'qxp.t',
     app_description     => 'MonkeyMan::CloudStack::API::qxp testing script',
-    app_version         => 'v2.1.0-dev_melnik13_v3',
-    parameters_to_get   => {
-        'l|list-command=s'  => 'list_command',
-        'q|xpath-query=s'   => 'xpath_query'
-    }
+    app_version         => MM_VERSION
 );
 
 my $logger          = $monkeyman->get_logger;
 my $cloudstack      = $monkeyman->get_cloudstack;
 my $api             = $cloudstack->get_api;
-my $parameters      = $monkeyman->get_parameters;
-my $list_command    = defined($parameters->get_list_command) ?
-                        $parameters->get_list_command :
-                        'listVirtualMachines';
-my $xpath_query     = defined($parameters->get_xpath_query) ?
-                        $parameters->get_xpath_query :
-                        '/listvirtualmachinesresponse' . 
-                            '/virtualmachine' .
-                            '[nic/ipaddress = "10.13.101.100"]';
 
 my $biglist     = $api->run_command(parameters => {
-                    command => $list_command,
+                    command => 'listVirtualMachines',
                     listall => 'true'
 });
 
-$logger->tracef("Have got %s", $biglist);
+$logger->tracef("Have got %s as the list of all elements", $biglist);
+
+my @ids_global;
+my @ids_local;
+
+
+
+$logger->debug("Getting values");
+
+@ids_local = ();
 
 foreach my $id ($api->qxp(
-    query       => $xpath_query . '/id',
     dom         => $biglist,
+    query       => '/listvirtualmachinesresponse' . 
+                    '/virtualmachine' .
+                    '[nic/id]' .
+                    '/id',
     return_as   => 'value'
 )) {
-    ok($logger->tracef("Have found %s", $id));
+    $logger->tracef("Have got ID as a value, it's %s", $id);
+    push(@ids_global, $id);
+    push(@ids_local, $id);
 }
 
-foreach my $vm ($api->qxp(
-    query       => $xpath_query,
+ok(!array_diff(@ids_local, @ids_global));
+
+
+
+$logger->debug("Getting DOMs");
+
+@ids_local = ();
+
+foreach my $dom ($api->qxp(
     dom         => $biglist,
+    query       => '/listvirtualmachinesresponse' . 
+                    '/virtualmachine' .
+                    '[nic/id]',
+    return_as   => 'dom'
+)) {
+    my $id = $dom->findvalue('/virtualmachine/id');
+    $logger->tracef("Have got %s as a DOM, its ID is %s", $dom, $id);
+    push(@ids_local, $id);
+}
+
+ok(!array_diff(@ids_local, @ids_global));
+
+
+
+$logger->debug("Getting elements");
+
+@ids_local = ();
+
+foreach my $vm ($api->qxp(
+    dom         => $biglist,
+    query       => '/listvirtualmachinesresponse' . 
+                    '/virtualmachine' .
+                    '[nic/id]',
     return_as   => 'element[VirtualMachine]'
 )) {
-    ok($logger->tracef("Have found %s", $vm->get_id));
+    my $id = $vm->get_id;
+    $logger->tracef("Have got %s as %s, it ID is %s", $vm, $vm->get_type(noun => 1, a => 1), $id);
+    push(@ids_local, $id);
 }
+
+ok(!array_diff(@ids_local, @ids_global));
+
+
+
+$logger->debug("Getting IDs");
+
+@ids_local = ();
+
+foreach my $id ($api->qxp(
+    dom         => $biglist,
+    query       => '/listvirtualmachinesresponse' . 
+                    '/virtualmachine' .
+                    '[nic/id]',
+    return_as   => 'id[VirtualMachine]'
+)) {
+    $logger->tracef("Have got ID as ID, it's %s", $id);
+    push(@ids_local, $id);
+}
+
+ok(!array_diff(@ids_local, @ids_global));
+
+
 
 done_testing;
 

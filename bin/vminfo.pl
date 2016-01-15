@@ -10,6 +10,7 @@ use lib("$Bin/../lib");
 
 # Use my own modules
 use MonkeyMan;
+use MonkeyMan::Constants qw(:version);
 use MonkeyMan::Utils;
 use MonkeyMan::CloudStack::API::Element::Domain;
 
@@ -20,7 +21,7 @@ use Method::Signatures;
 MonkeyMan->new(
     app_name            => 'vminfo',
     app_description     => 'The utility to get information about a virtual machine',
-    app_version         => 'v2.1.0-dev_melnik13_v3',
+    app_version         => MM_VERSION,
     app_usage_help      => \&vminfo_usage,
     app_code            => \&vminfo_app,
     parameters_to_get   => {

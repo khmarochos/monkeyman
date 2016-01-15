@@ -3,10 +3,11 @@
 use strict;
 use warnings;
 
-use FindBin qw($Bin);
-use lib("$Bin/../../../../../../lib");
+use FindBin qw($RealBin);
+use lib("$RealBin/../../../../../../lib");
 
 use MonkeyMan;
+use MonkeyMan::Constants qw(:version);
 
 use Test::More (tests => 11);
 use Method::Signatures;
@@ -17,7 +18,7 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'qxp.t',
     app_description     => 'MonkeyMan::CloudStack::API::Roles::Element::is_dom_expired() testing script',
-    app_version         => 'v2.1.0-dev_melnik13_v3',
+    app_version         => MM_VERSION,
     parameters_to_get   => {
         't|type=s'          => 'type',
         'i|id=s'            => 'id'
