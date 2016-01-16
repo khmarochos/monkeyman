@@ -55,13 +55,14 @@ after install_accessors => sub {
                                         $read_method_ref->isa('Moose::Meta::Method::Accessor')
                             );
 
-                        my $hashref = &{$read_method_ref};
+                        my $slot = $_[1];
+                           $slot = defined($slot) ? $slot : $handy_default;
+
+                        @_ = ($_[0]); # Cut it short >8
+
+                        my $hashref = &{ $read_method_ref };
                         confess("The attribute doesn't contain a HashRef as it's supposed to")
                             unless(ref($hashref) eq 'HASH');
-
-                        my $self = shift;
-                        my $slot = shift;
-                           $slot = defined($slot) ? $slot : $handy_default;
 
                         my $result = $hashref->{$slot};
                         confess(sprintf("The %s slot is empty", $slot))
