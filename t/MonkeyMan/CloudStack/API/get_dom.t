@@ -25,7 +25,12 @@ my $cloudstack      = $monkeyman->get_cloudstack;
 my $api             = $cloudstack->get_api;
 
 
-foreach my $vm ($api->get_elements( type => 'VirtualMachine', criterions => { all => 1 } )) {
+foreach my $vm ($api->get_elements(
+    type        => 'VirtualMachine',
+    criterions  => {
+        listall => 1
+    }
+)) {
     ok($vm->get_id eq $vm->get_dom->findvalue('/virtualmachine/id'));
 }
 

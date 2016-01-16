@@ -499,11 +499,17 @@ method run_command(
 =cut
 
 method get_doms(
-    Str     :$type!,
-    HashRef :$criterions = { }
+    Str                     :$type!,
+    Maybe[HashRef]          :$criterions,
+    Maybe[ArrayRef[Str]]    :$xpaths,
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+
+    #FIXME# Should I really pretend they ask us to list all elements here?
+    $criterions = { listall => 1 }
+        unless(defined($criterions));
+    #FIXME# Or shouldn't I?
 
     my %magic_words = $self->get_magic_words($type);
 
@@ -526,6 +532,26 @@ method get_doms(
         dom         => $dom,
         return_as   => 'dom'
     );
+
+    if(defined($xpaths)) {
+        foreach my $xpath (@{ $xpaths }) {
+            my @results_filtered;
+            foreach my $result (@results) {
+                foreach my $result_filtered ($self->qxp(
+                    query       => $xpath,
+                    dom         => $result,
+                    return_as   => 'dom'
+                )) {
+                    push(@results_filtered, $result_filtered);
+                }
+            }
+            @results = @results_filtered;
+        }
+    }
+
+    foreach my $dom (@results) {
+        $logger->tracef("Found the %s DOM", $dom);
+    }
 
     return(@results);
 
@@ -592,6 +618,7 @@ This method finds infrastructure elements by the criterions defined.
     foreach my $vm ($api->get_elements(
         type        => 'VirtualMachine',
         criterions  => { host => 'hX.cX.pX.zX' },
+        xpaths      => [ '/virtualmachine[host = "hX.cX.pX.zX"]' ]
     )) {
         ok($vm->get_id, $vm->get_dom->findvalue('/virtualmachine/id');
     }
@@ -602,13 +629,25 @@ method get_elements(
     Str                                     :$type!,
     Maybe[Str]                              :$return_as = 'element',
     Maybe[HashRef]                          :$criterions,
+    Maybe[ArrayRef[Str]]                    :$xpaths,
     Maybe[ArrayRef[XML::LibXML::Document]]  :$doms,
 ) {
 
+    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+
     if(defined($criterions)) {
+
+        $logger->warnf(
+            "It's odd, as some DOM's are given (%s), " .
+            "but some criterions are given too (%s)",
+            $doms, $criterions
+        )
+            if(defined($doms));
+
         foreach my $result ($self->get_doms(
             type        => $type,
-            criterions  => $criterions
+            criterions  => $criterions,
+            xpaths      => $xpaths
         )) {
             push(@{ $doms }, $result);
         }
@@ -624,6 +663,11 @@ method get_elements(
         );
         push(@results, $self->_return_element_as($element, $return_as));
     }
+
+#    if(defined($xpaths)) {
+#        my @results_updated;
+#        @results = @results_updated;
+#    }
 
     return(@results);
 
@@ -808,7 +852,7 @@ method _return_element_as(
 }
 
 method _criterions_to_parameters(
-        :$all,
+        :$listall,
     Str :$id,
     Str :$domainid
 ) {
@@ -816,7 +860,7 @@ method _criterions_to_parameters(
     my %parameters;
 
     $parameters{'listall'} = 'true'
-        if(defined($all));
+        if(defined($listall));
     $parameters{'id'} = $id
         if(defined($id));
     $parameters{'domainid'} = $domainid

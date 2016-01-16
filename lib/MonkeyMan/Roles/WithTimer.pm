@@ -84,7 +84,7 @@ method get_time_passed_formatted {
 
     sprintf("%.6f seconds passed for %s",
         $self->get_time_passed,
-        $self->meta->name
+        $self
     );
 
 }

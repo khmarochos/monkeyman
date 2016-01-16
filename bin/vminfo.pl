@@ -12,59 +12,77 @@ use lib("$Bin/../lib");
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
 use MonkeyMan::Utils;
-use MonkeyMan::CloudStack::API::Element::Domain;
+use MonkeyMan::CloudStack::API::Element::VirtualMachine;
+my %magic_words =
+ %::MonkeyMan::CloudStack::API::Element::VirtualMachine::_magic_words;
 
 use Method::Signatures;
 
 
 
-MonkeyMan->new(
+my $monkeyman = MonkeyMan->new(
+    app_code            => undef,
     app_name            => 'vminfo',
     app_description     => 'The utility to get information about a virtual machine',
     app_version         => MM_VERSION,
     app_usage_help      => \&vminfo_usage,
-    app_code            => \&vminfo_app,
     parameters_to_get   => {
         'o|cond|conditions=s%{,}'   => 'conditions',
-        'x|xpath=s@'                => 'xpath',
+        'x|xpath|xpaths=s@'         => 'xpaths',
         's|short+'                  => 'short'
     }
 );
+my $logger      = $monkeyman->get_logger;
+my $api         = $monkeyman->get_cloudstack->get_api;
+my $parameters  = $monkeyman->get_parameters;
 
 
 
-func vminfo_app(MonkeyMan $mm!) {
+my @xpaths_to_apply;
 
-#    $mm->get_cloudstack->get_api->run_command(
-#        parameters => {
-#            command     => 'disableUser',
-#            id          => '2741357e-7ea9-4dfc-b3ff-43e2efd94736'
-#        },
-#        wait => 1
-#    );
+if(defined($parameters->get_conditions)) {
+    my %conditions = %{ $parameters->get_conditions };
+    foreach my $condition (keys(%conditions)) {
 
-#    my $result = $mm->get_cloudstack->get_api->run_command(
-#        parameters => {
-#            command     => 'listVirtualMachines',
-#            domainid    => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d'
-#        }
-#    );
-#    print(mm_sprintf("%s\n", $result->toString(1)));
+        my $xpath_to_apply;
+        my $xpath_base = sprintf("/%s",
+            $magic_words{'list_tag_entity'}
+        );
 
-    foreach my $d ($mm->get_cloudstack->get_api->get_elements(
-        type        => 'Domain',
-        criterions  => { id  => '6cd7f13c-e1c7-437d-95f9-e98e55eb200d' }
-    )) {
-        foreach my $vm ($d->get_related(type => 'VirtualMachine')) {
-            $vm->refresh_dom;
-            $mm->get_logger->infof(
-                "The %s %s's ID is %s\n",
-                $vm, $vm->get_type(noun => 1), $vm->get_id
+        if($condition =~ /^has_ipaddress$/i) {
+            $xpath_to_apply = sprintf("%s[nic/ipaddress = '%s']",
+                $xpath_base,
+                $conditions{$condition}
             );
         }
+
+        push(@xpaths_to_apply, $xpath_to_apply);
+        $logger->debugf("Added the following XPath query: %s", $xpath_to_apply);
+
     }
+}
 
+foreach my $vm ($api->get_elements(
+    type        => 'VirtualMachine',
+    criterions  => { listall => 1 },
+    xpaths      => [ @xpaths_to_apply ]
+)) {
+    $logger->debugf("Have found the %s %s", $vm, $vm->get_type(noun => 1));
 
+    if(defined($parameters->get_xpaths)) {
+        foreach my $xpath (@{ $parameters->get_xpaths }) {
+            printf(
+                ($parameters->get_short ? "%.0s" : "%s = ") . "%s\n",
+                $xpath,
+                $vm->qxp(
+                    query       => $xpath,
+                    return_as   => 'value'
+                )
+            );
+        }
+    } else {
+        print($vm->get_dom->toString($parameters->get_short ? 0 : 1));
+    }
 
 }
 
