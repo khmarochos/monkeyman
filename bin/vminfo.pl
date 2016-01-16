@@ -71,14 +71,14 @@ foreach my $vm ($api->get_elements(
 
     if(defined($parameters->get_xpaths)) {
         foreach my $xpath (@{ $parameters->get_xpaths }) {
-            printf(
-                ($parameters->get_short ? "%.0s" : "%s = ") . "%s\n",
-                $xpath,
+            print(join("\n",
                 $vm->qxp(
                     query       => $xpath,
-                    return_as   => 'value'
+                    return_as   => ($parameters->get_short > 1) ?
+                                    'value' :
+                                    'dom'
                 )
-            );
+            )."\n");
         }
     } else {
         print($vm->get_dom->toString($parameters->get_short ? 0 : 1));
