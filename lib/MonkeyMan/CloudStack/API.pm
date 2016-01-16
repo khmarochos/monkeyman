@@ -421,13 +421,17 @@ method run_command(
         );
     }
 
-    my $job_run = ${$self->get_time_current}[0];
+    my $job_run = $self->get_time_current_rough;
     my $result  = $command_to_run->run(
         fatal_fail  => $fatal_fail,
         fatal_empty => $fatal_empty,
         fatal_431   => $fatal_431
     );
-    my $dom     = $self->get_dom($result);
+    my $dom = XML::LibXML->new->load_xml(string => $result);
+    $logger->tracef(
+        "The %s reply has been recognized as a DOM: %s",
+            \$result, $dom
+    );
 
     if(my $jobid = $dom->findvalue('/*/jobid')) {
 
@@ -460,13 +464,13 @@ method run_command(
 
                 if(
                     ($wait > 0) &&
-                    ($wait + $job_run <= ${$self->get_time_current}[0])
+                    ($wait + $job_run <= $self->get_time_current_rough)
                 ) {
                     (__PACKAGE__ . '::Exception::Timeout')->throwf(
                         "We can't wait for the %s job to finish anymore: " .
                         "%d seconds have passed, which is more than %d",
                             $jobid,
-                            ${$self->get_time_current}[0] - $job_run,
+                            $self->get_time_current_rough - $job_run,
                             $wait
                     );
                 }
@@ -485,18 +489,6 @@ method run_command(
 
         }
     }
-
-    return($dom);
-
-}
-
-method get_dom(Str $xml!) {
-
-    my $dom = XML::LibXML->new->load_xml(string => $xml);
-
-    $self->get_cloudstack->get_monkeyman->get_logger->tracef(
-        "The %s XML document has been fetched as a DOM: %s", \$xml, $dom
-    );
 
     return($dom);
 

@@ -60,7 +60,7 @@ with high-level Perl5-applications.
     }
 
     # > apps/cool/mine.pl -d 01234567-89ab-cdef-fedc-ba9876543210
-    # 2040/04/20 04:20:00 [I] [main] The  virtual machine's ID is 01234567-dead-beef-cafe-899123456789 - got as [MonkeyMan::CloudStack::API::Element::VirtualMachine@0xdeadbee/badcaffedeadfacefeeddeafbeefbabe]
+    # 2040/04/20 04:20:00 [I] [main] The  virtual machine's ID is 01234567-dead-beef-cafe-899123456789 - got as [MonkeyMan::CloudStack::API::Element::VirtualMachine@0xdeadbee/badcaffefeeddeafbeefbabedeadface]
     # 
     # Hope you'll enjoy it :)
     #
@@ -78,7 +78,7 @@ use 5.20.1;
 our $VERSION='v2.1.0-dev_melnik13_v3';
 
 # Use Moose and be happy :)
-use Moose;
+use Moose 2.1604;
 use namespace::autoclean;
 
 # Add some roles
@@ -114,7 +114,7 @@ This method initializes the framework and runs the application.
 
 method BUILD(...) {
 
-    $self->get_logger->debugf("%s Hello world!", $self->get_time_passed_formatted);
+    $self->get_logger->debugf("<%s> Hello world!", $self->get_time_passed_formatted);
     $self->_mm_init;
 
     if(defined($self->get_app_code)) {
@@ -128,7 +128,7 @@ method BUILD(...) {
 END {
     my $mm = MonkeyMan->instance;
     $mm->_mm_shutdown;
-    $mm->get_logger->debugf("%s Goodbye world!", $mm->get_time_passed_formatted);
+    $mm->get_logger->debugf("<%s> Goodbye world!", $mm->get_time_passed_formatted);
 }
 
 method BUILDARGS(...) {
@@ -571,7 +571,7 @@ method _mm_init {
         $self->get_time_started_formatted
     );
 
-    $logger->debugf("%s The framework has been initialized",
+    $logger->debugf("<%s> The framework has been initialized",
         $self->get_time_passed_formatted,
         $self
     );
@@ -582,7 +582,7 @@ method _mm_init {
 
 method _app_start {
 
-    $self->get_logger->debugf("%s The application has been started",
+    $self->get_logger->debugf("<%s> The application has been started",
         $self->get_time_passed_formatted
     );
 
@@ -594,7 +594,7 @@ method _app_run {
 
     &{ $self->{app_code}; }($self);
 
-    $self->get_logger->debugf("%s The application has been executed",
+    $self->get_logger->debugf("<%s> The application has been executed",
         $self->get_time_passed_formatted
     );
 
@@ -604,7 +604,7 @@ method _app_run {
 
 method _app_finish {
 
-    $self->get_logger->debugf("%s The application has been finished",
+    $self->get_logger->debugf("<%s> The application has been finished",
         $self->get_time_passed_formatted
     );
 
@@ -614,7 +614,7 @@ method _app_finish {
 
 method _mm_shutdown {
 
-    $self->get_logger->debugf("%s The framework is shutting itself down",
+    $self->get_logger->debugf("<%s> The framework is shutting itself down",
         $self->get_time_passed_formatted,
         $self
     );

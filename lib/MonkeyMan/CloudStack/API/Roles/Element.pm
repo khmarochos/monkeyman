@@ -170,7 +170,7 @@ around '_set_dom' => sub {
             $self, $dom
         );
 
-    $self->_set_dom_updated(${$self->get_time_current}[0]);
+    $self->_set_dom_updated($self->get_time_current_rough);
     $self->$orig($dom);
 
 };
@@ -246,9 +246,9 @@ plus C<N> is not greater than the current time.
     # Let's assume it's 1000 seconds of Unix Epoch now
     # and the DOM has been refreshed at 300
     #
-    ok( $self->is_dom_expired('+699) );
-    ok( $self->is_dom_expired('+700) );
-    ok(!$self->is_dom_expired('+701) );
+    ok( $self->is_dom_expired('+699') );
+    ok( $self->is_dom_expired('+700') );
+    ok(!$self->is_dom_expired('+701') );
 
 If equals to C<-N>, the method returns true (expired) if the DOM has been
 refreshed not less than N seconds ago.
@@ -267,7 +267,7 @@ method is_dom_expired(Maybe[Str] $best_before) {
     $best_before = '+' . $self->get_dom_best_before
         unless(defined($best_before));
     my $is_expired = 0;
-    my $now = ${$self->get_time_current}[0];
+    my $now = $self->get_time_current_rough;
     if($best_before =~ /^\s*([\+\-])?\s*(\d+)\s*$/) {
         $is_expired = 1 if(
             (

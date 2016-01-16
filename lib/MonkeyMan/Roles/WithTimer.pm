@@ -54,11 +54,19 @@ method _build_time_started_formatted {
 
 
 
+method get_time_current_rough {
+
+    return(${$self->get_time_current}[0]);
+
+}
+
+
+
 method get_time_current {
 
     my @time_current = gettimeofday;
 
-    \@time_current;
+    return(\@time_current);
 
 }
 
@@ -74,7 +82,7 @@ method get_time_passed {
 
 method get_time_passed_formatted {
 
-    sprintf("<%.6f seconds passed for %s>",
+    sprintf("%.6f seconds passed for %s",
         $self->get_time_passed,
         $self->meta->name
     );

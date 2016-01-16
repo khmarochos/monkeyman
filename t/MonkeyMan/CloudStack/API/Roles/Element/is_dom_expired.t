@@ -44,7 +44,7 @@ my $d = ($api->get_elements(
 my $wait = 3; sleep($wait);
 
 my $dom_updated = $d->get_dom_updated;
-my $now = ${$d->get_time_current}[0];
+my $now = $d->get_time_current_rough;
 $logger->debugf(
     "The %s domain is loaded, the DOM is updated at %s, it's %s now",
         $d,
@@ -59,10 +59,10 @@ ok( $d->is_dom_expired($now - ($wait + 0)) );
 ok( $d->is_dom_expired($now - ($wait - 1)) );
 ok( $d->is_dom_expired('+' . ($wait - 1)) );
 ok( $d->is_dom_expired('+' . ($wait + 0)) );
-ok(!$d->is_dom_expired('+' . ($wait + 10)) );
+ok(!$d->is_dom_expired('+' . ($wait + 1)) );
 ok( $d->is_dom_expired('-' . ($wait - 1)) );
 ok( $d->is_dom_expired('-' . ($wait + 0)) );
-ok(!$d->is_dom_expired('-' . ($wait + 10)) );
+ok(!$d->is_dom_expired('-' . ($wait + 1)) );
 
 
 

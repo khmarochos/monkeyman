@@ -56,9 +56,9 @@ method is_expired(
         my $sign = $1;
         my $time = $2;
         if($sign eq '+') {
-            $time = ${$self->get_time_current}[0] + $time;
+            $time = $self->get_time_current_rough + $time;
         } elsif($sign eq '-') {
-            $time = ${$self->get_time_current}[0] - $time;
+            $time = $self->get_time_current_rough - $time;
         }
         $time_to_cmp = $time;
     } else {
