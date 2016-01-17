@@ -49,7 +49,12 @@ if(defined($parameters->get_conditions)) {
             $magic_words{'list_tag_entity'}
         );
 
-        if($condition =~ /^has_ipaddress$/i) {
+        if($condition =~ /^has_id/) {
+            $xpath_to_apply = sprintf("%s[id = '%s']",
+                $xpath_base,
+                $conditions{$condition}
+            );
+        } elsif($condition =~ /^has_ipaddress$/i) {
             $xpath_to_apply = sprintf("%s[nic/ipaddress = '%s']",
                 $xpath_base,
                 $conditions{$condition}

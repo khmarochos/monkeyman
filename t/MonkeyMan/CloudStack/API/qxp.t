@@ -9,17 +9,21 @@ use lib("$RealBin/../../../../lib");
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
 
-use Test::More;
-use Array::Utils qw(array_diff);
-
-
-
 my $monkeyman = MonkeyMan->new(
-    app_code            => undef,
+    app_code            => \&test,
     app_name            => 'qxp.t',
     app_description     => 'MonkeyMan::CloudStack::API::qxp testing script',
     app_version         => MM_VERSION
 );
+
+#sub test {
+#    my $monkeyman = shift;
+#    ...
+
+
+use Test::More;
+use XML::LibXML;
+use Array::Utils qw(array_diff);
 
 my $logger          = $monkeyman->get_logger;
 my $cloudstack      = $monkeyman->get_cloudstack;
@@ -37,7 +41,7 @@ my @ids_local;
 
 
 
-$logger->debug("Getting values");
+$logger->debug("Getting IDs as values");
 
 @ids_local = ();
 
@@ -58,7 +62,7 @@ ok(!array_diff(@ids_local, @ids_global));
 
 
 
-$logger->debug("Getting DOMs");
+$logger->debug("Getting elements as DOMs");
 
 @ids_local = ();
 
@@ -98,7 +102,7 @@ ok(!array_diff(@ids_local, @ids_global));
 
 
 
-$logger->debug("Getting IDs");
+$logger->debug("Getting elements' IDs");
 
 @ids_local = ();
 

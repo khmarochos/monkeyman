@@ -40,6 +40,7 @@ use namespace::autoclean;
 with 'MonkeyMan::CloudStack::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
+use MonkeyMan::Types qw(ElementType);
 use MonkeyMan::Constants qw(:cloudstack);
 use MonkeyMan::Utils qw(mm_load_package);
 use MonkeyMan::Exception qw(
@@ -496,6 +497,23 @@ method run_command(
 
 =head2 C<get_doms()>
 
+The method returns the list of DOMs of elements of type defined matching
+XPath-condtions defined. You probably won't need it, because it only performs
+dirty work for C<get_elements()> which can return DOMs as well.
+
+Anyhow, it consumes the following parameters:
+
+=head4 C<type>
+
+MANDATORY. The type of elements that needs to be found, types are described in
+the L<MonkeyMan::CloudStack::API::Element::TYPE> manual.
+
+=head4 C<criterions>
+
+Optional. 
+
+=head4 C<xpaths>
+
 =cut
 
 method get_doms(
@@ -518,7 +536,7 @@ method get_doms(
         $criterions
     );
 
-    my %parameters = ($self->_criterions_to_parameters(%{ $criterions }));
+    my %parameters = ($self->criterions_to_parameters($type, %{ $criterions }));
        $parameters{'command'} = $magic_words{'find_command'};
 
     my $dom = $self->run_command(
@@ -574,7 +592,7 @@ method get_job_result(Str $jobid!) {
 
 
 
-method load_element_package(Str $type) {
+method load_element_package(Str $type!) {
 
     try {
         return(mm_load_package(__PACKAGE__ . '::Element::' . $type));
@@ -742,9 +760,9 @@ C<MonkeyMan::CloudStack::API::Element::TYPE> objects.
 =cut
 
 method qxp(
-    Str         :$query!,
-    Object      :$dom!,
-    Maybe[Str]  :$return_as,
+    Str                     :$query!,
+    XML::LibXML::Document   :$dom!,
+    Maybe[Str]              :$return_as,
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
@@ -851,23 +869,14 @@ method _return_element_as(
 
 }
 
-method _criterions_to_parameters(
-        :$listall,
-    Str :$id,
-    Str :$domainid
-) {
-
-    my %parameters;
-
-    $parameters{'listall'} = 'true'
-        if(defined($listall));
-    $parameters{'id'} = $id
-        if(defined($id));
-    $parameters{'domainid'} = $domainid
-        if(defined($domainid));
-
+method criterions_to_parameters(Str $type!, ...) {
+    shift;
+    no strict 'refs';
+    my $class_name = $self->load_element_package($type);
+    my %parameters = &{
+        '::' . $class_name . '::_criterions_to_parameters'
+    }(@_);
     return(%parameters);
-
 }
 
 

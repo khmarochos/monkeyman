@@ -26,6 +26,16 @@ our %_related = (
     }
 );
 
+func _criterions_to_parameters(
+        :$listall,
+    Str :$id,
+) {
+    my %parameters;
+    $parameters{'listall'}  = 'true'        if(defined($listall));
+    $parameters{'id'}       = $id           if(defined($id));
+    return(%parameters);
+}
+
 
 
 __PACKAGE__->meta->make_immutable;

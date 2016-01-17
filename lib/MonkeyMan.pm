@@ -86,6 +86,7 @@ with 'MonkeyMan::Roles::WithTimer';
 # This is a role to implement the timer attributes for the MonkeyMan class
 # (the time_started attribute and some methods to work with it)
 
+use MonkeyMan::Types qw(ElementType);
 use MonkeyMan::Constants qw(:ALL);
 use MonkeyMan::Exception qw(CanNotLoadPackage);
 use MonkeyMan::Parameters;
