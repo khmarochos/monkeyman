@@ -40,7 +40,7 @@ use namespace::autoclean;
 with 'MonkeyMan::CloudStack::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
-use MonkeyMan::Types qw(ElementType);
+use MonkeyMan::CloudStack::Types qw(ElementType);
 use MonkeyMan::Constants qw(:cloudstack);
 use MonkeyMan::Utils qw(mm_load_package);
 use MonkeyMan::Exception qw(
@@ -517,9 +517,9 @@ Optional.
 =cut
 
 method get_doms(
-    Str                     :$type!,
-    Maybe[HashRef]          :$criterions,
-    Maybe[ArrayRef[Str]]    :$xpaths,
+    MonkeyMan::CloudStack::Types::ElementType   :$type!,
+    Maybe[HashRef]                              :$criterions,
+    Maybe[ArrayRef[Str]]                        :$xpaths,
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
@@ -592,7 +592,7 @@ method get_job_result(Str $jobid!) {
 
 
 
-method load_element_package(Str $type!) {
+method load_element_package(MonkeyMan::CloudStack::Types::ElementType $type!) {
 
     try {
         return(mm_load_package(__PACKAGE__ . '::Element::' . $type));
@@ -606,7 +606,7 @@ method load_element_package(Str $type!) {
 
 }
 
-method get_magic_words(Str $type!) {
+method get_magic_words(MonkeyMan::CloudStack::Types::ElementType $type!) {
 
     my $class_name = $self->load_element_package($type);
 
@@ -644,11 +644,11 @@ This method finds infrastructure elements by the criterions defined.
 =cut
 
 method get_elements(
-    Str                                     :$type!,
-    Maybe[Str]                              :$return_as = 'element',
-    Maybe[HashRef]                          :$criterions,
-    Maybe[ArrayRef[Str]]                    :$xpaths,
-    Maybe[ArrayRef[XML::LibXML::Document]]  :$doms,
+    MonkeyMan::CloudStack::Types::ElementType   :$type!,
+    Maybe[Str]                                  :$return_as = 'element',
+    Maybe[HashRef]                              :$criterions,
+    Maybe[ArrayRef[Str]]                        :$xpaths,
+    Maybe[ArrayRef[XML::LibXML::Document]]      :$doms,
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
@@ -761,7 +761,7 @@ C<MonkeyMan::CloudStack::API::Element::TYPE> objects.
 
 method qxp(
     Str                     :$query!,
-    XML::LibXML::Document   :$dom!,
+    XML::LibXML::Document :$dom!, # DON'T ADD SPACES HERE!
     Maybe[Str]              :$return_as,
 ) {
 
@@ -834,10 +834,10 @@ method qxp(
 #
 
 method translate_type(
-    Str    :$type!,
-    Bool   :$a      = 0,
-    Bool   :$noun   = 1,
-    Bool   :$plural = 0
+    MonkeyMan::CloudStack::Types::ElementType   :$type!,
+    Bool                                        :$a      = 0,
+    Bool                                        :$noun   = 1,
+    Bool                                        :$plural = 0
 ) {
     if($noun) {
         $type =~ s/(?:\b|(?<=([a-z])))([A-Z][a-z]+)/(defined($1) ? ' ' : '') . lc($2)/eg;
@@ -869,7 +869,10 @@ method _return_element_as(
 
 }
 
-method criterions_to_parameters(Str $type!, ...) {
+method criterions_to_parameters(
+    MonkeyMan::CloudStack::Types::ElementType $type!,
+    ...
+) {
     shift;
     no strict 'refs';
     my $class_name = $self->load_element_package($type);

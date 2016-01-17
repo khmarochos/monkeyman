@@ -1,7 +1,12 @@
-package MonkeyMan::Types;
+package MonkeyMan::CloudStack::Types;
 
 use strict;
 use warnings;
+
+our @_types_known = qw(
+    VirtualMachine
+    Domain
+);
 
 use MooseX::Types -declare => [
     qw(
@@ -10,10 +15,7 @@ use MooseX::Types -declare => [
 ];
 use MooseX::Types::Moose qw(Str);
 
-our @_types_known = qw(
-    VirtualMachine
-    Domain
-);
+no strict 'refs';
 
 subtype ElementType,
     as Str,
