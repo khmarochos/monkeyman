@@ -37,9 +37,9 @@ plus `N` is not greater than the current time.
 # Let's assume it's 1000 seconds of Unix Epoch now
 # and the DOM has been refreshed at 300
 #
-ok( $self->is_dom_expired('+699) );
-ok( $self->is_dom_expired('+700) );
-ok(!$self->is_dom_expired('+701) );
+ok( $self->is_dom_expired('+699') );
+ok( $self->is_dom_expired('+700') );
+ok(!$self->is_dom_expired('+701') );
 ```
 
 If equals to `-N`, the method returns true (expired) if the DOM has been

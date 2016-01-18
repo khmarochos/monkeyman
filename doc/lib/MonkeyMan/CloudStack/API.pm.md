@@ -219,6 +219,23 @@ is 1.
 
 ## `get_doms()`
 
+The method returns the list of DOMs of elements of type defined matching
+XPath-condtions defined. You probably won't need it, because it only performs
+dirty work for `get_elements()` which can return DOMs as well.
+
+Anyhow, it consumes the following parameters:
+
+#### `type`
+
+MANDATORY. The type of elements that needs to be found, types are described in
+the [MonkeyMan::CloudStack::API::Element::TYPE](https://metacpan.org/pod/MonkeyMan::CloudStack::API::Element::TYPE) manual.
+
+#### `criterions`
+
+Optional. 
+
+#### `xpaths`
+
 ## `get_elements()`
 
 This method finds infrastructure elements by the criterions defined.
@@ -227,6 +244,7 @@ This method finds infrastructure elements by the criterions defined.
 foreach my $vm ($api->get_elements(
     type        => 'VirtualMachine',
     criterions  => { host => 'hX.cX.pX.zX' },
+    xpaths      => [ '/virtualmachine[host = "hX.cX.pX.zX"]' ]
 )) {
     ok($vm->get_id, $vm->get_dom->findvalue('/virtualmachine/id');
 }
@@ -304,6 +322,6 @@ This parameter defines what kind of results are expected.
 
 Hey! **The above document had some coding errors, which are explained below:**
 
-- Around line 687:
+- Around line 741:
 
     '=item' outside of any '=over'

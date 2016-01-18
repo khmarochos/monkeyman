@@ -36,14 +36,15 @@ This application recognizes the following parameters:
         [opt] [mul] Get the result in a short form (try to add it twice!)
 __END_OF_USAGE_HELP__
     parameters_to_get   => {
-        'o|cond|conditions=s%{,}'   => 'conditions',
-        'x|xpath|xpaths=s@'         => 'xpaths',
-        's|short+'                  => 'short'
+        'o|cond|condition|conditions=s%{,}' => 'conditions',
+        'x|xpath|xpaths=s@'                 => 'xpaths',
+        's|short|be-short+'                 => 'be_short'
     }
 );
 my $logger      = $monkeyman->get_logger;
 my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
+
 
 
 
@@ -85,12 +86,16 @@ if(defined($parameters->get_conditions)) {
 
 }
 
+
+
 # So, if the user asked for "-o has_ipaddress=13.13.13.13 -o has_domain=LAB13",
 # the @xpaths_to_apply list shall contain the following elements:
 # (
 #   "/virtualmachineslist/[nic/ipaddress = '13.13.13.13']",
 #   "/virtualmachineslist/[domain = 'LAB13']"
 # )
+
+my $be_short    = $parameters->get_be_short;
 
 foreach my $vm ($api->get_elements(
     type        => 'VirtualMachine',
@@ -107,13 +112,15 @@ foreach my $vm ($api->get_elements(
         # asks for "-x /virtualmachine/id"), let's give them what they need.
 
         foreach my $xpath (@{ $parameters->get_xpaths }) {
+            my @doms_new;
             foreach my $dom (@doms) {
-                @doms = $api->qxp(
+                push(@doms_new, $api->qxp(
                     query       => $xpath,
                     dom         => $dom,
                     return_as   => 'dom'
-                );
+                ));
             }
+            @doms = @doms_new;
         }
     }
 
@@ -121,9 +128,9 @@ foreach my $vm ($api->get_elements(
     # the results in the form requested (depends on "-s" parameters quantity).
 
     foreach (@doms) {
-        if(defined($parameters->get_short) && $parameters->get_short > 1) {
+        if     (defined($be_short) && $be_short > 1) {
             print($_->findvalue('*'));
-        } elsif(defined($parameters->get_short) && $parameters->get_short > 0) {
+        } elsif(defined($be_short) && $be_short > 0) {
             print($_->toString(0));
         } else {
             print($_->toString(1));
@@ -133,8 +140,3 @@ foreach my $vm ($api->get_elements(
 }
 
 
-
-func vminfo_usage {
-
-
-}

@@ -698,7 +698,7 @@ method get_elements(
 This method queries the DOM (as L<XML::LibXML::Document>) provided 
 with the XPath-query provided.
 
-    $dom = $api->run(
+    $dom = $api->run_command(
         command     => 'listVirtualMachines',
         listAll     => 'true'
     );
