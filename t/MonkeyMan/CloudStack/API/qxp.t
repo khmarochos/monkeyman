@@ -19,11 +19,6 @@ my $monkeyman = MonkeyMan->new(
     }
 );
 
-#sub test {
-#    my $monkeyman = shift;
-#    ...
-
-
 use Test::More;
 use XML::LibXML;
 use Array::Utils qw(array_diff);
