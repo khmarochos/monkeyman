@@ -25,7 +25,16 @@ my $monkeyman = MonkeyMan->new(
     app_name            => 'vminfo',
     app_description     => 'The utility to get information about a virtual machine',
     app_version         => MM_VERSION,
-    app_usage_help      => \&vminfo_usage,
+    app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
+This application recognizes the following parameters:
+
+    -o <condition>, --condition <condition>
+        [mul]       Look up for virtual machines by certain conditions
+    -x <query>, --xpath <query>
+        [opt] [mul] Apply some XPath-queries and show their result
+    -s, --short
+        [opt] [mul] Get the result in a short form (try to add it twice!)
+__END_OF_USAGE_HELP__
     parameters_to_get   => {
         'o|cond|conditions=s%{,}'   => 'conditions',
         'x|xpath|xpaths=s@'         => 'xpaths',
@@ -37,6 +46,10 @@ my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
 
 
+
+# First of all, let's prepare the list of XPath-queries that will be aplied
+# to the full list of virtual machines. These XPath-queries should select only
+# those ones that the user needs.
 
 my @xpaths_to_apply;
 
@@ -72,6 +85,13 @@ if(defined($parameters->get_conditions)) {
 
 }
 
+# So, if the user asked for "-o has_ipaddress=13.13.13.13 -o has_domain=LAB13",
+# the @xpaths_to_apply list shall contain the following elements:
+# (
+#   "/virtualmachineslist/[nic/ipaddress = '13.13.13.13']",
+#   "/virtualmachineslist/[domain = 'LAB13']"
+# )
+
 foreach my $vm ($api->get_elements(
     type        => 'VirtualMachine',
     criterions  => { listall => 1 },
@@ -82,6 +102,10 @@ foreach my $vm ($api->get_elements(
     my @doms = $vm->get_dom;
 
     if(defined($parameters->get_xpaths)) {
+
+        # If the user would like to ADD some XPath-queries (for example, they
+        # asks for "-x /virtualmachine/id"), let's give them what they need.
+
         foreach my $xpath (@{ $parameters->get_xpaths }) {
             foreach my $dom (@doms) {
                 @doms = $api->qxp(
@@ -92,6 +116,10 @@ foreach my $vm ($api->get_elements(
             }
         }
     }
+
+    # In any case we have at least one XML::LibXML::Document, so let's display
+    # the results in the form requested (depends on "-s" parameters quantity).
+
     foreach (@doms) {
         if(defined($parameters->get_short) && $parameters->get_short > 1) {
             print($_->findvalue('*'));
@@ -108,16 +136,5 @@ foreach my $vm ($api->get_elements(
 
 func vminfo_usage {
 
-    return(<<__END_OF_USAGE_HELP__
-This application recognizes the following parameters:
-
-    -o <condition>, --condition <condition>
-        [mul]       Look up for virtual machines by certain conditions
-    -x <query>, --xpath <query>
-        [opt] [mul] Apply some XPath-queries and show their result
-    -s, --short
-        [opt] [mul] Get the result in a short form (try to add it twice!)
-__END_OF_USAGE_HELP__
-    );
 
 }
