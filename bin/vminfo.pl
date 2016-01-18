@@ -59,6 +59,13 @@ if(defined($parameters->get_conditions)) {
                 $xpath_base,
                 $conditions{$condition}
             );
+        } elsif($condition =~ /^has_domain$/i) {
+            $xpath_to_apply = sprintf("%s[domain = '%s']",
+                $xpath_base,
+                $conditions{$condition}
+            );
+        } else {
+            MonkeyMan::Exception->throwf("The %s condition is invalid", $condition);
         }
 
         push(@xpaths_to_apply, $xpath_to_apply);
@@ -70,23 +77,31 @@ if(defined($parameters->get_conditions)) {
 foreach my $vm ($api->get_elements(
     type        => 'VirtualMachine',
     criterions  => { listall => 1 },
-    xpaths      => [ @xpaths_to_apply ]
+    xpaths      => [ (@xpaths_to_apply) ]
 )) {
     $logger->debugf("Have found the %s %s", $vm, $vm->get_type(noun => 1));
 
+    my @doms = $vm->get_dom;
+
     if(defined($parameters->get_xpaths)) {
         foreach my $xpath (@{ $parameters->get_xpaths }) {
-            print(join("\n",
-                $vm->qxp(
+            foreach my $dom (@doms) {
+                @doms = $api->qxp(
                     query       => $xpath,
-                    return_as   => ($parameters->get_short > 1) ?
-                                    'value' :
-                                    'dom'
-                )
-            )."\n");
+                    dom         => $dom,
+                    return_as   => 'dom'
+                );
+            }
         }
-    } else {
-        print($vm->get_dom->toString($parameters->get_short ? 0 : 1));
+    }
+    foreach (@doms) {
+        if(defined($parameters->get_short) && $parameters->get_short > 1) {
+            print($_->findvalue('*'));
+        } elsif(defined($parameters->get_short) && $parameters->get_short > 0) {
+            print($_->toString(0));
+        } else {
+            print($_->toString(1));
+        }
     }
 
 }
@@ -101,7 +116,7 @@ This application recognizes the following parameters:
     -o <condition>, --condition <condition>
         [mul]       Look up for virtual machines by certain conditions
     -x <query>, --xpath <query>
-        [opt] [mul] Apply some XPath-queries
+        [opt] [mul] Apply some XPath-queries and show their result
     -s, --short
         [opt] [mul] Get the result in a short form
 __END_OF_USAGE_HELP__
