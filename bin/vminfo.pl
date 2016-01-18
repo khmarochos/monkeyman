@@ -41,14 +41,13 @@ my $parameters  = $monkeyman->get_parameters;
 my @xpaths_to_apply;
 
 if(defined($parameters->get_conditions)) {
+
+    # Adding the '/virtualmachineslist' prefix to queries
+    my $xpath_base = '/' . $magic_words{'list_tag_entity'};
+
     my %conditions = %{ $parameters->get_conditions };
     foreach my $condition (keys(%conditions)) {
-
         my $xpath_to_apply;
-        my $xpath_base = sprintf("/%s",
-            $magic_words{'list_tag_entity'}
-        );
-
         if($condition =~ /^has_id/) {
             $xpath_to_apply = sprintf("%s[id = '%s']",
                 $xpath_base,
@@ -67,11 +66,10 @@ if(defined($parameters->get_conditions)) {
         } else {
             MonkeyMan::Exception->throwf("The %s condition is invalid", $condition);
         }
-
         push(@xpaths_to_apply, $xpath_to_apply);
         $logger->debugf("Added the following XPath query: %s", $xpath_to_apply);
-
     }
+
 }
 
 foreach my $vm ($api->get_elements(
@@ -118,7 +116,7 @@ This application recognizes the following parameters:
     -x <query>, --xpath <query>
         [opt] [mul] Apply some XPath-queries and show their result
     -s, --short
-        [opt] [mul] Get the result in a short form
+        [opt] [mul] Get the result in a short form (try to add it twice!)
 __END_OF_USAGE_HELP__
     );
 
