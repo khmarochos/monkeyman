@@ -33,7 +33,7 @@ after install_accessors => sub {
 
             my $handy_default   = $handy->{'default'};
             confess("The default slot of the handy isn't defined")
-                unless(defined($handy_name));
+                unless(defined($handy_default));
 
             my $handy_strict    = $handy->{'strict'};
             confess("The strictness of the handy isn't defined")
@@ -58,7 +58,7 @@ after install_accessors => sub {
                         my $slot = $_[1];
                            $slot = defined($slot) ? $slot : $handy_default;
 
-                        @_ = ($_[0]); # Cut it short >8
+                        @_ = ($_[0]); # 8< Cut it short 8<
 
                         my $hashref = &{ $read_method_ref };
                         confess("The attribute doesn't contain a HashRef as it's supposed to")

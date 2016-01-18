@@ -9,7 +9,7 @@ use lib("$RealBin/../../lib");
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version :cloudstack);
 
-use Test::More (tests => 2);
+use Test::More (tests => 3);
 
 
 
@@ -20,5 +20,6 @@ my $monkeyman = MonkeyMan->new(
     app_version         => MM_VERSION
 );
 
+ok($monkeyman->_get_cloudstacks->{&MM_PRIMARY_CLOUDSTACK} == $monkeyman->get_cloudstack);
 ok($monkeyman->get_cloudstack == $monkeyman->get_cloudstack);
 ok($monkeyman->get_cloudstack == $monkeyman->get_cloudstack(&MM_PRIMARY_CLOUDSTACK));

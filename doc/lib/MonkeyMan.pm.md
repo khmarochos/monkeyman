@@ -55,7 +55,7 @@ sub MyCoolApplication {
 }
 
 # > apps/cool/mine.pl -d 01234567-89ab-cdef-fedc-ba9876543210
-# 2040/04/20 04:20:00 [I] [main] The  virtual machine's ID is 01234567-dead-beef-cafe-899123456789 - got as [MonkeyMan::CloudStack::API::Element::VirtualMachine@0xdeadbee/badcaffefeeddeafbeefbabedeadface]
+# 2040/04/20 04:20:00 [I] [main] The virtual machine's ID is 01234567-dead-beef-cafe-899123456789 - got as [MonkeyMan::CloudStack::API::Element::VirtualMachine@0xdeadbee/badcaffefeeddeafbeefbabedeadface]
 # 
 # Hope you'll enjoy it :)
 #

@@ -256,7 +256,7 @@ This method queries the DOM (as [XML::LibXML::Document](https://metacpan.org/pod
 with the XPath-query provided.
 
 ```perl
-$dom = $api->run(
+$dom = $api->run_command(
     command     => 'listVirtualMachines',
     listAll     => 'true'
 );

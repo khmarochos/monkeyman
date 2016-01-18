@@ -304,6 +304,32 @@ method is_dom_expired(Maybe[Str] $best_before) {
 
 
 
+has 'id' => (
+    is          => 'rw',
+    isa         => 'Maybe[Str]',
+    reader      =>    'get_id',
+    writer      =>   '_set_id',
+    predicate   =>    'has_id',
+    builder     => '_build_id',
+    lazy        => 1
+);
+
+method _build_id {
+    $self->get_id;
+}
+
+around 'get_id' => sub {
+    my $orig = shift;
+    my $self = shift;
+
+    return(($self->qxp(
+        query       => '/id',
+        return_as   => 'value'
+    ))[0]);
+};
+
+
+
 method get_related(
     Str         :$type!,
     Maybe[Str]  :$best_before
@@ -346,31 +372,7 @@ method get_related(
 
 
 
-has 'id' => (
-    is          => 'rw',
-    isa         => 'Maybe[Str]',
-    reader      =>    'get_id',
-    writer      =>   '_set_id',
-    predicate   =>    'has_id',
-    builder     => '_build_id',
-    lazy        => 1
-);
-
-method _build_id {
-    $self->get_id;
-}
-
-around 'get_id' => sub {
-    my $orig = shift;
-    my $self = shift;
-
-    return(($self->qxp(
-        query       => '/id',
-        return_as   => 'value'
-    ))[0]);
-};
-
-
+# Some proxy-like methods goes here...
 
 method qxp(
     Str                     :$query!,
@@ -395,6 +397,14 @@ method qxp(
 
 }
 
+method criterions_to_parameters(...) {
 
+    my @results = $self->get_api->criterions_to_parameters(
+        $self->get_type,
+        @_
+    );
+    return(@results);
+
+}
 
 1;

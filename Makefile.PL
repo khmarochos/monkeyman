@@ -3,6 +3,9 @@
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
+    ABSTRACT_FROM   => 'lib/MonkeyMan.pm',
+    AUTHOR          => 'Volodymyr Melnyk <vladimir@melnik.net.ua>',
+    LICENSE         => 'Apache',
     NAME            => 'MonkeyMan',
     VERSION_FROM    => 'lib/MonkeyMan.pm',
     test            => {

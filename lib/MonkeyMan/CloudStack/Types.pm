@@ -1,26 +1,40 @@
 package MonkeyMan::CloudStack::Types;
+#FIXME: MonkeyMan::CloudStack::API::Types?
 
 use strict;
 use warnings;
 
-our @_types_known = qw(
-    VirtualMachine
-    Domain
-);
-
 use MooseX::Types -declare => [
     qw(
         ElementType
+        ReturnAs
     )
 ];
 use MooseX::Types::Moose qw(Str);
 
-no strict 'refs';
 
+
+our @_ElementType_values = qw(
+    VirtualMachine
+    Domain
+);
 subtype ElementType,
     as Str,
-    where { grep(@{'::' . __PACKAGE__ . '::_types_known'}, $_); },
-    message { "ElementType isn't valid" };
+        where { my $v = $_; grep({ $_ eq $v} @_ElementType_values); },
+            message { "This ElementType isn't valid" };
+
+
+
+our @_ReturnAs_regexps = qw(
+    ^dom$
+    ^value$
+    ^element(:?\[.+\])?$
+    ^id(:?\[.+\])?$
+);
+subtype ReturnAs,
+    as Str,
+        where { my $v = $_; grep({ $v =~ qr/$_/ } @_ReturnAs_regexps); },
+            message { "This ReturnAs isn't valid" };
 
 
 

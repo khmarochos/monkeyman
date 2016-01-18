@@ -40,7 +40,7 @@ use namespace::autoclean;
 with 'MonkeyMan::CloudStack::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
-use MonkeyMan::CloudStack::Types qw(ElementType);
+use MonkeyMan::CloudStack::Types qw(ElementType ReturnAs);
 use MonkeyMan::Constants qw(:cloudstack);
 use MonkeyMan::Utils qw(mm_load_package);
 use MonkeyMan::Exception qw(
@@ -644,11 +644,11 @@ This method finds infrastructure elements by the criterions defined.
 =cut
 
 method get_elements(
-    MonkeyMan::CloudStack::Types::ElementType   :$type!,
-    Maybe[Str]                                  :$return_as = 'element',
-    Maybe[HashRef]                              :$criterions,
-    Maybe[ArrayRef[Str]]                        :$xpaths,
-    Maybe[ArrayRef[XML::LibXML::Document]]      :$doms,
+    MonkeyMan::CloudStack::Types::ElementType       :$type!,
+    Maybe[MonkeyMan::CloudStack::Types::ReturnAs]   :$return_as = 'element',
+    Maybe[HashRef]                                  :$criterions,
+    Maybe[ArrayRef[Str]]                            :$xpaths,
+    Maybe[ArrayRef[XML::LibXML::Document]]          :$doms,
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
@@ -760,9 +760,9 @@ C<MonkeyMan::CloudStack::API::Element::TYPE> objects.
 =cut
 
 method qxp(
-    Str                     :$query!,
+    Str :$query!,
     XML::LibXML::Document :$dom!, # DON'T ADD SPACES HERE!
-    Maybe[Str]              :$return_as,
+    Maybe[MonkeyMan::CloudStack::Types::ReturnAs] :$return_as
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
