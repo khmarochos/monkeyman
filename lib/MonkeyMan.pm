@@ -133,6 +133,7 @@ method BUILD(...) {
 
 method BUILDARGS(...) {
 
+    # FIXME: Please, move this crap to the MonkeyMan::Parameters module (added on 2016.01.19)
     my %args = @_;
     my @required_parameters;
     my @required_attributes;
@@ -151,11 +152,11 @@ method BUILDARGS(...) {
     );
     while(my($reserved_parameters_group, $reserved_attribute) = each(%default_parameters)) {
         foreach my $forbidden_attribute (grep({ $reserved_attribute eq $_ } @required_attributes)) {
-            warn(sprintf("The '%s' command-line parameter is forbidden, you shouldn't try to use it"));
+            warn(sprintf("The '%s' attribute is forbidden, you shouldn't try to use it", $forbidden_attribute));
         }
         foreach my $reserved_parameter ($reserved_parameters_group =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g) {
             foreach my $forbidden_parameter (grep({ $reserved_parameter eq $_ } @required_parameters)) {
-                warn(sprintf("The '%s' command-line parameter is forbidden, you shouldn't try to use it"));
+                warn(sprintf("The '%s' command-line parameter is forbidden, you shouldn't try to use it", $forbidden_parameter));
             }
         }
         $args{'parameters_to_get'}->{$reserved_parameters_group} = $reserved_attribute;

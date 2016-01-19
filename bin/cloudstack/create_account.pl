@@ -60,7 +60,8 @@ __END_OF_USAGE_HELP__
         'D|domain-name-short=s' => 'domain_name_short',
         'domain-id=s'           => 'domain_id',
         'p|password=s'          => 'password',
-        'P|password-prompt'     => 'password_prompt'
+        'P|password-prompt'     => 'password_prompt',
+        'version|v'                     => 'mm_show_version'
     }
 );
 my $logger      = $monkeyman->get_logger;
