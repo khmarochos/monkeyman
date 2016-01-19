@@ -16,6 +16,8 @@ Change Log
    `MonkeyMan::CloudStack` objects configured and used, we can set the default
    one by the `--default-logger` and `--default-cloudstack` framework-wide
    command-line parameters.
+ - The command-line parameters defined by the `parameters_to_get` attribute of
+   the `MonkeyMan` class are being more strictly checked now.
  - The `bin/runcmd.pl` utility has been added.
  - The `bin/vminfo.pl` now proceeds multiple XPath queries.
  - Added the `MonkeyMan::CloudStack::Types` library with some types.

@@ -61,7 +61,6 @@ __END_OF_USAGE_HELP__
         'domain-id=s'           => 'domain_id',
         'p|password=s'          => 'password',
         'P|password-prompt'     => 'password_prompt',
-        'version|v'                     => 'mm_show_version'
     }
 );
 my $logger      = $monkeyman->get_logger;
