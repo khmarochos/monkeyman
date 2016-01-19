@@ -3,8 +3,8 @@
 use strict;
 use warnings;
 
-use FindBin qw($RealBin);
-use lib("$RealBin/../../../../../../lib");
+use FindBin;
+use lib("$FindBin::Bin/../../../../../../lib");
 
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);

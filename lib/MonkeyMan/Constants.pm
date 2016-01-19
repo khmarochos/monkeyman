@@ -3,7 +3,7 @@ package MonkeyMan::Constants;
 use strict;
 use warnings;
 
-use FindBin qw($Bin);
+use FindBin;
 use Exporter;
 
 use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
@@ -21,7 +21,7 @@ my @mm_constants_version = qw(
 # :directories
 
 sub MM_DIRECTORY_ROOT {
-    if($Bin =~ m{^((/.+?)?/monkeyman\b)}) {
+    if($FindBin::Bin =~ m{^((/.+?)?/monkeyman\b)}) {
         return($1);
     } else {
         die("Can't find the root directory");
@@ -61,24 +61,24 @@ my @mm_constants_timeouts = qw(
 use constant MM_VERBOSITY_LEVELS        => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
 use constant MM_VERBOSITY_LEVEL_BASE    => 4;
 use constant MM_DATE_TIME_FORMAT        => '%Y/%m/%d %H:%M:%S';
-use constant MM_PRIMARY_LOGGER          => 'PRIMARY';
+use constant MM_DEFAULT_LOGGER_ID       => 'PRIMARY';
 
 my @mm_constants_logging = qw(
     MM_VERBOSITY_LEVELS
     MM_VERBOSITY_LEVEL_BASE
     MM_DATE_TIME_FORMAT
-    MM_PRIMARY_LOGGER
+    MM_DEFAULT_LOGGER_ID
 );
 
 # :cloudstack
 
-use constant MM_PRIMARY_CLOUDSTACK => 'PRIMARY';
-use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH => 3600;
-use constant MM_CLOUDSTACK_API_SLEEP => 10;
-use constant MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME => 100;
+use constant MM_DEFAULT_CLOUDSTACK_ID               => 'PRIMARY';
+use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH      => 3600;
+use constant MM_CLOUDSTACK_API_SLEEP                => 10;
+use constant MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME   => 100;
 
 my @mm_constants_cloudstack = qw(
-    MM_PRIMARY_CLOUDSTACK
+    MM_DEFAULT_CLOUDSTACK_ID
     MM_CLOUDSTACK_API_WAIT_FOR_FINISH
     MM_CLOUDSTACK_API_SLEEP
     MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME

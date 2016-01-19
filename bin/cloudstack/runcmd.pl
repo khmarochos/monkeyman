@@ -5,8 +5,8 @@ use strict;
 use warnings;
 
 # Find the libraries-directory
-use FindBin qw($Bin);
-use lib("$Bin/../lib");
+use FindBin;
+use lib("$FindBin::Bin/../../lib");
 
 # Use my own modules
 use MonkeyMan;

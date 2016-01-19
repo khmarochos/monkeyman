@@ -23,8 +23,8 @@ with high-level Perl5-applications.
         app_name            => 'apps/cool/mine.pl',
         app_description     => "Discovers objects' relations",
         app_version         => '6.6.6',
-        parse_parameters    => {
-            'd|domain_id=s' => 'domain_id'
+        parameters_to_get   => {
+            'd|domain_id=s'     => 'domain_id'
         }
     );
 
@@ -71,9 +71,9 @@ with high-level Perl5-applications.
 
 =cut
 
+use 5.20.1;
 use strict;
 use warnings;
-use 5.20.1;
 
 our $VERSION='v2.1.0-dev_melnik13_v3';
 
@@ -114,8 +114,13 @@ This method initializes the framework and runs the application.
 
 method BUILD(...) {
 
-    $self->get_logger->debugf("<%s> Hello world!", $self->get_time_passed_formatted);
     $self->_mm_init;
+    $self->get_logger->debugf("<%s> Hello world!", $self->get_time_passed_formatted);
+    END {
+        my $mm = MonkeyMan->instance;
+        $mm->get_logger->debugf("<%s> Goodbye world!", $mm->get_time_passed_formatted);
+        $mm->_mm_shutdown;
+    }
 
     if(defined($self->get_app_code)) {
         $self->_app_start;
@@ -123,11 +128,6 @@ method BUILD(...) {
         $self->_app_finish;
     }
 
-    END {
-        my $mm = MonkeyMan->instance;
-        $mm->_mm_shutdown;
-        $mm->get_logger->debugf("<%s> Goodbye world!", $mm->get_time_passed_formatted);
-    }
 
 }
 
@@ -135,11 +135,18 @@ method BUILDARGS(...) {
 
     my %args = @_;
 
-    $args{'parameters_to_get'}->{'h|help'}              = 'mm_show_help';
-    $args{'parameters_to_get'}->{'V|version'}           = 'mm_show_version';
-    $args{'parameters_to_get'}->{'c|configuration=s'}   = 'mm_configuration';
-    $args{'parameters_to_get'}->{'v|verbose+'}          = 'mm_be_verbose';
-    $args{'parameters_to_get'}->{'q|quiet+'}            = 'mm_be_quiet';
+    my %default_parameters = (
+        'h|help'                => 'mm_show_help',
+        'V|version'             => 'mm_show_version',
+        'c|configuration=s'     => 'mm_configuration',
+        'default-cloudstack=s'  => 'mm_default_cloudstack',
+        'default-logger=s'      => 'mm_default_logger',
+        'v|verbose+'            => 'mm_be_verbose',
+        'q|quiet+'              => 'mm_be_quiet'
+    );
+    while(my($key, $value) = each(%default_parameters)) {
+        $args{'parameters_to_get'}->{$key} = $value;
+    }
 
     return(\%args);
 
@@ -392,31 +399,24 @@ C<get_logger()> method described below.
 
 =cut
 
-has 'loggers' => (
-    is          => 'ro',
-    isa         => 'HashRef[MonkeyMan::Logger]',
-    reader      =>   '_get_loggers',
-    writer      =>   '_set_loggers',
-    builder     => '_build_loggers',
+has 'default_logger_id' => (
+    is          => 'rw',
+    isa         => 'Str',
     lazy        => 1,
-    handies     => [{
-        name        => 'get_logger',
-        default     => &MM_PRIMARY_LOGGER,
-        strict      => 1
-    }]
+    reader      => '_get_default_logger_id',
+    writer      => '_set_default_logger_id',
+    predicate   => '_has_default_logger_id',
+    builder     => '_build_default_logger_id'
 );
 
-method _build_loggers {
-
-    return({ 
-        &MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(
-            monkeyman => $self
-        )
-    });
-
+method _build_default_logger_id {
+    if(defined(my $default_logger_id =
+        $self->get_parameters->get_mm_default_logger)) {
+        return($default_logger_id);
+    } else {
+        return(&MM_DEFAULT_LOGGER_ID);
+    }
 }
-
-
 
 =head4 C<cloudstacks>
 
@@ -426,35 +426,24 @@ handle is described below.
 
 =cut
 
-has 'cloudstacks' => (
-    is          => 'ro',
-    isa         => 'HashRef[MonkeyMan::CloudStack]',
-    reader      =>   '_get_cloudstacks',
-    writer      =>   '_set_cloudstacks',
-    builder     => '_build_cloudstacks',
+has 'default_cloudstack_id' => (
+    is          => 'rw',
+    isa         => 'Str',
     lazy        => 1,
-    handies     => [{
-        name        => 'get_cloudstack',
-        default     => &MM_PRIMARY_CLOUDSTACK,
-        strict      => 1
-    }]
+    reader      => '_get_default_cloudstack_id',
+    writer      => '_set_default_cloudstack_id',
+    predicate   => '_has_default_cloudstack_id',
+    builder     => '_build_default_cloudstack_id'
 );
 
-method _build_cloudstacks {
-
-    return({
-        &MM_PRIMARY_CLOUDSTACK => MonkeyMan::CloudStack->new(
-            monkeyman       => $self,
-            configuration   => $self
-                                ->get_configuration
-                                    ->{'cloudstack'}
-                                        ->{&MM_PRIMARY_CLOUDSTACK}
-        )
-    });
-
+method _build_default_cloudstack_id {
+    if(defined(my $default_cloudstack_id =
+        $self->get_parameters->get_mm_default_cloudstack)) {
+        return($default_cloudstack_id);
+    } else {
+        return(&MM_DEFAULT_CLOUDSTACK_ID);
+    }
 }
-
-
 
 =head2 get_app_code()
 
@@ -500,17 +489,17 @@ The C<get_logger()> accessor returns the reference to L<MonkeyMan::Logger>
 requested. If the ID hasn't been specified, it returns the instance identified
 as C<PRIMARY>.
 
-    ok($mm->get_logger() == $mm->get_logger(&MM_PRIMARY_LOGGER));
+    ok($mm->get_logger() == $mm->get_logger(&MM_DEFAULT_LOGGER_ID));
     ok($mm->get_logger() == $mm->get_logger('PRIMARY');
 
 The C<PRIMARY> logger is being initialized proactively by the framework, but
 it's also possible to initialize it by oneself in the case will you need it.
 
-    %my_loggers = (&MM_PRIMARY_LOGGER => MonkeyMan::Logger->new(...));
+    %my_loggers = (&MM_DEFAULT_LOGGER_ID => MonkeyMan::Logger->new(...));
     $mm = MonkeyMan->new(loggers => \%my_loggers, ...);
 
 Please, keep in mind that C<PRIMARY> is the default logger's handle, it's
-defined by the C<MM_PRIMARY_LOGGER> constant.
+defined by the C<MM_DEFAULT_LOGGER_ID> constant.
 
 The C<get_loggers> returns the reference to the hash containing the loggers'
 index, which means the following:
@@ -524,7 +513,7 @@ index, which means the following:
 These accessors behaves very similar to C<get_logger()> and C<get_loggers()>,
 but the index contains references to L<MonkeyMan::CloudStack> objects
 initialized. The default CloudStack instance's name is C<PRIMARY>, it's defined
-as the C<MM_PRIMARY_CLOUDSTACK> constant.
+as the C<MM_DEFAULT_CLOUDSTACK_ID> constant.
 
 =head2 get_mm_version()
 
@@ -537,8 +526,90 @@ framework's version ID.
 
 method _mm_init {
 
-    my $parameters  = $self->get_parameters;
-    my $logger      = $self->get_logger;
+    my $meta = $self->meta;
+    my $parameters = $self->get_parameters;
+
+    my $default_logger_id = $self->_get_default_logger_id;
+    $meta->add_method(
+        _build_loggers => method {
+            return( { 
+                $default_logger_id => MonkeyMan::Logger->new(
+                    monkeyman => $self
+                )
+            } );
+        }
+    );
+    $self->meta->add_attribute(
+        'loggers' => (
+            is          => 'ro',
+            isa         => 'HashRef[MonkeyMan::Logger]',
+            reader      =>   '_get_loggers',
+            writer      =>   '_set_loggers',
+            builder     => '_build_loggers',
+            lazy        => 1,
+            handies     => [{
+                name        => 'get_logger',
+                default     => $default_logger_id,
+                strict      => 1
+            }]
+        )
+    );
+
+    my $default_cloudstack_id = $self->_get_default_cloudstack_id;
+    $meta->add_method(
+        _build_cloudstacks => method {
+            return( {
+                $default_cloudstack_id => MonkeyMan::CloudStack->new(
+                    monkeyman       => $self,
+                    configuration   => $self
+                                        ->get_configuration
+                                            ->{'cloudstack'}
+                                                ->{$default_cloudstack_id}
+                )
+            } );
+        }
+    );
+    $self->meta->add_attribute(
+        'cloudstacks' => (
+            is          => 'ro',
+            isa         => 'HashRef[MonkeyMan::CloudStack]',
+            reader      =>   '_get_cloudstacks',
+            writer      =>   '_set_cloudstacks',
+            builder     => '_build_cloudstacks',
+            lazy        => 1,
+            handies     => [{
+                name        => 'get_cloudstack',
+                default     => $default_cloudstack_id,
+                strict      => 1
+            }]
+        )
+    );
+
+    my $logger = $self->get_logger;
+    $logger->tracef("We've got the set of command-line parameters: %s",
+        $self->get_parameters
+    );
+    $logger->tracef("We've got the configuration: %s",
+        $self->get_configuration
+    );
+    $logger->tracef("We've got the primary (%s) logger instance: %s",
+        $default_logger_id,
+        $self->get_logger
+    );
+    $logger->tracef("We've got the primary (%s) CloudStack instance: %s",
+        $default_cloudstack_id,
+        $self->get_cloudstack
+    );
+
+    $logger->tracef("We've got the framework %s initialized by PID %d at %s",
+        $self,
+        $$,
+        $self->get_time_started_formatted
+    );
+    $logger->debugf("<%s> The framework has been initialized",
+        $self->get_time_passed_formatted,
+        $self
+    );
 
     if($parameters->get_mm_show_help) {
         $self->print_full_version_info;
@@ -548,33 +619,6 @@ method _mm_init {
         $self->print_full_version_info;
         exit;
     }
-
-    $logger->tracef("We've got the set of command-line parameters: %s",
-        $parameters
-    );
-
-    $logger->tracef("We've got the configuration: %s",
-        $self->get_configuration
-    );
-
-    $logger->tracef("We've got the primary logger instance: %s",
-        $self->_get_loggers->{&MM_PRIMARY_LOGGER}
-    );
-
-    $logger->tracef("We've got the primapy CloudStack instance: %s",
-        $self->_get_cloudstacks->{&MM_PRIMARY_CLOUDSTACK}
-    );
-
-    $logger->tracef("We've got the framework %s initialized by PID %d at %s",
-        $self,
-        $$,
-        $self->get_time_started_formatted
-    );
-
-    $logger->debugf("<%s> The framework has been initialized",
-        $self->get_time_passed_formatted,
-        $self
-    );
 
 }
 
@@ -656,6 +700,10 @@ method print_full_usage_help {
         [opt]       Print version number and do nothing
     -c <filename>, --configuration <filename>
         [opt]       The main configuration file
+    --default-cloudstack <ID>
+        [opt]       The default Apache CloudStack connector
+    --default-logger <ID>
+        [opt]       The default Logger
     -v, --verbose
         [opt] [mul] Increases verbosity
     -q, --quiet

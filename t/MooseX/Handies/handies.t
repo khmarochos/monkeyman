@@ -10,8 +10,8 @@ our $_PrimaryZaloopaValue   = 13;
 
 package _Zaloopator;
 
-use FindBin qw($RealBin);
-use lib "$RealBin/../../../lib";
+use FindBin;
+use lib "$FindBin::Bin/../../../lib";
 
 use Moose;
 use MooseX::Handies;

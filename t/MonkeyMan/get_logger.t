@@ -3,8 +3,8 @@
 use strict;
 use warnings;
 
-use FindBin qw($RealBin);
-use lib("$RealBin/../../lib");
+use FindBin;
+use lib("$FindBin::Bin/../../lib");
 
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version :logging);
@@ -21,6 +21,6 @@ my $monkeyman = MonkeyMan->new(
     app_version         => MM_VERSION
 );
 
-ok($monkeyman->_get_loggers->{&MM_PRIMARY_LOGGER} == $monkeyman->get_logger);
+ok($monkeyman->_get_loggers->{$monkeyman->_get_default_logger_id} == $monkeyman->get_logger);
 ok($monkeyman->get_logger == $monkeyman->get_logger);
-ok($monkeyman->get_logger == $monkeyman->get_logger(&MM_PRIMARY_LOGGER));
+ok($monkeyman->get_logger == $monkeyman->get_logger($monkeyman->_get_default_logger_id));

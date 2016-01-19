@@ -12,6 +12,10 @@ Change Log
 
 ### Added
 
+ - Now we can not only just handle multiple `MonkeyMan::Logger` and
+   `MonkeyMan::CloudStack` objects configured and used, we can set the default
+   one by the `--default-logger` and `--default-cloudstack` framework-wide
+   command-line parameters.
  - The `bin/runcmd.pl` utility has been added.
  - The `bin/vminfo.pl` now proceeds multiple XPath queries.
  - Added the `MonkeyMan::CloudStack::Types` library with some types.

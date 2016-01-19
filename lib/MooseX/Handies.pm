@@ -1,11 +1,13 @@
 package MooseX::Handies;
 
-use Moose ();
+use namespace::autoclean;
+use Moose 2.1604;
 use Moose::Exporter;
 use Moose::Util::MetaRole;
-
 use MooseX::Handies::Role::Meta::Attribute;
 use Data::Dumper;
+
+our $VERSION = '1.0';
 
 
 
