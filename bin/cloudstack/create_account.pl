@@ -26,6 +26,15 @@ my $monkeyman = MonkeyMan->new(
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
 
+    -C, --create-domain
+        [opt]       The domain needs to be created if it doesn't exist!
+    -a <name>, --account-name <name>
+        [req]       The account's name
+    -t <type>, --account-type <type>
+        [req]       The account's type ("admin" or "user")
+    -e <address>, --e-mail <address>
+        [opt]       The account's e-mail address
+
     -d <name>, --domain-name <name>
         [req*]      The domain's full name (inclidung "ROOT")
     -D <name>, --domain-name-short <name>
@@ -34,28 +43,22 @@ This application recognizes the following parameters:
         [req*]      The domain's ID
   * You can set only 1 of these 3 parameters, but it's mandatory to set one.
 
-    -a <name>, --account-name <name>
-        [req]       The account's name
-    -t <type>, --account-type <type>
-        [req]       The account's type ("admin" or "user")
-    -e <address>, --e-mail <address>
-        [opt]       The account's e-mail address
-
     -p <password>, --password <password>
         [opt*,**]   The account's password
     -P, --password-prompt
         [opt*]      The account's password needs to be entered
-  * You can set only 1 of these 2 parameters. The password will be generated
-    automatically if you don't set any of them.
- ** We don't recommend you to use this option, as it can cause password leak.
+  * You can set only 1 of these 2 parameters. You can omit them, and the
+    password will be generated automatically.
+ ** We don't recommend you to use this option, as it may lead to password leak.
 __END_OF_USAGE_HELP__
     parameters_to_get   => {
-        'd|domain-name=s'       => 'domain_name',
-        'D|domain-name-short=s' => 'domain_name_short',
-        'domain-id=s'           => 'domain_id',
+        'C|create-domain'       => 'create_domain',
         'a|account-name=s'      => 'account_name',
         't|account-type=s'      => 'account_type',
         'e|email-address=s'     => 'e_mail',
+        'd|domain-name=s'       => 'domain_name',
+        'D|domain-name-short=s' => 'domain_name_short',
+        'domain-id=s'           => 'domain_id',
         'p|password=s'          => 'password',
         'P|password-prompt'     => 'password_prompt'
     }

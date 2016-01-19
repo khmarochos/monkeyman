@@ -134,7 +134,12 @@ method BUILD(...) {
 method BUILDARGS(...) {
 
     my %args = @_;
-
+    my @required_parameters;
+    my @required_attributes;
+    while(my($key, $value) = each(%{ $args{'parameters_to_get'} })) {
+        push(@required_parameters, ($key =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g));
+        push(@required_attributes, $value);
+    }
     my %default_parameters = (
         'h|help'                => 'mm_show_help',
         'V|version'             => 'mm_show_version',
@@ -144,8 +149,16 @@ method BUILDARGS(...) {
         'v|verbose+'            => 'mm_be_verbose',
         'q|quiet+'              => 'mm_be_quiet'
     );
-    while(my($key, $value) = each(%default_parameters)) {
-        $args{'parameters_to_get'}->{$key} = $value;
+    while(my($reserved_parameters_group, $reserved_attribute) = each(%default_parameters)) {
+        foreach my $forbidden_attribute (grep({ $reserved_attribute eq $_ } @required_attributes)) {
+            warn(sprintf("The '%s' command-line parameter is forbidden, you shouldn't try to use it"));
+        }
+        foreach my $reserved_parameter ($reserved_parameters_group =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g) {
+            foreach my $forbidden_parameter (grep({ $reserved_parameter eq $_ } @required_parameters)) {
+                warn(sprintf("The '%s' command-line parameter is forbidden, you shouldn't try to use it"));
+            }
+        }
+        $args{'parameters_to_get'}->{$reserved_parameters_group} = $reserved_attribute;
     }
 
     return(\%args);
