@@ -400,10 +400,10 @@ C<get_logger()> method described below.
 =cut
 
 has 'default_logger_id' => (
-    is          => 'rw',
+    is          => 'ro',
     isa         => 'Str',
     lazy        => 1,
-    reader      => '_get_default_logger_id',
+    reader      => 'get_default_logger_id',
     writer      => '_set_default_logger_id',
     predicate   => '_has_default_logger_id',
     builder     => '_build_default_logger_id'
@@ -427,10 +427,10 @@ handle is described below.
 =cut
 
 has 'default_cloudstack_id' => (
-    is          => 'rw',
+    is          => 'ro',
     isa         => 'Str',
     lazy        => 1,
-    reader      => '_get_default_cloudstack_id',
+    reader      => 'get_default_cloudstack_id',
     writer      => '_set_default_cloudstack_id',
     predicate   => '_has_default_cloudstack_id',
     builder     => '_build_default_cloudstack_id'
@@ -486,34 +486,53 @@ configuration tree.
 =head2 get_loggers()
 
 The C<get_logger()> accessor returns the reference to L<MonkeyMan::Logger>
-requested. If the ID hasn't been specified, it returns the instance identified
-as C<PRIMARY>.
+requested. If the ID hasn't been specified, it returns the default instance.
 
-    ok($mm->get_logger() == $mm->get_logger(&MM_DEFAULT_LOGGER_ID));
-    ok($mm->get_logger() == $mm->get_logger('PRIMARY');
+You should keep in mind that the default instance can be reassigned by
+the C<--default-logger> framework-wide command-line parameter. By
+default, the default logger's ID is C<PRIMARY>, as it's defined by the
+C<MM_DEFAULT_LOGGER_ID> constant.
 
-The C<PRIMARY> logger is being initialized proactively by the framework, but
+    $default_logger_given   = $mm->get_parameters->default_logger;
+    $default_logger_used    = $mm->_get_default_logger;
+
+    if(defined($default_logger_given) {
+        ok($default_logger_used eq $default_logger_given);
+        ok($mm->get_logger == $mm->get_logger($default_logger_used));
+    } else {
+        ok($default_logger_used eq &MM_DEFAULT_LOGGER_ID);
+        ok($mm->get_logger == $mm->get_logger(&MM_DEFAULT_LOGGER_ID));
+    }
+
+The default logger is being initialized proactively by the framework, but
 it's also possible to initialize it by oneself in the case will you need it.
 
-    %my_loggers = (&MM_DEFAULT_LOGGER_ID => MonkeyMan::Logger->new(...));
-    $mm = MonkeyMan->new(loggers => \%my_loggers, ...);
-
-Please, keep in mind that C<PRIMARY> is the default logger's handle, it's
-defined by the C<MM_DEFAULT_LOGGER_ID> constant.
+    $my_loggers = {
+        zaloopa => MonkeyMan::Logger->new(...),
+        ebuchka => MonkeyMan::Logger->new(...),
+        pizdets => MonkeyMan::Logger->new(...)
+    };
+    $mm = MonkeyMan->new(
+        loggers             => $my_loggers,
+        default_logger_id   => 'zaloopa'
+    );
 
 The C<get_loggers> returns the reference to the hash containing the loggers'
-index, which means the following:
+index, which leads to the following:
 
-    ok($mm->get_logger('Log-13') == $mm->get_loggers->{'Log-13'});
+    ok($mm->get_logger('zaloopa') == $mm->get_loggers->{'zaloopa'});
 
 =head2 get_cloudstack()
 
 =head2 get_cloudstacks()
 
-These accessors behaves very similar to C<get_logger()> and C<get_loggers()>,
+These accessors behave very similar to C<get_logger()> and C<get_loggers()>,
 but the index contains references to L<MonkeyMan::CloudStack> objects
-initialized. The default CloudStack instance's name is C<PRIMARY>, it's defined
-as the C<MM_DEFAULT_CLOUDSTACK_ID> constant.
+initialized.
+
+The default CloudStack instance's ID can be set by the
+C<--default-cloudstack> parameter, by default it's C<PRIMARY>, as it's
+defined as the C<MM_DEFAULT_CLOUDSTACK_ID> constant.
 
 =head2 get_mm_version()
 
@@ -529,7 +548,7 @@ method _mm_init {
     my $meta = $self->meta;
     my $parameters = $self->get_parameters;
 
-    my $default_logger_id = $self->_get_default_logger_id;
+    my $default_logger_id = $self->get_default_logger_id;
     $meta->add_method(
         _build_loggers => method {
             return( { 
@@ -555,7 +574,7 @@ method _mm_init {
         )
     );
 
-    my $default_cloudstack_id = $self->_get_default_cloudstack_id;
+    my $default_cloudstack_id = $self->get_default_cloudstack_id;
     $meta->add_method(
         _build_cloudstacks => method {
             return( {

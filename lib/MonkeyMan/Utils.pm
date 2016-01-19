@@ -71,7 +71,7 @@ func _showref(Ref $ref!) {
         $monkeyman  = MonkeyMan->instance;
         $monkeyman_started = $monkeyman->get_time_started_formatted;
         $logger     = $monkeyman->get_logger;
-        $conftree   = $monkeyman->get_configuration->{'log'}->{$monkeyman->_get_default_logger_id};
+        $conftree   = $monkeyman->get_configuration->{'log'}->{$monkeyman->get_default_logger_id};
         $dumped     = $conftree->{'dump'}->{'enabled'};
         $dumpxml    = $conftree->{'dump'}->{'add_xml'};
         $dumpdir    = $conftree->{'dump'}->{'directory'};

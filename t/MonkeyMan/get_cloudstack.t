@@ -20,6 +20,6 @@ my $monkeyman = MonkeyMan->new(
     app_version         => MM_VERSION
 );
 
-ok($monkeyman->_get_cloudstacks->{$monkeyman->_get_default_cloudstack_id} == $monkeyman->get_cloudstack);
+ok($monkeyman->_get_cloudstacks->{$monkeyman->get_default_cloudstack_id} == $monkeyman->get_cloudstack);
 ok($monkeyman->get_cloudstack == $monkeyman->get_cloudstack);
-ok($monkeyman->get_cloudstack == $monkeyman->get_cloudstack($monkeyman->_get_default_cloudstack_id));
+ok($monkeyman->get_cloudstack == $monkeyman->get_cloudstack($monkeyman->get_default_cloudstack_id));

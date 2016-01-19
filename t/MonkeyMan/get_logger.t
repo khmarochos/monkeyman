@@ -21,6 +21,6 @@ my $monkeyman = MonkeyMan->new(
     app_version         => MM_VERSION
 );
 
-ok($monkeyman->_get_loggers->{$monkeyman->_get_default_logger_id} == $monkeyman->get_logger);
+ok($monkeyman->_get_loggers->{$monkeyman->get_default_logger_id} == $monkeyman->get_logger);
 ok($monkeyman->get_logger == $monkeyman->get_logger);
-ok($monkeyman->get_logger == $monkeyman->get_logger($monkeyman->_get_default_logger_id));
+ok($monkeyman->get_logger == $monkeyman->get_logger($monkeyman->get_default_logger_id));

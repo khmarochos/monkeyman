@@ -89,8 +89,8 @@ method BUILD(...) {
         } else {
             my $log_configuration_file = $self->_has_configuration_file ?
                 $self->_get_configuration_file :
-                defined($self->get_monkeyman->get_configuration->{'log'}->{$self->get_monkeyman->_get_default_logger_id}->{'conf'}) ?
-                        $self->get_monkeyman->get_configuration->{'log'}->{$self->get_monkeyman->_get_default_logger_id}->{'conf'} :
+                defined($self->get_monkeyman->get_configuration->{'log'}->{$self->get_monkeyman->get_default_logger_id}->{'conf'}) ?
+                        $self->get_monkeyman->get_configuration->{'log'}->{$self->get_monkeyman->get_default_logger_id}->{'conf'} :
                         MM_CONFIG_LOGGER;
             open(
                 my $log_configuration_filehandle, '<', $log_configuration_file
