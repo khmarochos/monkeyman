@@ -368,7 +368,8 @@ method run_command(
     Bool    :$wait          = 0,
     Bool    :$fatal_empty   = 0,
     Bool    :$fatal_fail    = 1,
-    Bool    :$fatal_431
+    Bool    :$fatal_431     =
+        ! $self->get_configuration->{'ignore_431_code'}
 ) {
 
     my $configuration   = $self->get_configuration;

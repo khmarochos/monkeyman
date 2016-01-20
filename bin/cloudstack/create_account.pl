@@ -76,3 +76,12 @@ foreach (
 ) {
     $parameters->check_loneliness(fatal => 1, attributes_alone => $_);
 }
+
+my $domain;
+
+if($parameters->get_domain_id) {
+    $domain = $api->get_elements(
+        type        => 'Domain',
+        criterions  => { id => $parameters->get_domain_id }
+    );
+}
