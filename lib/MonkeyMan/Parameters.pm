@@ -95,7 +95,7 @@ method BUILD(...) {
 
 
 
-method only_one(Bool :$fatal, ArrayRef[Str] :$lone_attributes) {
+method check_loneliness(Bool :$fatal, ArrayRef[Str] :$attributes_alone) {
 
     my $monkeyman                   = $self->get_monkeyman;
     my $logger                      = $monkeyman->get_logger;
@@ -103,25 +103,29 @@ method only_one(Bool :$fatal, ArrayRef[Str] :$lone_attributes) {
     my %parameters_by_attributes    = reverse(%parameters_by_definitions);
     my @result;
 
-    foreach my $lone_attribute (@{ $lone_attributes }) {
-        my $reader  = 'get_' . $lone_attribute;
+    # Firstly, let's see what parameters have been given
+
+    foreach my $leave_me_alone (@{ $attributes_alone }) {
+        my $reader  = 'get_' . $leave_me_alone;
         my $value   = $self->$reader;
         if(defined($value)) {
             push(@result, {
-                attribute   => $lone_attribute,
-                definition  => $parameters_by_attributes{$lone_attribute},
+                attribute   => $leave_me_alone,
+                definition  => $parameters_by_attributes{$leave_me_alone},
                 value       => $value
             });
         }
     }
+
+    # If there are more than one parameters, we should take some measures
 
     if(@result > 1) {
         my @superflous_parameters;
         for my $i (2..@result) {
             push(@superflous_parameters, $result[$i-1]->{'attribute'});
             $logger->warnf(
-                "The %s parameter (%s) is already given, " .
-                "the %s parameter (%s) is superflous",
+                "The %s parameter (defined as '%s') is already given, so " .
+                "the %s parameter (defined as '%s') is superflous",
                 $result[0]   ->{'attribute'}, $result[0]   ->{'definition'},
                 $result[$i-1]->{'attribute'}, $result[$i-1]->{'definition'}
             );

@@ -68,7 +68,11 @@ my $logger      = $monkeyman->get_logger;
 my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
 
-$parameters->only_one(
-    fatal           => 1,
-    lone_attributes => [ qw(domain_name domain_name_short domain_id) ]
-);
+# Now let's make sure that no parameters given are redundant
+foreach (
+    [ qw(   domain_id   domain_name     domain_name_short   ) ],
+    [ qw(   domain_id   create_domain                       ) ],
+    [ qw(   password    password_prompt                     ) ],
+) {
+    $parameters->check_loneliness(fatal => 1, attributes_alone => $_);
+}
