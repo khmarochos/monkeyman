@@ -498,8 +498,8 @@ method run_command(
 =head2 C<get_doms()>
 
 The method returns the list of DOMs of elements of type defined matching
-XPath-condtions defined. You probably won't need it, because it only performs
-dirty work for C<get_elements()> which can return DOMs as well.
+XPath-condtions defined. You'll probably need to use this method, because it
+only performs dirty work for C<get_elements()>.
 
 Anyhow, it consumes the following parameters:
 

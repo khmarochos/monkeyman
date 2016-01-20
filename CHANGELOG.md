@@ -18,6 +18,8 @@ Change Log
    command-line parameters.
  - The command-line parameters defined by the `parameters_to_get` attribute of
    the `MonkeyMan` class are being more strictly checked now.
+ - The `MonkeyMan::Parameters` now has the `only_one()` method to check if some
+   parameters given are superflous.
  - The `bin/runcmd.pl` utility has been added.
  - The `bin/vminfo.pl` now proceeds multiple XPath queries.
  - Added the `MonkeyMan::CloudStack::Types` library with some types.

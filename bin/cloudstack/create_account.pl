@@ -27,7 +27,8 @@ my $monkeyman = MonkeyMan->new(
 This application recognizes the following parameters:
 
     -C, --create-domain
-        [opt]       The domain needs to be created if it doesn't exist!
+        [opt] [mul] The domain needs to be created if it doesn't exist,
+                    set it twice if we shall create all parent domains!
     -a <name>, --account-name <name>
         [req]       The account's name
     -t <type>, --account-type <type>
@@ -36,7 +37,7 @@ This application recognizes the following parameters:
         [opt]       The account's e-mail address
 
     -d <name>, --domain-name <name>
-        [req*]      The domain's full name (inclidung "ROOT")
+        [req*]      The domain's full name (includung "ROOT")
     -D <name>, --domain-name-short <name>
         [req*]      The domain's short name (the last chunk)
     --domain-id <id>
@@ -67,3 +68,7 @@ my $logger      = $monkeyman->get_logger;
 my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
 
+$parameters->only_one(
+    fatal           => 1,
+    lone_attributes => [ qw(domain_name domain_name_short domain_id) ]
+);
