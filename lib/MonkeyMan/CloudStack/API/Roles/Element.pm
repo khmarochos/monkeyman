@@ -75,6 +75,21 @@ method _build_magic_words {
 
 }
 
+has 'vocabulary' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::CloudStack::API::Vocabulary',
+    reader      =>    'get_vocabulary',
+    writer      =>   '_set_vocabulary',
+    builder     => '_build_vocabulary',
+    lazy        => 1
+);
+
+method _build_vocabulary {
+
+    return($self->get_api->get_vocabulary($self->get_type));
+
+}
+
 
 
 has 'criterions' => (
@@ -369,6 +384,14 @@ method get_related(
     ));
 
 }
+
+
+
+#method BUILD(...) {
+#
+#    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+#
+#}
 
 
 

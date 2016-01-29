@@ -25,7 +25,7 @@ use Array::Utils qw(array_diff);
 
 my $type            = defined($monkeyman->get_parameters->get_type) ?
                         $monkeyman->get_parameters->get_type :
-                        'VirtualMachine';
+                            'VirtualMachine';
 my $logger          = $monkeyman->get_logger;
 my $cloudstack      = $monkeyman->get_cloudstack;
 my $api             = $cloudstack->get_api;

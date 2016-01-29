@@ -29,15 +29,118 @@ our %_related = (
 func _criterions_to_parameters(
         :$listall,
     Str :$id,
+    Str :$name
 ) {
     my %parameters;
     $parameters{'listall'}  = 'true'        if(defined($listall));
     $parameters{'id'}       = $id           if(defined($id));
+    $parameters{'name'}     = $name         if(defined($name));
     return(%parameters);
 }
+
+
+
+=pod
+
+    $parent1 = $api->get_elements(
+        type        => 'Domain',
+        xpaths      => [ '<%OUR_ENTITY_NODE>[name = "ZALOOPA"]' ]
+    );
+    $parent2 = $api->get_elements(
+        type        => 'Domain',
+        criterions  => { name => 'ZALOOPA' }
+    );
+    ok($parent1->get_id eq $parent2->get_id);
+
+    $child = $api->new_element('Domain')->do(
+        action          => 'create',
+        return_as       => 'element[Domain]',
+        parentdomainid  => $parent1->get_id
+    }
+
+=cut
+
+our %vocabulary_data = (
+    name => 'domain',
+    entity_node => '<%OUR_NAME%>',
+    related => {
+        our_virtual_machines => {
+            type    => 'VirtualMachine',
+            keys    => [ {
+                value   => { xpaths     => [ '/<%OUR_ENTITY_NODE%>/id' ] },
+                foreign => { xpaths     => [ '/<%THEIR_ENTITY_NODE%>[domainid = "<%OUR_KEY_VALUE%>"]' ] },
+            } ]
+        },
+        our_accounts => {
+            type    => 'Account',
+            keys    => [ {
+                value   => { xpaths     => [ '/<%OUR_ENTITY_NODE%>/id' ] },
+                foreign => { criterions => [ qw( domainid ) ] }
+            } ]
+        }
+    },
+    actions => {
+        list => {
+            request  => {
+                command         => 'listDomains',
+                listall         => { isa => 'Bool', required => 0 },
+                id              => { isa => 'Str', required => 0 },
+                name            => { isa => 'Str', required => 0 }
+            },
+            response => {
+                async           => 0,
+                paged           => 1,
+                response_node   => 'listdomainsresponse',
+                results         => {
+                    domain          => {
+                        return_as       => [ qw( dom element[Domain] id[Domain] ) ],
+                        xpaths          => [ '/<%OUR_ENTITY_NODE%>' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        xpaths          => [ '/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    }
+                }
+            }
+        },
+        create => {
+            request => {
+                command         => 'createDomain',
+                networkdomain   => { isa => 'Str', required => 0 },
+                parentdomainid  => { isa => 'Str', required => 1 },
+            },
+            response => {
+                async           => 1,
+                response_node   => 'createdomainresponse',
+                results         => {
+                    domain          => {
+                        return_as       => [ qw( dom element[Domain] id[Domain] ) ],
+                        xpaths          => [ '/<%OUR_ENTITY_NODE%>' ],
+                        required        => 1,
+                        multiple        => 0
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        xpaths          => [ '/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 1,
+                        multiple        => 0
+                    },
+                }
+            }
+        }
+    }
+);
 
 
 
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+=pod
+
+=cut

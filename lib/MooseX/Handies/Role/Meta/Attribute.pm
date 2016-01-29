@@ -27,17 +27,13 @@ after install_accessors => sub {
 
         foreach my $handy (@handies) {
 
-            my $handy_name      = $handy->{'name'};
-            confess("The name of the handy isn't defined")
-                unless(defined($handy_name));
+            my $handy_name          = defined($handy->{'name'}) ? $handy->{'name'} : confess("The name of the handy isn't defined");
+            my $handy_default       = $handy->{'default'};
+            my $handy_initializer   = $handy->{'initializer'};
+            my $handy_strict        = defined($handy->{'strict'}) ? $handy->{'strict'} : 1;
 
-            my $handy_default   = $handy->{'default'};
-            confess("The default slot of the handy isn't defined")
-                unless(defined($handy_default));
-
-            my $handy_strict    = $handy->{'strict'};
-            confess("The strictness of the handy isn't defined")
-                unless(defined($handy_strict));
+            # my $handy_initializer = (defined($handy->{'initializer'}) && ref($handy->{'initializer'}) eq 'CODE') ?
+            #   $handy->{'initializer'} : confess("The initializer is not a code reference");
 
             if($associated_class->has_method($handy->{'name'})) {
                 confess(sprintf("The %s method already exists in the %s class", $handy_name, $associated_class->name));
@@ -55,20 +51,23 @@ after install_accessors => sub {
                                         $read_method_ref->isa('Moose::Meta::Method::Accessor')
                             );
 
-                        my $slot = $_[1];
-                           $slot = defined($slot) ? $slot : $handy_default;
+                        my $slot = defined($_[1]) ? $_[1] : $handy_default;
+                        confess("This attribute's handy doesn't have the default slot")
+                            if(!defined($slot));
 
-                        @_ = ($_[0]); # 8< Cut it short 8<
+                        @_ = ($_[0]); # 8< Cut it short, or the reader will complain! 8<
 
                         my $hashref = &{ $read_method_ref };
                         confess("The attribute doesn't contain a HashRef as it's supposed to")
                             unless(ref($hashref) eq 'HASH');
 
-                        my $result = $hashref->{$slot};
-                        confess(sprintf("The %s slot is empty", $slot))
-                            if($handy_strict && !defined($result));
+                        $hashref->{$slot} = $_[0]->$handy_initializer($slot)
+                            if(!defined($hashref->{$slot}) && defined($handy_initializer));
 
-                        return($result);
+                        confess(sprintf("The %s slot is empty", $slot))
+                            if(!defined($hashref->{$slot}) && $handy_strict);
+
+                        return($hashref->{$slot});
 
                     }, (
                         name            => $handy_name,
@@ -76,6 +75,7 @@ after install_accessors => sub {
                     )
                 )
             );
+
         }
 
     }

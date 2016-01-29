@@ -4,6 +4,11 @@ Things To Do
 Code
 ----
 
+ - [ ] Get rid of `MonkeyMan::CloudStack::API::Element::*::_magic_words` and
+       other ugly things, use the brand new `%*::vocabulary` hashtree.
+ - [ ] Make it possible to dump all data structures right to the same log-file
+       where it has been mentioned.
+        - suggested in `2016.01.28` by `melnik13`
  - [ ] Move command-line parameters manupulations to `MonkeyMan::Parameters`
         - suggested on `2016.01.19` by `melnik13`
  - [ ] Make some helper to find the framework's library directory

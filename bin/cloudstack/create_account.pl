@@ -15,6 +15,7 @@ use MonkeyMan::CloudStack::API;
 
 # Use some third-party libraries
 use Method::Signatures;
+use File::Basename;
 
 
 
@@ -68,7 +69,10 @@ my $logger      = $monkeyman->get_logger;
 my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
 
-# Now let's make sure that no parameters given are redundant
+#
+# First of all, let's make sure that no parameters given are redundant
+#
+
 foreach (
     [ qw(   domain_id   domain_name     domain_name_short   ) ],
     [ qw(   domain_id   create_domain                       ) ],
@@ -77,11 +81,52 @@ foreach (
     $parameters->check_loneliness(fatal => 1, attributes_alone => $_);
 }
 
-my $domain;
+#
+# Now let's find (or create) the domain
+#
+
+my @domains;
 
 if($parameters->get_domain_id) {
-    $domain = $api->get_elements(
+    # The ID is defined, so it will be easy to find the domain
+    @domains = $api->get_elements(
         type        => 'Domain',
         criterions  => { id => $parameters->get_domain_id }
     );
+} elsif($parameters->get_domain_name) {
+    # Okay, they want to find the domain by the "full name", so let's make sure
+    # that the path matches
+    @domains = $api->get_elements(
+        type        => 'Domain',
+        criterions  => {
+            name => basename($parameters->get_domain_name)
+        },
+        xpaths      => [
+            sprintf("/domain[path = '%s']", $parameters->get_domain_name)
+        ] 
+    );
+} elsif($parameters->get_domain_name_short) {
+    @domains = $api->get_elements(
+        type        => 'Domain',
+        criterions  => {
+            name => $parameters->get_domain_name_short,
+        }
+    );
+} else {
+    MonkeyMan::Exception->throw("No domain has been defined");
+}
+
+if(@domains > 1) {
+    # It may happen when the short name requested occures more than once
+    MonkeyMan::Exception->throwf(
+        "Too many domains have been found, their IDs are: %s",
+        join(', ', map({ $_->get_id } @domains))
+    );
+} elsif(@domains < 1) {
+    # The domain doesn't exist, shall we create it?
+    if(!$parameters->get_create_domain) {
+        MonkeyMan::Exception->throw(
+            "No domain has been found, its creation hasn't been requested"
+        );
+    }
 }

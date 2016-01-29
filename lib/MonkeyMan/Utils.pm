@@ -144,7 +144,7 @@ func _showref(Ref $ref!) {
 
 
 
-func mm_find_package(Str $package_name!) {
+func mm_find_package_file_name(Str $package_name!) {
     my $file_name = $package_name;
        $file_name =~ s#::#/#g;
        $file_name .= '.pm';
@@ -153,9 +153,8 @@ func mm_find_package(Str $package_name!) {
 
 func mm_load_package(Str $package_name!) {
 
-    my $file_name = mm_find_package($package_name);
-
     unless(is_loaded($package_name)) {
+        my $file_name = mm_find_package_file_name($package_name);
         try {
             require($file_name);
         } catch($e) {

@@ -20,9 +20,8 @@ our @_ElementType_values = qw(
 );
 subtype ElementType,
     as Str,
-        where { my $v = $_; grep({ $_ eq $v} @_ElementType_values); },
-            message { "This ElementType isn't valid" };
-
+    where { my $v = $_; grep({ $_ eq $v} @_ElementType_values); },
+    message { "This ElementType isn't valid" };
 
 
 our @_ReturnAs_regexps = qw(
@@ -33,8 +32,8 @@ our @_ReturnAs_regexps = qw(
 );
 subtype ReturnAs,
     as Str,
-        where { my $v = $_; grep({ $v =~ qr/$_/ } @_ReturnAs_regexps); },
-            message { "This ReturnAs isn't valid" };
+    where { my $v = $_; grep({ $v =~ qr/$_/ } @_ReturnAs_regexps); },
+    message { "This ReturnAs isn't valid" };
 
 
 

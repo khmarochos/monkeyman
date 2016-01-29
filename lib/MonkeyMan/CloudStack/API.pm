@@ -34,6 +34,7 @@ use warnings;
 
 # Use Moose and be happy :)
 use Moose;
+use MooseX::Handies;
 use namespace::autoclean;
 
 # Inherit some essentials
@@ -46,10 +47,12 @@ use MonkeyMan::Utils qw(mm_load_package);
 use MonkeyMan::Exception qw(
     CanNotLoadPackage
     InvalidParametersValue
+    MagicWordsArentDefined
     NoParameters
     Timeout
 );
 use MonkeyMan::CloudStack::API::Command;
+use MonkeyMan::CloudStack::API::Vocabulary;
 
 use TryCatch;
 use Method::Signatures;
@@ -595,11 +598,14 @@ method get_job_result(Str $jobid!) {
 
 method load_element_package(MonkeyMan::CloudStack::Types::ElementType $type!) {
 
+    my $package_name = __PACKAGE__ . '::Element::' . $type;
+
     try {
-        return(mm_load_package(__PACKAGE__ . '::Element::' . $type));
+        return(mm_load_package($package_name));
     } catch($e) {
         (__PACKAGE__ . '::Exception::CanNotLoadPackage')->throwf(
-            "Can't load the package for operating %s. %s",
+            "Can't load the %s package for operating %s. %s",
+            $package_name,
             $self->translate_type(type => $type, plural => 1),
             $e
         );
@@ -607,6 +613,9 @@ method load_element_package(MonkeyMan::CloudStack::Types::ElementType $type!) {
 
 }
 
+#
+# FIXME: Get rid of this crap, please!
+#
 method get_magic_words(MonkeyMan::CloudStack::Types::ElementType $type!) {
 
     my $class_name = $self->load_element_package($type);
@@ -614,21 +623,43 @@ method get_magic_words(MonkeyMan::CloudStack::Types::ElementType $type!) {
     no strict 'refs';
     my %magic_words = %{'::' . $class_name . '::_magic_words'};
 
-    foreach my $magic_word (qw(
-        find_command
-        list_tag_global
-        list_tag_entity
-    )) {
-        (__PACKAGE__ . '::Exception::MagicWordsArentDefined')->throwf(
-            "The %s class doesn't have the %s magic word defined. " .
-            "Sorry, but I can not use it.",
-            $class_name, $magic_word
-        )
-            unless(defined($magic_words{$magic_word}));
-    }
     return(%magic_words);
 
 }
+
+
+
+has 'vocabularies' => (
+    is          => 'ro',
+    isa         => 'HashRef[MonkeyMan::CloudStack::API::Vocabulary]',
+    reader      =>    'get_vocabularies',
+    writer      =>   '_set_vocabularies',
+    builder     => '_build_vocabularies',
+    lazy        => 1,
+    handies     => [{
+        name        => 'get_vocabulary',
+        default     => undef,
+        strict      => 1,
+        initializer => 'initialize_vocabulary'
+    }]
+);
+
+method _build_vocabularies {
+
+    return({});
+
+}
+
+method initialize_vocabulary(MonkeyMan::CloudStack::Types::ElementType $type!) {
+
+    return(MonkeyMan::CloudStack::API::Vocabulary->new(
+        api         => $self,
+        type        => $type
+    ));
+
+}
+
+
 
 =head2 C<get_elements()>
 
@@ -657,8 +688,8 @@ method get_elements(
     if(defined($criterions)) {
 
         $logger->warnf(
-            "It's odd, as some DOM's are given (%s), " .
-            "but some criterions are given too (%s)",
+            "It's odd that some DOM's are given (%s), " .
+            "but some criterions are given as well (%s)",
             $doms, $criterions
         )
             if(defined($doms));
@@ -688,7 +719,20 @@ method get_elements(
 #        @results = @results_updated;
 #    }
 
-    return(@results);
+    if(defined(wantarray) && ! wantarray) {
+        if(@results > 1) {
+            $logger->warnf(
+                "The get_elements() method's is supposed to return " .
+                "not a list, but a scalar value to the context it has been " .
+                "called from, altough %d elements have been found (%s). " .
+                "Returning the first one (%s) only.",
+                scalar(@results), \@results, $results[0]
+            );
+        }
+        return(shift(@results));
+    } else {
+        return(@results);
+    }
 
 }
 
