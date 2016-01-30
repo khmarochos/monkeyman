@@ -82,17 +82,34 @@ our %vocabulary_data = (
     actions => {
         list => {
             request  => {
-                command         => 'listDomains',
-                listall         => { isa => 'Bool', required => 0 },
-                id              => { isa => 'Str', required => 0 },
-                name            => { isa => 'Str', required => 0 }
+                command             => 'listDomains',
+                parameters          => {
+                    all             => {
+                        isa             => 'Bool',
+                        required        => 0,
+                        parameter_name  => 'listall',
+                        parameter_value => '<%VALUE%>'
+                    },
+                    filter_by_id    => {
+                        isa             => 'Str',
+                        required        => 0,
+                        parameter_name  => 'id',
+                        parameter_value => '<%VALUE%>'
+                    },
+                    filter_by_name  => {
+                        isa             => 'Str',
+                        required        => 0,
+                        parameter_name  => 'name',
+                        parameter_value => '<%VALUE%>'
+                    }
+                }
             },
             response => {
                 async           => 0,
                 paged           => 1,
                 response_node   => 'listdomainsresponse',
                 results         => {
-                    domain          => {
+                    element         => {
                         return_as       => [ qw( dom element[Domain] id[Domain] ) ],
                         xpaths          => [ '/<%OUR_ENTITY_NODE%>' ],
                         required        => 0,
@@ -110,8 +127,20 @@ our %vocabulary_data = (
         create => {
             request => {
                 command         => 'createDomain',
-                networkdomain   => { isa => 'Str', required => 0 },
-                parentdomainid  => { isa => 'Str', required => 1 },
+                parameters      => {
+                    network_domain_name => {
+                        isa             => 'Str',
+                        required        => 0,
+                        parameter_name  => 'networkdomain',
+                        parameter_value => '<%VALUE%>'
+                    },
+                    parent_domain_id    => {
+                        isa             => 'Str',
+                        required        => 1,
+                        parameter_name  => 'parentdomainid',
+                        parameter_value => '<%VALUE%>'
+                    }
+                }
             },
             response => {
                 async           => 1,

@@ -652,7 +652,7 @@ method _build_vocabularies {
 
 method initialize_vocabulary(MonkeyMan::CloudStack::Types::ElementType $type!) {
 
-    return(MonkeyMan::CloudStack::API::Vocabulary->new(
+    return(MonkeyMan::CloudStack::API::Vocabulary->initialize(
         api         => $self,
         type        => $type
     ));

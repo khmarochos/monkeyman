@@ -81,7 +81,11 @@ has 'vocabulary' => (
     reader      =>    'get_vocabulary',
     writer      =>   '_set_vocabulary',
     builder     => '_build_vocabulary',
-    lazy        => 1
+    lazy        => 1,
+    handles     => [ qw(
+        vocabulary_lookup
+        compose_command
+    ) ]
 );
 
 method _build_vocabulary {
