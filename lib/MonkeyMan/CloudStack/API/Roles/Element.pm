@@ -85,6 +85,7 @@ has 'vocabulary' => (
     handles     => [ qw(
         vocabulary_lookup
         compose_command
+        action_perform
     ) ]
 );
 

@@ -40,15 +40,16 @@ my @elements = $api->get_elements(
 #    criterions  => { id => $element_id }
 );
 
-plan(tests => scalar(@elements));
+plan(tests => scalar(@elements) * 2);
 
 foreach my $element (@elements) {
     ok($element->vocabulary_lookup(word => 'name', fatal => 1));
-    print(
-        $element->compose_command(
-            action      => 'list',
-            parameters  => { all => 1 }
-        ) . "\n"
-    );
+    ok($element->vocabulary_lookup(word => 'entity_node', fatal => 1));
+#    print(
+#        $element->compose_command(
+#            action      => 'list',
+#            parameters  => { all => 1 }
+#        ) . "\n"
+#    );
 }
 

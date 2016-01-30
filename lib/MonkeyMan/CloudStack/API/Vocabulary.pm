@@ -5,7 +5,6 @@ use warnings;
 
 # Use Moose and be happy :)
 use Moose;
-use MooseX::Singleton;
 use namespace::autoclean;
 
 with 'MonkeyMan::CloudStack::API::Essentials';
