@@ -85,19 +85,16 @@ our %vocabulary_data = (
                 command             => 'listDomains',
                 parameters          => {
                     all             => {
-                        isa             => 'Bool',
                         required        => 0,
                         parameter_name  => 'listall',
                         parameter_value => '<%VALUE%>'
                     },
                     filter_by_id    => {
-                        isa             => 'Str',
                         required        => 0,
                         parameter_name  => 'id',
                         parameter_value => '<%VALUE%>'
                     },
                     filter_by_name  => {
-                        isa             => 'Str',
                         required        => 0,
                         parameter_name  => 'name',
                         parameter_value => '<%VALUE%>'
@@ -129,13 +126,11 @@ our %vocabulary_data = (
                 command         => 'createDomain',
                 parameters      => {
                     network_domain_name => {
-                        isa             => 'Str',
                         required        => 0,
                         parameter_name  => 'networkdomain',
                         parameter_value => '<%VALUE%>'
                     },
                     parent_domain_id    => {
-                        isa             => 'Str',
                         required        => 1,
                         parameter_name  => 'parentdomainid',
                         parameter_value => '<%VALUE%>'

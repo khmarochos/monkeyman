@@ -15,6 +15,7 @@ use MonkeyMan::Exception qw(
     VocabularyIsIncomplete
     WordIsMissing
     MacrosIsUndefined
+    RequiredParameterIsUnset
 );
 
 use Method::Signatures;
@@ -193,7 +194,7 @@ method vocabulary_lookup(
         )
     }
 
-    if($resolve && !ref($result)) {
+    if($resolve && defined($result) && !ref($result)) {
         $result = $self->resolve_macros(
             str     => $result,
             macros  => $macros,
@@ -212,8 +213,6 @@ method compose_command(
     HashRef         :$parameters
 ) {
 
-    my $result;
-
     my $action_data = $self->vocabulary_lookup(
         word    => [ 'actions', $action ],
         fatal   => 1
@@ -226,6 +225,8 @@ method compose_command(
             ref     => $action_data
         )
     );
+
+    # Let's translate the method's parameters to the command's parameters
 
     foreach my $parameter (keys(%{ $parameters })) {
 
@@ -262,21 +263,55 @@ method compose_command(
 
     }
 
-#        my $command_parameter_required = $self->vocabulary_lookup(
-#            word    => 'required',
-#            fatal   => 0,
-#            ref     => $parameter_data,
-#        );
-#        $command_parameter_required = 0
-#            unless(defined($command_parameter_required));
-#        if($command_parameter_required && !defined($command_parameter_value)) {
-#            (__PACKAGE__ . '::Exception::RequiredParameterIsUnset') {
-#            }
-#        }
+    # Now let's check if all required command parameters have been defined
 
-    $result = join("\t", (%command_parameters));
+    foreach my $parameter (keys(%{ $self->vocabulary_lookup(
+        word    => [ 'request', 'parameters' ],
+        fatal   => 1,
+        ref     => $action_data
+    ) } )) {
 
-    return($result);
+        my $parameter_data = $self->vocabulary_lookup(
+            word    => [ 'request', 'parameters', $parameter ],
+            fatal   => 1,
+            ref     => $action_data
+        );
+        
+        my $command_parameter_required = $self->vocabulary_lookup(
+            word    => 'required',
+            fatal   => 0,
+            ref     => $parameter_data,
+        );
+        next
+            unless(
+                defined($command_parameter_required) &&
+                        $command_parameter_required
+            );
+
+        my $command_parameter_name = $self->vocabulary_lookup(
+            word    => 'parameter_name',
+            fatal   => 0,
+            ref     => $parameter_data
+        );
+        $command_parameter_name = $parameter
+            unless(defined($command_parameter_name));
+
+        (__PACKAGE__ . '::Exception::RequiredParameterIsUnset')->throwf(
+            "The %s parameter is required by the %s command, " .
+            "but the corresponding parameter it isn't set for the %s action",
+            $command_parameter_name,
+            $command_parameters{'command'},
+            $action
+            
+        )
+            unless(defined($command_parameters{$command_parameter_name}));
+
+    }
+
+    return(MonkeyMan::CloudStack::API::Command->new(
+        api         => $self->get_api,
+        parameters  => \%command_parameters
+    ));
 
 }
 
