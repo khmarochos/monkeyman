@@ -23,7 +23,7 @@ use Method::Signatures;
 
 has 'type' => (
     is          => 'ro',
-    isa         => 'Str',
+    isa         => 'MonkeyMan::CloudStack::Types::ElementType',
     reader      =>    'get_type',
     writer      =>   '_set_type',
     builder     => '_build_type',
@@ -85,6 +85,7 @@ has 'vocabulary' => (
     handles     => [ qw(
         vocabulary_lookup
         compose_command
+        interpret_response
         action_perform
     ) ]
 );

@@ -15,6 +15,7 @@ use MonkeyMan::Exception qw(
     WordIsMissing
     MacrosIsUndefined
     RequiredParameterIsUnset
+    UnknownResultRequested
 );
 
 use Method::Signatures;
@@ -42,8 +43,13 @@ has 'global_macros' => (
 
 method _build_global_macros {
     return({
-        OUR_NAME    => $self->vocabulary_lookup(
+        OUR_NAME        => $self->vocabulary_lookup(
             word    => 'name',
+            fatal   => 1,
+            resolve => 0
+        ),
+        OUR_ENTITY_NODE => $self->vocabulary_lookup(
+            word    => 'entity_node',
             fatal   => 1,
             resolve => 0
         )
@@ -166,6 +172,10 @@ method vocabulary_lookup(
     Maybe[HashRef]      :$macros,
     Bool                :$resolve       = 1
 ) {
+
+    # FIXME: What about operating ArrayRefs instead of those stupid joints?
+    # It's quite risky to rely on a delimiter, as the "word" can contain the
+    # delimiter character in itself, so what will you do? ;-)
 
     $word = join($delimiter, @{ $word })
         if(ref($word) eq 'ARRAY');
@@ -315,6 +325,84 @@ method compose_command(
 }
 
 
+
+method perform_action(
+) {
+}
+
+
+
+method interpret_response(
+    XML::LibXML::Document   :$dom!,
+    Str                     :$action = ($self->recognize_response(dom => $dom))[1],
+    ArrayRef[HashRef]       :$requested!
+) {
+
+    my $api     = $self->get_api;
+    my $logger  = $api->get_cloudstack->get_monkeyman->get_logger;
+
+    my @results;
+
+    my $action_data = $self->vocabulary_lookup(
+        word    => [ 'actions', $action ],
+        fatal   => 1
+    );
+
+    foreach my $request (@{ $requested }) {
+
+        my $result;
+        my $return_as;
+        while(each(%{ $request })) {
+            if(defined($result)) {
+                $logger->warnf(
+                    "The %s (as %s) request is redundant, " .
+                    "as %s (as %s) is already requested.",
+                    $_[0], $_[1], $result, $return_as
+                );
+            } else {
+                $result     = $_[0];
+                $return_as  = $_[1];
+            }
+        }
+
+        my $response_data = $self->vocabulary_lookup(
+            word    => [ 'response' ],
+            fatal   => 1,
+            ref     => $action_data
+        );
+
+#        (__PACKAGE__ . '::Exception::InvalidResultRequested')->throwf(
+#            "The %s request is invalid, it doesn't contain "
+#            "but the corresponding parameter it isn't set for the %s action",
+#            unless(defined($result) && defined($return_as)) {
+#        }
+    }
+
+}
+
+
+
+method recognize_response (
+    XML::LibXML::Document   :$dom!,
+    Maybe[Bool]             :$fatal = 1
+) {
+
+    my @response_recognized = $self->get_api->recognize_response(
+        dom         => $dom,
+        vocabulary  => $self->get_type,
+        fatal       => $fatal
+    );
+
+    if(scalar(@response_recognized)) {
+        $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+            "The %s DOM has been recognized as the %s:%s response",
+            $dom, $response_recognized[0], $response_recognized[1]
+        );
+    }
+
+    return(@response_recognized);
+
+}
 
 __PACKAGE__->meta->make_immutable;
 

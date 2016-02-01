@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use FindBin;
-use lib("$FindBin::Bin/../../../../../../lib");
+use lib("$FindBin::Bin/../../../../lib");
 
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
@@ -40,16 +40,20 @@ my @elements = $api->get_elements(
 #    criterions  => { id => $element_id }
 );
 
-plan(tests => scalar(@elements) * 2);
+plan(tests => scalar(@elements));
 
 foreach my $element (@elements) {
+
     ok($element->vocabulary_lookup(word => 'name', fatal => 1));
-    ok($element->vocabulary_lookup(word => 'entity_node', fatal => 1));
-#    print(
-#        $element->compose_command(
-#            action      => 'list',
-#            parameters  => { all => 1 }
-#        ) . "\n"
-#    );
+
+    my $command = $element->compose_command(
+        action      => 'list',
+        parameters  => { filter_by_id => $element->get_id }
+    );
+    my $dom = $api->run_command(command => $command);
+    print($element->interpret_response(
+        dom         => $dom,
+        requested   => [ { id => 'value' } ]
+    ) . "\n");
 }
 

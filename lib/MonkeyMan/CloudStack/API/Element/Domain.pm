@@ -83,6 +83,8 @@ our %vocabulary_data = (
         list => {
             request  => {
                 command             => 'listDomains',
+                async               => 0,
+                paged               => 1,
                 parameters          => {
                     all             => {
                         required        => 0,
@@ -102,8 +104,6 @@ our %vocabulary_data = (
                 }
             },
             response => {
-                async           => 0,
-                paged           => 1,
                 response_node   => 'listdomainsresponse',
                 results         => {
                     element         => {

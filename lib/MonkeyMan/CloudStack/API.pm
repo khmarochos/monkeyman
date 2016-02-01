@@ -47,6 +47,7 @@ use MonkeyMan::Utils qw(mm_load_package);
 use MonkeyMan::Exception qw(
     CanNotLoadPackage
     InvalidParametersValue
+    InvalidResponse
     MagicWordsArentDefined
     NoParameters
     Timeout
@@ -656,6 +657,65 @@ method initialize_vocabulary(MonkeyMan::CloudStack::Types::ElementType $type!) {
         api         => $self,
         type        => $type
     ));
+
+}
+
+
+
+method recognize_response (
+    XML::LibXML::Document   :$dom!,
+    Str                     :$vocabulary,
+    Maybe[Bool]             :$fatal = 1
+) {
+
+    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+
+    my @response_recognized;
+
+    my @vocabularies = ($self->get_vocabulary($vocabulary));
+    unless(@vocabularies) {
+        foreach my $vocabulary (keys(%{ $self->get_vocabularies })) {
+            push(@vocabularies, $self->get_vocabulary($vocabulary));
+        }
+    }
+
+    foreach my $response_node (map { $_->nodeName } ($dom->findnodes('/*'))) {
+        next unless($response_node =~ /response$/);
+        foreach my $vocabulary (@vocabularies) {
+            foreach my $action (keys(%{ $vocabulary->vocabulary_lookup(
+                fatal   => 1,
+                word    => [ 'actions' ]
+            ) })) {
+                if($response_node eq $vocabulary->vocabulary_lookup(
+                    fatal   => 1,
+                    word    => [
+                        'actions', $action, 'response', 'response_node'
+                    ]
+                )) {
+                    if(scalar(@response_recognized)) {
+                        $logger->warnf(
+                            "The %s DOM is recognized as a response to the " .
+                            "%s:%s action, although it can be recognized " .
+                            "as a response to the %s:%s action as well.",
+                            $dom,
+                            $vocabulary->get_type, $action,
+                            $response_recognized[0], $response_recognized[1]
+                        );
+                    }
+                    @response_recognized = ($vocabulary->get_type, $action);
+                }
+            }
+        }
+    }
+
+    if($fatal && !scalar(@response_recognized)) {
+        (__PACKAGE__ . '::Exception::InvalidResponse')->throwf(
+            "The %s DOM doesn't seem to be containing a response",
+            $dom
+        );
+    }
+
+    return(@response_recognized);
 
 }
 
