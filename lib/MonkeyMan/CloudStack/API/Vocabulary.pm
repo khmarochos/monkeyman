@@ -16,6 +16,7 @@ use MonkeyMan::Exception qw(
     MacrosIsUndefined
     RequiredParameterIsUnset
     UnknownResultRequested
+    ReturnAsDisallowed
 );
 
 use Method::Signatures;
@@ -44,12 +45,12 @@ has 'global_macros' => (
 method _build_global_macros {
     return({
         OUR_NAME        => $self->vocabulary_lookup(
-            word    => 'name',
+            words   => [ 'name' ],
             fatal   => 1,
             resolve => 0
         ),
         OUR_ENTITY_NODE => $self->vocabulary_lookup(
-            word    => 'entity_node',
+            words   => [ 'entity_node' ],
             fatal   => 1,
             resolve => 0
         )
@@ -59,7 +60,7 @@ method _build_global_macros {
 
 
 method resolve_macros(
-    Str             :$str!,
+    Str             :$source!,
     Maybe[HashRef]  :$macros,
     Bool            :$fatal = 1
 ) {
@@ -73,22 +74,29 @@ method resolve_macros(
         }
     }
 
-    while ($str =~ /^(.*)<%(.+)%>(.*)$/) {
+    while ($source =~ /^(.*)<%(.+)%>(.*)$/) {
+
         my($left, $middle, $right) = ($1, $2, $3);
-        if(defined($left)) {
-            push(@result, $left);
+
+        if(defined($right)) {
+            unshift(@result, $right);
         }
+
         if(defined(my $new_value = $macros_all{$middle})) {
-            push(@result, $new_value);
+            unshift(@result, $new_value);
         } elsif($fatal) {
-            (__PACKAGE__ . 'Exception::MacrosIsUndefined')->throwf(
+            (__PACKAGE__ . '::Exception::MacrosIsUndefined')->throwf(
                 "Can't resolve the %s macros", $middle
             )
         }
-        $str = $right;
+
+        $source = $left;
+
     }
 
-    return(join('', @result, $str));
+    unshift(@result, $source);
+
+    return(join('', @result));
 
 }
 
@@ -133,16 +141,15 @@ method check_vocabulary(
     Bool    :$fatal?             = 1
 ) {
 
-    foreach my $word (qw(
-        name
-        actions
-        actions:list
-        actions:list:request
-        actions:list:response
-    )) {
+    foreach my $words (
+        [ qw(name) ],
+        [ qw(actions) ],
+        [ qw(actions list) ],
+        [ qw(actions list request) ],
+        [ qw(actions list response) ]
+    ) {
         unless(defined($self->vocabulary_lookup(
-            word        => $word,
-            delimiter   => ':',
+            words       => $words,
             ref         => $vocabulary_data,
             fatal       => 0,
             resolve     => 0
@@ -150,7 +157,8 @@ method check_vocabulary(
             if($fatal) {
                 (__PACKAGE__ . '::Exception::VocabularyIsIncomplete')->throwf(
                     "The %s class' vocabulary data is missing the %s word." ,
-                    $self->get_type, $word
+                    $self->get_api->translate_type(type => $self->get_type),
+                    join(':', @{ $words })
                 );
             } else {
                 return(0)
@@ -165,47 +173,45 @@ method check_vocabulary(
 
 
 method vocabulary_lookup(
-    Str|ArrayRef[Str]   :$word!,
-    Str                 :$delimiter     = ':',
+    ArrayRef[Str]       :$words!,
     HashRef             :$ref           = $self->get_vocabulary_data,
     Maybe[Bool]         :$fatal         = 0,
     Maybe[HashRef]      :$macros,
     Bool                :$resolve       = 1
 ) {
 
-    # FIXME: What about operating ArrayRefs instead of those stupid joints?
-    # It's quite risky to rely on a delimiter, as the "word" can contain the
-    # delimiter character in itself, so what will you do? ;-)
-
-    $word = join($delimiter, @{ $word })
-        if(ref($word) eq 'ARRAY');
-
     my $result;
+    
+    # I hope, we'll never need it again!
+    # $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+    #     "Looking for the %s word in the %s vocabulary",
+    #     join(':', @{ $words }), $ref
+    # );
 
-    if((my @words = split($delimiter, $word)) > 1) {
-        my $word0 = shift(@words);
-        if(defined($ref->{$word0})) {
+    my @wordz = (@{ $words });
+    my $word0 = shift(@wordz);
+    if(scalar(@wordz) > 0) {
+        if(defined($ref->{ $word0 })) {
             $result = $self->vocabulary_lookup(
-                word        => join($delimiter, @words),
-                delimiter   => $delimiter,
-                ref         => $ref->{$word0},
+                words       => \@wordz,
+                ref         => $ref->{ $word0 },
                 fatal       => 0
             );
         }
     } else {
-        $result = $ref->{$word};
+        $result = $ref->{ $word0 };
     }
 
     if($fatal && !defined($result)) {
         (__PACKAGE__ . '::Exception::WordIsMissing')->throwf(
-            "The %s class' vocabulary data is missing the %s word." ,
-            $self->get_type, $word
+            "The %s vocabulary is missing the %s word." ,
+            $ref, join(':', @{ $words })
         )
     }
 
     if($resolve && defined($result) && !ref($result)) {
         $result = $self->resolve_macros(
-            str     => $result,
+            source  => $result,
             macros  => $macros,
             fatal   => 1
         );
@@ -223,13 +229,13 @@ method compose_command(
 ) {
 
     my $action_data = $self->vocabulary_lookup(
-        word    => [ 'actions', $action ],
+        words   => [ 'actions', $action ],
         fatal   => 1
     );
 
     my %command_parameters = (
         command => $self->vocabulary_lookup(
-            word    => [ qw(request command) ],
+            words   => [ qw(request command) ],
             fatal   => 1,
             ref     => $action_data
         )
@@ -240,13 +246,13 @@ method compose_command(
     foreach my $parameter (keys(%{ $parameters })) {
 
         my $parameter_data = $self->vocabulary_lookup(
-            word    => [ 'request', 'parameters', $parameter ],
+            words   => [ 'request', 'parameters', $parameter ],
             fatal   => 1,
             ref     => $action_data
         );
         
         my $command_parameter_name = $self->vocabulary_lookup(
-            word    => 'parameter_name',
+            words   => [ 'parameter_name' ],
             fatal   => 0,
             ref     => $parameter_data
         );
@@ -254,7 +260,7 @@ method compose_command(
             unless(defined($command_parameter_name));
 
         my $command_parameter_value = $self->vocabulary_lookup(
-            word    => 'parameter_value',
+            words   => [ 'parameter_value' ],
             fatal   => 0,
             ref     => $parameter_data,
             macros  => { VALUE => $parameters->{$parameter} }
@@ -263,7 +269,7 @@ method compose_command(
             unless(defined($command_parameter_value));
 
         my $command_parameter_isa = $self->vocabulary_lookup(
-            word    => 'isa',
+            words   => [ 'isa' ],
             fatal   => 0,
             ref     => $parameter_data,
         );
@@ -274,20 +280,22 @@ method compose_command(
 
     # Now let's check if all required command parameters have been defined
 
-    foreach my $parameter (keys(%{ $self->vocabulary_lookup(
-        word    => [ 'request', 'parameters' ],
-        fatal   => 1,
-        ref     => $action_data
-    ) } )) {
+    foreach my $parameter (keys(%{
+        $self->vocabulary_lookup(
+            words   => [ 'request', 'parameters' ],
+            fatal   => 1,
+            ref     => $action_data
+        )
+    })) {
 
         my $parameter_data = $self->vocabulary_lookup(
-            word    => [ 'request', 'parameters', $parameter ],
+            words   => [ 'request', 'parameters', $parameter ],
             fatal   => 1,
             ref     => $action_data
         );
         
         my $command_parameter_required = $self->vocabulary_lookup(
-            word    => 'required',
+            words   => [ 'required' ],
             fatal   => 0,
             ref     => $parameter_data,
         );
@@ -298,7 +306,7 @@ method compose_command(
             );
 
         my $command_parameter_name = $self->vocabulary_lookup(
-            word    => 'parameter_name',
+            words   => [ 'parameter_name' ],
             fatal   => 0,
             ref     => $parameter_data
         );
@@ -344,7 +352,7 @@ method interpret_response(
     my @results;
 
     my $action_data = $self->vocabulary_lookup(
-        word    => [ 'actions', $action ],
+        words   => [ 'actions', $action ],
         fatal   => 1
     );
 
@@ -355,7 +363,7 @@ method interpret_response(
         while(each(%{ $request })) {
             if(defined($result)) {
                 $logger->warnf(
-                    "The %s (as %s) request is redundant, " .
+                    "The %s (as %s) requisition is redundant, " .
                     "as %s (as %s) is already requested.",
                     $_[0], $_[1], $result, $return_as
                 );
@@ -366,10 +374,48 @@ method interpret_response(
         }
 
         my $response_data = $self->vocabulary_lookup(
-            word    => [ 'response' ],
+            words   => [ 'response' ],
             fatal   => 1,
             ref     => $action_data
         );
+        my $responde_node_name = $self->vocabulary_lookup(
+            words   => [ 'response_node' ],
+            fatal   => 1,
+            ref     => $response_data
+        );
+
+        while(my($result, $return_as) = each(%{ $request })) {
+            my $results_data = $self->vocabulary_lookup(
+                words   => [ 'results', $result ],
+                fatal   => 1,
+                ref     => $response_data
+            );
+            unless(grep { $_ eq $return_as } (@{ $self->vocabulary_lookup(
+                words   => [ 'return_as' ],
+                fatal   => 1,
+                ref     => $results_data
+            ) })) {
+                (__PACKAGE__ . '::Exception::ReturnAsDisallowed')->throwf(
+                    "Can't return %s as %s from the %s vocabulary",
+                    $result, $return_as, $self
+                );
+            }
+            foreach my $xpath (@{ $self->vocabulary_lookup(
+                words   => [ 'xpaths' ],
+                fatal   => 1,
+                ref     => $results_data,
+            ) }) {
+                $xpath = $self->resolve_macros(
+                    source  => $xpath,
+                    macros  => { OUR_RESPONSE_NODE => $responde_node_name }
+                );
+                $self->get_api->qxp(
+                    dom         => $dom,
+                    query       => $xpath,
+                    return_as   => $return_as
+                );
+            }
+        }
 
 #        (__PACKAGE__ . '::Exception::InvalidResultRequested')->throwf(
 #            "The %s request is invalid, it doesn't contain "
@@ -377,6 +423,8 @@ method interpret_response(
 #            unless(defined($result) && defined($return_as)) {
 #        }
     }
+
+    return(@results);
 
 }
 
@@ -395,8 +443,14 @@ method recognize_response (
 
     if(scalar(@response_recognized)) {
         $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
-            "The %s DOM has been recognized as the %s:%s response",
-            $dom, $response_recognized[0], $response_recognized[1]
+            "The %s DOM has been recognized as the response to " .
+            "the %s action of %s",
+            $dom,
+            $response_recognized[1],
+            $self->get_api->translate_type(
+                type    => $response_recognized[0],
+                a       => 1
+            )
         );
     }
 

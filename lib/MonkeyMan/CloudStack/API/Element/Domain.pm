@@ -62,7 +62,7 @@ func _criterions_to_parameters(
 
 our %vocabulary_data = (
     name => 'domain',
-    entity_node => '<%OUR_NAME%>',
+    entity_node => 'domain',
     related => {
         our_virtual_machines => {
             type    => 'VirtualMachine',
@@ -108,13 +108,13 @@ our %vocabulary_data = (
                 results         => {
                     element         => {
                         return_as       => [ qw( dom element[Domain] id[Domain] ) ],
-                        xpaths          => [ '/<%OUR_ENTITY_NODE%>' ],
+                        xpaths          => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
                         required        => 0,
                         multiple        => 1
                     },
                     id              => {
                         return_as       => [ qw( value ) ],
-                        xpaths          => [ '/<%OUR_ENTITY_NODE%>/id' ],
+                        xpaths          => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
                         required        => 0,
                         multiple        => 1
                     }
@@ -124,6 +124,8 @@ our %vocabulary_data = (
         create => {
             request => {
                 command         => 'createDomain',
+                async           => 1,
+                paged           => 0,
                 parameters      => {
                     network_domain_name => {
                         required        => 0,
@@ -138,7 +140,6 @@ our %vocabulary_data = (
                 }
             },
             response => {
-                async           => 1,
                 response_node   => 'createdomainresponse',
                 results         => {
                     domain          => {

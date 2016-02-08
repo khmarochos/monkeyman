@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use FindBin;
-use lib("$FindBin::Bin/../../../../lib");
+use lib("$FindBin::Bin/../../../../../lib");
 
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
@@ -12,7 +12,7 @@ use MonkeyMan::Constants qw(:version);
 my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'vocabulary.t',
-    app_description     => 'MonkeyMan::CloudStack::API::Roles::Element::*vocabulary* testing script',
+    app_description     => 'MonkeyMan::CloudStack::API::Vocabulary testing script',
     app_version         => MM_VERSION,
     parameters_to_get   => {
         't|type=s'          => 'type',
@@ -36,7 +36,7 @@ my $element_id      = defined($parameters->get_id)?
 
 my @elements = $api->get_elements(
     type        =>         $element_type,
-    criterions  => { listall => 'true' }
+    criterions  => { all => 'true' }
 #    criterions  => { id => $element_id }
 );
 
@@ -44,7 +44,7 @@ plan(tests => scalar(@elements));
 
 foreach my $element (@elements) {
 
-    ok($element->vocabulary_lookup(word => 'name', fatal => 1));
+    ok($element->vocabulary_lookup(words => 'name', fatal => 1));
 
     my $command = $element->compose_command(
         action      => 'list',

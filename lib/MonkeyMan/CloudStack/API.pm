@@ -530,30 +530,27 @@ method get_doms(
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
 
     #FIXME# Should I really pretend they ask us to list all elements here?
-    $criterions = { listall => 1 }
+    $criterions = { all => 'true' }
         unless(defined($criterions));
     #FIXME# Or shouldn't I?
-
-    my %magic_words = $self->get_magic_words($type);
 
     $logger->tracef("Looking for %s matching the %s set of criterias",
         $self->translate_type(type => $type, noun => 1, plural => 1),
         $criterions
     );
 
-    my %parameters = ($self->criterions_to_parameters($type, %{ $criterions }));
-       $parameters{'command'} = $magic_words{'find_command'};
+    my $vocabulary = $self->get_vocabulary($type);
 
     my $dom = $self->run_command(
-        parameters => \%parameters,
+        command => $vocabulary->compose_command(
+            action      => 'list',
+            parameters  => $criterions
+        )
     );
 
-    my @results = $self->qxp(
-        query       =>
-            '/' . $magic_words{'list_tag_global'} .
-            '/' . $magic_words{'list_tag_entity'},
+    my @results = $vocabulary->interpret_response(
         dom         => $dom,
-        return_as   => 'dom'
+        requested   => [ { element => 'dom' } ]
     );
 
     if(defined($xpaths)) {
@@ -684,11 +681,11 @@ method recognize_response (
         foreach my $vocabulary (@vocabularies) {
             foreach my $action (keys(%{ $vocabulary->vocabulary_lookup(
                 fatal   => 1,
-                word    => [ 'actions' ]
+                words   => [ 'actions' ]
             ) })) {
                 if($response_node eq $vocabulary->vocabulary_lookup(
                     fatal   => 1,
-                    word    => [
+                    words   => [
                         'actions', $action, 'response', 'response_node'
                     ]
                 )) {
@@ -745,15 +742,7 @@ method get_elements(
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
 
-    if(defined($criterions)) {
-
-        $logger->warnf(
-            "It's odd that some DOM's are given (%s), " .
-            "but some criterions are given as well (%s)",
-            $doms, $criterions
-        )
-            if(defined($doms));
-
+    unless(defined($doms)) {
         foreach my $result ($self->get_doms(
             type        => $type,
             criterions  => $criterions,
