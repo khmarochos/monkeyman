@@ -35,25 +35,20 @@ my $element_id      = defined($parameters->get_id)?
                               '6cd7f13c-e1c7-437d-95f9-e98e55eb200d';
 
 my @elements = $api->get_elements(
-    type        =>         $element_type,
+    type        => $element_type,
     criterions  => { all => 'true' }
-#    criterions  => { id => $element_id }
 );
 
 plan(tests => scalar(@elements));
 
 foreach my $element (@elements) {
-
-    ok($element->vocabulary_lookup(words => 'name', fatal => 1));
-
-    my $command = $element->compose_command(
+    my $path = $api->perform_action(
         action      => 'list',
-        parameters  => { filter_by_id => $element->get_id }
+        type        => $element_type,
+        parameters  => { filter_by_id => $element->get_id },
+        requested   => [ { path => 'value' } ]
     );
-    my $dom = $api->run_command(command => $command);
-    print($element->interpret_response(
-        dom         => $dom,
-        requested   => [ { id => 'value' } ]
-    ) . "\n");
+    ok(defined($path));
 }
+
 

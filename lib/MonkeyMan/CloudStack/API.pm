@@ -49,6 +49,7 @@ use MonkeyMan::Exception qw(
     InvalidParametersValue
     InvalidResponse
     MagicWordsArentDefined
+    DOMIsNotDefined
     NoParameters
     Timeout
 );
@@ -500,7 +501,63 @@ method run_command(
 
 }
 
-=head2 C<get_doms()>
+method compose_command(
+    MonkeyMan::CloudStack::Types::ElementType   :$type!,
+    Str                                         :$action!,
+    Maybe[HashRef]                              :$parameters
+) {
+
+    return($self->get_vocabulary($type)->compose_command(
+        action      => $action,
+        parameters  => $parameters
+    ));
+
+}
+
+method interpret_response(
+    XML::LibXML::Document                       :$dom!,
+    MonkeyMan::CloudStack::Types::ElementType   :$type      = ($self->recognize_response(dom => $dom))[0],
+    Str                                         :$action    = ($self->recognize_response(dom => $dom))[1],
+    ArrayRef[HashRef]                           :$requested!
+) {
+
+    return($self->get_vocabulary($type)->interpret_response(
+        dom         => $dom,
+        action      => $action,
+        requested   => $requested
+    ));
+
+}
+
+method perform_action(
+    MonkeyMan::CloudStack::Types::ElementType   :$type!,
+    Str                                         :$action!,
+    Maybe[HashRef]                              :$parameters,
+    ArrayRef[HashRef]                           :$requested!
+) {
+
+    my $command = $self->compose_command(
+        type        => $type,
+        action      => $action,
+        parameters  => $parameters
+    );
+
+    my $dom = $self->run_command(
+        command     => $command
+    );
+
+    # The wantarray() function will detect what the caller expects
+    return($self->interpret_response(
+        dom         => $dom,
+        type        => $type,
+        requested   => $requested
+    ))
+
+}
+
+
+
+=head2 C<find_doms()>
 
 The method returns the list of DOMs of elements of type defined matching
 XPath-condtions defined. You'll probably need to use this method, because it
@@ -521,7 +578,7 @@ Optional.
 
 =cut
 
-method get_doms(
+method find_doms(
     MonkeyMan::CloudStack::Types::ElementType   :$type!,
     Maybe[HashRef]                              :$criterions,
     Maybe[ArrayRef[Str]]                        :$xpaths,
@@ -529,10 +586,8 @@ method get_doms(
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
 
-    #FIXME# Should I really pretend they ask us to list all elements here?
     $criterions = { all => 'true' }
         unless(defined($criterions));
-    #FIXME# Or shouldn't I?
 
     $logger->tracef("Looking for %s matching the %s set of criterias",
         $self->translate_type(type => $type, noun => 1, plural => 1),
@@ -565,6 +620,7 @@ method get_doms(
                     push(@results_filtered, $result_filtered);
                 }
             }
+            # Yes, it should happen BEFORE we proceed to the next XPath-query!
             @results = @results_filtered;
         }
     }
@@ -659,9 +715,69 @@ method initialize_vocabulary(MonkeyMan::CloudStack::Types::ElementType $type!) {
 
 
 
+method recognize_dom(
+    XML::LibXML::Document   :$dom!,
+    Maybe[Bool]             :$fatal = 1
+) {
+
+    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+
+    my $dom_recognized;
+
+    my @vocabularies = map { $self->get_vocabulary($_) } (
+        keys(%{ $self->get_vocabularies })
+    );
+
+    foreach my $response_node (map { $_->nodeName } ($dom->findnodes('/*'))) {
+        foreach my $vocabulary (@vocabularies) {
+            foreach my $entity_node (keys(%{ $vocabulary->vocabulary_lookup(
+                fatal   => 1,
+                words   => [ 'actions', 'entity_node' ]
+            ) })) {
+                if($response_node eq $entity_node) {
+                    if(
+                        defined($dom_recognized) &&
+                        ($dom_recognized ne $vocabulary->get_type)
+                     ) {
+                        $logger->warnf(
+                            "The %s DOM is recognized as %s, " .
+                            "although it also could be recognized as %s",
+                            $dom,
+                            $self->translate_type(
+                                type    => $vocabulary->get_type,
+                                a       => 1
+                            ),
+                            $self->translate_type(
+                                type    => $dom_recognized,
+                                a       => 1
+                            )
+                        );
+                    }
+                    $dom_recognized = $vocabulary->get_type;
+                }
+            }
+        }
+    }
+
+    if($fatal && !defined($dom_recognized)) {
+        (__PACKAGE__ . '::Exception::InvalidResponse')->throwf(
+            "The %s DOM doesn't seem to be containing any elements",
+            $dom
+        );
+    }
+
+    $logger->tracef(
+        "The %s DOM has been recognized as %s",
+        $dom, $self->translate_type(type => $dom_recognized, a => 1)
+    );
+
+    return($dom_recognized);
+
+}
+
 method recognize_response (
     XML::LibXML::Document   :$dom!,
-    Str                     :$vocabulary,
+    Maybe[Str]              :$vocabulary,
     Maybe[Bool]             :$fatal = 1
 ) {
 
@@ -669,7 +785,9 @@ method recognize_response (
 
     my @response_recognized;
 
-    my @vocabularies = ($self->get_vocabulary($vocabulary));
+    my @vocabularies = ($self->get_vocabulary($vocabulary))
+        if(defined($vocabulary));
+
     unless(@vocabularies) {
         foreach my $vocabulary (keys(%{ $self->get_vocabularies })) {
             push(@vocabularies, $self->get_vocabulary($vocabulary));
@@ -689,14 +807,25 @@ method recognize_response (
                         'actions', $action, 'response', 'response_node'
                     ]
                 )) {
-                    if(scalar(@response_recognized)) {
+                    if(
+                        scalar(@response_recognized) && (
+                            ($response_recognized[0] ne $vocabulary->get_type) ||
+                            ($response_recognized[1] ne $action)
+                        )
+                    ) {
                         $logger->warnf(
-                            "The %s DOM is recognized as a response to the " .
-                            "%s:%s action, although it can be recognized " .
-                            "as a response to the %s:%s action as well.",
+                            "The %s DOM is recognized as a response to " .
+                            "the %s:%s action, although it also could be " .
+                            "recognized as a response to the %s:%s action",
                             $dom,
-                            $vocabulary->get_type, $action,
-                            $response_recognized[0], $response_recognized[1]
+                            $self->translate_type(
+                                type => $vocabulary->get_type
+                            ),
+                            $action,
+                            $self->translate_type(
+                                type => $response_recognized[0]
+                            ),
+                            $response_recognized[1]
                         );
                     }
                     @response_recognized = ($vocabulary->get_type, $action);
@@ -711,6 +840,14 @@ method recognize_response (
             $dom
         );
     }
+
+    $logger->tracef(
+        "The %s DOM has been recognized as the %s:%s action",
+        $dom,
+        $self->translate_type(type => $response_recognized[0]),
+        $response_recognized[1]
+    );
+
 
     return(@response_recognized);
 
@@ -730,20 +867,32 @@ This method finds infrastructure elements by the criterions defined.
         ok($vm->get_id, $vm->get_dom->findvalue('/virtualmachine/id');
     }
 
+    $vm_copy = $api->get_elements(
+        doms        => $vm->get_dom
+    );
+
 =cut
 
 method get_elements(
-    MonkeyMan::CloudStack::Types::ElementType       :$type!,
-    Maybe[MonkeyMan::CloudStack::Types::ReturnAs]   :$return_as = 'element',
-    Maybe[HashRef]                                  :$criterions,
-    Maybe[ArrayRef[Str]]                            :$xpaths,
-    Maybe[ArrayRef[XML::LibXML::Document]]          :$doms,
+    Maybe[MonkeyMan::CloudStack::Types::ElementType]    :$type,
+    Maybe[MonkeyMan::CloudStack::Types::ReturnAs]       :$return_as = 'element',
+    Maybe[HashRef]                                      :$criterions,
+    Maybe[ArrayRef[Str]]                                :$xpaths,
+    Maybe[ArrayRef[XML::LibXML::Document]]              :$doms,
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
 
+    unless(defined($type)) {
+        (__PACKAGE__ . '::Exception::DOMIsNotDefined')->throw(
+            "Neither DOM nor element type have been defined"
+        )
+            unless(defined($doms));
+        $type = $self->recognize_dom(dom => $doms, fatal => 1);
+    }
+
     unless(defined($doms)) {
-        foreach my $result ($self->get_doms(
+        foreach my $result ($self->find_doms(
             type        => $type,
             criterions  => $criterions,
             xpaths      => $xpaths
@@ -771,14 +920,14 @@ method get_elements(
     if(defined(wantarray) && ! wantarray) {
         if(@results > 1) {
             $logger->warnf(
-                "The get_elements() method's is supposed to return " .
+                "The get_elements() method is supposed to return " .
                 "not a list, but a scalar value to the context it has been " .
                 "called from, altough %d elements have been found (%s). " .
                 "Returning the first one (%s) only.",
                 scalar(@results), \@results, $results[0]
             );
         }
-        return(shift(@results));
+        return($results[0]);
     } else {
         return(@results);
     }
@@ -867,65 +1016,83 @@ method qxp(
     }
 
     $logger->tracef(
-        'Querying the %s DOM with the "%s" XPath-query',
-        $dom,
-        $query
+        'Querying the %s DOM with the "%s" XPath-query (expecting %s)',
+        $dom, $query, A($return_as)
     );
 
     my @results;
 
-    foreach my $result ($dom->findnodes($query)->get_nodelist) {
-
-        my $new_node = $result->cloneNode(1);
+    foreach my $new_node (
+        map { $_->cloneNode(1) } ( $dom->findnodes($query)->get_nodelist)
+    ) {
         my $new_dom = XML::LibXML::Document->new();
            $new_dom->addChild($new_node);
-
-        if($return_as =~ /^value$/i) {
-
-            push(@results, $new_dom->textContent);
-            $logger->tracef(
-                "Added the value of the %s DOM to the list of results",
-                $new_dom
-            );
-
-        } elsif($return_as =~ /^dom$/i) {
-
-            push(@results, $new_dom);
-            $logger->tracef(
-                "Added the %s DOM to the list of results",
-                $new_dom
-            );
-
-        } elsif($return_as =~ /^(id|element)\[(\w+)\]$/i) {
-
-            my $return_as   = $1;
-            my $type        = $2;
-            foreach my $element ($self->get_elements(
-                type        => $type,
-                doms        => [ $new_dom ],
-            )) {
-                push(@results, $self->_return_element_as($element, $return_as));
-                $logger->tracef(
-                    "Added the %s based on the %s DOM to the list of results",
-                    $element->get_type(noun => 1),
-                    $new_dom
-                );
-            }
-
-        }
-
+        my $result = $self->return_as($new_dom, $return_as);
+        push(@results, $result);
+        $logger->tracef(
+            'Added the %s element to the %s list of results',
+            ref($result) ? $result : \$result, \@results
+        );
     }
 
     return(@results);
 
+}
 
+method return_as(
+    Defined                                 $source!,
+    MonkeyMan::CloudStack::Types::ReturnAs  $return_as!
+) {
+    if(ref($source) eq 'MonkeyMan::CloudStack::API::Element') {
+        return($self->_return_element_as($source, $return_as));
+    } elsif(ref($source) eq 'XML::LibXML::Document') {
+        return($self->_return_dom_as($source, $return_as));
+    } else {
+        (__PACKAGE__ . '::Exception::InvalidSource')->throwf(
+            "Can't return %s as %s", $source, A($return_as)
+        );
+    }
+}
+
+method _return_dom_as(
+    XML::LibXML::Document                   $dom!,
+    MonkeyMan::CloudStack::Types::ReturnAs  $return_as!
+) {
+    if     ($return_as eq 'element') {
+        return($self->get_elements(doms => $dom));
+    } elsif($return_as eq 'dom') {
+        return($dom);
+    } elsif($return_as eq 'id') {
+        return($dom->findvalue('/id'));
+    } elsif($return_as eq 'value') {
+        return($dom->textContent);
+    } else {
+        (__PACKAGE__ . '::Exception::InvalidParametersValue')->throwf(
+            "The %s DOM can't be return as %s.",
+            $dom, A($return_as)
+        );
+    }
+}
+
+method _return_element_as(
+    MonkeyMan::CloudStack::API::Roles::Element  $element!,
+    MonkeyMan::CloudStack::Types::ReturnAs      $return_as!
+) {
+    if     ($return_as eq 'element') {
+        return($element);
+    } elsif($return_as eq 'dom') {
+        return($element->get_dom);
+    } elsif($return_as eq 'id') {
+        return($element->get_id);
+    } else {
+        (__PACKAGE__ . '::Exception::InvalidParametersValue')->throwf(
+            "The %s element can't be return as %s.",
+            $element, A($return_as)
+        );
+    }
 }
 
 
-
-#
-# Some helpers
-#
 
 method translate_type(
     MonkeyMan::CloudStack::Types::ElementType   :$type!,
@@ -941,39 +1108,6 @@ method translate_type(
             if($a && !$plural);
     }
     return($type);
-}
-
-method _return_element_as(
-    MonkeyMan::CloudStack::API::Roles::Element  $element!,
-    Maybe[Str]                                  $return_as = 'element'
-) {
-
-    if     ($return_as  =~ /^element$/i) {
-        return($element);
-    } elsif($return_as  =~ /^dom$/i) {
-        return($element->get_dom);
-    } elsif($return_as  =~ /^id$/i) {
-        return($element->get_id);
-    } else {
-        (__PACKAGE__ . '::Exception::InvalidParametersValue')->throwf(
-            "The return_as parameter's value is invalid (%s).",
-            $return_as
-        );
-    }
-
-}
-
-method criterions_to_parameters(
-    MonkeyMan::CloudStack::Types::ElementType $type!,
-    ...
-) {
-    shift;
-    no strict 'refs';
-    my $class_name = $self->load_element_package($type);
-    my %parameters = &{
-        '::' . $class_name . '::_criterions_to_parameters'
-    }(@_);
-    return(%parameters);
 }
 
 

@@ -426,14 +426,4 @@ method qxp(
 
 }
 
-method criterions_to_parameters(...) {
-
-    my @results = $self->get_api->criterions_to_parameters(
-        $self->get_type,
-        @_
-    );
-    return(@results);
-
-}
-
 1;

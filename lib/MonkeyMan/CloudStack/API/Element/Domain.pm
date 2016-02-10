@@ -26,20 +26,6 @@ our %_related = (
     }
 );
 
-func _criterions_to_parameters(
-        :$listall,
-    Str :$id,
-    Str :$name
-) {
-    my %parameters;
-    $parameters{'listall'}  = 'true'        if(defined($listall));
-    $parameters{'id'}       = $id           if(defined($id));
-    $parameters{'name'}     = $name         if(defined($name));
-    return(%parameters);
-}
-
-
-
 =pod
 
     $parent1 = $api->get_elements(
@@ -61,27 +47,12 @@ func _criterions_to_parameters(
 =cut
 
 our %vocabulary_data = (
+    type => 'Domain',
     name => 'domain',
     entity_node => 'domain',
-    related => {
-        our_virtual_machines => {
-            type    => 'VirtualMachine',
-            keys    => [ {
-                value   => { xpaths     => [ '/<%OUR_ENTITY_NODE%>/id' ] },
-                foreign => { xpaths     => [ '/<%THEIR_ENTITY_NODE%>[domainid = "<%OUR_KEY_VALUE%>"]' ] },
-            } ]
-        },
-        our_accounts => {
-            type    => 'Account',
-            keys    => [ {
-                value   => { xpaths     => [ '/<%OUR_ENTITY_NODE%>/id' ] },
-                foreign => { criterions => [ qw( domainid ) ] }
-            } ]
-        }
-    },
     actions => {
         list => {
-            request  => {
+            request => {
                 command             => 'listDomains',
                 async               => 0,
                 paged               => 1,
@@ -115,6 +86,12 @@ our %vocabulary_data = (
                     id              => {
                         return_as       => [ qw( value ) ],
                         xpaths          => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    path              => {
+                        return_as       => [ qw( value ) ],
+                        xpaths          => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/path' ],
                         required        => 0,
                         multiple        => 1
                     }
@@ -157,7 +134,23 @@ our %vocabulary_data = (
                 }
             }
         }
-    }
+    },
+    related => {
+        our_virtual_machines => {
+            type    => 'VirtualMachine',
+            keys    => [ {
+                value   => { xpaths     => [ '/<%OUR_ENTITY_NODE%>/id' ] },
+                foreign => { xpaths     => [ '/<%THEIR_ENTITY_NODE%>[domainid = "<%OUR_KEY_VALUE%>"]' ] },
+            } ]
+        },
+        our_accounts => {
+            type    => 'Account',
+            keys    => [ {
+                value   => { xpaths     => [ '/<%OUR_ENTITY_NODE%>/id' ] },
+                foreign => { criterions => [ qw( domainid ) ] }
+            } ]
+        }
+    },
 );
 
 

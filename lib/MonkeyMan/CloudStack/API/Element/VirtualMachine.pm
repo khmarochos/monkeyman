@@ -26,18 +26,6 @@ our %_related = (
     }
 );
 
-func _criterions_to_parameters(
-        :$listall,
-    Str :$id,
-    Str :$domainid
-) {
-    my %parameters;
-    $parameters{'listall'}  = 'true'        if(defined($listall));
-    $parameters{'id'}       = $id           if(defined($id));
-    $parameters{'domainid'} = $domainid     if(defined($domainid));
-    return(%parameters);
-}
-
 
 
 __PACKAGE__->meta->make_immutable;

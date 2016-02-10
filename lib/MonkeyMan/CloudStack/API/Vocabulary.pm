@@ -118,7 +118,7 @@ method _build_vocabulary_data {
     my $class_name  = $self->get_api->load_element_package($type);
 
     no strict 'refs';
-    my $vocabulary_data = \%{'::' . $class_name . '::vocabulary_data'};
+    my $vocabulary_data = \%{ '::' . $class_name . '::vocabulary_data' };
 
     unless(defined($vocabulary_data)) {
         (__PACKAGE__ . '::Exception::VocabularyIsMissing')->throwf(
@@ -138,13 +138,13 @@ method _build_vocabulary_data {
 
 method check_vocabulary(
     HashRef :$vocabulary_data?   = $self->get_vocabulary_data,
-    Bool    :$fatal?             = 1
+    Bool    :$fatal              = 1
 ) {
 
     foreach my $words (
+        [ qw(type) ],
         [ qw(name) ],
-        [ qw(actions) ],
-        [ qw(actions list) ],
+        [ qw(entity_node) ],
         [ qw(actions list request) ],
         [ qw(actions list response) ]
     ) {
@@ -175,7 +175,7 @@ method check_vocabulary(
 method vocabulary_lookup(
     ArrayRef[Str]       :$words!,
     HashRef             :$ref           = $self->get_vocabulary_data,
-    Maybe[Bool]         :$fatal         = 0,
+    Maybe[Bool]         :$fatal         = 1,
     Maybe[HashRef]      :$macros,
     Bool                :$resolve       = 1
 ) {
@@ -334,12 +334,6 @@ method compose_command(
 
 
 
-method perform_action(
-) {
-}
-
-
-
 method interpret_response(
     XML::LibXML::Document   :$dom!,
     Str                     :$action = ($self->recognize_response(dom => $dom))[1],
@@ -409,11 +403,11 @@ method interpret_response(
                     source  => $xpath,
                     macros  => { OUR_RESPONSE_NODE => $responde_node_name }
                 );
-                $self->get_api->qxp(
+                push(@results, $self->get_api->qxp(
                     dom         => $dom,
                     query       => $xpath,
                     return_as   => $return_as
-                );
+                ));
             }
         }
 
@@ -422,6 +416,21 @@ method interpret_response(
 #            "but the corresponding parameter it isn't set for the %s action",
 #            unless(defined($result) && defined($return_as)) {
 #        }
+    }
+
+    if(defined(wantarray) && ! wantarray) {
+        if(@results > 1) {
+            $logger->warnf(
+                "The interpret_response() method is supposed to return " .
+                "not a list, but a scalar value to the context it has been " .
+                "called from, altough %d elements have been found (%s). " .
+                "Returning the first one (%s) only.",
+                scalar(@results), \@results, $results[0]
+            );
+        }
+        return($results[0]);
+    } else {
+        return(@results);
     }
 
     return(@results);
