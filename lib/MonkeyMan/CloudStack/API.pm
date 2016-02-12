@@ -1082,7 +1082,7 @@ method _return_dom_as(
     } elsif($return_as eq 'dom') {
         return($dom);
     } elsif($return_as eq 'id') {
-        return($dom->findvalue('/id'));
+        return($dom->findvalue('/*/id'));
     } elsif($return_as eq 'value') {
         return($dom->textContent);
     } else {

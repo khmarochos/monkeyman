@@ -35,7 +35,7 @@ my @elements = $api->perform_action(
     type        => $element_type,
     action      => 'list',
     parameters  => { all => 'true' },
-    requested   => [ { element => 'element' } ]
+    requested   => [ { element => 'id' } ]
 );
 
 plan(tests => scalar(@elements));
@@ -44,10 +44,10 @@ foreach my $element (@elements) {
     my $path = $api->perform_action(
         type        => $element_type,
         action      => 'list',
-        parameters  => { filter_by_id => $element->get_id },
+        parameters  => { filter_by_id => $element },
         requested   => [ { path => 'value' } ]
     );
-    $logger->debugf("The path to the %s %s is %s", $element->get_id, $api->translate_type(type => $element->get_type), $path);
+    $logger->debugf("The path to the %s %s is %s", $element, $api->translate_type(type => $element_type), $path);
     ok(defined($path));
 }
 
