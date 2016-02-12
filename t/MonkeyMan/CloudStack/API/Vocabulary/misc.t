@@ -30,24 +30,24 @@ my $parameters      = $monkeyman->get_parameters;
 my $element_type    = defined($parameters->get_type)?
                               $parameters->get_type :
                               'Domain';
-my $element_id      = defined($parameters->get_id)?
-                              $parameters->get_id :
-                              '6cd7f13c-e1c7-437d-95f9-e98e55eb200d';
 
-my @elements = $api->get_elements(
+my @elements = $api->perform_action(
     type        => $element_type,
-    criterions  => { all => 'true' }
+    action      => 'list',
+    parameters  => { all => 'true' },
+    requested   => [ { element => 'element' } ]
 );
 
 plan(tests => scalar(@elements));
 
 foreach my $element (@elements) {
     my $path = $api->perform_action(
-        action      => 'list',
         type        => $element_type,
+        action      => 'list',
         parameters  => { filter_by_id => $element->get_id },
         requested   => [ { path => 'value' } ]
     );
+    $logger->debugf("The path to the %s %s is %s", $element->get_id, $api->translate_type(type => $element->get_type), $path);
     ok(defined($path));
 }
 

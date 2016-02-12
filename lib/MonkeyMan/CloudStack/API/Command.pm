@@ -128,6 +128,7 @@ has http_response => (
 );
 
 method run(
+    Bool        :$return_as_dom = 0, # FIXME: Make it work
     Maybe[Bool] :$fatal_fail    = 1,
     Maybe[Bool] :$fatal_empty   = 0,
     Maybe[Bool] :$fatal_431     =
@@ -171,7 +172,7 @@ method run(
                 $self
             );
         } else {
-            MonkeyMan::CloudStack::API::Command::Exception::BadResponse->throwf(
+            (__PACKAGE__ . '::Exception::BadResponse')->throwf(
                 "The command has failed to run: %s",
                     $self->get_http_response->status_line
             );

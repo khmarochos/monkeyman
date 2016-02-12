@@ -46,7 +46,7 @@ our %_related = (
 
 =cut
 
-our %vocabulary_data = (
+our %vocabulary_tree = (
     type => 'Domain',
     name => 'domain',
     entity_node => 'domain',
@@ -57,20 +57,26 @@ our %vocabulary_data = (
                 async               => 0,
                 paged               => 1,
                 parameters          => {
-                    all             => {
-                        required        => 0,
-                        parameter_name  => 'listall',
-                        parameter_value => '<%VALUE%>'
+                    all => {
+                        required            => 0,
+                        command_parameters  => { 'listall' => '<%VALUE%>' },
                     },
-                    filter_by_id    => {
-                        required        => 0,
-                        parameter_name  => 'id',
-                        parameter_value => '<%VALUE%>'
+                    filter_by_id => {
+                        required            => 0,
+                        command_parameters  => { 'id' => '<%VALUE%>' },
                     },
-                    filter_by_name  => {
-                        required        => 0,
-                        parameter_name  => 'name',
-                        parameter_value => '<%VALUE%>'
+                    filter_by_name => {
+                        required            => 0,
+                        command_parameters  => { 'name' => '<%VALUE%>' },
+                    },
+                    filter_by_path => {
+                        required            => 0,
+                        filters             => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>[path = "<%VALUE%>"]' ]
+                    },
+                    filter_by_path_all => {
+                        required            => 0,
+                        command_parameters  => { 'listall' => 'true' },
+                        filters             => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>[path = "<%VALUE%>"]' ]
                     }
                 }
             },
@@ -78,59 +84,23 @@ our %vocabulary_data = (
                 response_node   => 'listdomainsresponse',
                 results         => {
                     element         => {
-                        return_as       => [ qw( dom element[Domain] id[Domain] ) ],
-                        xpaths          => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
+                        return_as       => [ qw( dom element id ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
                         required        => 0,
                         multiple        => 1
                     },
                     id              => {
                         return_as       => [ qw( value ) ],
-                        xpaths          => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
                         required        => 0,
                         multiple        => 1
                     },
                     path              => {
                         return_as       => [ qw( value ) ],
-                        xpaths          => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/path' ],
+                        queries         => [ '<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/path' ],
                         required        => 0,
                         multiple        => 1
                     }
-                }
-            }
-        },
-        create => {
-            request => {
-                command         => 'createDomain',
-                async           => 1,
-                paged           => 0,
-                parameters      => {
-                    network_domain_name => {
-                        required        => 0,
-                        parameter_name  => 'networkdomain',
-                        parameter_value => '<%VALUE%>'
-                    },
-                    parent_domain_id    => {
-                        required        => 1,
-                        parameter_name  => 'parentdomainid',
-                        parameter_value => '<%VALUE%>'
-                    }
-                }
-            },
-            response => {
-                response_node   => 'createdomainresponse',
-                results         => {
-                    domain          => {
-                        return_as       => [ qw( dom element[Domain] id[Domain] ) ],
-                        xpaths          => [ '/<%OUR_ENTITY_NODE%>' ],
-                        required        => 1,
-                        multiple        => 0
-                    },
-                    id              => {
-                        return_as       => [ qw( value ) ],
-                        xpaths          => [ '/<%OUR_ENTITY_NODE%>/id' ],
-                        required        => 1,
-                        multiple        => 0
-                    },
                 }
             }
         }

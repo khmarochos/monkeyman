@@ -18,8 +18,10 @@ use MonkeyMan::Exception qw(
     UnknownResultRequested
     ReturnAsDisallowed
 );
+use MonkeyMan::CloudStack::API::Request;
 
 use Method::Signatures;
+use Lingua::EN::Inflect qw(A);
 
 
 
@@ -102,42 +104,42 @@ method resolve_macros(
 
 
 
-has 'vocabulary_data' => (
+has 'vocabulary_tree' => (
     is          => 'ro',
     isa         => 'HashRef',
-    reader      =>    'get_vocabulary_data',
-    writer      =>   '_set_vocabulary_data',
-    predicate   =>   '_has_vocabulary_data',
-    builder     => '_build_vocabulary_data',
+    reader      =>    'get_vocabulary_tree',
+    writer      =>   '_set_vocabulary_tree',
+    predicate   =>   '_has_vocabulary_tree',
+    builder     => '_build_vocabulary_tree',
     lazy        => 1
 );
 
-method _build_vocabulary_data {
+method _build_vocabulary_tree {
 
     my $type        = $self->get_type;
     my $class_name  = $self->get_api->load_element_package($type);
 
     no strict 'refs';
-    my $vocabulary_data = \%{ '::' . $class_name . '::vocabulary_data' };
+    my $vocabulary_tree = \%{ '::' . $class_name . '::vocabulary_tree' };
 
-    unless(defined($vocabulary_data)) {
+    unless(defined($vocabulary_tree)) {
         (__PACKAGE__ . '::Exception::VocabularyIsMissing')->throwf(
-            "The %s class' vocabulary data is missing. " .
+            "The %s class' vocabulary tree is missing. " .
             "Sorry, but I can not use this class.",
             $class_name
         );
     }
 
-    $self->check_vocabulary(vocabulary_data => $vocabulary_data, fatal => 1);
+    $self->check_vocabulary(vocabulary_tree => $vocabulary_tree, fatal => 1);
 
-    return($vocabulary_data);
+    return($vocabulary_tree);
 
 }
 
 
 
 method check_vocabulary(
-    HashRef :$vocabulary_data?   = $self->get_vocabulary_data,
+    HashRef :$vocabulary_tree    = $self->get_vocabulary_tree,
     Bool    :$fatal              = 1
 ) {
 
@@ -148,20 +150,23 @@ method check_vocabulary(
         [ qw(actions list request) ],
         [ qw(actions list response) ]
     ) {
+        $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+            "Making sure if there is the %s word in the %s vocabulary tree",
+            join(':', @{ $words }), $vocabulary_tree
+        );
         unless(defined($self->vocabulary_lookup(
             words       => $words,
-            ref         => $vocabulary_data,
+            tree        => $vocabulary_tree,
             fatal       => 0,
             resolve     => 0
         ))) {
             if($fatal) {
                 (__PACKAGE__ . '::Exception::VocabularyIsIncomplete')->throwf(
-                    "The %s class' vocabulary data is missing the %s word." ,
-                    $self->get_api->translate_type(type => $self->get_type),
-                    join(':', @{ $words })
+                    "The %s vocabulary tree is missing the %s word." ,
+                    $vocabulary_tree, join(':', @{ $words })
                 );
             } else {
-                return(0)
+                return(0);
             }
         }
     }
@@ -174,7 +179,7 @@ method check_vocabulary(
 
 method vocabulary_lookup(
     ArrayRef[Str]       :$words!,
-    HashRef             :$ref           = $self->get_vocabulary_data,
+    HashRef             :$tree?         = $self->get_vocabulary_tree,
     Maybe[Bool]         :$fatal         = 1,
     Maybe[HashRef]      :$macros,
     Bool                :$resolve       = 1
@@ -182,30 +187,30 @@ method vocabulary_lookup(
 
     my $result;
     
-    # I hope, we'll never need it again!
-    # $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
-    #     "Looking for the %s word in the %s vocabulary",
-    #     join(':', @{ $words }), $ref
-    # );
+    #my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+    #$logger->tracef(
+    #    "Looking for the %s word in the %s vocabulary tree",
+    #    join(':', @{ $words }), $tree
+    #);
 
-    my @wordz = (@{ $words });
+    my @wordz = (@{ $words }); # Don't mess up with the original list!
     my $word0 = shift(@wordz);
     if(scalar(@wordz) > 0) {
-        if(defined($ref->{ $word0 })) {
+        if(defined($tree->{ $word0 })) {
             $result = $self->vocabulary_lookup(
                 words       => \@wordz,
-                ref         => $ref->{ $word0 },
+                tree        => $tree->{ $word0 },
                 fatal       => 0
             );
         }
     } else {
-        $result = $ref->{ $word0 };
+        $result = $tree->{ $word0 };
     }
 
     if($fatal && !defined($result)) {
         (__PACKAGE__ . '::Exception::WordIsMissing')->throwf(
             "The %s vocabulary is missing the %s word." ,
-            $ref, join(':', @{ $words })
+            $tree, join(':', @{ $words })
         )
     }
 
@@ -223,112 +228,106 @@ method vocabulary_lookup(
 
 
 
-method compose_command(
+method compose_request(
     Str             :$action!,
-    HashRef         :$parameters
+    HashRef         :$parameters,
+    Maybe[HashRef]  :$macros,
+    Maybe[Bool]     :$return_as_hashref
 ) {
 
-    my $action_data = $self->vocabulary_lookup(
+    my $r = {
+        action      => $action,
+        parameters  => $parameters,
+        macros      => $macros
+    };
+
+    my $action_subtree = $self->vocabulary_lookup(
         words   => [ 'actions', $action ],
         fatal   => 1
     );
-
-    my %command_parameters = (
-        command => $self->vocabulary_lookup(
-            words   => [ qw(request command) ],
-            fatal   => 1,
-            ref     => $action_data
-        )
+    my $request_subtree = $self->vocabulary_lookup(
+        words   => [ 'request' ],
+        fatal   => 1,
+        tree    => $action_subtree
     );
 
-    # Let's translate the method's parameters to the command's parameters
-
-    foreach my $parameter (keys(%{ $parameters })) {
-
-        my $parameter_data = $self->vocabulary_lookup(
-            words   => [ 'request', 'parameters', $parameter ],
-            fatal   => 1,
-            ref     => $action_data
-        );
-        
-        my $command_parameter_name = $self->vocabulary_lookup(
-            words   => [ 'parameter_name' ],
-            fatal   => 0,
-            ref     => $parameter_data
-        );
-        $command_parameter_name = $parameter
-            unless(defined($command_parameter_name));
-
-        my $command_parameter_value = $self->vocabulary_lookup(
-            words   => [ 'parameter_value' ],
-            fatal   => 0,
-            ref     => $parameter_data,
-            macros  => { VALUE => $parameters->{$parameter} }
-        );
-        $command_parameter_value = $parameters->{$parameter}
-            unless(defined($command_parameter_value));
-
-        my $command_parameter_isa = $self->vocabulary_lookup(
-            words   => [ 'isa' ],
-            fatal   => 0,
-            ref     => $parameter_data,
-        );
-
-        $command_parameters{$command_parameter_name} = $command_parameter_value;
-
-    }
-
-    # Now let's check if all required command parameters have been defined
-
-    foreach my $parameter (keys(%{
+    # Now let's make sure if all required action parameters have been defined
+    while(my($parameter_name, $parameter_subtree) = each(%{
         $self->vocabulary_lookup(
-            words   => [ 'request', 'parameters' ],
+            words   => [ qw(request parameters) ],
             fatal   => 1,
-            ref     => $action_data
+            tree    => $action_subtree
         )
     })) {
-
-        my $parameter_data = $self->vocabulary_lookup(
-            words   => [ 'request', 'parameters', $parameter ],
-            fatal   => 1,
-            ref     => $action_data
-        );
-        
-        my $command_parameter_required = $self->vocabulary_lookup(
+        if($self->vocabulary_lookup(
             words   => [ 'required' ],
             fatal   => 0,
-            ref     => $parameter_data,
-        );
-        next
-            unless(
-                defined($command_parameter_required) &&
-                        $command_parameter_required
-            );
-
-        my $command_parameter_name = $self->vocabulary_lookup(
-            words   => [ 'parameter_name' ],
-            fatal   => 0,
-            ref     => $parameter_data
-        );
-        $command_parameter_name = $parameter
-            unless(defined($command_parameter_name));
-
-        (__PACKAGE__ . '::Exception::RequiredParameterIsUnset')->throwf(
-            "The %s parameter is required by the %s command, " .
-            "but the corresponding parameter it isn't set for the %s action",
-            $command_parameter_name,
-            $command_parameters{'command'},
-            $action
-            
-        )
-            unless(defined($command_parameters{$command_parameter_name}));
-
+            tree    => $parameter_subtree
+        ) && !defined($parameters->{$parameter_name})) {
+            (__PACKAGE__ . '::Exception::RequiredParameterIsUnset')->throwf(
+                "The %s parameter is missing, it's required by the %s action",
+                $parameter_name, $action
+            )
+        }
     }
 
-    return(MonkeyMan::CloudStack::API::Command->new(
+    # Let's translate the method's parameters to the command's parameters
+    my $command_parameters = { };
+    foreach my $parameter (keys(%{ $parameters })) {
+        $macros->{'VALUE'} = $parameters->{$parameter};
+        while(
+            my(
+                $command_parameter_name,
+                $command_parameter_value
+            ) = map { $self->resolve_macros(source => $_, macros => $macros) }
+                each(%{
+                    $self->vocabulary_lookup(
+                        words   => [
+                            'request',
+                            'parameters',
+                            $parameter,
+                            'command_parameters'
+                        ],
+                        fatal   => 1,
+                        tree    => $action_subtree,
+                    );
+                })
+        ) {
+            $command_parameters->{$command_parameter_name} =
+                                  $command_parameter_value;
+        }
+    }
+    $command_parameters->{'command'} = $self->vocabulary_lookup(
+        words   => [ 'command' ],
+        fatal   => 1,
+        tree    => $request_subtree
+    );
+
+    $r->{'command'} = MonkeyMan::CloudStack::API::Command->new(
         api         => $self->get_api,
-        parameters  => \%command_parameters
-    ));
+        parameters  => $command_parameters
+    );
+
+    $r->{'async'} = $self->vocabulary_lookup(
+        words   => [ 'async' ],
+        fatal   => 0,
+        tree    => $request_subtree
+    );
+    $r->{'paged'} = $self->vocabulary_lookup(
+        words   => [ 'paged' ],
+        fatal   => 0,
+        tree     => $request_subtree
+    );
+    $r->{'api'}  = $self->get_api;
+    $r->{'type'} = $self->get_type;
+
+    $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+        "Composed the %s set of parameters", $r
+    );
+
+    return((defined($return_as_hashref) && $return_as_hashref) ?
+        $r : MonkeyMan::CloudStack::API::Request->new($r)
+    );
 
 }
 
@@ -345,7 +344,7 @@ method interpret_response(
 
     my @results;
 
-    my $action_data = $self->vocabulary_lookup(
+    my $action_subtree = $self->vocabulary_lookup(
         words   => [ 'actions', $action ],
         fatal   => 1
     );
@@ -367,37 +366,37 @@ method interpret_response(
             }
         }
 
-        my $response_data = $self->vocabulary_lookup(
+        my $response_subtree = $self->vocabulary_lookup(
             words   => [ 'response' ],
             fatal   => 1,
-            ref     => $action_data
+            tree    => $action_subtree
         );
         my $responde_node_name = $self->vocabulary_lookup(
             words   => [ 'response_node' ],
             fatal   => 1,
-            ref     => $response_data
+            tree    => $response_subtree
         );
 
         while(my($result, $return_as) = each(%{ $request })) {
-            my $results_data = $self->vocabulary_lookup(
+            my $results_subtree = $self->vocabulary_lookup(
                 words   => [ 'results', $result ],
                 fatal   => 1,
-                ref     => $response_data
+                tree    => $response_subtree
             );
             unless(grep { $_ eq $return_as } (@{ $self->vocabulary_lookup(
                 words   => [ 'return_as' ],
                 fatal   => 1,
-                ref     => $results_data
+                tree    => $results_subtree
             ) })) {
                 (__PACKAGE__ . '::Exception::ReturnAsDisallowed')->throwf(
-                    "Can't return %s as %s from the %s vocabulary",
-                    $result, $return_as, $self
+                    "Can't return the %s result as %s from the %s vocabulary",
+                    $result, A($return_as), $self
                 );
             }
             foreach my $xpath (@{ $self->vocabulary_lookup(
-                words   => [ 'xpaths' ],
+                words   => [ 'queries' ],
                 fatal   => 1,
-                ref     => $results_data,
+                tree    => $results_subtree,
             ) }) {
                 $xpath = $self->resolve_macros(
                     source  => $xpath,

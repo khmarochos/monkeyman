@@ -501,15 +501,19 @@ method run_command(
 
 }
 
-method compose_command(
+method compose_request(
     MonkeyMan::CloudStack::Types::ElementType   :$type!,
     Str                                         :$action!,
-    Maybe[HashRef]                              :$parameters
+    Maybe[HashRef]                              :$parameters,
+    Maybe[HashRef]                              :$macros,
+    Maybe[Bool]                                 :$return_as_hashref
 ) {
 
-    return($self->get_vocabulary($type)->compose_command(
-        action      => $action,
-        parameters  => $parameters
+    return($self->get_vocabulary($type)->compose_request(
+        action              => $action,
+        parameters          => $parameters,
+        macros              => $macros,
+        return_as_hashref   => $return_as_hashref
     ));
 
 }
@@ -533,17 +537,19 @@ method perform_action(
     MonkeyMan::CloudStack::Types::ElementType   :$type!,
     Str                                         :$action!,
     Maybe[HashRef]                              :$parameters,
+    Maybe[HashRef]                              :$macros,
     ArrayRef[HashRef]                           :$requested!
 ) {
 
-    my $command = $self->compose_command(
+    my $request = $self->compose_request(
         type        => $type,
         action      => $action,
-        parameters  => $parameters
+        parameters  => $parameters,
+        macros      => $macros
     );
 
     my $dom = $self->run_command(
-        command     => $command
+        command     => $request->get_command
     );
 
     # The wantarray() function will detect what the caller expects
@@ -581,7 +587,7 @@ Optional.
 method find_doms(
     MonkeyMan::CloudStack::Types::ElementType   :$type!,
     Maybe[HashRef]                              :$criterions,
-    Maybe[ArrayRef[Str]]                        :$xpaths,
+    Maybe[ArrayRef[Str]]                        :$xpaths
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
@@ -597,10 +603,10 @@ method find_doms(
     my $vocabulary = $self->get_vocabulary($type);
 
     my $dom = $self->run_command(
-        command => $vocabulary->compose_command(
+        command => $vocabulary->compose_request(
             action      => 'list',
             parameters  => $criterions
-        )
+        )->get_command
     );
 
     my @results = $vocabulary->interpret_response(
@@ -730,31 +736,30 @@ method recognize_dom(
 
     foreach my $response_node (map { $_->nodeName } ($dom->findnodes('/*'))) {
         foreach my $vocabulary (@vocabularies) {
-            foreach my $entity_node (keys(%{ $vocabulary->vocabulary_lookup(
+            my $entity_node = $vocabulary->vocabulary_lookup(
                 fatal   => 1,
-                words   => [ 'actions', 'entity_node' ]
-            ) })) {
-                if($response_node eq $entity_node) {
-                    if(
-                        defined($dom_recognized) &&
-                        ($dom_recognized ne $vocabulary->get_type)
-                     ) {
-                        $logger->warnf(
-                            "The %s DOM is recognized as %s, " .
-                            "although it also could be recognized as %s",
-                            $dom,
-                            $self->translate_type(
-                                type    => $vocabulary->get_type,
-                                a       => 1
-                            ),
-                            $self->translate_type(
-                                type    => $dom_recognized,
-                                a       => 1
-                            )
-                        );
-                    }
-                    $dom_recognized = $vocabulary->get_type;
+                words   => [ 'entity_node' ]
+            );
+            if($response_node eq $entity_node) {
+                if(
+                    defined($dom_recognized) &&
+                    ($dom_recognized ne $vocabulary->get_type)
+                 ) {
+                    $logger->warnf(
+                        "The %s DOM is recognized as %s, " .
+                        "although it also could be recognized as %s",
+                        $dom,
+                        $self->translate_type(
+                            type    => $vocabulary->get_type,
+                            a       => 1
+                        ),
+                        $self->translate_type(
+                            type    => $dom_recognized,
+                            a       => 1
+                        )
+                    );
                 }
+                $dom_recognized = $vocabulary->get_type;
             }
         }
     }
@@ -842,12 +847,11 @@ method recognize_response (
     }
 
     $logger->tracef(
-        "The %s DOM has been recognized as the %s:%s action",
+        "The %s DOM has been recognized as the %s:%s action's response",
         $dom,
         $self->translate_type(type => $response_recognized[0]),
         $response_recognized[1]
     );
-
 
     return(@response_recognized);
 
@@ -884,11 +888,21 @@ method get_elements(
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
 
     unless(defined($type)) {
-        (__PACKAGE__ . '::Exception::DOMIsNotDefined')->throw(
-            "Neither DOM nor element type have been defined"
-        )
-            unless(defined($doms));
-        $type = $self->recognize_dom(dom => $doms, fatal => 1);
+        unless(defined($doms) && scalar(@{ $doms })) {
+            (__PACKAGE__ . '::Exception::NotEnoughParametersDefined')->throw(
+                "The element type isn't defined and no DOMs are given"
+            );
+        }
+        foreach my $dom (@{ $doms }) {
+            my $type_detected = $self->recognize_dom(dom => $dom, fatal => 1);
+            if(defined($type) && ($type ne $type_detected)) {
+                $logger->warnf(
+                    "The %s set of DOMs contains a mix of elements " .
+                    "(either %s and %s)", $doms, PL($type_detected), PL($type)
+                );
+            }
+            $type = $type_detected;
+        }
     }
 
     unless(defined($doms)) {
@@ -1043,6 +1057,11 @@ method return_as(
     Defined                                 $source!,
     MonkeyMan::CloudStack::Types::ReturnAs  $return_as!
 ) {
+
+    $self->get_cloudstack->get_monkeyman->get_logger->tracef(
+        "Going to show %s as %s", $source, A($return_as)
+    );
+
     if(ref($source) eq 'MonkeyMan::CloudStack::API::Element') {
         return($self->_return_element_as($source, $return_as));
     } elsif(ref($source) eq 'XML::LibXML::Document') {
@@ -1059,7 +1078,7 @@ method _return_dom_as(
     MonkeyMan::CloudStack::Types::ReturnAs  $return_as!
 ) {
     if     ($return_as eq 'element') {
-        return($self->get_elements(doms => $dom));
+        return($self->get_elements(doms => [ $dom ]));
     } elsif($return_as eq 'dom') {
         return($dom);
     } elsif($return_as eq 'id') {

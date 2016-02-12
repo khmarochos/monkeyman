@@ -25,14 +25,15 @@ subtype ElementType,
 
 
 our @_ReturnAs_regexps = qw(
-    ^dom$
-    ^value$
-    ^element(:?\[.+\])?$
-    ^id(:?\[.+\])?$
+    dom
+    value
+    element
+    id
 );
 subtype ReturnAs,
     as Str,
-    where { my $v = $_; grep({ $v =~ qr/$_/ } @_ReturnAs_regexps); },
+#    where { my $v = $_; grep({ $v =~ qr/$_/ } @_ReturnAs_regexps); },
+    where { my $v = $_; grep({ $_ eq $v } @_ReturnAs_regexps); },
     message { "This ReturnAs isn't valid" };
 
 
