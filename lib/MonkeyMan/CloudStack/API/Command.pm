@@ -137,7 +137,7 @@ method run(
 
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
 
-    $logger->debugf("Running the %s command", $self);
+    $logger->tracef("Running the %s command", $self);
 
     unless($self->get_url || $self->get_parameters) {
         MonkeyMan::Exception->throw(

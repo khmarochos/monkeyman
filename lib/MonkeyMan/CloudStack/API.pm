@@ -501,6 +501,8 @@ method run_command(
 
 }
 
+
+
 method compose_request(
     MonkeyMan::CloudStack::Types::ElementType   :$type!,
     Str                                         :$action!,
@@ -518,14 +520,40 @@ method compose_request(
 
 }
 
-method interpret_response(
-    XML::LibXML::Document                       :$dom!,
-    MonkeyMan::CloudStack::Types::ElementType   :$type      = ($self->recognize_response(dom => $dom))[0],
-    Str                                         :$action    = ($self->recognize_response(dom => $dom))[1],
-    ArrayRef[HashRef]                           :$requested!
+method apply_filters(
+    XML::LibXML::Document                               :$dom!,
+    Maybe[MonkeyMan::CloudStack::Types::ElementType]    :$type,
+    Maybe[Str]                                          :$action,
+    Maybe[HashRef]                                      :$parameters,
+    Maybe[ArrayRef[Str]]                                :$filters,
+    Maybe[MonkeyMan::CloudStack::API::Request]          :$request,
+    Maybe[HashRef]                                      :$macros
 ) {
 
-    return($self->get_vocabulary($type)->interpret_response(
+    return($self->get_vocabulary(
+        defined($type) ? $type : ($self->recognize_response(dom => $dom))[0]
+    )->apply_filters(
+        dom         => $dom,
+        action      => $action,
+        parameters  => $parameters,
+        filters     => $filters,
+        request     => $request,
+        macros      => $macros
+    ));
+
+}
+
+method interpret_response(
+    XML::LibXML::Document                               :$dom!,
+    Maybe[MonkeyMan::CloudStack::Types::ElementType]    :$type,
+    Maybe[Str]                                          :$action,
+    Maybe[HashRef]                                      :$macros,
+    HashRef|ArrayRef[HashRef]                           :$requested!
+) {
+
+    return($self->get_vocabulary(
+        defined($type) ? $type : ($self->recognize_response(dom => $dom))[0]
+    )->interpret_response(
         dom         => $dom,
         action      => $action,
         requested   => $requested
@@ -538,7 +566,7 @@ method perform_action(
     Str                                         :$action!,
     Maybe[HashRef]                              :$parameters,
     Maybe[HashRef]                              :$macros,
-    ArrayRef[HashRef]                           :$requested!
+    HashRef|ArrayRef[HashRef]                   :$requested!
 ) {
 
     my $request = $self->compose_request(
@@ -550,6 +578,11 @@ method perform_action(
 
     my $dom = $self->run_command(
         command     => $request->get_command
+    );
+
+    $dom = $self->apply_filters(
+        dom         => $dom,
+        request     => $request
     );
 
     # The wantarray() function will detect what the caller expects

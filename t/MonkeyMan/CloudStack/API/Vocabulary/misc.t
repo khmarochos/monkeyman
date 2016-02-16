@@ -35,20 +35,42 @@ my @elements = $api->perform_action(
     type        => $element_type,
     action      => 'list',
     parameters  => { all => 'true' },
-    requested   => [ { element => 'id' } ]
+    requested   => { element => 'element' }
 );
 
-plan(tests => scalar(@elements));
+plan(tests => scalar(@elements) * 3);
 
 foreach my $element (@elements) {
+
+    $logger->debugf("Performing a singular request, requesting the path to the %s %s", $element->get_id, $element->get_type(noun => 1));
     my $path = $api->perform_action(
         type        => $element_type,
         action      => 'list',
-        parameters  => { filter_by_id => $element },
-        requested   => [ { path => 'value' } ]
+        parameters  => { filter_by_id => $element->get_id },
+        requested   => { path => 'value' }
     );
-    $logger->debugf("The path to the %s %s is %s", $element, $api->translate_type(type => $element_type), $path);
     ok(defined($path));
-}
+
+    $logger->debugf("Performing a plural request, requesting the path to the %s %s twice", $element->get_id, $element->get_type(noun => 1));
+    my @paths = $api->perform_action(
+        type        => $element_type,
+        action      => 'list',
+        parameters  => { filter_by_id => $element->get_id },
+        requested   => [ { path => 'value' }, { path => 'value' } ]
+    );
+    ok($path eq $paths[0] && $paths[0] eq $paths[1]);
+
+    my $id = $api->perform_action(
+        type        => $element_type,
+        action      => 'list',
+        parameters  => { filter_by_path_all => $path },
+        requested   => { id => 'value' }
+    );
+    ok($id eq $element->get_id);
+
+    $logger->debugf("Results were: %s, %s, %s, %s", $path, $paths[0], $paths[1], $id);
+
+} 
+
 
 

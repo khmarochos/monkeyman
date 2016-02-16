@@ -17,8 +17,10 @@ use MonkeyMan::Exception qw(
     RequiredParameterIsUnset
     UnknownResultRequested
     ReturnAsDisallowed
+    SplitBrain
 );
 use MonkeyMan::CloudStack::API::Request;
+use MonkeyMan::Utils qw(mm_sprintf);
 
 use Method::Signatures;
 use Lingua::EN::Inflect qw(A);
@@ -97,6 +99,10 @@ method resolve_macros(
     }
 
     unshift(@result, $source);
+
+#    $self->get_api->get_cloudstack->get_monkeyman->get_logger->debugf(
+#        "!!! %s !!!", join('', @result)
+#    #);
 
     return(join('', @result));
 
@@ -236,10 +242,17 @@ method compose_request(
 ) {
 
     my $r = {
+        api         => $self->get_api,
+        type        => $self->get_type,
         action      => $action,
         parameters  => $parameters,
+        async       => undef,
+        paged       => undef,
+        filters     => [ ],
         macros      => $macros
     };
+
+    my $macros_complete = { defined($macros) ? %{ $macros } : () };
 
     my $action_subtree = $self->vocabulary_lookup(
         words   => [ 'actions', $action ],
@@ -250,6 +263,13 @@ method compose_request(
         fatal   => 1,
         tree    => $action_subtree
     );
+
+    my $responde_node_name = $self->vocabulary_lookup(
+        words   => [ qw(response response_node) ],
+        fatal   => 1,
+        tree    => $action_subtree
+    );
+    $macros_complete->{'OUR_RESPONSE_NODE'} = $responde_node_name;
 
     # Now let's make sure if all required action parameters have been defined
     while(my($parameter_name, $parameter_subtree) = each(%{
@@ -273,30 +293,54 @@ method compose_request(
 
     # Let's translate the method's parameters to the command's parameters
     my $command_parameters = { };
+
     foreach my $parameter (keys(%{ $parameters })) {
-        $macros->{'VALUE'} = $parameters->{$parameter};
-        while(
-            my(
-                $command_parameter_name,
-                $command_parameter_value
-            ) = map { $self->resolve_macros(source => $_, macros => $macros) }
-                each(%{
-                    $self->vocabulary_lookup(
-                        words   => [
-                            'request',
-                            'parameters',
-                            $parameter,
-                            'command_parameters'
-                        ],
-                        fatal   => 1,
-                        tree    => $action_subtree,
-                    );
-                })
+
+        $macros_complete->{'VALUE'} = $parameters->{$parameter};
+
+        my $filters = $self->vocabulary_lookup(
+            words   => [ 'request', 'parameters', $parameter, 'filters' ],
+            fatal   => 0,
+            tree    => $action_subtree
+        );
+        if(defined($filters) && ref($filters) eq 'ARRAY') {
+            foreach my $filter (
+                map { $self->resolve_macros(
+                    source => $_,
+                    macros => $macros_complete
+                ) } (@{ $filters })
+            ) {
+                push(@{ $r->{'filters'} }, $filter);
+            }
+        }
+        
+        my $command_parameters_subtree = $self->vocabulary_lookup(
+            words => [
+                'request',  'parameters',
+                $parameter, 'command_parameters'
+            ],
+            fatal   => 0,
+            tree    => $action_subtree,
+        );
+        if(
+            defined($command_parameters_subtree) &&
+                ref($command_parameters_subtree) eq 'HASH'
         ) {
-            $command_parameters->{$command_parameter_name} =
-                                  $command_parameter_value;
+            while(
+                my(
+                    $command_parameter_name,
+                    $command_parameter_value
+                ) = map { $self->resolve_macros(
+                    source => $_,
+                    macros => $macros_complete
+                ) } each(%{ $command_parameters_subtree })
+            ) {
+                $command_parameters->{$command_parameter_name} =
+                $command_parameter_value;
+            }
         }
     }
+
     $command_parameters->{'command'} = $self->vocabulary_lookup(
         words   => [ 'command' ],
         fatal   => 1,
@@ -318,8 +362,6 @@ method compose_request(
         fatal   => 0,
         tree     => $request_subtree
     );
-    $r->{'api'}  = $self->get_api;
-    $r->{'type'} = $self->get_type;
 
     $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
         "Composed the %s set of parameters", $r
@@ -333,16 +375,124 @@ method compose_request(
 
 
 
+method apply_filters(
+    XML::LibXML::Document                       :$dom!,
+    Maybe[Str]                                  :$action,
+    Maybe[HashRef]                              :$parameters,
+    Maybe[ArrayRef[Str]]                        :$filters,
+    Maybe[MonkeyMan::CloudStack::API::Request]  :$request,
+    Maybe[HashRef]                              :$macros
+) {
+
+    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+
+    if(defined($request)) {
+
+        $logger->warnf(
+            "The %s request is given, though the %s action is given too",
+            $request, $action
+        ) if(defined($action));
+        $action = $request->get_action;
+
+        $logger->warnf(
+            "The %s request is given, though the %s filters set is given too",
+            $request, $action
+        ) if(defined($filters));
+        $filters = $request->get_filters;
+
+    } elsif(defined($action) && defined($parameters)) {
+
+        $logger->warnf(
+            "The %s action is given, though the %s fitlers set is given too",
+            $request, $action
+        ) if(defined($filters));
+
+        my $request = $self->compose_request(
+            action              => $action,
+            parameters          => $parameters,
+            macros              => $macros,
+            return_as_hashref   => 1
+        );
+
+        @{ $filters } = @{ $request->{'filters'} };
+
+    }
+
+    my $nodes_cloned = { };
+    my $new_dom = $dom;
+    foreach my $filter (@{ $filters }) {
+        $logger->tracef("Applying the %s filter to the %s DOM", $filter, $new_dom);
+        foreach my $node ($dom->findnodes($filter)) {
+            $new_dom = $self->_import_node($nodes_cloned, $node, 1)->ownerDocument;
+        }
+    }
+    return($new_dom);
+
+}
+
+method _import_node(
+    HashRef           $nodes_cloned!,
+    XML::LibXML::Node $node!,
+    Bool              $last
+) {
+
+    #$self->get_api->get_cloudstack->get_monkeyman->get_logger->debugf(
+    #    "Called to add the %s node, " .
+    #    "the %s map contains the following elements: %s",
+    #    $node, $nodes_cloned, join(', ',
+    #        map { mm_sprintf("%s => %s", $_, $nodes_cloned->{$_}) }
+    #            keys(%{ $nodes_cloned })
+    #    )
+    #);
+
+    my $node_new;
+    if(defined(my $parent_node = $node->parentNode)) {
+        my $parent_node_key = $parent_node->unique_key;
+        if(defined($nodes_cloned->{$parent_node_key})) {
+            unless($nodes_cloned->{$parent_node_key}->isSameNode($parent_node)) {
+                (__PACKAGE__ . '::Exception::SplitBrain')->throwf(
+                    "The %s node and the %s one aren't the same " .
+                    "as they're supposed to be",
+                        $nodes_cloned->{$parent_node_key},
+                                        $parent_node
+                );
+            }
+            # If we already have the parent node cloned and mapped
+            $node_new = $nodes_cloned->{$parent_node_key};
+        } else {
+            # If we don't have the parent node cloned and mapped yet
+            $node_new = $self->_import_node($nodes_cloned, $parent_node, 0);
+        }
+        $node_new = $node_new->addChild($node->cloneNode($last ? 1 : 0));
+    } else {
+        # If the node has no parents at all
+        $node_new = $node->cloneNode($last ? 1 : 0);
+    }
+    $nodes_cloned->{$node->unique_key} = $node_new;
+
+    return($node_new);
+
+}
+
+
+
 method interpret_response(
-    XML::LibXML::Document   :$dom!,
-    Str                     :$action = ($self->recognize_response(dom => $dom))[1],
-    ArrayRef[HashRef]       :$requested!
+    XML::LibXML::Document       :$dom!,
+    Maybe[Str]                  :$action,
+    Maybe[HashRef]              :$macros,
+    HashRef|ArrayRef[HashRef]   :$requested!
 ) {
 
     my $api     = $self->get_api;
     my $logger  = $api->get_cloudstack->get_monkeyman->get_logger;
 
     my @results;
+
+    $action = ($self->recognize_response(dom => $dom))[1]
+        unless(defined($action));
+
+    $requested = [ $requested ]
+        unless(ref($requested) eq 'ARRAY');
 
     my $action_subtree = $self->vocabulary_lookup(
         words   => [ 'actions', $action ],
@@ -377,6 +527,9 @@ method interpret_response(
             tree    => $response_subtree
         );
 
+        my $macros_complete = { defined($macros) ? %{ $macros } : () };
+        $macros_complete->{'OUR_RESPONSE_NODE'} = $responde_node_name;
+
         while(my($result, $return_as) = each(%{ $request })) {
             my $results_subtree = $self->vocabulary_lookup(
                 words   => [ 'results', $result ],
@@ -400,7 +553,7 @@ method interpret_response(
             ) }) {
                 $xpath = $self->resolve_macros(
                     source  => $xpath,
-                    macros  => { OUR_RESPONSE_NODE => $responde_node_name }
+                    macros  => $macros_complete
                 );
                 push(@results, $self->get_api->qxp(
                     dom         => $dom,
