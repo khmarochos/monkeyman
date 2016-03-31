@@ -24,6 +24,7 @@ use MonkeyMan::Utils qw(mm_sprintf);
 
 use Method::Signatures;
 use Lingua::EN::Inflect qw(A);
+use XML::LibXML;
 
 
 
@@ -202,6 +203,7 @@ method vocabulary_lookup(
     my @wordz = (@{ $words }); # Don't mess up with the original list!
     my $word0 = shift(@wordz);
     if(scalar(@wordz) > 0) {
+        # This word isn't the last one, we shall go derper O_o
         if(defined($tree->{ $word0 })) {
             $result = $self->vocabulary_lookup(
                 words       => \@wordz,
@@ -210,6 +212,7 @@ method vocabulary_lookup(
             );
         }
     } else {
+        # There are no more words, dealing with the last one
         $result = $tree->{ $word0 };
     }
 
@@ -386,18 +389,23 @@ method apply_filters(
 
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
 
+    # FIXME: Need to decide what exactly has the highest priority:
+    # the $action-$parameters pair, the $request name or the $filters list
+
     if(defined($request)) {
 
         $logger->warnf(
             "The %s request is given, though the %s action is given too",
             $request, $action
         ) if(defined($action));
+
         $action = $request->get_action;
 
         $logger->warnf(
             "The %s request is given, though the %s filters set is given too",
             $request, $action
         ) if(defined($filters));
+
         $filters = $request->get_filters;
 
     } elsif(defined($action) && defined($parameters)) {
@@ -413,20 +421,24 @@ method apply_filters(
             macros              => $macros,
             return_as_hashref   => 1
         );
-
         @{ $filters } = @{ $request->{'filters'} };
 
     }
 
-    my $nodes_cloned = { };
-    my $new_dom = $dom;
     foreach my $filter (@{ $filters }) {
-        $logger->tracef("Applying the %s filter to the %s DOM", $filter, $new_dom);
-        foreach my $node ($dom->findnodes($filter)) {
-            $new_dom = $self->_import_node($nodes_cloned, $node, 1)->ownerDocument;
+        $logger->tracef("Applying the %s filter to the %s DOM", $filter, $dom);
+        my $nodes_cloned = { };
+        my @nodes_found = $dom->findnodes($filter);
+        if(@nodes_found) {
+            foreach my $node (@nodes_found) {
+                $dom = $self->_import_node($nodes_cloned, $node, 1)->ownerDocument;
+            }
+        } else {
+            $dom = undef;
         }
     }
-    return($new_dom);
+
+    return($dom);
 
 }
 
@@ -435,15 +447,6 @@ method _import_node(
     XML::LibXML::Node $node!,
     Bool              $last
 ) {
-
-    #$self->get_api->get_cloudstack->get_monkeyman->get_logger->debugf(
-    #    "Called to add the %s node, " .
-    #    "the %s map contains the following elements: %s",
-    #    $node, $nodes_cloned, join(', ',
-    #        map { mm_sprintf("%s => %s", $_, $nodes_cloned->{$_}) }
-    #            keys(%{ $nodes_cloned })
-    #    )
-    #);
 
     my $node_new;
     if(defined(my $parent_node = $node->parentNode)) {
@@ -463,6 +466,7 @@ method _import_node(
             # If we don't have the parent node cloned and mapped yet
             $node_new = $self->_import_node($nodes_cloned, $parent_node, 0);
         }
+        # We've got the parent node, adding the cloned node as a child now
         $node_new = $node_new->addChild($node->cloneNode($last ? 1 : 0));
     } else {
         # If the node has no parents at all
@@ -618,6 +622,22 @@ method recognize_response (
     return(@response_recognized);
 
 }
+
+
+
+method mimic_empty_response(Str $action!) {
+    my $response_node = $self->vocabulary_lookup(
+        words   => [ 'actions', $action, 'response', 'response_node' ],
+        fatal   => 1
+    );
+    my $dom = XML::LibXML::Document->createDocument;
+    my $root = $dom->createElement($response_node);
+    $root->addChild($dom->createAttribute('cloud-stack-version', '0.0.0'));
+    $root->addChild($dom->createElement('count'))->addChild($dom->createTextNode('0'));
+    $dom->setDocumentElement($root);
+    return($dom);
+}
+
 
 __PACKAGE__->meta->make_immutable;
 

@@ -27,9 +27,7 @@ my $api             = $cloudstack->get_api;
 
 foreach my $vm ($api->get_elements(
     type        => 'VirtualMachine',
-    criterions  => {
-        listall => 1
-    }
+    criterions  => { listall => 1 }
 )) {
     ok($vm->get_id eq $vm->get_dom->findvalue('/virtualmachine/id'));
 }

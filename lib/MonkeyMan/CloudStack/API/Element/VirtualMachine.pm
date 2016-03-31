@@ -12,17 +12,49 @@ use Method::Signatures;
 
 
 
-our %_magic_words = (
-    find_command    => 'listVirtualMachines',
-    list_tag_global => 'listvirtualmachinesresponse',
-    list_tag_entity => 'virtualmachine',
-);
-
-our %_related = (
-    Domain  => {
-        class_name  => 'MonkeyMan::CloudStack::API::Element::Domain',
-        local_key   => 'domainid',
-        foreign_key => 'id'
+our %vocabulary_tree = (
+    type => 'VirtualMachine',
+    name => 'virtual machine',
+    entity_node => 'virtualmachine',
+    actions => {
+        list => {
+            request => {
+                command             => 'listVirtualMachines',
+                async               => 0,
+                paged               => 1,
+                parameters          => {
+                    all => {
+                        required            => 0,
+                        command_parameters  => { 'listall' => 'true' },
+                    },
+                    filter_by_id => {
+                        required            => 0,
+                        command_parameters  => { 'id' => '<%VALUE%>' },
+                    }
+                    filter_by_domain_id => {
+                        required            => 0,
+                        command_parameters  => { 'domainid' => '<%VALUE%>' },
+                    }
+                }
+            },
+            response => {
+                response_node   => 'listvirtualmachinesresponse',
+                results         => {
+                    element         => {
+                        return_as       => [ qw( dom element id ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                }
+            }
+        }
     }
 );
 

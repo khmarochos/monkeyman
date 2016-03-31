@@ -58,23 +58,6 @@ around 'get_type' => sub {
 
 
 
-has 'magic_words' => (
-    is          => 'ro',
-    isa         => 'HashRef',
-    reader      =>    'get_magic_words',
-    writer      =>   '_set_magic_words',
-    builder     => '_build_magic_words',
-    lazy        => 1
-);
-
-method _build_magic_words {
-
-    my %magic_words = $self->get_api->get_magic_words($self->get_type);
-
-    return(\%magic_words);
-
-}
-
 has 'vocabulary' => (
     is          => 'ro',
     isa         => 'MonkeyMan::CloudStack::API::Vocabulary',
@@ -351,42 +334,11 @@ around 'get_id' => sub {
 
 
 
-method get_related(
-    Str         :$type!,
-    Maybe[Str]  :$best_before
-) {
+method get_related(Str :$related!) {
 
-    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
-
-    no strict 'refs';
-    my $class = blessed($self);
-    my %related = %{'::' . $class . '::_related'};
-
-    my $related_class_name  = $related{$type}->{'class_name'};
-    my $related_local_key   = $related{$type}->{'local_key'};
-    my $related_foreign_key = $related{$type}->{'foreign_key'};
-
-    $logger->tracef(
-        "Looking for %s relative to %s, " .
-        "their %s value shall be equal to our %s value",
-        $self->get_api->translate_type(
-            type => $type,
-            noun => 1,
-            plural => 1
-        ),
-        $self,
-        $related_local_key,
-        $related_foreign_key
-    );
-
-    return($self->get_api->get_elements(
-        type        => $type,
-        criterions  => {
-            $related_foreign_key => $self->qxp(
-                query       => '/' . $related_local_key,
-                return_as   => 'value'
-            )
-        }
+    return($self->get_api->get_related(
+        element => $self,
+        related => $related
     ));
 
 }
@@ -413,12 +365,14 @@ method qxp(
     $self->refresh_dom
         if($self->is_dom_expired($best_before));
 
-    if($return_as =~ /^(id|element)$/) {
-        $return_as .= '[' . $self->get_type . ']'; # Looks rude, FIXME, please
-    }
-
     my @results = $self->get_api->qxp(
-        query       => '/' . $self->get_magic_words->{'list_tag_entity'} . $query,
+        query       => sprintf('/%s/%s',
+            $self->get_vocabulary->vocabulary_lookup(
+                words   => [ 'entity_node' ],
+                fatal   => 1,
+                resolve => 0
+            ), $query
+        ),
         dom         => $dom,
         return_as   => $return_as
     );

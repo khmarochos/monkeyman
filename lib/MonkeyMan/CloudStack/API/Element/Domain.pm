@@ -12,40 +12,6 @@ use Method::Signatures;
 
 
 
-our %_magic_words = (
-    find_command    => 'listDomains',
-    list_tag_global => 'listdomainsresponse',
-    list_tag_entity => 'domain'
-);
-
-our %_related = (
-    VirtualMachine  => {
-        class_name  => 'MonkeyMan::CloudStack::API::Element::VirtualMachine',
-        local_key   => 'id',
-        foreign_key => 'domainid'
-    }
-);
-
-=pod
-
-    $parent1 = $api->get_elements(
-        type        => 'Domain',
-        xpaths      => [ '<%OUR_ENTITY_NODE>[name = "ZALOOPA"]' ]
-    );
-    $parent2 = $api->get_elements(
-        type        => 'Domain',
-        criterions  => { name => 'ZALOOPA' }
-    );
-    ok($parent1->get_id eq $parent2->get_id);
-
-    $child = $api->new_element('Domain')->do(
-        action          => 'create',
-        return_as       => 'element[Domain]',
-        parentdomainid  => $parent1->get_id
-    }
-
-=cut
-
 our %vocabulary_tree = (
     type => 'Domain',
     name => 'domain',
@@ -59,7 +25,7 @@ our %vocabulary_tree = (
                 parameters          => {
                     all => {
                         required            => 0,
-                        command_parameters  => { 'listall' => '<%VALUE%>' },
+                        command_parameters  => { 'listall' => 'true' },
                     },
                     filter_by_id => {
                         required            => 0,
@@ -103,32 +69,95 @@ our %vocabulary_tree = (
                     }
                 }
             }
+        },
+        create => {
+            request => {
+                command             => 'createDomain',
+                async               => 0,
+                paged               => 0,
+                parameters          => {
+                    name => {
+                        required            => 1,
+                        command_parameters  => { 'name' => '<%VALUE%>' },
+                    },
+                    parent => {
+                        required            => 0,
+                        command_parameters  => { 'parentdomainid' => '<%VALUE%>' },
+                    }
+                }
+            },
+            response => {
+                response_node   => 'createdomainresponse',
+                results         => {
+                    element         => {
+                        return_as       => [ qw( dom element id ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    }
+                }
+            }
         }
     },
     related => {
         our_virtual_machines => {
             type    => 'VirtualMachine',
             keys    => [ {
-                value   => { xpaths     => [ '/<%OUR_ENTITY_NODE%>/id' ] },
-                foreign => { xpaths     => [ '/<%THEIR_ENTITY_NODE%>[domainid = "<%OUR_KEY_VALUE%>"]' ] },
+                value   => { queries    => [ '<%OUR_ENTITY_NODE%>/id' ] },
+                foreign => { requested  => [ { filter_by_domain_id => '<%OUR_KEY_VALUE%>' } ] },
             } ]
         },
-        our_accounts => {
-            type    => 'Account',
-            keys    => [ {
-                value   => { xpaths     => [ '/<%OUR_ENTITY_NODE%>/id' ] },
-                foreign => { criterions => [ qw( domainid ) ] }
-            } ]
-        }
-    },
+    }
 );
+
+
+
+func create_domain_recursive(
+    Str                         :$desired_name!,
+    MonkeyMan::CloudStack::API  :$api!,
+    MonkeyMan::Logger            $logger = $api->get_cloudstack->get_monkeyman->get_logger
+) {
+    my @parent_name_array = split('/', $desired_name);
+    my $desired_name_tail = pop(@parent_name_array);
+    my $parent_name = join('/', @parent_name_array);
+    $logger->tracef(
+        "Looking for the parent of the %s domain (it's supposed to be %s)",
+        $desired_name, $parent_name
+    );
+    my $parent_domain = $api->perform_action(
+        type        => 'Domain',
+        action      => 'list',
+        parameters  => { filter_by_path_all => $parent_name },
+        requested   => { element => 'element' }
+    );
+    unless(defined($parent_domain)) {
+        $parent_domain = create_domain_recursive(
+            desired_name    => $parent_name,
+            api             => $api,
+            logger          => $logger
+        );
+    }
+    $logger->tracef("The parent domain has been found (%s)", $parent_domain);
+    my $domain = $api->perform_action(
+        type        => 'Domain',
+        action      => 'create',
+        parameters  => {
+            name        => $desired_name_tail,
+            parent      => $parent_domain->get_id
+        },
+        requested   => { element => 'element' }
+    );
+    return($domain);
+}
 
 
 
 __PACKAGE__->meta->make_immutable;
 
 1;
-
-=pod
-
-=cut

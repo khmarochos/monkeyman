@@ -12,6 +12,7 @@ use lib("$FindBin::Bin/../../lib");
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
 use MonkeyMan::CloudStack::API;
+use MonkeyMan::CloudStack::API::Element::Domain;
 
 # Use some third-party libraries
 use Method::Signatures;
@@ -87,30 +88,29 @@ foreach (
 
 my @domains;
 
-if($parameters->get_domain_id) {
+if(defined($parameters->get_domain_id)) {
     # The ID is defined, so it will be easy to find the domain
-    @domains = $api->get_elements(
+    @domains = $api->perform_action(
         type        => 'Domain',
-        criterions  => { id => $parameters->get_domain_id }
+        action      => 'list',
+        parameters  => { filter_by_id => $parameters->get_domain_id },
+        requested   => { element => 'element' }
     );
-} elsif($parameters->get_domain_name) {
+} elsif(defined($parameters->get_domain_name)) {
     # Okay, they want to find the domain by the "full name", so let's make sure
     # that the path matches
-    @domains = $api->get_elements(
+    @domains = $api->perform_action(
         type        => 'Domain',
-        criterions  => {
-            name => basename($parameters->get_domain_name)
-        },
-        xpaths      => [
-            sprintf("/domain[path = '%s']", $parameters->get_domain_name)
-        ] 
+        action      => 'list',
+        parameters  => { filter_by_path_all => $parameters->get_domain_name },
+        requested   => { element => 'element' }
     );
-} elsif($parameters->get_domain_name_short) {
-    @domains = $api->get_elements(
+} elsif(defined($parameters->get_domain_name_short)) {
+    @domains = $api->perform_action(
         type        => 'Domain',
-        criterions  => {
-            name => $parameters->get_domain_name_short,
-        }
+        action      => 'list',
+        parameters  => { filter_by_name => $parameters->get_domain_name_short },
+        requested   => { element => 'element' }
     );
 } else {
     MonkeyMan::Exception->throw("No domain has been defined");
@@ -124,9 +124,21 @@ if(@domains > 1) {
     );
 } elsif(@domains < 1) {
     # The domain doesn't exist, shall we create it?
-    if(!$parameters->get_create_domain) {
+    if(!defined($parameters->get_create_domain)) {
         MonkeyMan::Exception->throw(
-            "No domain has been found, its creation hasn't been requested"
+            "No domain has been found, but its creation hasn't been requested"
         );
     }
+    if(!defined($parameters->get_domain_name)) {
+        MonkeyMan::Exception->throw(
+            "Domain creation has been requested, but its name hasn't been set"
+        );
+    }
+    $logger->infof("Going to create the %s domain", $parameters->get_domain_name);
+    @domains = MonkeyMan::CloudStack::API::Element::Domain::
+        create_domain_recursive(
+            desired_name    => $parameters->get_domain_name,
+            api             => $api
+        );
 }
+

@@ -561,6 +561,13 @@ method interpret_response(
 
 }
 
+method mimic_empty_response(
+    MonkeyMan::CloudStack::Types::ElementType   :$type!,
+    Str                                         :$action!,
+) {
+    return($self->get_vocabulary($type)->mimic_empty_response($action));
+}
+
 method perform_action(
     MonkeyMan::CloudStack::Types::ElementType   :$type!,
     Str                                         :$action!,
@@ -584,6 +591,13 @@ method perform_action(
         dom         => $dom,
         request     => $request
     );
+    # If we've got an empty DOM after applying filters, let's mimic an empty
+    # DOM that would look like a proper response
+    $dom = $self->mimic_empty_response(
+        type    => $type,
+        action  => $action
+    )
+        unless(defined($dom));
 
     # The wantarray() function will detect what the caller expects
     return($self->interpret_response(
@@ -592,6 +606,20 @@ method perform_action(
         requested   => $requested
     ))
 
+}
+
+
+
+method get_related(
+    MonkeyMan::CloudStack::API::Roles::Element  :$element!,
+    Str                                         :$related
+) {
+#    $self->perform_action(
+#        type        => $type,
+#        action      => $action,
+#        parameters  => $parameters,
+#        macros      => $macros
+#    );
 }
 
 
