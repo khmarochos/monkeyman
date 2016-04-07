@@ -131,41 +131,6 @@ method BUILD(...) {
 
 }
 
-method BUILDARGS(...) {
-
-    # FIXME: Please, move this crap to the MonkeyMan::Parameters module (added on 2016.01.19)
-    my %args = @_;
-    my @required_parameters;
-    my @required_attributes;
-    while(my($key, $value) = each(%{ $args{'parameters_to_get'} })) {
-        push(@required_parameters, ($key =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g));
-        push(@required_attributes, $value);
-    }
-    my %default_parameters = (
-        'h|help'                => 'mm_show_help',
-        'V|version'             => 'mm_show_version',
-        'c|configuration=s'     => 'mm_configuration',
-        'default-cloudstack=s'  => 'mm_default_cloudstack',
-        'default-logger=s'      => 'mm_default_logger',
-        'v|verbose+'            => 'mm_be_verbose',
-        'q|quiet+'              => 'mm_be_quiet'
-    );
-    while(my($reserved_parameters_group, $reserved_attribute) = each(%default_parameters)) {
-        foreach my $forbidden_attribute (grep({ $reserved_attribute eq $_ } @required_attributes)) {
-            warn(sprintf("The '%s' attribute is forbidden, you shouldn't try to use it", $forbidden_attribute));
-        }
-        foreach my $reserved_parameter ($reserved_parameters_group =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g) {
-            foreach my $forbidden_parameter (grep({ $reserved_parameter eq $_ } @required_parameters)) {
-                warn(sprintf("The '%s' command-line parameter is forbidden, you shouldn't try to use it", $forbidden_parameter));
-            }
-        }
-        $args{'parameters_to_get'}->{$reserved_parameters_group} = $reserved_attribute;
-    }
-
-    return(\%args);
-
-}
-
 
 
 =pod
@@ -271,6 +236,8 @@ has 'app_usage_help' => (
 
 =head4 C<parameters_to_get>
 
+THIS PARAMETER MAY BE DEPRECATED, ONE SHOULD USE C<parameters_to_get_and_check>
+
 Optional. Contains a C<HashRef>. This parameter shall be a reference to a hash
 containing parameters to be passed to the L<Getopt::Long>::GetOptions()
 function.  It sets the the C<parameters> attribute with the C<get_parameters()>
@@ -329,6 +296,24 @@ has 'parameters_to_get' => (
     isa         => 'HashRef[Str]',
     predicate   => '_has_parameters_to_get',
     reader      => '_get_parameters_to_get',
+    lazy        => 0
+);
+
+=head4 C<parameters_to_get_validated>
+
+Optional. Contains a YAML-based configuration of the command-line parameters
+need to be parsed and validated.
+
+Overrides values of C<parameters_to_get>. Basically fucks C<parameters_to_get>
+off to tell you the truth.
+
+=cut
+
+has 'parameters_to_get_validated' => (
+    is          => 'ro',
+    isa         => 'Str',
+    predicate   => '_has_parameters_to_get_validated',
+    reader      => '_get_parameters_to_get_validated',
     lazy        => 0
 );
 

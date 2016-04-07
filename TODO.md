@@ -4,6 +4,9 @@ Things To Do
 Code
 ----
 
+ - [ ] Add the `EXCEPTION` method on demand when loading the
+       `MonkeyMan::Exception` method.
+        - suggested on `2016.04.07` by `melnik13`
  - [ ] Get rid of `MonkeyMan::CloudStack::API::Element::*::_magic_words` and
        other ugly things, use the brand new `%*::vocabulary` hashtree.
  - [ ] Add the `fatal` parameter to all vocabulary-related methods.

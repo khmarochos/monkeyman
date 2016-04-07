@@ -6,6 +6,9 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
+use MonkeyMan::Exception qw(
+    CantCreateDomain
+);
 with 'MonkeyMan::CloudStack::API::Roles::Element';
 
 use Method::Signatures;
@@ -118,14 +121,20 @@ our %vocabulary_tree = (
 
 
 
-func create_domain_recursive(
+func create_domain(
     Str                         :$desired_name!,
+    Bool                        :$recursive = 0,
     MonkeyMan::CloudStack::API  :$api!,
-    MonkeyMan::Logger            $logger = $api->get_cloudstack->get_monkeyman->get_logger
+    MonkeyMan::Logger           :$logger = $api->get_cloudstack->get_monkeyman->get_logger
 ) {
     my @parent_name_array = split('/', $desired_name);
     my $desired_name_tail = pop(@parent_name_array);
     my $parent_name = join('/', @parent_name_array);
+    unless(length($parent_name)) {
+        (__PACKAGE__ . '::Exception::CantCreateDomain')->throwf(
+            "Can't create the %s domain, it has no parent", $desired_name
+        );
+    }
     $logger->tracef(
         "Looking for the parent of the %s domain (it's supposed to be %s)",
         $desired_name, $parent_name
@@ -136,12 +145,20 @@ func create_domain_recursive(
         parameters  => { filter_by_path_all => $parent_name },
         requested   => { element => 'element' }
     );
-    unless(defined($parent_domain)) {
-        $parent_domain = create_domain_recursive(
-            desired_name    => $parent_name,
-            api             => $api,
-            logger          => $logger
-        );
+    if(!defined($parent_domain)) {
+        if($recursive) {
+            $parent_domain = create_domain(
+                desired_name    => $parent_name,
+                api             => $api,
+                logger          => $logger,
+                recursive       => 1
+            );
+        } else {
+            (__PACKAGE__ . '::Exception::CantCreateDomain')->throwf(
+                "Can't create the %s domain, can't find the %s parent",
+                $desired_name, $parent_name
+            );
+        }
     }
     $logger->tracef("The parent domain has been found (%s)", $parent_domain);
     my $domain = $api->perform_action(
