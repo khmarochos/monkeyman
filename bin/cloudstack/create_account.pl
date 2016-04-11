@@ -98,8 +98,8 @@ i|domain-id=s:
       - create_domain
       - domain_name
       - domain_name_short
-A|create-account+:          # right, just as for Getopt::Long
-  create_account:           # so we could receive the value from $MM->get_parameters->get_create_account any time later
+A|create-account+:
+  create_account:
     requires_each:
       - account_name
       - account_type
@@ -117,7 +117,7 @@ t|account-type=s:
 a|account-name=s:
   account_name:
     requires_each:
-      - account_name        # requiring oneself means that the parameter is strictly required
+      - account_name
     matches_any:
       - /.*/
 u|user-name=s:
@@ -251,4 +251,4 @@ my $account = $api->perform_action(
     },
     requested   => { 'element' => 'element' },
 );
-$logger->debugf("The account has the following ID: %s", $accoung->get_id);
+$logger->debugf("The account has the following ID: %s", $account->get_id);

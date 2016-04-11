@@ -114,14 +114,18 @@ This method initializes the framework and runs the application.
 
 method BUILD(...) {
 
-    $self->_mm_init;
-    $self->get_logger->debugf("<%s> Hello world!", $self->get_time_passed_formatted);
     END {
         my $mm = MonkeyMan->instance;
-        $mm->get_logger->debugf("<%s> Goodbye world!", $mm->get_time_passed_formatted);
-        $mm->_mm_shutdown;
+        if(ref($mm) eq 'MonkeyMan') {
+            $mm->get_logger->debugf("<%s> Goodbye world!", $mm->get_time_passed_formatted)
+                if($mm->can('get_logger'));
+            $mm->_mm_shutdown
+                if($mm->can('_mm_shutdown'));
+        }
     }
 
+    $self->_mm_init;
+    $self->get_logger->debugf("<%s> Hello world!", $self->get_time_passed_formatted);
     if(defined($self->get_app_code)) {
         $self->_app_start;
         $self->_app_run;
@@ -296,8 +300,13 @@ has 'parameters_to_get' => (
     isa         => 'HashRef[Str]',
     predicate   => '_has_parameters_to_get',
     reader      => '_get_parameters_to_get',
-    lazy        => 0
+    builder     => '_build_parameters_to_get',
+    lazy        => 0,
 );
+
+method _build_parameters_to_get(...) {
+    return({});
+}
 
 =head4 C<parameters_to_get_validated>
 
@@ -344,7 +353,7 @@ C<-c|--configuration> startup parameter.
 
     # MM_DIRECTORY_ROOT/etc/monkeyman.conf contains:
     #          <log>
-    #  .           <PRIMARY>
+    #              <PRIMARY>
     #                  <dump>
     #                      enabled = 1
     $log->debugf("The dumper is %s,
@@ -679,7 +688,8 @@ method _mm_shutdown {
     $self->get_logger->debugf("<%s> The framework is shutting itself down",
         $self->get_time_passed_formatted,
         $self
-    );
+    )
+        if($self->can('get_logger'));
 
 }
 

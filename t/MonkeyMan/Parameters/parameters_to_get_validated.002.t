@@ -21,7 +21,7 @@ use TryCatch;
 
 $monkeyman = MonkeyMan->new(
     app_code            => undef,
-    app_name            => 'parameters_to_get_validated.t',
+    app_name            => 'parameters_to_get_validated.002.t',
     app_description     => 'MonkeyMan::Parameters::parameters_to_get_validated testing script',
     app_version         => MM_VERSION,
     parameters_to_get_validated => <<__YAML__

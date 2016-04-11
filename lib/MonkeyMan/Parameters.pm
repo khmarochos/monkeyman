@@ -9,7 +9,13 @@ MonkeyMan::Parameters - options passed to a MonkeyMan-driven application
 use strict;
 use warnings;
 
-use MonkeyMan::Exception qw(ParameterKeyReserved);
+use MonkeyMan::Exception qw(
+    ParameterKeyReserved
+    ParameterNameReserved
+    MultipleParameterNames
+    NoParameterNames
+    InvalidValidationCondition
+);
 
 # Use Moose and be happy :)
 use Moose;
@@ -55,21 +61,46 @@ method BUILD(...) {
     # parameters_to_get
     my @parameter_keys_defined;
     my @parameter_names_defined;
-    while(my($parameter_keys, $parameter_name) = each(%{ $monkeyman->_get_parameters_to_get })) {
-        push(@parameter_keys_defined, ($parameter_keys =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g));
-        push(@parameter_names_defined, $parameter_name);
+    if($monkeyman->_has_parameters_to_get) {
+        while(
+            my(
+                $parameter_keys,
+                $parameter_name
+            ) = each(%{ $monkeyman->_get_parameters_to_get })
+        ) {
+            push(@parameter_keys_defined, ($parameter_keys =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g));
+            push(@parameter_names_defined, $parameter_name);
+        }
     }
 
     # Parsing some YAML here, filling the HASH referenced by parameters_to_get,
     # overriding everything without any warnings as it's documented.
+    my $parameters_to_get_validated;
     if($monkeyman->_has_parameters_to_get_validated) {
-        my $parameters_to_get_validated = Load($monkeyman->_get_parameters_to_get_validated);
-        while(my($parameter_keys, $parameter_name) = each(%{ $parameters_to_get_validated })) {
+        $parameters_to_get_validated = Load($monkeyman->_get_parameters_to_get_validated);
+        while(
+            my(
+                $parameter_keys,
+                $parameter_name_hashref
+            ) = each(%{ $parameters_to_get_validated })
+        ) {
+            my @parameter_names = (keys(%{ $parameter_name_hashref }));
+            if(@parameter_names > 1) {
+                (__PACKAGE__ . '::Exception::MultipleParameterNames')->throwf(
+                    "The %s command-line parameter key has multiple attribute names",
+                    $parameter_keys
+                );
+            } elsif(@parameter_names < 1) {
+                (__PACKAGE__ . '::Exception::NoParameterNames')->throwf(
+                    "The %s command-line parameter key has no attribute names",
+                    $parameter_keys
+                );
+            }
+            my $parameter_name = $parameter_names[0];
             push(@parameter_keys_defined, ($parameter_keys =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g));
             push(@parameter_names_defined, $parameter_name);
-            warn("$parameter_keys, $parameter_name, " . (keys(%{$parameter_name}))[0]);
-            $monkeyman->_get_parameters_to_get->{ $parameter_keys } =
-                (keys(%{$parameter_name}))[0];
+            #warn("$parameter_keys, $parameter_name");
+            $monkeyman->_get_parameters_to_get->{ $parameter_keys } = $parameter_name;
         }
     }
 
@@ -85,13 +116,6 @@ method BUILD(...) {
         'q|quiet+'              => 'mm_be_quiet'
     );
     while(my($reserved_parameters_group, $reserved_attribute) = each(%default_parameters)) {
-        foreach my $forbidden_attribute (grep({ $reserved_attribute eq $_ } @parameter_names_defined)) {
-            (__PACKAGE__ . '::Exception::ParameterKeyReserved')->throwf(
-                "The %s command-line parameter attribute name is reserved, " .
-                "you shouldn't have tried to use it",
-                $forbidden_attribute
-            );
-        }
         foreach my $reserved_parameter ($reserved_parameters_group =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g) {
             foreach my $forbidden_parameter (grep({ $reserved_parameter eq $_ } @parameter_keys_defined)) {
                 (__PACKAGE__ . '::Exception::ParameterKeyReserved')->throwf(
@@ -101,6 +125,13 @@ method BUILD(...) {
                 );
             }
         }
+        foreach my $forbidden_attribute (grep({ $reserved_attribute eq $_ } @parameter_names_defined)) {
+            (__PACKAGE__ . '::Exception::ParameterNameReserved')->throwf(
+                "The %s command-line parameter attribute name is reserved, " .
+                "you shouldn't have tried to use it",
+                $forbidden_attribute
+            );
+        }
         $monkeyman->_get_parameters_to_get->{$reserved_parameters_group} = $reserved_attribute;
     }
 
@@ -108,11 +139,11 @@ method BUILD(...) {
     my %parameters;
     while(
         my(
-            $parameter_definition,
+            $parameter_keys,
             $parameter_name
         ) = each(%{$monkeyman->_get_parameters_to_get})
     ) {
-        $parameters{$parameter_definition} = \($parameters_got->{$parameter_name});
+        $parameters{$parameter_keys} = \($parameters_got->{$parameter_name});
     }
     GetOptions(%parameters) ||
         MonkeyMan::Exception->throw("Can't get command-line parameters");
@@ -137,12 +168,39 @@ method BUILD(...) {
         );
 
         $self->$writer($parameters_got->{$parameter_name});
+    }
 
-        # Actually we don't need it:
-        #
-        # $meta->add_method(
-        #     $parameter_name => sub { shift->$reader(@_); }
-        # );
+    if(defined($parameters_to_get_validated)) {
+        while(
+            my(
+                $parameter_keys,
+                $parameter_name_hashref
+            ) = each(%{ $parameters_to_get_validated })
+        ) {
+            # We won't check how many parameter names there are, as we've done it previously
+            my $parameter_name = (keys(%{ $parameter_name_hashref }))[0];
+            while(
+                my(
+                    $validation_rule,
+                    $validation_conditions_hashref
+                ) = each(%{ $parameter_name_hashref->{ $parameter_name } })
+            ) {
+                foreach my $validation_condition (@{ $validation_conditions_hashref }) {
+                         if($validation_condition =~ /^requires_each$/i) {
+                    } elsif($validation_condition =~ /requires_any/i) {
+                    } elsif($validation_condition =~ /conflicts_each/i) {
+                    } elsif($validation_condition =~ /conflicts_any/i) {
+                    } elsif($validation_condition =~ /matches_each/i) {
+                    } elsif($validation_condition =~ /matches_any/i) {
+                    } else {
+                        (__PACKAGE__ . '::Exception::InvalidValidationCondition')->throwf(
+                            "The following validation condition is not recognized: %s",
+                            $validation_condition
+                        );
+                    }
+                }
+            }
+        }
     }
 
 }

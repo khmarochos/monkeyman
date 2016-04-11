@@ -76,12 +76,12 @@ func _showref(Ref $ref!) {
         $dumpxml    = $conftree->{'dump'}->{'add_xml'};
         $dumpdir    = $conftree->{'dump'}->{'directory'};
     } catch($e) {
-        $logger->warnf(
+        warn(sprintf(
             "Can't determine if I should dump the data structure. " .
             "It seems that MonkeyMan hasn't been initialized properly yet. " .
             "%s",
-                $e
-        );
+            $e
+        ));
         return("[$ref_id_short]");
     }
 
