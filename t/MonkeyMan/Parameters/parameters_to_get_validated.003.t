@@ -12,13 +12,11 @@ use MonkeyMan::Constants qw(:version);
 my $monkeyman;
 
 use Test::More tests => 1;
-use Class::Unload;
 use TryCatch;
 
 
 
 try {
-    @ARGV = qw(-w -z);
     $monkeyman = MonkeyMan->new(
         app_code            => undef,
         app_name            => 'parameters_to_get_validated.003.t',
@@ -29,11 +27,10 @@ try {
 w|whatever:
   whatever:
     requires_each:
+      - whatever
       - zaloopa
 z|zaloopa:
-  zaloopa:
-    requires_each:
-      - whatever
+  zaloopa
 __YAML__
     );
     pass('whatever & zaloopa');
@@ -43,4 +40,4 @@ __YAML__
 
 
 
-done_testing;
+#done_testing;

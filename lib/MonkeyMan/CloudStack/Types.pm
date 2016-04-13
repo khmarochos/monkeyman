@@ -17,6 +17,7 @@ use MooseX::Types::Moose qw(Str);
 our @_ElementType_values = qw(
     VirtualMachine
     Domain
+    Account
 );
 subtype ElementType,
     as Str,

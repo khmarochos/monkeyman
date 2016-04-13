@@ -14,7 +14,8 @@ use MonkeyMan::Exception qw(
     ParameterNameReserved
     MultipleParameterNames
     NoParameterNames
-    InvalidValidationCondition
+    InvalidValidationRule
+    ParameterValidationFailed
 );
 
 # Use Moose and be happy :)
@@ -58,7 +59,7 @@ method BUILD(...) {
     my $parameters_got  = $self->_get_parameters;
 
     # Getting lists of parameters' keys and attribute names defined by the
-    # parameters_to_get
+    # parameters_to_get attribute of MonkeyMan
     my @parameter_keys_defined;
     my @parameter_names_defined;
     if($monkeyman->_has_parameters_to_get) {
@@ -84,7 +85,9 @@ method BUILD(...) {
                 $parameter_name_hashref
             ) = each(%{ $parameters_to_get_validated })
         ) {
-            my @parameter_names = (keys(%{ $parameter_name_hashref }));
+            my @parameter_names = (ref($parameter_name_hashref) eq 'HASH') ?
+                (keys(%{ $parameter_name_hashref })) :
+                ($parameter_name_hashref);
             if(@parameter_names > 1) {
                 (__PACKAGE__ . '::Exception::MultipleParameterNames')->throwf(
                     "The %s command-line parameter key has multiple attribute names",
@@ -96,7 +99,7 @@ method BUILD(...) {
                     $parameter_keys
                 );
             }
-            my $parameter_name = $parameter_names[0];
+            my $parameter_name = shift(@parameter_names);
             push(@parameter_keys_defined, ($parameter_keys =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g));
             push(@parameter_names_defined, $parameter_name);
             #warn("$parameter_keys, $parameter_name");
@@ -115,27 +118,28 @@ method BUILD(...) {
         'v|verbose+'            => 'mm_be_verbose',
         'q|quiet+'              => 'mm_be_quiet'
     );
-    while(my($reserved_parameters_group, $reserved_attribute) = each(%default_parameters)) {
-        foreach my $reserved_parameter ($reserved_parameters_group =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g) {
-            foreach my $forbidden_parameter (grep({ $reserved_parameter eq $_ } @parameter_keys_defined)) {
+    while(my($reserved_keys, $reserved_name) = each(%default_parameters)) {
+        foreach my $reserved_key ($reserved_keys =~ /(?:\|?([a-zA-Z]+)(?:=.+)?)/g) {
+            foreach my $forbidden_key (grep({ $reserved_key eq $_ } @parameter_keys_defined)) {
                 (__PACKAGE__ . '::Exception::ParameterKeyReserved')->throwf(
                     "The %s command-line parameter key is reserved, " .
                     "you shouldn't have tried to use it",
-                    $forbidden_parameter
+                    $forbidden_key
                 );
             }
         }
-        foreach my $forbidden_attribute (grep({ $reserved_attribute eq $_ } @parameter_names_defined)) {
+        foreach my $forbidden_name (grep({ $reserved_name eq $_ } @parameter_names_defined)) {
             (__PACKAGE__ . '::Exception::ParameterNameReserved')->throwf(
                 "The %s command-line parameter attribute name is reserved, " .
                 "you shouldn't have tried to use it",
-                $forbidden_attribute
+                $forbidden_name
             );
         }
-        $monkeyman->_get_parameters_to_get->{$reserved_parameters_group} = $reserved_attribute;
+        $monkeyman->_get_parameters_to_get->{$reserved_keys} = $reserved_name;
     }
 
     # Parsing parameters
+    my $yammer;
     my %parameters;
     while(
         my(
@@ -145,8 +149,16 @@ method BUILD(...) {
     ) {
         $parameters{$parameter_keys} = \($parameters_got->{$parameter_name});
     }
-    GetOptions(%parameters) ||
-        MonkeyMan::Exception->throw("Can't get command-line parameters");
+    try {
+        local $SIG{__WARN__} = sub { $yammer = shift; };
+        GetOptions(%parameters);
+    } catch($e) {
+        $yammer = $e;
+    }
+    MonkeyMan::Exception->throwf("Can't get command-line parameters: %s", $yammer)
+        if($yammer);
+
+    #use Data::Dumper; die(Dumper(%parameters));
 
     # Adding methods
     my $meta = $self->meta;
@@ -162,7 +174,8 @@ method BUILD(...) {
                     predicate   => $predicate,
                     reader      => $reader,
                     writer      => $writer,
-                    is          => 'ro'
+                    is          => 'ro',
+                    lazy        => 0
                 )
             )
         );
@@ -170,39 +183,134 @@ method BUILD(...) {
         $self->$writer($parameters_got->{$parameter_name});
     }
 
-    if(defined($parameters_to_get_validated)) {
+    if(
+        (!defined($parameters_got->{'mm_show_help'}))    &&
+        (!defined($parameters_got->{'mm_show_version'})) &&
+        ( defined($parameters_to_get_validated))
+    ) {
         while(
             my(
                 $parameter_keys,
                 $parameter_name_hashref
             ) = each(%{ $parameters_to_get_validated })
         ) {
+            next unless(ref($parameter_name_hashref) eq 'HASH');
             # We won't check how many parameter names there are, as we've done it previously
             my $parameter_name = (keys(%{ $parameter_name_hashref }))[0];
+            my $validation_rules = $parameter_name_hashref->{ $parameter_name };
             while(
                 my(
                     $validation_rule,
-                    $validation_conditions_hashref
-                ) = each(%{ $parameter_name_hashref->{ $parameter_name } })
+                    $validation_conditions_ref
+                ) = (each(%{ $validation_rules }))
             ) {
-                foreach my $validation_condition (@{ $validation_conditions_hashref }) {
-                         if($validation_condition =~ /^requires_each$/i) {
-                    } elsif($validation_condition =~ /requires_any/i) {
-                    } elsif($validation_condition =~ /conflicts_each/i) {
-                    } elsif($validation_condition =~ /conflicts_any/i) {
-                    } elsif($validation_condition =~ /matches_each/i) {
-                    } elsif($validation_condition =~ /matches_any/i) {
-                    } else {
-                        (__PACKAGE__ . '::Exception::InvalidValidationCondition')->throwf(
-                            "The following validation condition is not recognized: %s",
-                            $validation_condition
-                        );
-                    }
+                try { 
+                    $self->_validate_parameters(
+                        parameters_got              => $parameters_got,
+                        parameter_name              => $parameter_name,
+                        validation_rule             => $validation_rule,
+                        validation_conditions_ref   => $validation_conditions_ref
+                    );
+                } catch($e) {
+                    (__PACKAGE__ . '::Exception::ParameterValidationFailed')->throwf(
+                        'The %s command-line parameter validation failed: %s',
+                        $parameter_name, $e
+                    );
                 }
             }
         }
     }
 
+}
+
+
+
+method _validate_parameters(
+    HashRef     :$parameters_got!,
+    Str         :$parameter_name!,
+    Str         :$validation_rule!,
+    Maybe[Ref]  :$validation_conditions_ref!
+) {
+
+    my @failure;
+    my @validation_conditions = @{ $validation_conditions_ref };
+
+    if(defined($parameters_got->{ $parameter_name })) {
+        if($validation_rule =~ /^requires_each$/i) {
+            @failure = qw();
+            foreach my $validation_condition (@validation_conditions) {
+                if(! defined($parameters_got->{ $validation_condition })) {
+                    @failure = (
+                        "The %s command-line parameter is required",
+                        $validation_condition
+                    );
+                    last;
+                }
+            }
+        } elsif($validation_rule =~ /^requires_any$/i) {
+            @failure = (
+                "One of the command-line parameters is required: %s",
+                join(', ', @validation_conditions)
+            );
+            foreach my $validation_condition (@validation_conditions) {
+                if(defined($parameters_got->{ $validation_condition })) {
+                    @failure = qw();
+                    last;
+                }
+            }
+        } elsif($validation_rule =~ /^conflicts_each$/i) {
+            @failure = (
+                "The following command-line parameters set is conflicting: %s",
+                join(', ', @validation_conditions)
+            );
+            foreach my $validation_condition (@validation_conditions) {
+                if(! defined($parameters_got->{ $validation_condition })) {
+                    @failure = qw();
+                    last;
+                }
+            }
+        } elsif($validation_rule =~ /^conflicts_any$/i) {
+            @failure = qw();
+            foreach my $validation_condition (@validation_conditions) {
+                if(defined($parameters_got->{ $validation_condition })) {
+                    @failure = (
+                        "The %s command-line parameter is conflicting",
+                        $validation_condition
+                    );
+                    last;
+                }
+            }
+    #   } elsif($validation_rule =~ /^matches_each$/i) {
+    #   } elsif($validation_rule =~ /^matches_any$/i) {
+    #   } elsif($validation_rule =~ /^mismatches_each$/i) {
+    #   } elsif($validation_rule =~ /^mismatches_any$/i) {
+        } else {
+            (__PACKAGE__ . '::Exception::InvalidValidationRule')->throwf(
+                "The following validation rule is not recognized: %s",
+                $validation_rule
+            );
+        }
+    } elsif($validation_rule =~ /^requires_each$/i) {
+        foreach my $validation_condition (@validation_conditions) {
+            if(
+                ($validation_condition eq $parameter_name) &&
+                (! defined($parameters_got->{ $validation_condition }))
+            ) {
+                @failure = (
+                    "This command-line parameter is required, " .
+                    "but hasn't been set"
+                );
+                last;
+            }
+        }
+    }
+
+    if(@failure) {
+        (__PACKAGE__ . '::Exception::ParameterValidationFailed')->throwf(
+            @failure
+        );
+    }
+    
 }
 
 

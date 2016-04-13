@@ -39,6 +39,10 @@ our %vocabulary_tree = (
                         required            => 0,
                         command_parameters  => { 'name' => '<%VALUE%>' },
                     },
+                    filter_by_domainid => {
+                        required            => 0,
+                        command_parameters  => { 'domainid' => '<%VALUE%>' }
+                    }
                 }
             },
             response => {
@@ -67,7 +71,7 @@ our %vocabulary_tree = (
                 parameters          => {
                     type => {
                         required            => 1,
-                        command_parameters  => { 'accountname' => '<%VALUE%>' },
+                        command_parameters  => { 'accounttype' => '<%VALUE%>' },
                     },
                     name => {
                         required            => 1,

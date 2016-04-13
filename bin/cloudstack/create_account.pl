@@ -17,6 +17,7 @@ use MonkeyMan::CloudStack::API::Element::Domain;
 # Use some third-party libraries
 use Method::Signatures;
 use File::Basename;
+use Term::ReadKey;
 
 
 
@@ -72,7 +73,7 @@ This application recognizes the following parameters:
     the password will be generated automatically.
  ** We don't recommend you to use this option, it may lead to password leak!
 __END_OF_USAGE_HELP__
-    parameters_to_get_and_check => <<__END_OF_PARAMETERS_TO_GET_AND_CHECK__
+    parameters_to_get_validated => <<__END_OF_PARAMETERS_TO_GET_VALIDATED__
 ---
 D|create-domain+:
   create_domain:
@@ -83,7 +84,7 @@ D|create-domain+:
       - domain_name_short
 d|domain-name=s:
   domain_name:
-    conflicts:
+    conflicts_any:
       - domain_id
       - domain_name_short
 s|domain-name-short=s:
@@ -98,7 +99,7 @@ i|domain-id=s:
       - create_domain
       - domain_name
       - domain_name_short
-A|create-account+:
+A|create-account:
   create_account:
     requires_each:
       - account_name
@@ -118,8 +119,6 @@ a|account-name=s:
   account_name:
     requires_each:
       - account_name
-    matches_any:
-      - /.*/
 u|user-name=s:
   user_name:
     requires_each:
@@ -170,11 +169,53 @@ P|password-prompt:
     conflicts_any:
       - password
       - password_stdin
-__END_OF_PARAMETERS_TO_GET_AND_CHECK__
+__END_OF_PARAMETERS_TO_GET_VALIDATED__
 );
 my $logger      = $monkeyman->get_logger;
 my $api         = $monkeyman->get_cloudstack->get_api;
-my $parameters  = $monkeyman->get_and_check_parameters;
+my $parameters  = $monkeyman->get_parameters;
+
+#
+# We'll need to get the password at the first
+#
+
+my $password;
+
+if(defined($parameters->get_password)) {
+    $password = $parameters->get_password;
+} elsif(defined($parameters->get_password_stdin)) {
+    chomp($password = <STDIN>);
+} elsif(defined($parameters->get_password_prompt)) {
+    PASSWORD_LOOP: for(1..3) {
+        my @passwords;
+        for(1..2) {
+            printf("Please, enter the desired password%s: ", (@passwords) ? ' again' : '');
+            ReadMode('noecho');
+            chomp(my $_password = <STDIN>);
+            ReadMode('normal');
+            if(!length($_password)) {
+                print("Sorry, the password shouldn't be empty\n");
+                next(PASSWORD_LOOP);
+            } else {
+                push(@passwords, $_password);
+            }
+        }
+        if($passwords[0] ne $passwords[1]) {
+            print("Sorry, the passwords you entered are different\n");
+            next(PASSWORD_LOOP);
+        } else {
+            print("Thanks!\n");
+            $password = shift(@passwords);
+            last(PASSWORD_LOOP);
+        }
+    }
+    unless(defined($password)) {
+        MonkeyMan::Exception->throwf(
+            "The user haven't entered the password after 3 attempts, " .
+            "you should replace the faulty one before to go next"
+        );
+    }
+}
 
 #
 # Now let's find (or create) the domain
@@ -223,11 +264,6 @@ if(@domains > 1) {
             "No domain has been found, but its creation hasn't been requested"
         );
     }
-    if(!defined($parameters->get_domain_name)) {
-        MonkeyMan::Exception->throw(
-            "Domain creation has been requested, but its name hasn't been set"
-        );
-    }
     $logger->infof("Going to create the %s domain", $parameters->get_domain_name);
     @domains = MonkeyMan::CloudStack::API::Element::Domain::create_domain(
         desired_name    => $parameters->get_domain_name,
@@ -240,15 +276,63 @@ my $domain_id = shift(@domains)->get_id;
 $logger->debugf("The domain has the following ID: %s", $domain_id);
 
 #
-# And now we can create the account if it's needed
+# Does this account already exist?
 #
-
-my $account = $api->perform_action(
+my @accounts = $api->perform_action(
     type        => 'Account',
-    action      => 'create',
+    action      => 'list',
     parameters  => {
-        
+        filter_by_domainid  => $domain_id,
+        filter_by_name      => $parameters->get_account_name
     },
-    requested   => { 'element' => 'element' },
+    requested   => { element => 'element' }
 );
-$logger->debugf("The account has the following ID: %s", $account->get_id);
+
+my $account_existed;
+if(@accounts > 1) {
+    # It's odd to find more than one account with the same name in the same domain
+    MonkeyMan::Exception->throwf(
+        "Too many accounts have been found, their IDs are: %s",
+        join(', ', map({ $_->get_id } @accounts))
+    );
+} elsif(@accounts < 1) {
+    # Okay, so we'll need to create any?
+    if(!defined($parameters->get_create_account)) {
+        MonkeyMan::Exception->throw(
+            "No account has been found, though its creation hasn't been requested"
+        );
+    }
+    $logger->infof("Going to create the %s account", $parameters->get_account_name);
+    my $account_type;
+    if($parameters->get_account_type =~ /^user$/i) {
+        $account_type = 0;
+    } elsif($parameters->get_account_type =~ /^root-admin$/i) {
+        $account_type = 1;
+    } elsif($parameters->get_account_type =~ /^domain-admin$/i) {
+        $account_type = 2;
+    } elsif($parameters->get_account_type =~ /^[012]$/) {
+        $account_type = $parameters->get_account_type;
+    } else {
+        # TODO: All parameters should be validated beforehand!
+    }
+    @accounts = $api->perform_action(
+        type        => 'Account',
+        action      => 'create',
+        parameters  => {
+            type        => $account_type,
+            name        => $parameters->get_account_name,
+            email       => $parameters->get_email_address,
+            first_name  => $parameters->get_first_name,
+            last_name   => $parameters->get_last_name,
+            password    => $password,
+            domain      => $domain_id
+        },
+        requested   => { 'element' => 'element' },
+    );
+} else {
+    $account_existed = 1;
+}
+
+my $account_id = shift(@accounts)->get_id;
+$logger->debugf("The account has the following ID: %s", $account_id);
+
