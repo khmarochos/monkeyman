@@ -51,25 +51,26 @@ This application recognizes the following parameters:
   * If you need to create an account, all 3 parameters shall be provided, but
     the account name is required in any case.
 
+    -U, --create-user
+        [opt*]      The user needs to be created and bound to the account
     -u <name>, --user-name <name>
-        [opt]       The user's name (if differs from the account's name)
+        [opt*]      The user's name
     -e <address>, --e-mail <address>
-        [opt]       The account's e-mail address
-
+        [opt*]      The account's e-mail address
     -f <first name>, --first-name <first name>
         [req*]      The first name
     -l <last name>, --last-name <last name>
         [req*]      The last name
-  * You can set only 1 of these 3 parameters, but it's mandatory to set at
-    least one of them.
+  * If you creating an account or a user, you should provide some data.
 
     -p <password>, --password <password>
-        [opt*,**]   The account's password
+        [opt*,**]   The user's password
     -S, --password-stdin
-        [opt*]      The account's password needs is to be got from STDIN
+        [opt*]      The user's password needs is to be got from STDIN
     -P, --password-prompt
-        [opt*]      The account's password needs to be entered twice
-  * You can set only 1 of these 3 parameters. You can omit them, in that case
+        [opt*]      The user's password needs to be entered twice
+  * If you creating an account or a user, you should provide the password.
+    You can set only 1 of these 3 parameters. You can omit them, in that case
     the password will be generated automatically.
  ** We don't recommend you to use this option, it may lead to password leak!
 __END_OF_USAGE_HELP__
@@ -117,8 +118,16 @@ t|account-type=s:
       - create_account
 a|account-name=s:
   account_name:
-    requires_each:
-      - account_name
+    requires_any.AccountOrUser:
+      - create_account
+      - create_user
+    requires_any.Domain
+      - create_account
+      - user_name
+U|create_user:
+  create_user:
+    requires:
+      - username
 u|user-name=s:
   user_name:
     requires_each:
@@ -134,17 +143,17 @@ e|email-address=s:
   email_address:
     requires_any:
       - create_account
-      - user_name
+      - create_user
 f|first-name=s:
   first_name:
     requires_any:
       - create_account
-      - user_name
+      - create_user
 l|last-name=s:
   last_name:
     requires_any:
       - create_account
-      - user_name
+      - create_user
 p|password=s:
   password:
     requires_any:
@@ -175,17 +184,16 @@ my $logger      = $monkeyman->get_logger;
 my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
 
-#
-# We'll need to get the password at the first
-#
-
 my $password;
 
 if(defined($parameters->get_password)) {
+    # They want me to get it from the command-line parameters (insecure)
     $password = $parameters->get_password;
 } elsif(defined($parameters->get_password_stdin)) {
+    # They want me to receive it from STDIN (secure)
     chomp($password = <STDIN>);
 } elsif(defined($parameters->get_password_prompt)) {
+    # They want me to ask the operator to enter it twice
     PASSWORD_LOOP: for(1..3) {
         my @passwords;
         for(1..2) {
@@ -212,7 +220,7 @@ if(defined($parameters->get_password)) {
     unless(defined($password)) {
         MonkeyMan::Exception->throwf(
             "The user haven't entered the password after 3 attempts, " .
-            "you should replace the faulty one before to go next"
+            "someone should consider replacing the faulty one before to go next"
         );
     }
 }
@@ -269,6 +277,8 @@ if(@domains > 1) {
         desired_name    => $parameters->get_domain_name,
         api             => $api,
         recursive       => ($parameters->get_create_domain > 1) ? 1 : 0
+        # ^ if they add "-D" twice, the domain will be created recursively,
+        #   so all parents will be created too 
     );
 }
 
@@ -276,8 +286,10 @@ my $domain_id = shift(@domains)->get_id;
 $logger->debugf("The domain has the following ID: %s", $domain_id);
 
 #
-# Does this account already exist?
+# Now let's deal with the account
 #
+
+# Does this account already exist?
 my @accounts = $api->perform_action(
     type        => 'Account',
     action      => 'list',
@@ -288,6 +300,7 @@ my @accounts = $api->perform_action(
     requested   => { element => 'element' }
 );
 
+# If the account does exist, we should consider creating a user bound to the same
 my $account_existed;
 if(@accounts > 1) {
     # It's odd to find more than one account with the same name in the same domain
@@ -336,3 +349,9 @@ if(@accounts > 1) {
 my $account_id = shift(@accounts)->get_id;
 $logger->debugf("The account has the following ID: %s", $account_id);
 
+#
+# And the last, but not ever ever ever least - the user!
+#
+
+if($parameters->get_create_user) {
+}

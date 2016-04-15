@@ -6,38 +6,199 @@ use warnings;
 use FindBin;
 use lib("$FindBin::Bin/../../../lib");
 
-use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
-
-my $monkeyman;
-
-use Test::More tests => 1;
-use TryCatch;
+use Method::Signatures;
+use Test::More tests => 10;
+use IPC::Open3;
 
 
+# requires_each for self-required parameters
 
-try {
-    $monkeyman = MonkeyMan->new(
-        app_code            => undef,
-        app_name            => 'parameters_to_get_validated.003.t',
-        app_description     => 'MonkeyMan::Parameters::parameters_to_get_validated testing script',
-        app_version         => MM_VERSION,
-        parameters_to_get_validated => <<__YAML__
+cmp_ok(test_validation(
+    parameters  => [qw(-w)],
+    yaml        => <<__YAML__
 ---
 w|whatever:
   whatever:
     requires_each:
       - whatever
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '==', 0, 'A self-required parameter is given (should be OK)');
+
+cmp_ok(test_validation(
+    parameters  => [qw()],
+    yaml        => <<__YAML__
+---
+w|whatever:
+  whatever:
+    requires_each:
+      - whatever
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '!=', 0, 'A self-required parameter is missing (should fail)');
+
+# requires_each
+
+cmp_ok(test_validation(
+    parameters  => [qw(-w -z -p)],
+    yaml        => <<__YAML__
+---
+w|whatever:
+  whatever:
+    requires_each:
+      - zaloopa
+      - pizdets
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '==', 0, 'All required parameres are given (should be OK)');
+
+cmp_ok(test_validation(
+    parameters  => [qw(-w -z)],
+    yaml        => <<__YAML__
+---
+w|whatever:
+  whatever:
+    requires_each:
+      - zaloopa
+      - pizdets
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '!=', 0, 'Some of required parameters aren\'t given (should fail)');
+
+# requires_any
+
+cmp_ok(test_validation(
+    parameters  => [qw(-w -z)],
+    yaml        => <<__YAML__
+---
+w|whatever:
+  whatever:
+    requires_any:
+      - zaloopa
+      - pizdets
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '==', 0, 'At least one of required parameters is given (should be OK)');
+
+cmp_ok(test_validation(
+    parameters  => [qw(-w)],
+    yaml        => <<__YAML__
+---
+w|whatever:
+  whatever:
+    requires_any:
+      - zaloopa
+      - pizdets
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '!=', 0, 'None of required parameters are given (should fail)');
+
+# conflicts_any
+
+cmp_ok(test_validation(
+    parameters  => [qw(-w)],
+    yaml        => <<__YAML__
+---
+w|whatever:
+  whatever:
+    conflicts_any:
       - zaloopa
 z|zaloopa:
   zaloopa
+p|pizdets:
+  pizdets
 __YAML__
+), '==', 0, 'None of conflicting parameters are given (should be OK)');
+
+cmp_ok(test_validation(
+    parameters  => [qw(-w -z)],
+    yaml        => <<__YAML__
+---
+w|whatever:
+  whatever:
+    conflicts_any:
+      - zaloopa
+      - pizdets
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '!=', 0, 'One of conflicting parameters is given (should be OK)');
+
+# conflicts_each
+
+cmp_ok(test_validation(
+    parameters  => [qw(-w -z)],
+    yaml        => <<__YAML__
+---
+w|whatever:
+  whatever:
+    conflicts_each:
+      - zaloopa
+      - pizdets
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '==', 0, 'Only one of conflicting parameters is given (should be OK)');
+
+cmp_ok(test_validation(
+    parameters  => [qw(-w -z -p)],
+    yaml        => <<__YAML__
+---
+w|whatever:
+  whatever:
+    conflicts_each:
+      - zaloopa
+      - pizdets
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '!=', 0, 'All conflicting parameters are given (should fail)');
+
+
+
+done_testing; exit;
+
+
+
+func test_validation(
+    ArrayRef    :$parameters!,
+    Str         :$yaml!
+) {
+    my $pid = open3(
+        \*PROBE_IN,
+        \*PROBE_OUT,
+        \*PROBE_ERR,
+        $FindBin::Bin . '/parameters_to_get_validated.YAML-STDIN.t',
+        @{ $parameters }
     );
-    pass('whatever & zaloopa');
-} catch($e) {
-    fail('whatever & zaloopa: ' . $e);
+    print(PROBE_IN $yaml); close(PROBE_IN);
+    my $error = <PROBE_ERR>; close(PROBE_ERR); diag($error) if defined($error);
+    close(PROBE_OUT);
+    waitpid($pid, 0);
+    return($?);
 }
 
-
-
-#done_testing;

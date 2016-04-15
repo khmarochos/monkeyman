@@ -125,12 +125,15 @@ method _build_timestamp {
 
 func _build_stack_trace_args(...) {
 
-    my $talktalk = 0;
+#    my $talktalk = 0;
 
     return(
         [
-            'indent', 1,
-            'no_args', 0, # y u no lemme huv sum urgs dolan pls
+            'indent',       1,
+            'no_args',      0, # y u no lemme huv sum urgs dolan pls
+            #'frame_filter', sub { return(0); }
+        ]
+    );
 #
 #           The following piece of code makes the builder of the stack trace
 #           skipping some ugly frames of the caller's stack, it doesn't work
@@ -145,8 +148,6 @@ func _build_stack_trace_args(...) {
 #                $talktalk++
 #                    if(index($_[0]->{'caller'}[0], 'MonkeyMan::Exception') == 0);
 #            }
-        ]
-    );
 
 }
 

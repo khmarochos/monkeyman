@@ -236,7 +236,7 @@ method _validate_parameters(
     my @validation_conditions = @{ $validation_conditions_ref };
 
     if(defined($parameters_got->{ $parameter_name })) {
-        if($validation_rule =~ /^requires_each$/i) {
+        if($validation_rule =~ /^requires_each(\..+)?$/i) {
             @failure = qw();
             foreach my $validation_condition (@validation_conditions) {
                 if(! defined($parameters_got->{ $validation_condition })) {
@@ -247,9 +247,9 @@ method _validate_parameters(
                     last;
                 }
             }
-        } elsif($validation_rule =~ /^requires_any$/i) {
+        } elsif($validation_rule =~ /^requires_any(\..+)?$/i) {
             @failure = (
-                "One of the command-line parameters is required: %s",
+                "One of the command-line parameters is required: %s" ,
                 join(', ', @validation_conditions)
             );
             foreach my $validation_condition (@validation_conditions) {
@@ -258,7 +258,7 @@ method _validate_parameters(
                     last;
                 }
             }
-        } elsif($validation_rule =~ /^conflicts_each$/i) {
+        } elsif($validation_rule =~ /^conflicts_each(\..+)?$/i) {
             @failure = (
                 "The following command-line parameters set is conflicting: %s",
                 join(', ', @validation_conditions)
@@ -269,13 +269,13 @@ method _validate_parameters(
                     last;
                 }
             }
-        } elsif($validation_rule =~ /^conflicts_any$/i) {
+        } elsif($validation_rule =~ /^conflicts_any(\..+)?$/i) {
             @failure = qw();
             foreach my $validation_condition (@validation_conditions) {
                 if(defined($parameters_got->{ $validation_condition })) {
                     @failure = (
                         "The %s command-line parameter is conflicting",
-                        $validation_condition
+                        $validation_condition,
                     );
                     last;
                 }
@@ -285,29 +285,27 @@ method _validate_parameters(
     #   } elsif($validation_rule =~ /^mismatches_each$/i) {
     #   } elsif($validation_rule =~ /^mismatches_any$/i) {
         } else {
-            (__PACKAGE__ . '::Exception::InvalidValidationRule')->throwf(
+            @failure = (
                 "The following validation rule is not recognized: %s",
                 $validation_rule
             );
         }
-    } elsif($validation_rule =~ /^requires_each$/i) {
+    } elsif($validation_rule =~ /^requires_each(\..+)?$/i) {
         foreach my $validation_condition (@validation_conditions) {
             if(
                 ($validation_condition eq $parameter_name) &&
                 (! defined($parameters_got->{ $validation_condition }))
             ) {
-                @failure = (
-                    "This command-line parameter is required, " .
-                    "but hasn't been set"
-                );
+                @failure = ('This command-line parameter is required');
                 last;
             }
         }
     }
 
     if(@failure) {
+        $failure[0] .= ', the %s validation rule of the %s parameter failed';
         (__PACKAGE__ . '::Exception::ParameterValidationFailed')->throwf(
-            @failure
+            @failure, $validation_rule, $parameter_name
         );
     }
     
