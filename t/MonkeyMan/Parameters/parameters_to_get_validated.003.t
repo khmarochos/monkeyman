@@ -7,20 +7,20 @@ use FindBin;
 use lib("$FindBin::Bin/../../../lib");
 
 use Method::Signatures;
-use Test::More tests => 10;
+use Test::More tests => 11;
 use IPC::Open3;
 
 
 # requires_each for self-required parameters
 
 cmp_ok(test_validation(
-    parameters  => [qw(-w)],
+    parameters  => [qw(-e)],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     requires_each:
-      - whatever
+      - ebashevo
 z|zaloopa:
   zaloopa
 p|pizdets:
@@ -32,10 +32,10 @@ cmp_ok(test_validation(
     parameters  => [qw()],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     requires_each:
-      - whatever
+      - ebashevo
 z|zaloopa:
   zaloopa
 p|pizdets:
@@ -46,11 +46,11 @@ __YAML__
 # requires_each
 
 cmp_ok(test_validation(
-    parameters  => [qw(-w -z -p)],
+    parameters  => [qw(-e -z -p)],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     requires_each:
       - zaloopa
       - pizdets
@@ -62,11 +62,11 @@ __YAML__
 ), '==', 0, 'All required parameres are given (should be OK)');
 
 cmp_ok(test_validation(
-    parameters  => [qw(-w -z)],
+    parameters  => [qw(-e -z)],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     requires_each:
       - zaloopa
       - pizdets
@@ -80,11 +80,11 @@ __YAML__
 # requires_any
 
 cmp_ok(test_validation(
-    parameters  => [qw(-w -z)],
+    parameters  => [qw(-e -z)],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     requires_any:
       - zaloopa
       - pizdets
@@ -96,11 +96,11 @@ __YAML__
 ), '==', 0, 'At least one of required parameters is given (should be OK)');
 
 cmp_ok(test_validation(
-    parameters  => [qw(-w)],
+    parameters  => [qw(-e)],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     requires_any:
       - zaloopa
       - pizdets
@@ -114,11 +114,11 @@ __YAML__
 # conflicts_any
 
 cmp_ok(test_validation(
-    parameters  => [qw(-w)],
+    parameters  => [qw(-e)],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     conflicts_any:
       - zaloopa
 z|zaloopa:
@@ -129,11 +129,11 @@ __YAML__
 ), '==', 0, 'None of conflicting parameters are given (should be OK)');
 
 cmp_ok(test_validation(
-    parameters  => [qw(-w -z)],
+    parameters  => [qw(-e -z)],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     conflicts_any:
       - zaloopa
       - pizdets
@@ -147,11 +147,11 @@ __YAML__
 # conflicts_each
 
 cmp_ok(test_validation(
-    parameters  => [qw(-w -z)],
+    parameters  => [qw(-e -z)],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     conflicts_each:
       - zaloopa
       - pizdets
@@ -163,11 +163,11 @@ __YAML__
 ), '==', 0, 'Only one of conflicting parameters is given (should be OK)');
 
 cmp_ok(test_validation(
-    parameters  => [qw(-w -z -p)],
+    parameters  => [qw(-e -z -p)],
     yaml        => <<__YAML__
 ---
-w|whatever:
-  whatever:
+e|ebashevo:
+  ebashevo:
     conflicts_each:
       - zaloopa
       - pizdets
@@ -177,6 +177,27 @@ p|pizdets:
   pizdets
 __YAML__
 ), '!=', 0, 'All conflicting parameters are given (should fail)');
+
+# Sorted rules
+
+cmp_ok(test_validation(
+    parameters  => [qw(-e -z -p)],
+    yaml        => <<__YAML__
+---
+e|ebashevo:
+  ebashevo:
+    conflicts_each.ZALOOPA&PIZDETS:
+      - zaloopa
+      - pizdets
+    conflicts_each.PIZDETS&ZALOOPA:
+      - zaloopa
+      - pizdets
+z|zaloopa:
+  zaloopa
+p|pizdets:
+  pizdets
+__YAML__
+), '!=', 0);
 
 
 

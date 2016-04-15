@@ -108,7 +108,11 @@ A|create-account:
       - first_name
       - last_name
       - email_address
-    requires_any:
+    requires_any.domain:
+      - domain_name
+      - domain_name_short
+      - domain_id
+    requires_any.password:
       - password
       - password_stdin
       - password_prompt
@@ -118,19 +122,13 @@ t|account-type=s:
       - create_account
 a|account-name=s:
   account_name:
-    requires_any.AccountOrUser:
+    requires_any:
       - create_account
       - create_user
-    requires_any.Domain
-      - create_account
-      - user_name
 U|create_user:
   create_user:
-    requires:
-      - username
-u|user-name=s:
-  user_name:
     requires_each:
+      - user_name
       - account_name
       - first_name
       - last_name
@@ -139,6 +137,10 @@ u|user-name=s:
       - password
       - password_stdin
       - password_prompt
+u|user-name=s:
+  user_name:
+    requires_each:
+      - create_user
 e|email-address=s:
   email_address:
     requires_any:
@@ -158,7 +160,7 @@ p|password=s:
   password:
     requires_any:
       - create_account
-      - user_name
+      - create_user
     conflicts_any:
       - password_stdin
       - password_prompt
@@ -166,7 +168,7 @@ S|password-stdin:
   password_stdin:
     requires_any:
       - create_account
-      - user_name
+      - create_user
     conflicts_any:
       - password
       - password_prompt
@@ -174,7 +176,7 @@ P|password-prompt:
   password_prompt:
     requires_any:
       - create_account
-      - user_name
+      - create_user
     conflicts_any:
       - password
       - password_stdin
@@ -282,7 +284,7 @@ if(@domains > 1) {
     );
 }
 
-my $domain_id = shift(@domains)->get_id;
+my $domain_id = $domains[0]->get_id;
 $logger->debugf("The domain has the following ID: %s", $domain_id);
 
 #
@@ -346,7 +348,7 @@ if(@accounts > 1) {
     $account_existed = 1;
 }
 
-my $account_id = shift(@accounts)->get_id;
+my $account_id = $accounts[0]->get_id;
 $logger->debugf("The account has the following ID: %s", $account_id);
 
 #
@@ -354,4 +356,18 @@ $logger->debugf("The account has the following ID: %s", $account_id);
 #
 
 if($parameters->get_create_user) {
+    my @users = $api->perform_action(
+        type        => 'User',
+        action      => 'create',
+        parameters  => {
+            name        => $parameters->get_user_name,
+            email       => $parameters->get_email_address,
+            first_name  => $parameters->get_first_name,
+            last_name   => $parameters->get_last_name,
+            password    => $password,
+            account     => $parameters->get_account_name,
+            domain      => $domain_id
+        },
+        requested   => { 'element' => 'element' },
+    );
 }

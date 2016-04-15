@@ -18,6 +18,7 @@ our @_ElementType_values = qw(
     VirtualMachine
     Domain
     Account
+    User
 );
 subtype ElementType,
     as Str,

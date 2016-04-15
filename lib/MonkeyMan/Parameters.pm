@@ -198,12 +198,8 @@ method BUILD(...) {
             # We won't check how many parameter names there are, as we've done it previously
             my $parameter_name = (keys(%{ $parameter_name_hashref }))[0];
             my $validation_rules = $parameter_name_hashref->{ $parameter_name };
-            while(
-                my(
-                    $validation_rule,
-                    $validation_conditions_ref
-                ) = (each(%{ $validation_rules }))
-            ) {
+            foreach my $validation_rule (sort(keys(%{ $validation_rules }))) {
+                my $validation_conditions_ref = $validation_rules->{ $validation_rule };
                 try { 
                     $self->_validate_parameters(
                         parameters_got              => $parameters_got,
@@ -303,7 +299,7 @@ method _validate_parameters(
     }
 
     if(@failure) {
-        $failure[0] .= ', the %s validation rule of the %s parameter failed';
+        $failure[0] .= ' - the %s validation rule of the %s parameter failed';
         (__PACKAGE__ . '::Exception::ParameterValidationFailed')->throwf(
             @failure, $validation_rule, $parameter_name
         );
