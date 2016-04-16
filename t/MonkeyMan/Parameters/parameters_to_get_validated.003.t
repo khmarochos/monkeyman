@@ -202,19 +202,19 @@ __YAML__
 # Regexp matching
 
 cmp_ok(test_validation(
-    parameters  => [qw(-e 222)],
+    parameters  => [qw(-e 13)],
     yaml        => <<__YAML__
 ---
 e|ebashevo=s:
   ebashevo:
     matches_each:
      - .+
-     - 2+
+     - 6+
 __YAML__
 ), '==', 0);
 
 cmp_ok(test_validation(
-    parameters  => [qw(-e 222)],
+    parameters  => [qw(-e 666)],
     yaml        => <<__YAML__
 ---
 e|ebashevo=s:

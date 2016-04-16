@@ -57,7 +57,8 @@ my @xpaths_to_apply;
 if(defined($parameters->get_conditions)) {
 
     # Adding the '/virtualmachineslist' prefix to queries
-    my $xpath_base = '/' . $magic_words{'list_tag_entity'};
+    my $xpath_base = '/' . $api->get_vocabulary('VirtualMachine')->
+        vocabulary_lookup(words => [ 'entity_node' ]);
 
     my %conditions = %{ $parameters->get_conditions };
     foreach my $condition (keys(%conditions)) {
@@ -99,7 +100,7 @@ my $be_short    = $parameters->get_be_short;
 
 foreach my $vm ($api->get_elements(
     type        => 'VirtualMachine',
-    criterions  => { listall => 1 },
+    criterions  => { all => 1 },
     xpaths      => [ (@xpaths_to_apply) ]
 )) {
     $logger->debugf("Have found the %s %s", $vm, $vm->get_type(noun => 1));

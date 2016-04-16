@@ -30,7 +30,7 @@ our %vocabulary_tree = (
                     filter_by_id => {
                         required            => 0,
                         command_parameters  => { 'id' => '<%VALUE%>' },
-                    }
+                    },
                     filter_by_domain_id => {
                         required            => 0,
                         command_parameters  => { 'domainid' => '<%VALUE%>' },

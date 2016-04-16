@@ -653,7 +653,7 @@ method find_doms(
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
 
-    $criterions = { all => 'true' }
+    $criterions = { all => 1 }
         unless(defined($criterions));
 
     $logger->tracef("Looking for %s matching the %s set of criterias",
