@@ -7,7 +7,7 @@ use FindBin;
 use lib("$FindBin::Bin/../../../lib");
 
 use Method::Signatures;
-use Test::More tests => 11;
+use Test::More tests => 13;
 use IPC::Open3;
 
 
@@ -199,6 +199,31 @@ p|pizdets:
 __YAML__
 ), '!=', 0);
 
+# Regexp matching
+
+cmp_ok(test_validation(
+    parameters  => [qw(-e 222)],
+    yaml        => <<__YAML__
+---
+e|ebashevo=s:
+  ebashevo:
+    matches_each:
+     - .+
+     - 2+
+__YAML__
+), '==', 0);
+
+cmp_ok(test_validation(
+    parameters  => [qw(-e 222)],
+    yaml        => <<__YAML__
+---
+e|ebashevo=s:
+  ebashevo:
+    matches_any:
+     - 1+
+     - 3+
+__YAML__
+), '!=', 0);
 
 
 done_testing; exit;

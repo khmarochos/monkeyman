@@ -276,9 +276,31 @@ method _validate_parameters(
                     last;
                 }
             }
-    #   } elsif($validation_rule =~ /^matches_each$/i) {
-    #   } elsif($validation_rule =~ /^matches_any$/i) {
-    #   } elsif($validation_rule =~ /^mismatches_each$/i) {
+       } elsif($validation_rule =~ /^matches_each$/i) {
+            @failure = qw();
+            foreach my $validation_condition (@validation_conditions) {
+                if($parameters_got->{ $parameter_name } !~ m/$validation_condition/) {
+                    @failure = (
+                        "'%s' doesn't match qr/%s/",
+                        $parameters_got->{ $parameter_name },
+                        $validation_condition
+                    );
+                    last;
+                }
+            }
+       } elsif($validation_rule =~ /^matches_any$/i) {
+            @failure = (
+                "'%s' didn't match any of the following regexp set: %s",
+                $parameters_got->{ $parameter_name },
+                join(', ', map {"qr/$_/"} @validation_conditions)
+            );
+            foreach my $validation_condition (@validation_conditions) {
+                if($parameters_got->{ $parameter_name } =~ m/$validation_condition/) {
+                    @failure = qw();
+                    last;
+                }
+            }
+    #   } elsif($validation_rule =~ /^mismatches_each$/i) { #TODO
     #   } elsif($validation_rule =~ /^mismatches_any$/i) {
         } else {
             @failure = (

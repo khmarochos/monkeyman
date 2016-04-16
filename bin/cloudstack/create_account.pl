@@ -24,7 +24,7 @@ use Term::ReadKey;
 my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'create_account.pl',
-    app_description     => 'Creates an account in the CloudStack domain',
+    app_description     => 'Creates domains, accounts and users',
     app_version         => MM_VERSION,
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
@@ -47,7 +47,7 @@ This application recognizes the following parameters:
     -a <name>, --account-name <name>
         [req*]       The account's name
     -t <type>, --account-type <type>
-        [req*]      The account's type ("user", "domain-admin", "root-admin")
+        [opt*]      The account's type ("user", "domain-admin", "root-admin")
   * If you need to create an account, all 3 parameters shall be provided, but
     the account name is required in any case.
 
@@ -58,10 +58,10 @@ This application recognizes the following parameters:
     -e <address>, --e-mail <address>
         [opt*]      The account's e-mail address
     -f <first name>, --first-name <first name>
-        [req*]      The first name
+        [opt*]      The first name
     -l <last name>, --last-name <last name>
-        [req*]      The last name
-  * If you creating an account or a user, you should provide some data.
+        [opt*]      The last name
+  * If you're creating an account or a user, you should provide some data.
 
     -p <password>, --password <password>
         [opt*,**]   The user's password
@@ -69,7 +69,7 @@ This application recognizes the following parameters:
         [opt*]      The user's password needs is to be got from STDIN
     -P, --password-prompt
         [opt*]      The user's password needs to be entered twice
-  * If you creating an account or a user, you should provide the password.
+  * If you're creating an account or a user, you should provide the password.
     You can set only 1 of these 3 parameters. You can omit them, in that case
     the password will be generated automatically.
  ** We don't recommend you to use this option, it may lead to password leak!
@@ -120,6 +120,9 @@ t|account-type=s:
   account_type:
     requires_each:
       - create_account
+    matches_any:
+      - ^(user|root-admin|domain-admin)$
+      - ^[012]$
 a|account-name=s:
   account_name:
     requires_any:
@@ -296,7 +299,6 @@ $logger->info(
 );
 
 # Do we need to do anything else?
-
 exit
     unless(
         defined($parameters->get_create_account) ||
@@ -373,7 +375,6 @@ $logger->infof(
 );
 
 # Do we need to do anything else?
-
 exit
     unless(defined($parameters->get_create_user));
 
