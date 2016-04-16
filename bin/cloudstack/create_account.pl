@@ -232,6 +232,7 @@ if(defined($parameters->get_password)) {
 #
 
 my @domains;
+my $domain_existed;
 
 if(defined($parameters->get_domain_id)) {
     # The ID is defined, so it will be easy to find the domain
@@ -282,10 +283,25 @@ if(@domains > 1) {
         # ^ if they add "-D" twice, the domain will be created recursively,
         #   so all parents will be created too 
     );
+    $domain_existed = 0;
+} else {
+    $domain_existed = 1;
 }
 
 my $domain_id = $domains[0]->get_id;
-$logger->debugf("The domain has the following ID: %s", $domain_id);
+$logger->info(
+    "The domain %s, it has the following ID: %s",
+    $domain_existed ? 'has been created' : 'existed',
+    $domain_id
+);
+
+# Do we need to do anything else?
+
+exit
+    unless(
+        defined($parameters->get_create_account) ||
+        defined($parameters->get_create_user)
+    );
 
 #
 # Now let's deal with the account
@@ -301,9 +317,9 @@ my @accounts = $api->perform_action(
     },
     requested   => { element => 'element' }
 );
+my $account_existed;
 
 # If the account does exist, we should consider creating a user bound to the same
-my $account_existed;
 if(@accounts > 1) {
     # It's odd to find more than one account with the same name in the same domain
     MonkeyMan::Exception->throwf(
@@ -344,30 +360,56 @@ if(@accounts > 1) {
         },
         requested   => { 'element' => 'element' },
     );
+    $account_existed = 0;
 } else {
     $account_existed = 1;
 }
 
 my $account_id = $accounts[0]->get_id;
-$logger->debugf("The account has the following ID: %s", $account_id);
+$logger->infof(
+    "The account %s, it has the following ID: %s",
+    $account_existed ? 'has been created' : 'existed',
+    $account_id
+);
+
+# Do we need to do anything else?
+
+exit
+    unless(defined($parameters->get_create_user));
 
 #
 # And the last, but not ever ever ever least - the user!
 #
 
-if($parameters->get_create_user) {
-    my @users = $api->perform_action(
-        type        => 'User',
-        action      => 'create',
-        parameters  => {
-            name        => $parameters->get_user_name,
-            email       => $parameters->get_email_address,
-            first_name  => $parameters->get_first_name,
-            last_name   => $parameters->get_last_name,
-            password    => $password,
-            account     => $parameters->get_account_name,
-            domain      => $domain_id
-        },
-        requested   => { 'element' => 'element' },
+my @users = $api->perform_action(
+    type        => 'User',
+    action      => 'create',
+    parameters  => {
+        name        => $parameters->get_user_name,
+        email       => $parameters->get_email_address,
+        first_name  => $parameters->get_first_name,
+        last_name   => $parameters->get_last_name,
+        password    => $password,
+        account     => $parameters->get_account_name,
+        domain      => $domain_id
+    },
+    requested   => { 'element' => 'element' },
+);
+
+my $user_id = $users[0]->get_id;
+if(@users > 1) {
+    MonkeyMan::Exception->throwf(
+        "Too many users have been found, their IDs are: %s",
+        join(', ', map({ $_->get_id } @users))
+    );
+} elsif(@users < 1) {
+    MonkeyMan::Exception->throwf(
+        "No users have been created, but it's odd that you see this message, " .
+        "because I should have raised an exception before the flow comes here"
     );
 }
+$logger->infof(
+    "The user has been created, it has the following ID: %s",
+    $user_id
+);
+

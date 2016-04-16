@@ -25,10 +25,12 @@ our %vocabulary_tree = (
                 parameters          => {
                     all => {
                         required            => 0,
-                        command_parameters  => { 'listall' => 'true' },
+                        command_parameters  => { 'listall' => 'true' }
+                    }
+                }
             },
             response => {
-                response_node   => 'listaccountsresponse',
+                response_node   => 'listusersresponse',
                 results         => {
                     element         => {
                         return_as       => [ qw( dom element id ) ],
@@ -86,7 +88,7 @@ our %vocabulary_tree = (
                 }
             },
             response => {
-                response_node   => 'createaccountresponse',
+                response_node   => 'createuserresponse',
                 results         => {
                     element         => {
                         return_as       => [ qw( dom element id ) ],
