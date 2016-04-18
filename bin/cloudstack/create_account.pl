@@ -121,8 +121,8 @@ t|account-type=s:
     requires_each:
       - create_account
     matches_any:
-      - ^(user|root-admin|domain-admin)$
-      - ^[012]$
+      - ^(user|root-admin|domain-admin)\$
+      - ^[012]\$
 a|account-name=s:
   account_name:
     requires_any:
@@ -202,22 +202,22 @@ if(defined($parameters->get_password)) {
     PASSWORD_LOOP: for(1..3) {
         my @passwords;
         for(1..2) {
-            printf("Please, enter the desired password%s: ", (@passwords) ? ' again' : '');
+            printf(STDERR "Please, enter the desired password%s: ", (@passwords) ? ' again' : '');
             ReadMode('noecho');
             chomp(my $_password = <STDIN>);
             ReadMode('normal');
             if(!length($_password)) {
-                print("Sorry, the password shouldn't be empty\n");
+                print(STDERR "Sorry, the password shouldn't be empty\n");
                 next(PASSWORD_LOOP);
             } else {
                 push(@passwords, $_password);
             }
         }
         if($passwords[0] ne $passwords[1]) {
-            print("Sorry, the passwords you entered are different\n");
+            print(STDERR "Sorry, the passwords you entered are different\n");
             next(PASSWORD_LOOP);
         } else {
-            print("Thanks!\n");
+            print(STDERR "Thanks!\n");
             $password = shift(@passwords);
             last(PASSWORD_LOOP);
         }
@@ -278,7 +278,7 @@ if(@domains > 1) {
             "No domain has been found, but its creation hasn't been requested"
         );
     }
-    $logger->infof("Going to create the %s domain", $parameters->get_domain_name);
+    $logger->debugf("Going to create the %s domain", $parameters->get_domain_name);
     @domains = MonkeyMan::CloudStack::API::Element::Domain::create_domain(
         desired_name    => $parameters->get_domain_name,
         api             => $api,
@@ -289,13 +289,22 @@ if(@domains > 1) {
     $domain_existed = 0;
 } else {
     $domain_existed = 1;
+    $logger->warn("We asked to create a domain, but it exists")
+        if(defined($parameters->get_create_domain));
 }
 
 my $domain_id = $domains[0]->get_id;
-$logger->info(
+$logger->debugf(
     "The domain %s, it has the following ID: %s",
     $domain_existed ? 'has been created' : 'existed',
     $domain_id
+);
+
+printf(
+    " Domain >> id: %s; path: %s (%s)\n",
+    $domain_id,
+    $domains[0]->qxp(query => '/path', return_as => 'value'),
+    $domain_existed ? 'found' : 'created'
 );
 
 # Do we need to do anything else?
@@ -335,7 +344,7 @@ if(@accounts > 1) {
             "No account has been found, though its creation hasn't been requested"
         );
     }
-    $logger->infof("Going to create the %s account", $parameters->get_account_name);
+    $logger->debugf("Going to create the %s account", $parameters->get_account_name);
     my $account_type;
     if($parameters->get_account_type =~ /^user$/i) {
         $account_type = 0;
@@ -365,13 +374,22 @@ if(@accounts > 1) {
     $account_existed = 0;
 } else {
     $account_existed = 1;
+    $logger->warn("We asked to create an account, but it exists")
+        if(defined($parameters->get_create_account));
 }
 
 my $account_id = $accounts[0]->get_id;
-$logger->infof(
+$logger->debugf(
     "The account %s, it has the following ID: %s",
     $account_existed ? 'has been created' : 'existed',
     $account_id
+);
+
+printf(
+    "Account >> id: %s; name: %s (%s)\n",
+    $account_id,
+    $accounts[0]->qxp(query => '/name', return_as => 'value'),
+    $account_existed ? 'found' : 'created'
 );
 
 # Do we need to do anything else?
@@ -384,33 +402,55 @@ exit
 
 my @users = $api->perform_action(
     type        => 'User',
-    action      => 'create',
+    action      => 'list',
     parameters  => {
         name        => $parameters->get_user_name,
-        email       => $parameters->get_email_address,
-        first_name  => $parameters->get_first_name,
-        last_name   => $parameters->get_last_name,
-        password    => $password,
         account     => $parameters->get_account_name,
         domain      => $domain_id
     },
     requested   => { 'element' => 'element' },
 );
+my $user_existed;
 
-my $user_id = $users[0]->get_id;
 if(@users > 1) {
     MonkeyMan::Exception->throwf(
         "Too many users have been found, their IDs are: %s",
         join(', ', map({ $_->get_id } @users))
     );
 } elsif(@users < 1) {
-    MonkeyMan::Exception->throwf(
-        "No users have been created, but it's odd that you see this message, " .
-        "because I should have raised an exception before the flow comes here"
+    $logger->debugf("Going to create the %s user", $parameters->get_user_name);
+    @users = $api->perform_action(
+        type        => 'User',
+        action      => 'create',
+        parameters  => {
+            name        => $parameters->get_user_name,
+            email       => $parameters->get_email_address,
+            first_name  => $parameters->get_first_name,
+            last_name   => $parameters->get_last_name,
+            password    => $password,
+            account     => $parameters->get_account_name,
+            domain      => $domain_id
+        },
+        requested   => { 'element' => 'element' },
     );
+    $user_existed = 0;
+} else {
+    $user_existed = 1;
+    $logger->warn("We asked to create a user, but it exists")
+        if(defined($parameters->get_create_user));
 }
-$logger->infof(
-    "The user has been created, it has the following ID: %s",
+
+my $user_id = $users[0]->get_id;
+$logger->debugf(
+    "The user %s, it has the following ID: %s",
+    $user_existed ? 'has been created' : 'existed',
     $user_id
+);
+
+printf(
+    "   User >> id: %s; name: %s (%s)\n",
+    $user_id,
+    $users[0]->qxp(query => '/username', return_as => 'value'),
+    $user_existed ? 'found' : 'created'
 );
 

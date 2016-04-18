@@ -26,6 +26,18 @@ our %vocabulary_tree = (
                     all => {
                         required            => 0,
                         command_parameters  => { 'listall' => 'true' }
+                    },
+                    name => {
+                        required            => 0,
+                        command_parameters  => { 'username' => '<%VALUE%>' }
+                    },
+                    account => {
+                        required            => 0,
+                        command_parameters  => { 'account' => '<%VALUE%>' }
+                    },
+                    domain => {
+                        required            => 0,
+                        command_parameters  => { 'domainid' => '<%VALUE%>' }
                     }
                 }
             },
