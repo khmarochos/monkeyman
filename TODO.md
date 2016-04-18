@@ -4,8 +4,10 @@ Things To Do
 Code
 ----
 
+ - [ ] Make `MonkeyMan::PasswordGenerator` configurable.
+        - suggested on `2016.04.18` by `melnik13`
  - [ ] Add the `EXCEPTION` method on demand when loading the
-       `MonkeyMan::Exception` method.
+       `MonkeyMan::Exception` package.
         - suggested on `2016.04.07` by `melnik13`
  - [ ] Add the `fatal` parameter to all vocabulary-related methods.
         - suggested on `2016.02.09` by `melnik13`

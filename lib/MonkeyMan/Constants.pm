@@ -56,6 +56,16 @@ my @mm_constants_timeouts = qw(
     MM_SLEEP_WHILE_WAITING_FOR_ASYNC_JOB_RESULT
 );
 
+# :passwords
+
+use constant MM_DEFAULT_PASSWORD_GENERATOR_ID   => 'PRIMARY';
+use constant MM_DEFAULT_PASSWORD_LENGTH         => 13;
+
+my @mm_constants_passwords = qw(
+    MM_DEFAULT_PASSWORD_GENERATOR_ID
+    MM_DEFAULT_PASSWORD_LENGTH
+);
+
 # :logging
 
 use constant MM_VERBOSITY_LEVELS        => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
@@ -91,6 +101,7 @@ my @mm_constants_all = (
     @mm_constants_directories,
     @mm_constants_filenames,
     @mm_constants_timeouts,
+    @mm_constants_passwords,
     @mm_constants_logging,
     @mm_constants_cloudstack
 );
@@ -106,6 +117,7 @@ my @mm_constants_all = (
     directories => \@mm_constants_directories,
     filenames   => \@mm_constants_filenames,
     timeouts    => \@mm_constants_timeouts,
+    passwords   => \@mm_constants_passwords,
     logging     => \@mm_constants_logging,
     cloudstack  => \@mm_constants_cloudstack
 );

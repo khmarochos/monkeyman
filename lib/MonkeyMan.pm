@@ -91,6 +91,7 @@ use MonkeyMan::Exception qw(CanNotLoadPackage);
 use MonkeyMan::Parameters;
 use MonkeyMan::CloudStack;
 use MonkeyMan::Logger;
+use MonkeyMan::PasswordGenerator;
 
 # Use 3rd-party libraries
 use MooseX::Handies;
@@ -453,6 +454,24 @@ method _build_default_cloudstack_id {
     }
 }
 
+=head4 C<password_generators>
+
+=cut
+
+has 'default_password_generator_id' => (
+    is          => 'ro',
+    isa         => 'Str',
+    lazy        => 1,
+    reader      =>    'get_default_password_generator_id',
+    writer      =>   '_set_default_password_generator_id',
+    predicate   =>   '_has_default_password_generator_id',
+    builder     => '_build_default_password_generator_id'
+);
+
+method _build_default_password_generator_id {
+    return(&MM_DEFAULT_PASSWORD_GENERATOR_ID);
+}
+
 =head2 get_app_code()
 
 =head2 get_app_name()
@@ -513,7 +532,7 @@ C<MM_DEFAULT_LOGGER_ID> constant.
     }
 
 The default logger is being initialized proactively by the framework, but
-it's also possible to initialize it by oneself in the case will you need it.
+it's also possible to initialize it by oneself in the case one needs it.
 
     $my_loggers = {
         zaloopa => MonkeyMan::Logger->new(...),
@@ -541,6 +560,14 @@ initialized.
 The default CloudStack instance's ID can be set by the
 C<--default-cloudstack> parameter, by default it's C<PRIMARY>, as it's
 defined as the C<MM_DEFAULT_CLOUDSTACK_ID> constant.
+
+=cut
+
+=head2 get_password_generator()
+
+=head2 get_password_generators()
+
+=cut
 
 =head2 get_mm_version()
 
@@ -612,6 +639,36 @@ method _mm_init {
         )
     );
 
+    my $default_password_generator_id = $self->get_default_password_generator_id;
+    $meta->add_method(
+        _build_password_generators => method {
+            return( {
+                $default_password_generator_id => MonkeyMan::PasswordGenerator->new(
+                    monkeyman       => $self,
+                    configuration   => $self
+                                        ->get_configuration
+                                            ->{'password_generator'}
+                                                ->{$default_password_generator_id}
+                )
+            } );
+        }
+    );
+    $self->meta->add_attribute(
+        'password_generators' => (
+            is          => 'ro',
+            isa         => 'HashRef[MonkeyMan::PasswordGenerator]',
+            reader      =>   '_get_password_generators',
+            writer      =>   '_set_password_generators',
+            builder     => '_build_password_generators',
+            lazy        => 1,
+            handies     => [{
+                name        => 'get_password_generator',
+                default     => $default_password_generator_id,
+                strict      => 1
+            }]
+        )
+    );
+
     my $logger = $self->get_logger;
     $logger->tracef("We've got the set of command-line parameters: %s",
         $self->get_parameters
@@ -626,6 +683,10 @@ method _mm_init {
     $logger->tracef("We've got the primary (%s) CloudStack instance: %s",
         $default_cloudstack_id,
         $self->get_cloudstack
+    );
+    $logger->tracef("We've got the primary (%s) password generator instance: %s",
+        $default_password_generator_id,
+        $self->get_password_generator
     );
 
     $logger->tracef("We've got the framework %s initialized by PID %d at %s",

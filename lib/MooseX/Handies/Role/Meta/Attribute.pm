@@ -63,6 +63,7 @@ after install_accessors => sub {
 
                         $hashref->{$slot} = $_[0]->$handy_initializer($slot)
                             if(!defined($hashref->{$slot}) && defined($handy_initializer));
+                        # ^ TODO: Test it, please
 
                         confess(sprintf("The %s slot is empty", $slot))
                             if(!defined($hashref->{$slot}) && $handy_strict);

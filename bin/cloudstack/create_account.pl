@@ -65,8 +65,10 @@ This application recognizes the following parameters:
 
     -p <password>, --password <password>
         [opt*,**]   The user's password
+    -G <length>, --password-generate <length>
+        [opt*]      The user's password needs to be generated
     -S, --password-stdin
-        [opt*]      The user's password needs is to be got from STDIN
+        [opt*]      The user's password needs to be got from STDIN
     -P, --password-prompt
         [opt*]      The user's password needs to be entered twice
   * If you're creating an account or a user, you should provide the password.
@@ -114,6 +116,7 @@ A|create-account:
       - domain_id
     requires_any.password:
       - password
+      - password_generate
       - password_stdin
       - password_prompt
 t|account-type=s:
@@ -138,6 +141,7 @@ U|create_user:
       - email_address
     requires_any:
       - password
+      - password_generate
       - password_stdin
       - password_prompt
 u|user-name=s:
@@ -165,8 +169,20 @@ p|password=s:
       - create_account
       - create_user
     conflicts_any:
+      - password_generate
       - password_stdin
       - password_prompt
+G|password-generate=s:
+  password_generate:
+    requires_any:
+      - create_account
+      - create_user
+    conflicts_any:
+      - password
+      - password_stdin
+      - password_prompt
+    matches_each:
+      - ^\\d+\$
 S|password-stdin:
   password_stdin:
     requires_any:
@@ -174,6 +190,7 @@ S|password-stdin:
       - create_user
     conflicts_any:
       - password
+      - password_generate
       - password_prompt
 P|password-prompt:
   password_prompt:
@@ -182,6 +199,7 @@ P|password-prompt:
       - create_user
     conflicts_any:
       - password
+      - password_generate
       - password_stdin
 __END_OF_PARAMETERS_TO_GET_VALIDATED__
 );
@@ -194,6 +212,9 @@ my $password;
 if(defined($parameters->get_password)) {
     # They want me to get it from the command-line parameters (insecure)
     $password = $parameters->get_password;
+} elsif(defined($parameters->get_password_generate)) {
+    # They want me to generate the password by myself
+    $password = $monkeyman->get_password_generator->generate(length => $parameters->get_password_generate);
 } elsif(defined($parameters->get_password_stdin)) {
     # They want me to receive it from STDIN (secure)
     chomp($password = <STDIN>);
