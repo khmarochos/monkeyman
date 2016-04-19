@@ -47,6 +47,7 @@ after install_accessors => sub {
                         confess("Can't find the read method")
                             unless(
                                     ref($read_method_ref) &&
+                                    ref($read_method_ref) eq 'CODE' ||
                                 blessed($read_method_ref) &&
                                         $read_method_ref->isa('Moose::Meta::Method::Accessor')
                             );
@@ -65,7 +66,7 @@ after install_accessors => sub {
                             if(!defined($hashref->{$slot}) && defined($handy_initializer));
                         # ^ TODO: Test it, please
 
-                        confess(sprintf("The %s slot is empty", $slot))
+                        confess(sprintf("The %s slot is empty (%s)", $slot, $hashref))
                             if(!defined($hashref->{$slot}) && $handy_strict);
 
                         return($hashref->{$slot});

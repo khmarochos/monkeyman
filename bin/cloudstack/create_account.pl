@@ -172,7 +172,7 @@ p|password=s:
       - password_generate
       - password_stdin
       - password_prompt
-G|password-generate=s:
+G|password-generate:
   password_generate:
     requires_any:
       - create_account
@@ -181,8 +181,6 @@ G|password-generate=s:
       - password
       - password_stdin
       - password_prompt
-    matches_each:
-      - ^\\d+\$
 S|password-stdin:
   password_stdin:
     requires_any:
@@ -214,7 +212,7 @@ if(defined($parameters->get_password)) {
     $password = $parameters->get_password;
 } elsif(defined($parameters->get_password_generate)) {
     # They want me to generate the password by myself
-    $password = $monkeyman->get_password_generator->generate(length => $parameters->get_password_generate);
+    $password = $monkeyman->get_password_generator->generate;
 } elsif(defined($parameters->get_password_stdin)) {
     # They want me to receive it from STDIN (secure)
     chomp($password = <STDIN>);
@@ -376,7 +374,7 @@ if(@accounts > 1) {
     } elsif($parameters->get_account_type =~ /^[012]$/) {
         $account_type = $parameters->get_account_type;
     } else {
-        # TODO: All parameters should be validated beforehand!
+        # TODO: Raise an exception?
     }
     @accounts = $api->perform_action(
         type        => 'Account',
@@ -407,10 +405,13 @@ $logger->debugf(
 );
 
 printf(
-    "Account >> id: %s; name: %s (%s)\n",
+    "Account >> id: %s; name: %s (%s)%s\n",
     $account_id,
     $accounts[0]->qxp(query => '/name', return_as => 'value'),
-    $account_existed ? 'found' : 'created'
+    $account_existed ? 'found' : 'created',
+   !$account_existed && defined($parameters->get_password_generate) ?
+        ', the password generated: ' . $password :
+        ''
 );
 
 # Do we need to do anything else?
@@ -469,9 +470,12 @@ $logger->debugf(
 );
 
 printf(
-    "   User >> id: %s; name: %s (%s)\n",
+    "   User >> id: %s; name: %s (%s)%s\n",
     $user_id,
     $users[0]->qxp(query => '/username', return_as => 'value'),
-    $user_existed ? 'found' : 'created'
+    $user_existed ? 'found' : 'created',
+   !$user_existed && defined($parameters->get_password_generate) ?
+        ', the password generated: ' . $password :
+        ''
 );
 

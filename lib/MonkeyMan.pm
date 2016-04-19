@@ -100,6 +100,7 @@ use Method::Signatures;
 use TryCatch;
 use Getopt::Long qw(:config no_ignore_case);
 use Config::General;
+use File::Slurp;
 
 
 
@@ -115,18 +116,16 @@ This method initializes the framework and runs the application.
 
 method BUILD(...) {
 
-    END {
-        my $mm = MonkeyMan->instance;
-        if(ref($mm) eq 'MonkeyMan') {
-            $mm->get_logger->debugf("<%s> Goodbye world!", $mm->get_time_passed_formatted)
-                if($mm->can('get_logger'));
-            $mm->_mm_shutdown
-                if($mm->can('_mm_shutdown'));
-        }
-    }
-
     $self->_mm_init;
     $self->get_logger->debugf("<%s> Hello world!", $self->get_time_passed_formatted);
+    {
+        END: {
+            $self->get_logger->debugf("<%s> Goodbye world!", $self->get_time_passed_formatted)
+                if($self->can('get_logger') && $self->get_logger->can('debugf'));
+            $self->_mm_shutdown
+                if($self->can('_mm_shutdown'));
+        };
+    };
     if(defined($self->get_app_code)) {
         $self->_app_start;
         $self->_app_run;
@@ -369,7 +368,59 @@ If the configuration is neither defined as the constructor parameter nor
 defined by the startup parameter, the framework attempts to find the
 configuration file at the location defined as the C<MM_CONFIG_MAIN> constant.
 
+=head4 C<configuration_filename>
+
+=head4 C<configuration_string>
+
+=head4 C<configuration_append>
+
 =cut
+
+has 'configuration_filename' => (
+    is          => 'ro',
+    isa         => 'Str',
+    predicate   =>    'has_configuration_filename',
+    reader      =>    'get_configuration_filename',
+    writer      =>   '_set_configuration_filename',
+    builder     => '_build_configuration_filename',
+    lazy        => 1
+);
+
+method _build_configuration_filename {
+    return(
+        defined($self->get_parameters->get_mm_configuration) ?
+                $self->get_parameters->get_mm_configuration :
+                MM_CONFIG_MAIN
+    );
+}
+
+has 'configuration_string' => (
+    is          => 'ro',
+    isa         => 'Maybe[Str]',
+    predicate   =>    'has_configuration_string',
+    reader      =>    'get_configuration_string',
+    writer      =>   '_set_configuration_string',
+    builder     => '_build_configuration_string',
+    lazy        => 1
+);
+
+method _build_configuration_string {
+    return(undef);
+}
+
+has 'configuration_append' => (
+    is          => 'ro',
+    isa         => 'Maybe[Str]',
+    predicate   =>    'has_configuration_append',
+    reader      =>    'get_configuration_append',
+    writer      =>   '_set_configuration_append',
+    builder     => '_build_configuration_append',
+    lazy        => 1
+);
+
+method _build_configuration_append {
+    return(undef);
+}
 
 has 'configuration' => (
     is          => 'ro',
@@ -383,15 +434,29 @@ has 'configuration' => (
 
 method _build_configuration {
 
+    my $configuration_string;
+
+    if($self->has_configuration_string) {
+        $configuration_string = $self->get_configuration_string;
+    } else {
+        $configuration_string = read_file($self->get_configuration_filename);
+    }
+
+    if($self->has_configuration_append) {
+        $configuration_string .=
+            "\n# APPENDED BY THE configuration_append ATTRIBUTE\n" .
+            $self->get_configuration_append;
+    }
+
     my $config = Config::General->new(
-        -ConfigFile         => (
-            defined($self->get_parameters->get_mm_configuration) ?
-                    $self->get_parameters->get_mm_configuration :
-                    MM_CONFIG_MAIN
-        ),
-        -UseApacheInclude   => 1,
-        -ExtendedAccess     => 1
+        -String                 => $configuration_string,
+        -UseApacheInclude       => 1,
+        -ExtendedAccess         => 1,
+        -MergeDuplicateBlocks   => 1
     );
+
+    use Data::Dumper; Dumper($config->getall);
+
     return({ $config->getall });
 
 }
@@ -469,7 +534,12 @@ has 'default_password_generator_id' => (
 );
 
 method _build_default_password_generator_id {
-    return(&MM_DEFAULT_PASSWORD_GENERATOR_ID);
+    if(defined(my $default_password_generator_id =
+        $self->get_parameters->get_mm_default_password_generator)) {
+        return($default_password_generator_id);
+    } else {
+        return(&MM_DEFAULT_PASSWORD_GENERATOR_ID);
+    }
 }
 
 =head2 get_app_code()
@@ -641,17 +711,20 @@ method _mm_init {
 
     my $default_password_generator_id = $self->get_default_password_generator_id;
     $meta->add_method(
-        _build_password_generators => method {
-            return( {
-                $default_password_generator_id => MonkeyMan::PasswordGenerator->new(
+        _initialize_password_generator => method(Str $generator_id!) {
+            return(
+                MonkeyMan::PasswordGenerator->new(
                     monkeyman       => $self,
                     configuration   => $self
                                         ->get_configuration
                                             ->{'password_generator'}
-                                                ->{$default_password_generator_id}
+                                                ->{$generator_id}
                 )
-            } );
+            );
         }
+    );
+    $meta->add_method(
+        _build_password_generators => method { return({}); }
     );
     $self->meta->add_attribute(
         'password_generators' => (
@@ -664,6 +737,7 @@ method _mm_init {
             handies     => [{
                 name        => 'get_password_generator',
                 default     => $default_password_generator_id,
+                initializer => '_initialize_password_generator',
                 strict      => 1
             }]
         )
@@ -750,7 +824,7 @@ method _mm_shutdown {
         $self->get_time_passed_formatted,
         $self
     )
-        if($self->can('get_logger'));
+        if($self->can('get_logger') && $self->get_logger->can('debugf'));
 
 }
 

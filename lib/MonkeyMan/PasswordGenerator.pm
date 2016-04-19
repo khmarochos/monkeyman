@@ -34,8 +34,11 @@ has generator => (
     lazy    => 1
 );
 
-method _build_generator(...) {
-    return(App::Genpass->new);
+method _build_generator(
+    Maybe[HashRef]  :$configuration =
+         ($self->_has_configuration && defined($self->get_configuration)) ? $self->get_configuration : {}
+) {
+    return(App::Genpass->new(%{ $configuration }));
 }
 
 
@@ -57,8 +60,7 @@ method _build_configuration(...) {
 
 
 method generate(
-    Int :$samples?  = 1,
-    Int :$length?   = MM_DEFAULT_PASSWORD_LENGTH
+    Int :$samples? = 1,
 ) {
     return($self->_get_generator->generate($samples));
 }

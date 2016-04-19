@@ -761,7 +761,7 @@ has 'vocabularies' => (
         name        => 'get_vocabulary',
         default     => undef,
         strict      => 1,
-        initializer => 'initialize_vocabulary'
+        initializer => '_initialize_vocabulary'
     }]
 );
 
@@ -771,7 +771,7 @@ method _build_vocabularies {
 
 }
 
-method initialize_vocabulary(MonkeyMan::CloudStack::Types::ElementType $type!) {
+method _initialize_vocabulary(MonkeyMan::CloudStack::Types::ElementType $type!) {
 
     return(MonkeyMan::CloudStack::API::Vocabulary->new(
         api         => $self,
