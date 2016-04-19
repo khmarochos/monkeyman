@@ -34,11 +34,37 @@ has generator => (
     lazy    => 1
 );
 
-method _build_generator(
-    Maybe[HashRef]  :$configuration =
-         ($self->_has_configuration && defined($self->get_configuration)) ? $self->get_configuration : {}
-) {
-    return(App::Genpass->new(%{ $configuration }));
+method _build_generator(Maybe[HashRef] :$configuration) {
+
+    unless(defined($configuration)) {
+        $configuration = ($self->_has_configuration && defined($self->get_configuration)) ?
+                          $self->get_configuration :
+                          {}
+    }
+
+    my %generator_configuration;
+
+    my $parameter = defined($configuration->{'length'}) ? 
+                            $configuration->{'length'} :
+                            MM_DEFAULT_PASSWORD_LENGTH;
+    if($parameter =~ /^(\d+)-(\d+)$/) {
+        $generator_configuration{'minlength'} = $1;
+        $generator_configuration{'maxlength'} = $2;
+    } else {
+        $generator_configuration{'length'} = $parameter;
+    }
+
+    $parameter = defined($configuration->{'all_characters'}) ?
+                         $configuration->{'all_characters'} :
+                         MM_DEFAULT_PASSWORD_ALL_CHARACTERS;
+    $generator_configuration{'verify'} = $parameter;
+
+    $parameter = defined($configuration->{'readable_only'}) ?
+                         $configuration->{'readable_only'} :
+                         MM_DEFAULT_PASSWORD_READABLE_ONLY;
+    $generator_configuration{'readable'} = $parameter;
+
+    return(App::Genpass->new(%generator_configuration));
 }
 
 

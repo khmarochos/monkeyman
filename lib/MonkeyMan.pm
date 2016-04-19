@@ -368,59 +368,7 @@ If the configuration is neither defined as the constructor parameter nor
 defined by the startup parameter, the framework attempts to find the
 configuration file at the location defined as the C<MM_CONFIG_MAIN> constant.
 
-=head4 C<configuration_filename>
-
-=head4 C<configuration_string>
-
-=head4 C<configuration_append>
-
 =cut
-
-has 'configuration_filename' => (
-    is          => 'ro',
-    isa         => 'Str',
-    predicate   =>    'has_configuration_filename',
-    reader      =>    'get_configuration_filename',
-    writer      =>   '_set_configuration_filename',
-    builder     => '_build_configuration_filename',
-    lazy        => 1
-);
-
-method _build_configuration_filename {
-    return(
-        defined($self->get_parameters->get_mm_configuration) ?
-                $self->get_parameters->get_mm_configuration :
-                MM_CONFIG_MAIN
-    );
-}
-
-has 'configuration_string' => (
-    is          => 'ro',
-    isa         => 'Maybe[Str]',
-    predicate   =>    'has_configuration_string',
-    reader      =>    'get_configuration_string',
-    writer      =>   '_set_configuration_string',
-    builder     => '_build_configuration_string',
-    lazy        => 1
-);
-
-method _build_configuration_string {
-    return(undef);
-}
-
-has 'configuration_append' => (
-    is          => 'ro',
-    isa         => 'Maybe[Str]',
-    predicate   =>    'has_configuration_append',
-    reader      =>    'get_configuration_append',
-    writer      =>   '_set_configuration_append',
-    builder     => '_build_configuration_append',
-    lazy        => 1
-);
-
-method _build_configuration_append {
-    return(undef);
-}
 
 has 'configuration' => (
     is          => 'ro',
@@ -459,6 +407,64 @@ method _build_configuration {
 
     return({ $config->getall });
 
+}
+
+=head4 C<configuration_filename>
+
+=cut
+
+has 'configuration_filename' => (
+    is          => 'ro',
+    isa         => 'Str',
+    predicate   =>    'has_configuration_filename',
+    reader      =>    'get_configuration_filename',
+    writer      =>   '_set_configuration_filename',
+    builder     => '_build_configuration_filename',
+    lazy        => 1
+);
+
+method _build_configuration_filename {
+    return(
+        defined($self->get_parameters->get_mm_configuration) ?
+                $self->get_parameters->get_mm_configuration :
+                MM_CONFIG_MAIN
+    );
+}
+
+=head4 C<configuration_string>
+
+=cut
+
+has 'configuration_string' => (
+    is          => 'ro',
+    isa         => 'Maybe[Str]',
+    predicate   =>    'has_configuration_string',
+    reader      =>    'get_configuration_string',
+    writer      =>   '_set_configuration_string',
+    builder     => '_build_configuration_string',
+    lazy        => 1
+);
+
+method _build_configuration_string {
+    return(undef);
+}
+
+=head4 C<configuration_append>
+
+=cut
+
+has 'configuration_append' => (
+    is          => 'ro',
+    isa         => 'Maybe[Str]',
+    predicate   =>    'has_configuration_append',
+    reader      =>    'get_configuration_append',
+    writer      =>   '_set_configuration_append',
+    builder     => '_build_configuration_append',
+    lazy        => 1
+);
+
+method _build_configuration_append {
+    return(undef);
 }
 
 

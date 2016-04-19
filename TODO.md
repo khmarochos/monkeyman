@@ -4,8 +4,6 @@ Things To Do
 Code
 ----
 
- - [ ] Make `MonkeyMan::PasswordGenerator` configurable.
-        - suggested on `2016.04.18` by `melnik13`
  - [ ] Add the `EXCEPTION` method on demand when loading the
        `MonkeyMan::Exception` package.
         - suggested on `2016.04.07` by `melnik13`
@@ -20,6 +18,9 @@ Code
         - suggested on `2016.01.17` by `melnik13`
  - [ ] Use the `MonkeyMan::CloudStack::Types::*` types everywhere
         - on `2016.01.18` by `melnik13`
+ - [x] Make `MonkeyMan::PasswordGenerator` configurable.
+        - suggested on `2016.04.18` by `melnik13`
+        - completed on `2016.04.19`
  - [x] Move command-line parameters manupulations to `MonkeyMan::Parameters`
         - suggested on `2016.01.19` by `melnik13`
         - completed on `2016.04.17`

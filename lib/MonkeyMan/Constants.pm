@@ -60,10 +60,14 @@ my @mm_constants_timeouts = qw(
 
 use constant MM_DEFAULT_PASSWORD_GENERATOR_ID   => 'PRIMARY';
 use constant MM_DEFAULT_PASSWORD_LENGTH         => 13;
+use constant MM_DEFAULT_PASSWORD_ALL_CHARACTERS => 1;
+use constant MM_DEFAULT_PASSWORD_READABLE_ONLY  => 1;
 
 my @mm_constants_passwords = qw(
     MM_DEFAULT_PASSWORD_GENERATOR_ID
     MM_DEFAULT_PASSWORD_LENGTH
+    MM_DEFAULT_PASSWORD_ALL_CHARACTERS
+    MM_DEFAULT_PASSWORD_READABLE_ONLY
 );
 
 # :logging
