@@ -48,54 +48,46 @@ my @mm_constants_filenames = qw(
     MM_CONFIG_CLOUDSTACK
 );
 
-# :timeouts
-
-use constant MM_SLEEP_WHILE_WAITING_FOR_ASYNC_JOB_RESULT => 60;
-
-my @mm_constants_timeouts = qw(
-    MM_SLEEP_WHILE_WAITING_FOR_ASYNC_JOB_RESULT
-);
-
-# :passwords
-
-use constant MM_DEFAULT_PASSWORD_GENERATOR_ID   => 'PRIMARY';
-use constant MM_DEFAULT_PASSWORD_LENGTH         => 13;
-use constant MM_DEFAULT_PASSWORD_ALL_CHARACTERS => 1;
-use constant MM_DEFAULT_PASSWORD_READABLE_ONLY  => 1;
-
-my @mm_constants_passwords = qw(
-    MM_DEFAULT_PASSWORD_GENERATOR_ID
-    MM_DEFAULT_PASSWORD_LENGTH
-    MM_DEFAULT_PASSWORD_ALL_CHARACTERS
-    MM_DEFAULT_PASSWORD_READABLE_ONLY
-);
-
 # :logging
 
 use constant MM_VERBOSITY_LEVELS        => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
 use constant MM_VERBOSITY_LEVEL_BASE    => 4;
 use constant MM_DATE_TIME_FORMAT        => '%Y/%m/%d %H:%M:%S';
-use constant MM_DEFAULT_LOGGER_ID       => 'PRIMARY';
+use constant MM_LOGGER_DEFAULT_HANDY    => 'PRIMARY';
 
 my @mm_constants_logging = qw(
     MM_VERBOSITY_LEVELS
     MM_VERBOSITY_LEVEL_BASE
     MM_DATE_TIME_FORMAT
-    MM_DEFAULT_LOGGER_ID
+    MM_LOGGER_DEFAULT_HANDY
 );
 
 # :cloudstack
 
-use constant MM_DEFAULT_CLOUDSTACK_ID               => 'PRIMARY';
 use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH      => 3600;
 use constant MM_CLOUDSTACK_API_SLEEP                => 10;
 use constant MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME   => 100;
+use constant MM_CLOUDSTACK_DEFAULT_HANDY            => 'PRIMARY';
 
 my @mm_constants_cloudstack = qw(
-    MM_DEFAULT_CLOUDSTACK_ID
     MM_CLOUDSTACK_API_WAIT_FOR_FINISH
     MM_CLOUDSTACK_API_SLEEP
     MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME
+    MM_CLOUDSTACK_DEFAULT_HANDY
+);
+
+# :passwords
+
+use constant MM_DEFAULT_PASSWORD_LENGTH             => 13;
+use constant MM_DEFAULT_PASSWORD_ALL_CHARACTERS     => 1;
+use constant MM_DEFAULT_PASSWORD_READABLE_ONLY      => 1;
+use constant MM_PASSWORD_GENERATOR_DEFAULT_HANDY    => 'PRIMARY';
+
+my @mm_constants_passwords = qw(
+    MM_DEFAULT_PASSWORD_LENGTH
+    MM_DEFAULT_PASSWORD_ALL_CHARACTERS
+    MM_DEFAULT_PASSWORD_READABLE_ONLY
+    MM_PASSWORD_GENERATOR_DEFAULT_HANDY
 );
 
 # :ALL
@@ -104,10 +96,9 @@ my @mm_constants_all = (
     @mm_constants_version,
     @mm_constants_directories,
     @mm_constants_filenames,
-    @mm_constants_timeouts,
-    @mm_constants_passwords,
     @mm_constants_logging,
-    @mm_constants_cloudstack
+    @mm_constants_cloudstack,
+    @mm_constants_passwords
 );
 
 
@@ -120,7 +111,6 @@ my @mm_constants_all = (
     version     => \@mm_constants_version,
     directories => \@mm_constants_directories,
     filenames   => \@mm_constants_filenames,
-    timeouts    => \@mm_constants_timeouts,
     passwords   => \@mm_constants_passwords,
     logging     => \@mm_constants_logging,
     cloudstack  => \@mm_constants_cloudstack

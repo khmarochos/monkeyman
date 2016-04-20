@@ -26,9 +26,18 @@ with 'MonkeyMan::Roles::WithTimer';
 # Use 3rd-party libraries
 use Method::Signatures;
 use TryCatch;
+use File::Slurp;
 use Log::Log4perl qw(:no_extra_logdie_message);
 
 
+
+has 'configuration' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    reader      =>  'get_configuration',
+    writer      => '_set_configuration',
+    predicate   => '_has_configuration'
+);
 
 has 'configuration_string' => (
     is          => 'ro',
@@ -65,17 +74,17 @@ has 'log4perl_loggers' => (
     lazy        => 1
 );
 
-has 'dumped' => (
-    is          => 'ro',
-    isa         => 'Str',
-    reader      => 'get_dumped'
-);
-
 method _build_log4perl_loggers {
 
     return({});
 
 }
+
+#   has 'dumped' => (
+#       is          => 'ro',
+#       isa         => 'Str',
+#       reader      => 'get_dumped'
+#   );
 
 
 
@@ -86,30 +95,19 @@ method BUILD(...) {
         # Okay, shall we any some certain configuration or we should get it
         # from some configuration file?
 
-        my $log_configuration;
+        my $log4perl_configuration;
         if($self->_has_configuration_string) {
-            $log_configuration = $self->_get_configuration_string;
+            $log4perl_configuration = $self->_get_configuration_string;
         } else {
             my $log_configuration_file = $self->_has_configuration_file ?
                 $self->_get_configuration_file :
-                defined($self->get_monkeyman->get_configuration->{'log'}->{$self->get_monkeyman->get_default_logger_id}->{'conf'}) ?
-                        $self->get_monkeyman->get_configuration->{'log'}->{$self->get_monkeyman->get_default_logger_id}->{'conf'} :
+                defined($self->get_configuration->{'conf'}) ?
+                        $self->get_configuration->{'conf'} :
                         MM_CONFIG_LOGGER;
-            open(
-                my $log_configuration_filehandle, '<', $log_configuration_file
-            ) ||
-                MonkeyMan::Exception->throwf(
-                    "Can't load logger's configuration from %s: %s",
-                    $log_configuration_file,
-                    $!
-                );
-            while(<$log_configuration_filehandle>) {
-                $log_configuration .= $_;
-            }
-            close($log_configuration_filehandle);
+            $log4perl_configuration = read_file($log_configuration_file)
         }
 
-        Log::Log4perl->init_once(\$log_configuration);
+        Log::Log4perl->init_once(\$log4perl_configuration);
 
         my $log_console_level = $self->_has_console_verbosity ?
             $self->_get_console_verbosity : (

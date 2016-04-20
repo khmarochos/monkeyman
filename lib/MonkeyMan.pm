@@ -479,24 +479,54 @@ C<get_logger()> method described below.
 
 =cut
 
-has 'default_logger_id' => (
+has 'logger_default_handy' => (
     is          => 'ro',
     isa         => 'Str',
     lazy        => 1,
-    reader      => 'get_default_logger_id',
-    writer      => '_set_default_logger_id',
-    predicate   => '_has_default_logger_id',
-    builder     => '_build_default_logger_id'
+    reader      =>    'get_logger_default_handy',
+    writer      =>   '_set_logger_default_handy',
+    predicate   =>   '_has_logger_default_handy',
+    builder     => '_build_logger_default_handy'
 );
 
-method _build_default_logger_id {
-    if(defined(my $default_logger_id =
-        $self->get_parameters->get_mm_default_logger)) {
-        return($default_logger_id);
-    } else {
-        return(&MM_DEFAULT_LOGGER_ID);
-    }
+method _build_logger_default_handy {
+    return(
+        defined($self->get_parameters->get_mm_default_logger) ?
+                $self->get_parameters->get_mm_default_logger :
+                &MM_LOGGER_DEFAULT_HANDY
+    );
 }
+
+method _initialize_logger_handy(Str $handy!) {
+    return(
+        MonkeyMan::Logger->new(
+            monkeyman       => $self,
+            configuration   => $self
+                                ->get_configuration
+                                    ->{'log'}
+                                        ->{$handy}
+        )
+    );
+}
+
+method _build_loggers {
+    return({});
+}
+
+has 'loggers' => (
+    is          => 'ro',
+    isa         => 'HashRef[MonkeyMan::Logger]',
+    reader      =>   '_get_loggers',
+    writer      =>   '_set_loggers',
+    builder     => '_build_loggers',
+    lazy        => 1,
+    handies     => [{
+        name        => 'get_logger',
+        default     => 'get_logger_default_handy',
+        initializer => '_initialize_logger_handy',
+        strict      => 1
+    }]
+);
 
 =head4 C<cloudstacks>
 
@@ -506,47 +536,132 @@ handle is described below.
 
 =cut
 
-has 'default_cloudstack_id' => (
+has 'cloudstack_default_handy' => (
     is          => 'ro',
     isa         => 'Str',
     lazy        => 1,
-    reader      => 'get_default_cloudstack_id',
-    writer      => '_set_default_cloudstack_id',
-    predicate   => '_has_default_cloudstack_id',
-    builder     => '_build_default_cloudstack_id'
+    reader      =>    'get_cloudstack_default_handy',
+    writer      =>   '_set_cloudstack_default_handy',
+    predicate   =>   '_has_cloudstack_default_handy',
+    builder     => '_build_cloudstack_default_handy'
 );
 
-method _build_default_cloudstack_id {
-    if(defined(my $default_cloudstack_id =
-        $self->get_parameters->get_mm_default_cloudstack)) {
-        return($default_cloudstack_id);
-    } else {
-        return(&MM_DEFAULT_CLOUDSTACK_ID);
-    }
+method _build_cloudstack_default_handy {
+    return(
+        defined($self->get_parameters->get_mm_default_cloudstack) ?
+                $self->get_parameters->get_mm_default_cloudstack :
+                &MM_CLOUDSTACK_DEFAULT_HANDY
+    );
 }
+
+method _initialize_cloudstack_handy(Str $handy!) {
+    return(
+        MonkeyMan::CloudStack->new(
+            monkeyman       => $self,
+            configuration   => $self
+                                ->get_configuration
+                                    ->{'cloudstack'}
+                                        ->{$handy}
+        )
+    );
+}
+
+method _build_cloudstacks {
+    return({});
+}
+
+has 'cloudstacks' => (
+    is          => 'ro',
+    isa         => 'HashRef[MonkeyMan::CloudStack]',
+    reader      =>   '_get_cloudstacks',
+    writer      =>   '_set_cloudstacks',
+    builder     => '_build_cloudstacks',
+    lazy        => 1,
+    handies     => [{
+        name        => 'get_cloudstack',
+        default     => 'get_cloudstack_default_handy',
+        initializer => '_initialize_cloudstack_handy',
+        strict      => 1
+    }]
+);
 
 =head4 C<password_generators>
 
 =cut
 
-has 'default_password_generator_id' => (
+has 'password_generator_default_handy' => (
     is          => 'ro',
     isa         => 'Str',
     lazy        => 1,
-    reader      =>    'get_default_password_generator_id',
-    writer      =>   '_set_default_password_generator_id',
-    predicate   =>   '_has_default_password_generator_id',
-    builder     => '_build_default_password_generator_id'
+    reader      =>    'get_password_generator_default_handy',
+    writer      =>   '_set_password_generator_default_handy',
+    predicate   =>   '_has_password_generator_default_handy',
+    builder     => '_build_password_generator_default_handy'
 );
 
-method _build_default_password_generator_id {
-    if(defined(my $default_password_generator_id =
-        $self->get_parameters->get_mm_default_password_generator)) {
-        return($default_password_generator_id);
-    } else {
-        return(&MM_DEFAULT_PASSWORD_GENERATOR_ID);
-    }
+method _build_password_generator_default_handy {
+    return(
+        defined($self->get_parameters->get_mm_default_password_generator) ?
+                $self->get_parameters->get_mm_default_password_generator :
+                &MM_PASSWORD_GENERATOR_DEFAULT_HANDY
+    );
 }
+
+method _initialize_password_generator_handy(Str $handy!) {
+    return(
+        MonkeyMan::PasswordGenerator->new(
+            monkeyman       => $self,
+            configuration   => $self
+                                ->get_configuration
+                                    ->{'password_generator'}
+                                        ->{$handy}
+        )
+    );
+}
+
+method _build_password_generators {
+    return({});
+}
+
+has 'password_generators' => (
+    is          => 'ro',
+    isa         => 'HashRef[MonkeyMan::PasswordGenerator]',
+    reader      =>   '_get_password_generators',
+    writer      =>   '_set_password_generators',
+    builder     => '_build_password_generators',
+    lazy        => 1,
+    handies     => [{
+        name        => 'get_password_generator',
+        default     => 'get_password_generator_default_handy',
+        initializer => '_initialize_password_generator_handy',
+        strict      => 1
+    }]
+);
+
+#   =head4 C<otrses>
+#   
+#   =cut
+#   
+#   has 'default_otrs_id' =>
+#       is          => 'ro',
+#       isa         => 'Str',
+#       lazy        => 1,
+#       reader      =>    'get_default_otrs_id',
+#       writer      =>   '_set_default_otrs_id',
+#       predicate   =>   '_has_default_otrs_id',
+#       builder     => '_build_default_otrs_id'
+#   );
+#   
+#   method _build_default_otrs_id {
+#       if(defined(my $default_otrs_id =
+#           $self->get_parameters->get_mm_default_otrs)) {
+#           return($default_otrs_id);
+#       } else {
+#           return(&MM_DEFAULT_OTRS_ID);
+#       }
+#   }
+
+
 
 =head2 get_app_code()
 
@@ -637,11 +752,11 @@ The default CloudStack instance's ID can be set by the
 C<--default-cloudstack> parameter, by default it's C<PRIMARY>, as it's
 defined as the C<MM_DEFAULT_CLOUDSTACK_ID> constant.
 
-=cut
-
 =head2 get_password_generator()
 
 =head2 get_password_generators()
+
+...
 
 =cut
 
@@ -657,115 +772,43 @@ framework's version ID.
 method _mm_init {
 
     my $meta = $self->meta;
-    my $parameters = $self->get_parameters;
 
-    my $default_logger_id = $self->get_default_logger_id;
-    $meta->add_method(
-        _build_loggers => method {
-            return( { 
-                $default_logger_id => MonkeyMan::Logger->new(
-                    monkeyman => $self
-                )
-            } );
-        }
-    );
-    $self->meta->add_attribute(
-        'loggers' => (
-            is          => 'ro',
-            isa         => 'HashRef[MonkeyMan::Logger]',
-            reader      =>   '_get_loggers',
-            writer      =>   '_set_loggers',
-            builder     => '_build_loggers',
-            lazy        => 1,
-            handies     => [{
-                name        => 'get_logger',
-                default     => $default_logger_id,
-                strict      => 1
-            }]
-        )
-    );
+    my @postponed_messages;
 
-    my $default_cloudstack_id = $self->get_default_cloudstack_id;
-    $meta->add_method(
-        _build_cloudstacks => method {
-            return( {
-                $default_cloudstack_id => MonkeyMan::CloudStack->new(
-                    monkeyman       => $self,
-                    configuration   => $self
-                                        ->get_configuration
-                                            ->{'cloudstack'}
-                                                ->{$default_cloudstack_id}
-                )
-            } );
-        }
+    push(
+        @postponed_messages,
+        [ "We've got the set of command-line parameters: %s", $self->get_parameters ]
     );
-    $self->meta->add_attribute(
-        'cloudstacks' => (
-            is          => 'ro',
-            isa         => 'HashRef[MonkeyMan::CloudStack]',
-            reader      =>   '_get_cloudstacks',
-            writer      =>   '_set_cloudstacks',
-            builder     => '_build_cloudstacks',
-            lazy        => 1,
-            handies     => [{
-                name        => 'get_cloudstack',
-                default     => $default_cloudstack_id,
-                strict      => 1
-            }]
-        )
-    );
+    if($self->get_parameters->get_mm_show_help) {
+        $self->print_full_version_info;
+        $self->print_full_usage_help;
+        exit;
+    } elsif($self->get_parameters->get_mm_show_version) {
+        $self->print_full_version_info;
+        exit;
+    }
 
-    my $default_password_generator_id = $self->get_default_password_generator_id;
-    $meta->add_method(
-        _initialize_password_generator => method(Str $generator_id!) {
-            return(
-                MonkeyMan::PasswordGenerator->new(
-                    monkeyman       => $self,
-                    configuration   => $self
-                                        ->get_configuration
-                                            ->{'password_generator'}
-                                                ->{$generator_id}
-                )
-            );
-        }
-    );
-    $meta->add_method(
-        _build_password_generators => method { return({}); }
-    );
-    $self->meta->add_attribute(
-        'password_generators' => (
-            is          => 'ro',
-            isa         => 'HashRef[MonkeyMan::PasswordGenerator]',
-            reader      =>   '_get_password_generators',
-            writer      =>   '_set_password_generators',
-            builder     => '_build_password_generators',
-            lazy        => 1,
-            handies     => [{
-                name        => 'get_password_generator',
-                default     => $default_password_generator_id,
-                initializer => '_initialize_password_generator',
-                strict      => 1
-            }]
-        )
+    push(
+        @postponed_messages,
+        [ "We've got the configuration: %s", $self->get_configuration ]
     );
 
     my $logger = $self->get_logger;
-    $logger->tracef("We've got the set of command-line parameters: %s",
-        $self->get_parameters
-    );
-    $logger->tracef("We've got the configuration: %s",
-        $self->get_configuration
-    );
+    foreach my $message (@postponed_messages) {
+        $logger->tracef(@{ $message });
+    }
     $logger->tracef("We've got the primary (%s) logger instance: %s",
-        $default_logger_id,
+        $self->get_logger_default_handy,
         $self->get_logger
     );
+
     $logger->tracef("We've got the primary (%s) CloudStack instance: %s",
-        $default_cloudstack_id,
+        $self->get_cloudstack_default_handy,
         $self->get_cloudstack
     );
+
     $logger->tracef("We've got the primary (%s) password generator instance: %s",
-        $default_password_generator_id,
+        $self->get_password_generator_default_handy,
         $self->get_password_generator
     );
 
@@ -774,19 +817,11 @@ method _mm_init {
         $$,
         $self->get_time_started_formatted
     );
+
     $logger->debugf("<%s> The framework has been initialized",
         $self->get_time_passed_formatted,
         $self
     );
-
-    if($parameters->get_mm_show_help) {
-        $self->print_full_version_info;
-        $self->print_full_usage_help;
-        exit;
-    } elsif($parameters->get_mm_show_version) {
-        $self->print_full_version_info;
-        exit;
-    }
 
 }
 

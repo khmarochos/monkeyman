@@ -27,10 +27,15 @@ after install_accessors => sub {
 
         foreach my $handy (@handies) {
 
-            my $handy_name          = defined($handy->{'name'}) ? $handy->{'name'} : confess("The name of the handy isn't defined");
+            my $handy_name          = defined($handy->{'name'}) ?
+                                              $handy->{'name'} :
+                                              confess("The name of the handy isn't defined");
+            my $handy_default_val   = $handy->{'default_val'};
             my $handy_default       = $handy->{'default'};
             my $handy_initializer   = $handy->{'initializer'};
-            my $handy_strict        = defined($handy->{'strict'}) ? $handy->{'strict'} : 1;
+            my $handy_strict        = defined($handy->{'strict'}) ?
+                                              $handy->{'strict'} :
+                                              1;
 
             # my $handy_initializer = (defined($handy->{'initializer'}) && ref($handy->{'initializer'}) eq 'CODE') ?
             #   $handy->{'initializer'} : confess("The initializer is not a code reference");
@@ -44,7 +49,7 @@ after install_accessors => sub {
                     sub {
 
                         my $read_method_ref = $self->get_read_method_ref;
-                        confess("Can't find the read method")
+                        confess("Can't find the reader method")
                             unless(
                                     ref($read_method_ref) &&
                                     ref($read_method_ref) eq 'CODE' ||
@@ -52,8 +57,15 @@ after install_accessors => sub {
                                         $read_method_ref->isa('Moose::Meta::Method::Accessor')
                             );
 
-                        my $slot = defined($_[1]) ? $_[1] : $handy_default;
-                        confess("This attribute's handy doesn't have the default slot")
+                        my $slot =
+                            defined($_[1]) ? $_[1] :
+                                defined($handy_default_val) ? $handy_default_val :
+                                    $_[0]->can($handy_default) ? $_[0]->$handy_default :
+                                        undef;
+                        confess(
+                            "The slot hadn't been defined when the handy was called, " .
+                            "neither the default slot has been defined"
+                        )
                             if(!defined($slot));
 
                         @_ = ($_[0]); # 8< Cut it short, or the reader will complain! 8<
@@ -64,7 +76,6 @@ after install_accessors => sub {
 
                         $hashref->{$slot} = $_[0]->$handy_initializer($slot)
                             if(!defined($hashref->{$slot}) && defined($handy_initializer));
-                        # ^ TODO: Test it, please
 
                         confess(sprintf("The %s slot is empty (%s)", $slot, $hashref))
                             if(!defined($hashref->{$slot}) && $handy_strict);
