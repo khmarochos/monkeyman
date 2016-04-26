@@ -16,6 +16,7 @@ use Method::Signatures;
 
 
 
+
 has 'configuration' => (
     is          => 'ro',
     isa         => 'HashRef',

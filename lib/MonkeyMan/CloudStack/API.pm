@@ -734,52 +734,6 @@ method load_element_package(MonkeyMan::CloudStack::Types::ElementType $type!) {
 
 }
 
-#
-# FIXME: Get rid of this crap, please!
-#
-method get_magic_words(MonkeyMan::CloudStack::Types::ElementType $type!) {
-
-    my $class_name = $self->load_element_package($type);
-
-    no strict 'refs';
-    my %magic_words = %{'::' . $class_name . '::_magic_words'};
-
-    return(%magic_words);
-
-}
-
-
-
-has 'vocabularies' => (
-    is          => 'ro',
-    isa         => 'HashRef[MonkeyMan::CloudStack::API::Vocabulary]',
-    reader      =>    'get_vocabularies',
-    writer      =>   '_set_vocabularies',
-    builder     => '_build_vocabularies',
-    lazy        => 1,
-    handies     => [{
-        name        => 'get_vocabulary',
-        default     => undef,
-        strict      => 1,
-        initializer => '_initialize_vocabulary'
-    }]
-);
-
-method _build_vocabularies {
-
-    return({});
-
-}
-
-method _initialize_vocabulary(MonkeyMan::CloudStack::Types::ElementType $type!) {
-
-    return(MonkeyMan::CloudStack::API::Vocabulary->new(
-        api         => $self,
-        type        => $type
-    ));
-
-}
-
 
 
 method recognize_dom(
@@ -792,7 +746,7 @@ method recognize_dom(
     my $dom_recognized;
 
     my @vocabularies = map { $self->get_vocabulary($_) } (
-        keys(%{ $self->get_vocabularies })
+        keys(%{ $self->get_vocabulary_plug->get_actors })
     );
 
     foreach my $response_node (map { $_->nodeName } ($dom->findnodes('/*'))) {
@@ -855,7 +809,7 @@ method recognize_response (
         if(defined($vocabulary));
 
     unless(@vocabularies) {
-        foreach my $vocabulary (keys(%{ $self->get_vocabularies })) {
+        foreach my $vocabulary (keys(%{ $self->get_vocabulary_plug->get_actors })) {
             push(@vocabularies, $self->get_vocabulary($vocabulary));
         }
     }
@@ -1192,9 +1146,22 @@ method translate_type(
 
 
 
-__PACKAGE__->meta->make_immutable;
+method BUILD(...) {
+
+    $self->get_cloudstack->get_monkeyman->plug(
+        plugin_name         => 'vocabulary',
+        actor_class         => 'MonkeyMan::CloudStack::API::Vocabulary',
+        actor_parent        => $self,
+        actor_parent_to     => 'api',
+        actor_name_to       => 'type',
+        actor_default       => undef,
+        actor_handle        => 'vocabulary',
+        plug_handle         => 'vocabulary_plug'
+    );
+
+}
+
+
 
 1;
-
-
 

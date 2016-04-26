@@ -18,6 +18,13 @@ Code
         - suggested on `2016.01.17` by `melnik13`
  - [ ] Use the `MonkeyMan::CloudStack::Types::*` types everywhere
         - on `2016.01.18` by `melnik13`
+ - [x] Make handies pluggable with `MonkeyMan::Plugin` role, get rid of
+       `MooseX::Handies` and "handies".
+        - suggested on `2016.04.23` by `melnik13`
+        - completed on `2016.04.26`
+ - [x] Rebase handies initializers to roles
+        - suggested on `2016.04.21` by `melnik13`
+        - rejected on `2016.04.25` by `melnik13`
  - [x] Make `MonkeyMan::CloudStack` being initialized by the method referenced
        in the `_initialize_cloudstack` handies' attribute.
         - suggested on `2016.04.20` by `melnik13`

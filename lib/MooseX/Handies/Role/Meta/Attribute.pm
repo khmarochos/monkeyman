@@ -27,6 +27,8 @@ after install_accessors => sub {
 
         foreach my $handy (@handies) {
 
+            use Data::Dumper; Dumper($handy);
+            
             my $handy_name          = defined($handy->{'name'}) ?
                                               $handy->{'name'} :
                                               confess("The name of the handy isn't defined");

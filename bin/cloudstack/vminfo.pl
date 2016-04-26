@@ -13,8 +13,6 @@ use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
 use MonkeyMan::Utils;
 use MonkeyMan::CloudStack::API::Element::VirtualMachine;
-my %magic_words =
- %::MonkeyMan::CloudStack::API::Element::VirtualMachine::_magic_words;
 
 use Method::Signatures;
 

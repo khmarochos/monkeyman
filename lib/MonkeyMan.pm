@@ -89,8 +89,8 @@ with 'MonkeyMan::Roles::WithTimer';
 use MonkeyMan::Constants qw(:ALL);
 use MonkeyMan::Exception qw(CanNotLoadPackage);
 use MonkeyMan::Parameters;
-use MonkeyMan::CloudStack;
 use MonkeyMan::Logger;
+use MonkeyMan::CloudStack;
 use MonkeyMan::PasswordGenerator;
 
 # Use 3rd-party libraries
@@ -471,6 +471,8 @@ method _build_configuration_append {
 
 =head3 Helpers-Related Parameters
 
+=cut
+
 =head4 C<loggers>
 
 Optional. Contains a C<HashRef> with links to L<MonkeyMan::Logger>
@@ -536,132 +538,28 @@ handle is described below.
 
 =cut
 
-has 'cloudstack_default_handy' => (
-    is          => 'ro',
-    isa         => 'Str',
-    lazy        => 1,
-    reader      =>    'get_cloudstack_default_handy',
-    writer      =>   '_set_cloudstack_default_handy',
-    predicate   =>   '_has_cloudstack_default_handy',
-    builder     => '_build_cloudstack_default_handy'
-);
-
-method _build_cloudstack_default_handy {
-    return(
-        defined($self->get_parameters->get_mm_default_cloudstack) ?
-                $self->get_parameters->get_mm_default_cloudstack :
-                &MM_CLOUDSTACK_DEFAULT_HANDY
-    );
-}
-
-method _initialize_cloudstack_handy(Str $handy!) {
-    return(
-        MonkeyMan::CloudStack->new(
-            monkeyman       => $self,
-            configuration   => $self
-                                ->get_configuration
-                                    ->{'cloudstack'}
-                                        ->{$handy}
-        )
-    );
-}
-
-method _build_cloudstacks {
-    return({});
-}
-
-has 'cloudstacks' => (
-    is          => 'ro',
-    isa         => 'HashRef[MonkeyMan::CloudStack]',
-    reader      =>   '_get_cloudstacks',
-    writer      =>   '_set_cloudstacks',
-    builder     => '_build_cloudstacks',
-    lazy        => 1,
-    handies     => [{
-        name        => 'get_cloudstack',
-        default     => 'get_cloudstack_default_handy',
-        initializer => '_initialize_cloudstack_handy',
-        strict      => 1
-    }]
-);
+# # has 'cloudstacks' => (
+# #     is          => 'ro',
+# #     isa         => 'HashRef[MonkeyMan::CloudStack]',
+# #     reader      =>   '_get_cloudstacks',
+# #     writer      =>   '_set_cloudstacks',
+# #     builder     => '_build_cloudstacks',
+# #     lazy        => 1,
+# #     handies     => [{
+# #         name        => 'get_cloudstack',
+# #         default     => 'get_cloudstack_default_handy',
+# #         initializer => '_initialize_cloudstack_handy',
+# #         strict      => 1
+# #     }]
+# # );
 
 =head4 C<password_generators>
 
 =cut
 
-has 'password_generator_default_handy' => (
-    is          => 'ro',
-    isa         => 'Str',
-    lazy        => 1,
-    reader      =>    'get_password_generator_default_handy',
-    writer      =>   '_set_password_generator_default_handy',
-    predicate   =>   '_has_password_generator_default_handy',
-    builder     => '_build_password_generator_default_handy'
-);
+=head4 C<otrses>
 
-method _build_password_generator_default_handy {
-    return(
-        defined($self->get_parameters->get_mm_default_password_generator) ?
-                $self->get_parameters->get_mm_default_password_generator :
-                &MM_PASSWORD_GENERATOR_DEFAULT_HANDY
-    );
-}
-
-method _initialize_password_generator_handy(Str $handy!) {
-    return(
-        MonkeyMan::PasswordGenerator->new(
-            monkeyman       => $self,
-            configuration   => $self
-                                ->get_configuration
-                                    ->{'password_generator'}
-                                        ->{$handy}
-        )
-    );
-}
-
-method _build_password_generators {
-    return({});
-}
-
-has 'password_generators' => (
-    is          => 'ro',
-    isa         => 'HashRef[MonkeyMan::PasswordGenerator]',
-    reader      =>   '_get_password_generators',
-    writer      =>   '_set_password_generators',
-    builder     => '_build_password_generators',
-    lazy        => 1,
-    handies     => [{
-        name        => 'get_password_generator',
-        default     => 'get_password_generator_default_handy',
-        initializer => '_initialize_password_generator_handy',
-        strict      => 1
-    }]
-);
-
-#   =head4 C<otrses>
-#   
-#   =cut
-#   
-#   has 'default_otrs_id' =>
-#       is          => 'ro',
-#       isa         => 'Str',
-#       lazy        => 1,
-#       reader      =>    'get_default_otrs_id',
-#       writer      =>   '_set_default_otrs_id',
-#       predicate   =>   '_has_default_otrs_id',
-#       builder     => '_build_default_otrs_id'
-#   );
-#   
-#   method _build_default_otrs_id {
-#       if(defined(my $default_otrs_id =
-#           $self->get_parameters->get_mm_default_otrs)) {
-#           return($default_otrs_id);
-#       } else {
-#           return(&MM_DEFAULT_OTRS_ID);
-#       }
-#   }
-
-
+=cut
 
 =head2 get_app_code()
 
@@ -769,6 +667,55 @@ framework's version ID.
 
 
 
+method plug(
+    Str             :$plugin_name!,
+    Str             :$actor_class!,
+    Object          :$actor_parent,
+    Maybe[Str]      :$actor_parent_to?,
+    Maybe[Str]      :$actor_name_to?,
+    Maybe[Str]      :$actor_default?,
+    Maybe[HashRef]  :$actor_parameters?,
+    Maybe[Str]      :$actor_handle?         = $plugin_name                              when undef,
+    Maybe[Str]      :$plug_handle?          = $plugin_name . '_plug'                    when undef,
+    Maybe[HashRef]  :$configuration_index?
+) {
+
+    my $plug_class = Moose::Meta::Class->create('MonkeyMan::Plug',
+        roles   => [ 'MonkeyMan::Roles::WithPlug' ]
+    );
+    my %p;
+    $p{'plugin_name'}           = $plugin_name;
+    $p{'actor_class'}           = $actor_class;
+    $p{'actor_parent'}          = $actor_parent;
+    $p{'actor_parent_to'}       = $actor_parent_to      if(defined($actor_parent_to));
+    $p{'actor_name_to'}         = $actor_name_to        if(defined($actor_name_to));
+    $p{'actor_default'}         = $actor_default        if(defined($actor_default));
+    $p{'actor_parameters'}      = $actor_parameters     if(defined($actor_parameters));
+    $p{'actor_handle'}          = $actor_handle;
+    $p{'plug_handle'}           = $plug_handle;
+    $p{'configuration_index'}   = $configuration_index  if(defined($configuration_index));
+    my $plug_object = $plug_class->new_object(%p);
+    my $parent_meta = $actor_parent->meta;
+    $parent_meta->add_method(
+        "get_$actor_handle" => sub { shift; $plug_object->get_actor($_[0]); }
+    );
+    $parent_meta->add_attribute(
+        $plug_handle        => (
+            isa         => 'MonkeyMan::Roles::WithPlug', # Well, I'm not sure...
+            is          => 'ro',
+            reader      =>          'get_' . $plug_handle,
+            writer      => my $w = '_set_' . $plug_handle,
+            predicate   =>         '_has_' . $plug_handle,
+        )
+    );
+    $actor_parent->$w($plug_object);
+
+    return($plug_object);
+
+}
+
+
+
 method _mm_init {
 
     my $meta = $self->meta;
@@ -793,24 +740,77 @@ method _mm_init {
         [ "We've got the configuration: %s", $self->get_configuration ]
     );
 
+    # Plug the logger
+    $self->plug(
+        plugin_name         => 'logger',
+        actor_class         => 'MonkeyMan::Logger',
+        actor_parent        => $self,
+        actor_parent_to     => 'monkeyman',
+        actor_default       =>
+            defined($self->get_parameters->get_mm_default_logger) ?
+                    $self->get_parameters->get_mm_default_logger :
+                    &MM_LOGGER_DEFAULT_HANDY,
+        actor_handle        => 'logger',
+        plug_handle         => 'logger_plug',
+        configuration_index => $self->get_configuration->{'logger'}
+    );
     my $logger = $self->get_logger;
-    foreach my $message (@postponed_messages) {
-        $logger->tracef(@{ $message });
-    }
-    $logger->tracef("We've got the primary (%s) logger instance: %s",
-        $self->get_logger_default_handy,
+    foreach(@postponed_messages) { $logger->tracef(@{$_}) }
+    $logger->tracef(
+        "The %s plug has been installed, so " .
+            "we've got the primary (%s) Logger instance: %s",
+        $self->get_logger_plug,
+        $self->get_logger_plug->get_actor_default,
         $self->get_logger
     );
 
-    $logger->tracef("We've got the primary (%s) CloudStack instance: %s",
-        $self->get_cloudstack_default_handy,
-        $self->get_cloudstack
-    );
+    # Plug the cloudstack if the configuration is defined
+    if(defined($self->get_configuration->{'cloudstack'})) {
+        $self->plug(
+            plugin_name         => 'cloudstack',
+            actor_class         => 'MonkeyMan::CloudStack',
+            actor_parent        => $self,
+            actor_parent_to     => 'monkeyman',
+            actor_default       =>
+                defined($self->get_parameters->get_mm_default_cloudstack) ?
+                        $self->get_parameters->get_mm_default_cloudstack :
+                        &MM_CLOUDSTACK_DEFAULT_HANDY,
+            actor_handle        => 'cloudstack',
+            plug_handle         => 'cloudstack_plug',
+            configuration_index => $self->get_configuration->{'cloudstack'}
+        );
+        $logger->tracef(
+            "The %s plug has been installed, so " .
+                "we've got the primary (%s) CloudStack instance: %s",
+            $self->get_cloudstack_plug,
+            $self->get_cloudstack_plug->get_actor_default,
+            $self->get_cloudstack
+        );
+    }
 
-    $logger->tracef("We've got the primary (%s) password generator instance: %s",
-        $self->get_password_generator_default_handy,
-        $self->get_password_generator
-    );
+    # Plug the password generator if the configuration is defined
+    if(defined($self->get_configuration->{'password_generator'})) {
+        $self->plug(
+            plugin_name         => 'password_generator',
+            actor_class         => 'MonkeyMan::PasswordGenerator',
+            actor_parent        => $self,
+            actor_parent_to     => 'monkeyman',
+            actor_default       =>
+                defined($self->get_parameters->get_mm_default_password_generator) ?
+                        $self->get_parameters->get_mm_default_password_generator :
+                        &MM_PASSWORD_GENERATOR_DEFAULT_HANDY,
+            actor_handle        => 'password_generator',
+            plug_handle         => 'password_generator_plug',
+            configuration_index => $self->get_configuration->{'password_generator'}
+        );
+        $logger->tracef(
+            "The %s plug has been installed, so " .
+                "we've got the primary (%s) password generator instance: %s",
+            $self->get_password_generator_plug,
+            $self->get_password_generator_plug->get_actor_default,
+            $self->get_password_generator
+        );
+    }
 
     $logger->tracef("We've got the framework %s initialized by PID %d at %s",
         $self,

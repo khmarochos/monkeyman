@@ -15,10 +15,15 @@ Moose::Exporter->setup_import_methods( also => 'Moose' );
 
 sub init_meta {
 
+# # warn(Dumper(\@_));
     shift;
     my %args = @_;
 
+# # warn(Dumper(Class::MOP::get_metaclass_by_name($args{for_class})));
+# # warn(Dumper(Moose::Meta::Role->meta));
+
     Moose->init_meta(%args);
+# # warn(Dumper(\%args));
 
     Moose::Util::MetaRole::apply_metaroles(
         for             => $args{for_class},
