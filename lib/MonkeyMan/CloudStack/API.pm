@@ -140,6 +140,7 @@ has useragent => (
     writer      =>   '_set_useragent',
     predicate   =>    'has_useragent',
     builder     => '_build_useragent',
+    lazy        => 1
 );
 
 method _build_useragent {
@@ -1164,4 +1165,3 @@ method BUILD(...) {
 
 
 1;
-

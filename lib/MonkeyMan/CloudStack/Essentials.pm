@@ -14,7 +14,6 @@ has 'cloudstack' => (
     isa         => 'MonkeyMan::CloudStack',
     reader      =>  'get_cloudstack',
     writer      => '_set_cloudstack',
-    predicate   =>  'has_cloudstack',
     required    => 1
 );
 

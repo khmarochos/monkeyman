@@ -675,8 +675,8 @@ method plug(
     Maybe[Str]      :$actor_name_to?,
     Maybe[Str]      :$actor_default?,
     Maybe[HashRef]  :$actor_parameters?,
-    Maybe[Str]      :$actor_handle?         = $plugin_name                              when undef,
-    Maybe[Str]      :$plug_handle?          = $plugin_name . '_plug'                    when undef,
+    Maybe[Str]      :$actor_handle?         = $plugin_name              when undef,
+    Maybe[Str]      :$plug_handle?          = $plugin_name . '_plug'    when undef,
     Maybe[HashRef]  :$configuration_index?
 ) {
 

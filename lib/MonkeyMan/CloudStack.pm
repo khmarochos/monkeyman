@@ -25,8 +25,6 @@ has 'configuration' => (
     required    => 1
 );
 
-
-
 has 'api' => (
     is          => 'ro',
     isa         => 'MonkeyMan::CloudStack::API',
