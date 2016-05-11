@@ -6,6 +6,7 @@ use warnings;
 use MonkeyMan::Exception qw(
     ActorIsListed
     ActorIsNotListed
+    ActorIsNotDefined
 );
 
 # Use Moose and be happy :)

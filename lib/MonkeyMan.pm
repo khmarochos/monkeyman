@@ -101,6 +101,7 @@ use TryCatch;
 use Getopt::Long qw(:config no_ignore_case);
 use Config::General;
 use File::Slurp;
+use String::CamelCase;
 
 
 
@@ -721,6 +722,7 @@ method _mm_init {
     my $meta = $self->meta;
 
     my @postponed_messages;
+    my $logger;
 
     push(
         @postponed_messages,
@@ -740,76 +742,50 @@ method _mm_init {
         [ "We've got the configuration: %s", $self->get_configuration ]
     );
 
-    # Plug the logger
-    $self->plug(
-        plugin_name         => 'logger',
-        actor_class         => 'MonkeyMan::Logger',
-        actor_parent        => $self,
-        actor_parent_to     => 'monkeyman',
-        actor_default       =>
-            defined($self->get_parameters->get_mm_default_logger) ?
-                    $self->get_parameters->get_mm_default_logger :
-                    &MM_LOGGER_DEFAULT_HANDY,
-        actor_handle        => 'logger',
-        plug_handle         => 'logger_plug',
-        configuration_index => $self->get_configuration->{'logger'}
-    );
-    my $logger = $self->get_logger;
-    foreach(@postponed_messages) { $logger->tracef(@{$_}) }
-    $logger->tracef(
-        "The %s plug has been installed, so " .
-            "we've got the primary (%s) Logger instance: %s",
-        $self->get_logger_plug,
-        $self->get_logger_plug->get_actor_default,
-        $self->get_logger
-    );
-
-    # Plug the cloudstack if the configuration is defined
-    if(defined($self->get_configuration->{'cloudstack'})) {
-        $self->plug(
-            plugin_name         => 'cloudstack',
-            actor_class         => 'MonkeyMan::CloudStack',
+    # Connecting plugins
+    foreach my $plugin_name (split(/\s*,?\s+/, $self->get_configuration->{'plugs'}->{'sequence'})) {
+        my $plugin_configuration = $self->get_configuration->{'plugs'}->{ $plugin_name };
+        push(@postponed_messages, [
+            'Plugging the %s module, configuration branch is %s',
+            $plugin_name,
+            $plugin_configuration
+        ]);
+        my $n_plug_handle               = 'get_' . $plugin_configuration->{'plug_handle'};
+        my $n_actor_handle              = 'get_' . $plugin_configuration->{'actor_handle'};
+        my $n_actor_default_parameter   = $plugin_configuration->{'actor_default_parameter'};
+        my $n_actor_default_constant    = $plugin_configuration->{'actor_default_constant'};
+        no strict qw(refs);
+        my %p = (
+            plugin_name         => defined($plugin_configuration->{'plugin_name'}) ?
+                                           $plugin_configuration->{'plugin_name'} :
+                                           $plugin_name,
+            actor_class         => defined($plugin_configuration->{'actor_class'}) ?
+                                           $plugin_configuration->{'actor_class'} :
+                                           'MonkeyMan::' . camelize($plugin_name),
             actor_parent        => $self,
             actor_parent_to     => 'monkeyman',
-            actor_default       =>
-                defined($self->get_parameters->get_mm_default_cloudstack) ?
-                        $self->get_parameters->get_mm_default_cloudstack :
-                        &MM_CLOUDSTACK_DEFAULT_HANDY,
-            actor_handle        => 'cloudstack',
-            plug_handle         => 'cloudstack_plug',
-            configuration_index => $self->get_configuration->{'cloudstack'}
+            actor_default       => defined($self->get_parameters->$n_actor_default_parameter) ?
+                                           $self->get_parameters->$n_actor_default_parameter :
+                                           &{$plugin_configuration->{'actor_default_constant'}},
+            actor_handle        => defined($plugin_configuration->{'actor_handle'}) ?
+                                           $plugin_configuration->{'actor_handle'} :
+                                           $plugin_name,
+            plug_handle         => defined($plugin_configuration->{'plug_handle'}) ?
+                                           $plugin_configuration->{'plug_handle'} :
+                                           $plugin_name . '_plug',
+            configuration_index => $self->get_configuration->{ $plugin_configuration->{'configuration_index_branch'} }
         );
-        $logger->tracef(
-            "The %s plug has been installed, so " .
-                "we've got the primary (%s) CloudStack instance: %s",
-            $self->get_cloudstack_plug,
-            $self->get_cloudstack_plug->get_actor_default,
-            $self->get_cloudstack
-        );
-    }
-
-    # Plug the password generator if the configuration is defined
-    if(defined($self->get_configuration->{'password_generator'})) {
-        $self->plug(
-            plugin_name         => 'password_generator',
-            actor_class         => 'MonkeyMan::PasswordGenerator',
-            actor_parent        => $self,
-            actor_parent_to     => 'monkeyman',
-            actor_default       =>
-                defined($self->get_parameters->get_mm_default_password_generator) ?
-                        $self->get_parameters->get_mm_default_password_generator :
-                        &MM_PASSWORD_GENERATOR_DEFAULT_HANDY,
-            actor_handle        => 'password_generator',
-            plug_handle         => 'password_generator_plug',
-            configuration_index => $self->get_configuration->{'password_generator'}
-        );
-        $logger->tracef(
-            "The %s plug has been installed, so " .
-                "we've got the primary (%s) password generator instance: %s",
-            $self->get_password_generator_plug,
-            $self->get_password_generator_plug->get_actor_default,
-            $self->get_password_generator
-        );
+        use strict qw(refs);
+        $self->plug(%p);
+        push(@postponed_messages, [
+            "The %s plug has been installed, " .
+                "so we've got the primary (%s) instance: %s",
+            $self->$n_plug_handle,
+            $self->$n_plug_handle->get_actor_default,
+            $self->$n_actor_handle
+        ]);
+        $logger = $self->$n_actor_handle if($plugin_name eq 'logger');
+        while(my $postponed = shift(@postponed_messages)) { $logger->tracef(@{$postponed}) };
     }
 
     $logger->tracef("We've got the framework %s initialized by PID %d at %s",
