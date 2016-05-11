@@ -750,33 +750,37 @@ method _mm_init {
             $plugin_name,
             $plugin_configuration
         ]);
-        my $n_plug_handle               = 'get_' . $plugin_configuration->{'plug_handle'};
-        my $n_actor_handle              = 'get_' . $plugin_configuration->{'actor_handle'};
-        my $n_actor_default_parameter   = $plugin_configuration->{'actor_default_parameter'};
-        my $n_actor_default_constant    = $plugin_configuration->{'actor_default_constant'};
+        my %p;
+        $p{'actor_parent'}              = $self;
+        $p{'actor_parent_to'}           = 'monkeyman';
+        $p{'plugin_name'}               = defined($plugin_configuration->{'plugin_name'}) ?
+                                                  $plugin_configuration->{'plugin_name'} :
+                                                  $plugin_name;
+        my $n_actor_default_parameter   = defined($plugin_configuration->{'actor_default_parameter'}) ?
+                                                  $plugin_configuration->{'actor_default_parameter'} :
+                                                  'get_mm_default_' . $p{'plugin_name'};
+        my $n_actor_default_constant    = defined($plugin_configuration->{'actor_default_constant'}) ?
+                                                  $plugin_configuration->{'actor_default_constant'} :
+                                                  'MM_' . lc($p{'plugin_name'}) . '_DEFAULT_HANDLE';
+        $p{'actor_class'}               = defined($plugin_configuration->{'actor_class'}) ?
+                                                  $plugin_configuration->{'actor_class'} :
+                                                  'MonkeyMan::' . camelize($p{'plugin_name'});
         no strict qw(refs);
-        my %p = (
-            plugin_name         => defined($plugin_configuration->{'plugin_name'}) ?
-                                           $plugin_configuration->{'plugin_name'} :
-                                           $plugin_name,
-            actor_class         => defined($plugin_configuration->{'actor_class'}) ?
-                                           $plugin_configuration->{'actor_class'} :
-                                           'MonkeyMan::' . camelize($plugin_name),
-            actor_parent        => $self,
-            actor_parent_to     => 'monkeyman',
-            actor_default       => defined($self->get_parameters->$n_actor_default_parameter) ?
-                                           $self->get_parameters->$n_actor_default_parameter :
-                                           &{$plugin_configuration->{'actor_default_constant'}},
-            actor_handle        => defined($plugin_configuration->{'actor_handle'}) ?
-                                           $plugin_configuration->{'actor_handle'} :
-                                           $plugin_name,
-            plug_handle         => defined($plugin_configuration->{'plug_handle'}) ?
-                                           $plugin_configuration->{'plug_handle'} :
-                                           $plugin_name . '_plug',
-            configuration_index => $self->get_configuration->{ $plugin_configuration->{'configuration_index_branch'} }
-        );
+        $p{'actor_default'}             = defined($self->get_parameters->$n_actor_default_parameter) ?
+                                                  $self->get_parameters->$n_actor_default_parameter :
+                                                  &{$n_actor_default_constant};
         use strict qw(refs);
+        $p{'actor_handle'}              = defined($plugin_configuration->{'actor_handle'}) ?
+                                                  $plugin_configuration->{'actor_handle'} :
+                                                  $p{'plugin_name'};
+        my $n_actor_handle              = 'get_' . $p{'actor_handle'};
+        $p{'plug_handle'}               = defined($plugin_configuration->{'plug_handle'}) ?
+                                                  $plugin_configuration->{'plug_handle'} :
+                                                  $p{'plugin_name'} . '_plug';
+        my $n_plug_handle               = 'get_' . $p{'plug_handle'};
+        $p{'configuration_index'}       = $self->get_configuration->{ $plugin_configuration->{'configuration_index_branch'} };
         $self->plug(%p);
+        $logger = $self->$n_actor_handle if($plugin_name eq 'logger');
         push(@postponed_messages, [
             "The %s plug has been installed, " .
                 "so we've got the primary (%s) instance: %s",
@@ -784,8 +788,9 @@ method _mm_init {
             $self->$n_plug_handle->get_actor_default,
             $self->$n_actor_handle
         ]);
-        $logger = $self->$n_actor_handle if($plugin_name eq 'logger');
-        while(my $postponed = shift(@postponed_messages)) { $logger->tracef(@{$postponed}) };
+        if(defined($logger)) {
+            while(my $postponed = shift(@postponed_messages)) { $logger->tracef(@{$postponed}) }
+        }
     }
 
     $logger->tracef("We've got the framework %s initialized by PID %d at %s",
