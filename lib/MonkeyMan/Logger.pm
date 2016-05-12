@@ -36,7 +36,7 @@ has 'configuration' => (
     isa         => 'HashRef',
     reader      =>  'get_configuration',
     writer      => '_set_configuration',
-    predicate   => '_has_configuration'
+    predicate   => '_has_configuration',
 );
 
 has 'configuration_string' => (

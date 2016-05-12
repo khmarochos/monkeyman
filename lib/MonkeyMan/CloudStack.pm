@@ -19,10 +19,10 @@ use Method::Signatures;
 
 has 'configuration' => (
     is          => 'ro',
-    isa         => 'HashRef',
+    isa         => 'Maybe[HashRef]',
     reader      =>    'get_configuration',
     writer      =>   '_set_configuration',
-    required    => 1
+    required    => 0
 );
 
 has 'api' => (

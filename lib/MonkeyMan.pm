@@ -474,94 +474,6 @@ method _build_configuration_append {
 
 =cut
 
-=head4 C<loggers>
-
-Optional. Contains a C<HashRef> with links to L<MonkeyMan::Logger>
-modules, so you can use multiple interfaces to multiple cloudstack with the
-C<get_logger()> method described below.
-
-=cut
-
-has 'logger_default_handy' => (
-    is          => 'ro',
-    isa         => 'Str',
-    lazy        => 1,
-    reader      =>    'get_logger_default_handy',
-    writer      =>   '_set_logger_default_handy',
-    predicate   =>   '_has_logger_default_handy',
-    builder     => '_build_logger_default_handy'
-);
-
-method _build_logger_default_handy {
-    return(
-        defined($self->get_parameters->get_mm_default_logger) ?
-                $self->get_parameters->get_mm_default_logger :
-                &MM_LOGGER_DEFAULT_HANDY
-    );
-}
-
-method _initialize_logger_handy(Str $handy!) {
-    return(
-        MonkeyMan::Logger->new(
-            monkeyman       => $self,
-            configuration   => $self
-                                ->get_configuration
-                                    ->{'log'}
-                                        ->{$handy}
-        )
-    );
-}
-
-method _build_loggers {
-    return({});
-}
-
-has 'loggers' => (
-    is          => 'ro',
-    isa         => 'HashRef[MonkeyMan::Logger]',
-    reader      =>   '_get_loggers',
-    writer      =>   '_set_loggers',
-    builder     => '_build_loggers',
-    lazy        => 1,
-    handies     => [{
-        name        => 'get_logger',
-        default     => 'get_logger_default_handy',
-        initializer => '_initialize_logger_handy',
-        strict      => 1
-    }]
-);
-
-=head4 C<cloudstacks>
-
-Optional. Contains a C<HashRef> with links to L<MonkeyMan::CloudStack> modules.
-The C<get_cloudstack()> method helps to get the CloudStack instance by its
-handle is described below.
-
-=cut
-
-# # has 'cloudstacks' => (
-# #     is          => 'ro',
-# #     isa         => 'HashRef[MonkeyMan::CloudStack]',
-# #     reader      =>   '_get_cloudstacks',
-# #     writer      =>   '_set_cloudstacks',
-# #     builder     => '_build_cloudstacks',
-# #     lazy        => 1,
-# #     handies     => [{
-# #         name        => 'get_cloudstack',
-# #         default     => 'get_cloudstack_default_handy',
-# #         initializer => '_initialize_cloudstack_handy',
-# #         strict      => 1
-# #     }]
-# # );
-
-=head4 C<password_generators>
-
-=cut
-
-=head4 C<otrses>
-
-=cut
-
 =head2 get_app_code()
 
 =head2 get_app_name()
@@ -743,55 +655,72 @@ method _mm_init {
     );
 
     # Connecting plugins
-    foreach my $plugin_name (split(/\s*,?\s+/, $self->get_configuration->{'plugs'}->{'sequence'})) {
-        my $plugin_configuration = $self->get_configuration->{'plugs'}->{ $plugin_name };
+    foreach my $plugin_name (split(/\s*,?\s+/, $self->get_configuration->{'plugins'}->{'modules'})) {
+
+        my $plugin_configuration = $self->get_configuration->{'plugins'}->{ $plugin_name };
         push(@postponed_messages, [
-            'Plugging the %s module, configuration branch is %s',
+            'Plugging the %s module according to the %s configuration',
             $plugin_name,
             $plugin_configuration
         ]);
+
         my %p;
-        $p{'actor_parent'}              = $self;
-        $p{'actor_parent_to'}           = 'monkeyman';
-        $p{'plugin_name'}               = defined($plugin_configuration->{'plugin_name'}) ?
-                                                  $plugin_configuration->{'plugin_name'} :
-                                                  $plugin_name;
-        my $n_actor_default_parameter   = defined($plugin_configuration->{'actor_default_parameter'}) ?
-                                                  $plugin_configuration->{'actor_default_parameter'} :
-                                                  'get_mm_default_' . $p{'plugin_name'};
-        my $n_actor_default_constant    = defined($plugin_configuration->{'actor_default_constant'}) ?
-                                                  $plugin_configuration->{'actor_default_constant'} :
-                                                  'MM_' . lc($p{'plugin_name'}) . '_DEFAULT_HANDLE';
-        $p{'actor_class'}               = defined($plugin_configuration->{'actor_class'}) ?
-                                                  $plugin_configuration->{'actor_class'} :
-                                                  'MonkeyMan::' . camelize($p{'plugin_name'});
+        $p{'plugin_name'}               =   defined($plugin_configuration->{'plugin_name'}) ?
+                                                    $plugin_configuration->{'plugin_name'} :
+                                                    $plugin_name;
+        $p{'actor_parent'}              =   $self;
+        $p{'actor_parent_to'}           =   'monkeyman';
+        $p{'actor_class'}               =   defined($plugin_configuration->{'actor_class'}) ?
+                                                    $plugin_configuration->{'actor_class'} :
+                                                    'MonkeyMan::' . camelize($p{'plugin_name'});
+        my $n_actor_default_parameter   =   defined($plugin_configuration->{'actor_default_parameter'}) ?
+                                                    $plugin_configuration->{'actor_default_parameter'} :
+                                                    'get_mm_default_' . $p{'plugin_name'};
+        my $n_actor_default_constant    =   defined($plugin_configuration->{'actor_default_constant'}) ?
+                                                    $plugin_configuration->{'actor_default_constant'} :
+                                                    'MM_' . lc($p{'plugin_name'}) . '_DEFAULT_HANDLE';
         no strict qw(refs);
-        $p{'actor_default'}             = defined($self->get_parameters->$n_actor_default_parameter) ?
-                                                  $self->get_parameters->$n_actor_default_parameter :
-                                                  &{$n_actor_default_constant};
+        $p{'actor_default'}             =   defined($self->get_parameters->$n_actor_default_parameter) ?
+                                                    $self->get_parameters->$n_actor_default_parameter :
+                                                    &{$n_actor_default_constant};
         use strict qw(refs);
-        $p{'actor_handle'}              = defined($plugin_configuration->{'actor_handle'}) ?
-                                                  $plugin_configuration->{'actor_handle'} :
-                                                  $p{'plugin_name'};
-        my $n_actor_handle              = 'get_' . $p{'actor_handle'};
-        $p{'plug_handle'}               = defined($plugin_configuration->{'plug_handle'}) ?
-                                                  $plugin_configuration->{'plug_handle'} :
-                                                  $p{'plugin_name'} . '_plug';
-        my $n_plug_handle               = 'get_' . $p{'plug_handle'};
-        $p{'configuration_index'}       = $self->get_configuration->{ $plugin_configuration->{'configuration_index_branch'} };
+        $p{'actor_handle'}              =   defined($plugin_configuration->{'actor_handle'}) ?
+                                                    $plugin_configuration->{'actor_handle'} :
+                                                    $p{'plugin_name'};
+        my $n_actor_handle              =   'get_'. $p{'actor_handle'};
+        $p{'plug_handle'}               =   defined($plugin_configuration->{'plug_handle'}) ?
+                                                    $plugin_configuration->{'plug_handle'} :
+                                                    $p{'plugin_name'} . '_plug';
+        my $n_plug_handle               =   'get_'. $p{'plug_handle'};
+        $p{'configuration_index'}       =   defined($plugin_configuration->{'configuration_index_branch'}) ?
+                                                  $self->
+                                                      get_configuration->
+                                                          { $plugin_configuration->{'configuration_index_branch'} } :
+                                                  $self->get_configuration->{ $p{'plugin_name'} };
+        unless(ref($p{'configuration_index'}) eq 'HASH' && defined($p{'configuration_index'}->{ $p{'actor_default'} })) {
+            push(@postponed_messages, [
+                'The primary (ID: %s) actor\'s configuration is missing, skipping the %s module',
+                $p{'actor_default'},
+                $p{'plugin_name'}
+            ]);
+            next;
+        }
+
         $self->plug(%p);
-        $logger = $self->$n_actor_handle if($plugin_name eq 'logger');
+
         push(@postponed_messages, [
-            "The %s plug has been installed, " .
-                "so we've got the primary (%s) instance: %s",
+            "The %s module has been plugged, " .
+                "so we've got the primary (ID: %s) actor: %s",
             $self->$n_plug_handle,
             $self->$n_plug_handle->get_actor_default,
             $self->$n_actor_handle
         ]);
-        if(defined($logger)) {
-            while(my $postponed = shift(@postponed_messages)) { $logger->tracef(@{$postponed}) }
-        }
+
+        if($plugin_name eq 'logger') { $logger = $self->$n_actor_handle }
+
     }
+
+    while(my $postponed = shift(@postponed_messages)) { $logger->tracef(@{$postponed}); }
 
     $logger->tracef("We've got the framework %s initialized by PID %d at %s",
         $self,
