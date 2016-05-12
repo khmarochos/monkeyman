@@ -584,8 +584,8 @@ method plug(
     Str             :$plugin_name!,
     Str             :$actor_class!,
     Object          :$actor_parent,
-    Maybe[Str]      :$actor_parent_to?,
-    Maybe[Str]      :$actor_name_to?,
+    Maybe[Str]      :$actor_parent_as?,
+    Maybe[Str]      :$actor_name_as?,
     Maybe[Str]      :$actor_default?,
     Maybe[HashRef]  :$actor_parameters?,
     Maybe[Str]      :$actor_handle?         = $plugin_name              when undef,
@@ -600,8 +600,8 @@ method plug(
     $p{'plugin_name'}           = $plugin_name;
     $p{'actor_class'}           = $actor_class;
     $p{'actor_parent'}          = $actor_parent;
-    $p{'actor_parent_to'}       = $actor_parent_to      if(defined($actor_parent_to));
-    $p{'actor_name_to'}         = $actor_name_to        if(defined($actor_name_to));
+    $p{'actor_parent_as'}       = $actor_parent_as      if(defined($actor_parent_as));
+    $p{'actor_name_as'}         = $actor_name_as        if(defined($actor_name_as));
     $p{'actor_default'}         = $actor_default        if(defined($actor_default));
     $p{'actor_parameters'}      = $actor_parameters     if(defined($actor_parameters));
     $p{'actor_handle'}          = $actor_handle;
@@ -669,7 +669,7 @@ method _mm_init {
                                                     $plugin_configuration->{'plugin_name'} :
                                                     $plugin_name;
         $p{'actor_parent'}              =   $self;
-        $p{'actor_parent_to'}           =   'monkeyman';
+        $p{'actor_parent_as'}           =   'monkeyman';
         $p{'actor_class'}               =   defined($plugin_configuration->{'actor_class'}) ?
                                                     $plugin_configuration->{'actor_class'} :
                                                     'MonkeyMan::' . camelize($p{'plugin_name'});

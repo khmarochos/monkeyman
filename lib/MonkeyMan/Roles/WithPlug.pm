@@ -46,20 +46,20 @@ has 'actor_parent' => (
     required    => 1
 );
 
-has 'actor_parent_to' => (
+has 'actor_parent_as' => (
     isa         => 'Maybe[Str]',
     is          => 'ro',
-    reader      =>  'get_actor_parent_to',
-    writer      => '_set_actor_parent_to',
-    predicate   => '_has_actor_parent_to',
+    reader      =>  'get_actor_parent_as',
+    writer      => '_set_actor_parent_as',
+    predicate   => '_has_actor_parent_as',
 );
 
-has 'actor_name_to' => (
+has 'actor_name_as' => (
     isa         => 'Maybe[Str]',
     is          => 'ro',
-    reader      =>  'get_actor_name_to',
-    writer      => '_set_actor_name_to',
-    predicate   => '_has_actor_name_to',
+    reader      =>  'get_actor_name_as',
+    writer      => '_set_actor_name_as',
+    predicate   => '_has_actor_name_as',
 );
 
 has 'actor_default' => (
@@ -180,11 +180,11 @@ method initialize_actor(Str $actor_name!) {
     %actor_parameters = %{ $self->get_actor_parameters }
         if($self->_has_actor_parameters);
 
-    $actor_parameters{$self->get_actor_parent_to} = $self->get_actor_parent
-        if($self->_has_actor_parent_to);
+    $actor_parameters{$self->get_actor_parent_as} = $self->get_actor_parent
+        if($self->_has_actor_parent_as);
 
-    $actor_parameters{$self->get_actor_name_to} = $actor_name
-        if($self->_has_actor_name_to);
+    $actor_parameters{$self->get_actor_name_as} = $actor_name
+        if($self->_has_actor_name_as);
 
     $actor_parameters{'configuration'} = $self->get_configuration_index->{ $actor_name }
         if($self->_has_configuration_index);

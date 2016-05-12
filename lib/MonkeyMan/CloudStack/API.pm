@@ -1153,8 +1153,8 @@ method BUILD(...) {
         plugin_name         => 'vocabulary',
         actor_class         => 'MonkeyMan::CloudStack::API::Vocabulary',
         actor_parent        => $self,
-        actor_parent_to     => 'api',
-        actor_name_to       => 'type',
+        actor_parent_as     => 'api',
+        actor_name_as       => 'type',
         actor_default       => undef,
         actor_handle        => 'vocabulary',
         plug_handle         => 'vocabulary_plug'
