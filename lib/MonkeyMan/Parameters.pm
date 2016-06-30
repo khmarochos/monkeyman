@@ -33,6 +33,36 @@ use YAML::XS;
 
 
 
+has 'reserved' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    predicate   =>   '_has_reserved',
+    reader      =>   '_get_reserved',
+    builder     => '_build_reserved',
+    lazy        => 1
+);
+
+method _build_reserved {
+
+    my %reserved = (
+        'h|help'                        => 'mm_show_help',
+        'V|version'                     => 'mm_show_version',
+        'c|configuration=s'             => 'mm_configuration',
+        'v|verbose+'                    => 'mm_be_verbose',
+        'q|quiet+'                      => 'mm_be_quiet',
+    );
+    foreach my $plugin_name (keys(%{ $self->get_monkeyman->get_plugins_loaded })) {
+        my $plugin_configuration   = $self->get_monkeyman->get_plugins_loaded->{$plugin_name};
+        $reserved{
+            $plugin_configuration->{'parameter_key'} . '=s'
+        } = $plugin_configuration->{'parameter_name'};
+    }
+    return(\%reserved);
+
+}
+
+
+
 has 'parameters' => (
     is          => 'ro',
     isa         => 'HashRef',
@@ -43,8 +73,6 @@ has 'parameters' => (
     lazy        => 1
 );
 
-
-
 method _build_parameters {
 
     return({});
@@ -54,6 +82,12 @@ method _build_parameters {
 
 
 method BUILD(...) {
+
+    $self->parse_everything(strict => 0);
+
+}
+
+method parse_everything(Bool :$strict? = 0) {
 
     my $monkeyman       = $self->get_monkeyman;
     my $parameters_got  = $self->_get_parameters;
@@ -107,37 +141,10 @@ method BUILD(...) {
         }
     }
 
-    # Adding common parameters handling instructions,
-    # making sure they aren't overriding any settings discovered previously
-    my %default_parameters = (
-        'h|help'                        => 'mm_show_help',
-        'V|version'                     => 'mm_show_version',
-        'c|configuration=s'             => 'mm_configuration',
-        'v|verbose+'                    => 'mm_be_verbose',
-        'q|quiet+'                      => 'mm_be_quiet',
-        'default-cloudstack=s'          => 'mm_default_cloudstack',
-        'default-logger=s'              => 'mm_default_logger',
-        'default-password-generator=s'  => 'mm_default_password_generator'
+    $self->check_reserved(
+        parameter_keys_defined  => \@parameter_keys_defined,
+        parameter_names_defined => \@parameter_names_defined
     );
-    while(my($reserved_keys, $reserved_name) = each(%default_parameters)) {
-        foreach my $reserved_key ($reserved_keys =~ /(?:\|?([a-zA-Z\-]+)(?:=.+)?)/g) {
-            foreach my $forbidden_key (grep({ $reserved_key eq $_ } @parameter_keys_defined)) {
-                (__PACKAGE__ . '::Exception::ParameterKeyReserved')->throwf(
-                    "The %s command-line parameter key is reserved, " .
-                    "you shouldn't have tried to use it",
-                    $forbidden_key
-                );
-            }
-        }
-        foreach my $forbidden_name (grep({ $reserved_name eq $_ } @parameter_names_defined)) {
-            (__PACKAGE__ . '::Exception::ParameterNameReserved')->throwf(
-                "The %s command-line parameter attribute name is reserved, " .
-                "you shouldn't have tried to use it",
-                $forbidden_name
-            );
-        }
-        $monkeyman->_get_parameters_to_get->{$reserved_keys} = $reserved_name;
-    }
 
     # Parsing parameters
     my $yammer;
@@ -184,6 +191,7 @@ method BUILD(...) {
         $self->$writer($parameters_got->{$parameter_name});
     }
 
+    # Validating all the parameters
     if(
         (!defined($parameters_got->{'mm_show_help'}))    &&
         (!defined($parameters_got->{'mm_show_version'})) &&
@@ -330,6 +338,41 @@ method _validate_parameters(
     
 }
 
+
+
+method check_reserved(
+    ArrayRef    :$parameter_keys_defined!,
+    ArrayRef    :$parameter_names_defined!,
+    Bool        :$fatal? = 1
+) {
+    # Adding common parameters handling instructions,
+    # making sure they aren't overriding any settings discovered previously
+    my %default_parameters = (%{ $self->_get_reserved });
+    my @forbidden_keys;
+    my @forbidden_names;
+    while(my($reserved_keys, $reserved_name) = each(%default_parameters)) {
+        foreach my $reserved_key ($reserved_keys =~ /(?:\|?([a-zA-Z\-]+)(?:=.+)?)/g) {
+            foreach my $forbidden_key (grep({ $reserved_key eq $_ } @{ $parameter_keys_defined })) {
+                (__PACKAGE__ . '::Exception::ParameterKeyReserved')->throwf(
+                    "The %s command-line parameter key is reserved, " .
+                    "you shouldn't have tried to use it",
+                    $forbidden_key
+                ) if($fatal);
+                push(@forbidden_keys, $forbidden_key);
+            }
+        }
+        foreach my $forbidden_name (grep({ $reserved_name eq $_ } @{ $parameter_names_defined })) {
+            (__PACKAGE__ . '::Exception::ParameterNameReserved')->throwf(
+                "The %s command-line parameter attribute name is reserved, " .
+                "you shouldn't have tried to use it",
+                $forbidden_name
+            ) if ($fatal);
+            push(@forbidden_names, $forbidden_name);
+        }
+        $self->get_monkeyman->_get_parameters_to_get->{$reserved_keys} = $reserved_name;
+    }
+    return(\@forbidden_keys, \@forbidden_names);
+}
 
 
 #__PACKAGE__->meta->make_immutable;

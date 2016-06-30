@@ -27,6 +27,7 @@ sub MM_DIRECTORY_ROOT {
         die("Can't find the root directory");
     }
 }
+use constant MM_DIRECTORY_LIB           => MM_DIRECTORY_ROOT . '/lib';
 use constant MM_DIRECTORY_CONFIG_MAIN   => MM_DIRECTORY_ROOT . '/etc';
 use constant MM_DIRECTORY_DUMP          => MM_DIRECTORY_ROOT . '/var/dump/objects';
 
@@ -38,11 +39,13 @@ my @mm_constants_directories = qw(
 
 # :filenames
 
+use constant MM_CONFIG_PLUGINS      => MM_DIRECTORY_LIB . '/MonkeyMan/plugins.yaml';
 use constant MM_CONFIG_MAIN         => MM_DIRECTORY_CONFIG_MAIN . '/monkeyman.conf';
 use constant MM_CONFIG_LOGGER       => MM_DIRECTORY_CONFIG_MAIN . '/logger.conf';
 use constant MM_CONFIG_CLOUDSTACK   => MM_DIRECTORY_CONFIG_MAIN . '/cloudstack.conf';
 
 my @mm_constants_filenames = qw(
+    MM_CONFIG_PLUGINS
     MM_CONFIG_MAIN
     MM_CONFIG_LOGGER
     MM_CONFIG_CLOUDSTACK
@@ -53,7 +56,6 @@ my @mm_constants_filenames = qw(
 use constant MM_VERBOSITY_LEVELS        => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
 use constant MM_VERBOSITY_LEVEL_BASE    => 4;
 use constant MM_DATE_TIME_FORMAT        => '%Y/%m/%d %H:%M:%S';
-use constant MM_LOGGER_DEFAULT_HANDY    => 'PRIMARY';
 
 my @mm_constants_logging = qw(
     MM_VERBOSITY_LEVELS
@@ -67,7 +69,6 @@ my @mm_constants_logging = qw(
 use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH      => 3600;
 use constant MM_CLOUDSTACK_API_SLEEP                => 10;
 use constant MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME   => 100;
-use constant MM_CLOUDSTACK_DEFAULT_HANDY            => 'PRIMARY';
 
 my @mm_constants_cloudstack = qw(
     MM_CLOUDSTACK_API_WAIT_FOR_FINISH
@@ -81,7 +82,6 @@ my @mm_constants_cloudstack = qw(
 use constant MM_DEFAULT_PASSWORD_LENGTH             => 13;
 use constant MM_DEFAULT_PASSWORD_ALL_CHARACTERS     => 1;
 use constant MM_DEFAULT_PASSWORD_READABLE_ONLY      => 1;
-use constant MM_PASSWORD_GENERATOR_DEFAULT_HANDY    => 'PRIMARY';
 
 my @mm_constants_passwords = qw(
     MM_DEFAULT_PASSWORD_LENGTH
@@ -89,6 +89,16 @@ my @mm_constants_passwords = qw(
     MM_DEFAULT_PASSWORD_READABLE_ONLY
     MM_PASSWORD_GENERATOR_DEFAULT_HANDY
 );
+
+# :miscellaneous
+
+use constant MM_DEFAULT_ACTOR => 'PRIMARY';
+
+my @mm_constants_miscellaneous = qw(
+    MM_DEFAULT_ACTOR
+);
+
+
 
 # :ALL
 
@@ -98,7 +108,8 @@ my @mm_constants_all = (
     @mm_constants_filenames,
     @mm_constants_logging,
     @mm_constants_cloudstack,
-    @mm_constants_passwords
+    @mm_constants_passwords,
+    @mm_constants_miscellaneous
 );
 
 
@@ -107,13 +118,14 @@ my @mm_constants_all = (
 @EXPORT             = qw();
 @EXPORT_OK          = @mm_constants_all;
 %EXPORT_TAGS        = (
-    ALL         => \@mm_constants_all,
-    version     => \@mm_constants_version,
-    directories => \@mm_constants_directories,
-    filenames   => \@mm_constants_filenames,
-    passwords   => \@mm_constants_passwords,
-    logging     => \@mm_constants_logging,
-    cloudstack  => \@mm_constants_cloudstack
+    ALL                 => \@mm_constants_all,
+    version             => \@mm_constants_version,
+    directories         => \@mm_constants_directories,
+    filenames           => \@mm_constants_filenames,
+    passwords           => \@mm_constants_passwords,
+    logging             => \@mm_constants_logging,
+    cloudstack          => \@mm_constants_cloudstack,
+    miscellaneous       => \@mm_constants_miscellaneous
 );
 
 

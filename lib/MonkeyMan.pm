@@ -101,7 +101,9 @@ use TryCatch;
 use Getopt::Long qw(:config no_ignore_case);
 use Config::General;
 use File::Slurp;
-use String::CamelCase;
+use String::CamelCase qw(camelize);
+use YAML::XS;
+use File::Slurp;
 
 
 
@@ -404,8 +406,6 @@ method _build_configuration {
         -MergeDuplicateBlocks   => 1
     );
 
-    use Data::Dumper; Dumper($config->getall);
-
     return({ $config->getall });
 
 }
@@ -629,6 +629,23 @@ method plug(
 
 
 
+
+has 'plugins_loaded' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    reader      =>  'get_plugins_loaded',
+    writer      => '_set_plugins_loaded',
+    predicate   => '_has_plugins_loaded',
+    builder     => '_build_plugins_loaded',
+    lazy        => 1
+);
+
+method _build_plugins_loaded {
+
+    Load(scalar(read_file(MM_CONFIG_PLUGINS)));
+
+}
+
 method _mm_init {
 
     my $meta = $self->meta;
@@ -655,9 +672,9 @@ method _mm_init {
     );
 
     # Connecting plugins
-    foreach my $plugin_name (split(/\s*,?\s+/, $self->get_configuration->{'plugins'}->{'modules'})) {
+    foreach my $plugin_name (keys(%{ $self->get_plugins_loaded })) {
 
-        my $plugin_configuration = $self->get_configuration->{'plugins'}->{ $plugin_name };
+        my $plugin_configuration = $self->get_plugins_loaded->{$plugin_name};
         push(@postponed_messages, [
             'Plugging the %s module according to the %s configuration',
             $plugin_name,
@@ -665,25 +682,28 @@ method _mm_init {
         ]);
 
         my %p;
+        # Assigning the name of the plugin
         $p{'plugin_name'}               =   defined($plugin_configuration->{'plugin_name'}) ?
                                                     $plugin_configuration->{'plugin_name'} :
                                                     $plugin_name;
+        # The plugin should have the monkeyman attribute pointing to MonkeyMan
         $p{'actor_parent'}              =   $self;
         $p{'actor_parent_as'}           =   'monkeyman';
+        # Of course, we'll need to know the class name
         $p{'actor_class'}               =   defined($plugin_configuration->{'actor_class'}) ?
                                                     $plugin_configuration->{'actor_class'} :
                                                     'MonkeyMan::' . camelize($p{'plugin_name'});
+        # Who will be the default actor? It can be defined by a command-line parameter or by a constant
         my $n_actor_default_parameter   =   defined($plugin_configuration->{'actor_default_parameter'}) ?
                                                     $plugin_configuration->{'actor_default_parameter'} :
                                                     'get_mm_default_' . $p{'plugin_name'};
-        my $n_actor_default_constant    =   defined($plugin_configuration->{'actor_default_constant'}) ?
-                                                    $plugin_configuration->{'actor_default_constant'} :
-                                                    'MM_' . lc($p{'plugin_name'}) . '_DEFAULT_HANDLE';
-        no strict qw(refs);
+        # Whos is the default actor?
         $p{'actor_default'}             =   defined($self->get_parameters->$n_actor_default_parameter) ?
                                                     $self->get_parameters->$n_actor_default_parameter :
-                                                    &{$n_actor_default_constant};
-        use strict qw(refs);
+                                                    defined($plugin_configuration->{'actor_default_actor'}) ?
+                                                            $plugin_configuration->{'actor_default_actor'} :
+                                                            MM_DEFAULT_ACTOR;
+        # We'll add some methods to the parent class, so let's determine their names
         $p{'actor_handle'}              =   defined($plugin_configuration->{'actor_handle'}) ?
                                                     $plugin_configuration->{'actor_handle'} :
                                                     $p{'plugin_name'};
@@ -692,6 +712,7 @@ method _mm_init {
                                                     $plugin_configuration->{'plug_handle'} :
                                                     $p{'plugin_name'} . '_plug';
         my $n_plug_handle               =   'get_'. $p{'plug_handle'};
+        # And the last (not the least, though) - the configuration branch
         $p{'configuration_index'}       =   defined($plugin_configuration->{'configuration_index_branch'}) ?
                                                   $self->
                                                       get_configuration->
@@ -703,7 +724,7 @@ method _mm_init {
                 $p{'actor_default'},
                 $p{'plugin_name'}
             ]);
-            next;
+            next; # The rest aint going to happen, dude!
         }
 
         $self->plug(%p);
