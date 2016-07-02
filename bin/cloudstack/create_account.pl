@@ -300,14 +300,14 @@ if(@domains > 1) {
     $logger->debugf("Going to create the %s domain", $parameters->get_domain_name);
     @domains = MonkeyMan::CloudStack::API::Element::Domain::create_domain(
         desired_name    => $parameters->get_domain_name,
-        API             => $API,
-        RECURSIVE       => ($PARAMETERS->GET_CREATE_DOMAIN > 1) ? 1 : 0
-        # ^ IF THEY ADD "-d" TWICE, THE DOMAIN WILL BE CREATED RECURSIVELY,
-        #   SO ALL PARENTS WILL BE CREATED TOO 
+        api             => $api,
+        recursive       => ($parameters->get_create_domain > 1) ? 1 : 0
+        # ^ If they add "-d" twice, the domain will be created recursively,
+        #   so all parents will be created too 
     );
-    $DOMAIN_EXISTED = 0;
-} ELSE {
-    $DOMAIN_EXISTED = 1;
+    $domain_existed = 0;
+} else {
+    $domain_existed = 1;
     $logger->warn("We asked to create a domain, but it exists")
         if(defined($parameters->get_create_domain));
 }

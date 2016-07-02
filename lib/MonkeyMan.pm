@@ -826,6 +826,17 @@ method print_full_usage_help {
         &{ $self->get_app_usage_help } :
            $self->get_app_usage_help;
 
+    my $plugins_usage_help;
+    foreach my $plugin_name (keys(%{ $self->get_plugins_loaded })) {
+        my $plugin_configuration   = $self->get_plugins_loaded->{$plugin_name};
+        $plugins_usage_help .= sprintf(
+            "    --%s <ID> (the default actor is %s)\n        [opt]       %s\n",
+            $plugin_configuration->{'parameter_key'},
+            $plugin_configuration->{'actor_default_actor'},
+            $plugin_configuration->{'parameter_help'}
+        );
+    }
+
     printf(<<__END_OF_USAGE_HELP__
 %sIt%shandles the following set of MonkeyMan-wide parameteters:
 
@@ -835,18 +846,16 @@ method print_full_usage_help {
         [opt]       Print version number and do nothing
     -c <filename>, --configuration <filename>
         [opt]       The main configuration file
-    --default-cloudstack <ID>
-        [opt]       The default Apache CloudStack connector
-    --default-logger <ID>
-        [opt]       The default Logger
     -v, --verbose
         [opt] [mul] Increases verbosity
     -q, --quiet
         [opt] [mul] Decreases verbosity
 
+%s
 __END_OF_USAGE_HELP__
         , $app_usage_help ? ($app_usage_help . "\n") : ''
-        , $app_usage_help ? ' also ' : ' '
+        , $app_usage_help ? ' also ' : ' ',
+        , $plugins_usage_help ? ("It also handles the following selectors:\n\n" . $plugins_usage_help) : ''
     );
 
 }

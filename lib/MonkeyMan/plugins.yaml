@@ -9,6 +9,7 @@ logger:
     configuration_index_branch:   logger
     parameter_key:                default-logger
     parameter_name:               mm_default_logger
+    parameter_help:               The default Logger actor
 
 cloudstack:
     plugin_name:                  cloudstack
@@ -20,6 +21,7 @@ cloudstack:
     configuration_index_branch:   cloudstack
     parameter_key:                default-cloudstack
     parameter_name:               mm_default_cloudstack
+    parameter_help:               The default Apache CloudStack actor
 
 password_generator:
     plugin_name:                  password_generator
@@ -31,3 +33,4 @@ password_generator:
     configuration_index_branch:   password_generator
     parameter_key:                default-password-generator
     parameter_name:               mm_default_password_generator
+    parameter_help:               The default Password Generator actor
