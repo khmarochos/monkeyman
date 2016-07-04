@@ -610,11 +610,19 @@ method plug(
     $p{'configuration_index'}   = $configuration_index  if(defined($configuration_index));
 
     my $plug_object = MonkeyMan::Plug->new(%p);
+
     my $parent_meta = $actor_parent->meta;
+    # FIXME: I should check now, hasn't the plug been initalized yet, so we
+    # wouldn't install the plugin's method and attribute which can lead to the
+    # exception raising
+
+    # Now we'll add the method get_SOMETHING (where SOMETHING is the value of
+    # the actor_handle parameter) to the parent class
     $parent_meta->add_method(
         "get_$actor_handle" => sub { shift; $plug_object->get_actor($_[0]); }
     );
-
+    # And don't forget to add the attribute with the name taken from the
+    # plug_handle parameter to the parent class as well
     $parent_meta->add_attribute(
         $plug_handle        => (
             isa         => 'MonkeyMan::Plug',
@@ -624,8 +632,10 @@ method plug(
             predicate   =>         '_has_' . $plug_handle,
         )
     );
+    # And initialize its value (add the reference to the plug)
     $actor_parent->$w($plug_object);
 
+    # We'll definitely need it later
     mm_load_package($actor_class);
 
     return($plug_object);
