@@ -87,11 +87,10 @@ with 'MonkeyMan::Roles::WithTimer';
 # (the time_started attribute and some methods to work with it)
 
 use MonkeyMan::Constants qw(:ALL);
+use MonkeyMan::Utils qw(mm_load_package);
 use MonkeyMan::Exception qw(CanNotLoadPackage);
 use MonkeyMan::Parameters;
-use MonkeyMan::Logger;
-use MonkeyMan::CloudStack;
-use MonkeyMan::PasswordGenerator;
+use MonkeyMan::Plug;
 
 # Use 3rd-party libraries
 use MooseX::Handies;
@@ -593,9 +592,11 @@ method plug(
     Maybe[HashRef]  :$configuration_index?
 ) {
 
-    my $plug_class = Moose::Meta::Class->create('MonkeyMan::Plug',
-        roles   => [ 'MonkeyMan::Roles::WithPlug' ]
-    );
+#   my $plug_class = Moose::Meta::Class->create('MonkeyMan::Plug',
+#       roles   => [ 'MonkeyMan::Roles::WithPlug' ]
+#   );
+#   ^^^ I used to create a define a separate class for each plug, now I don't
+
     my %p;
     $p{'plugin_name'}           = $plugin_name;
     $p{'actor_class'}           = $actor_class;
@@ -607,14 +608,16 @@ method plug(
     $p{'actor_handle'}          = $actor_handle;
     $p{'plug_handle'}           = $plug_handle;
     $p{'configuration_index'}   = $configuration_index  if(defined($configuration_index));
-    my $plug_object = $plug_class->new_object(%p);
+
+    my $plug_object = MonkeyMan::Plug->new(%p);
     my $parent_meta = $actor_parent->meta;
     $parent_meta->add_method(
         "get_$actor_handle" => sub { shift; $plug_object->get_actor($_[0]); }
     );
+
     $parent_meta->add_attribute(
         $plug_handle        => (
-            isa         => 'MonkeyMan::Roles::WithPlug', # Well, I'm not sure...
+            isa         => 'MonkeyMan::Plug',
             is          => 'ro',
             reader      =>          'get_' . $plug_handle,
             writer      => my $w = '_set_' . $plug_handle,
@@ -622,6 +625,8 @@ method plug(
         )
     );
     $actor_parent->$w($plug_object);
+
+    mm_load_package($actor_class);
 
     return($plug_object);
 
