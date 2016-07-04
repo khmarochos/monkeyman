@@ -613,7 +613,7 @@ method plug(
 
     my $parent_meta = $actor_parent->meta;
     # FIXME: I should check now, hasn't the plug been initalized yet, so we
-    # wouldn't install the plugin's method and attribute which can lead to the
+    # wouldn't install the plugin's method and attribute which can lead to
     # exception raising
 
     # Now we'll add the method get_SOMETHING (where SOMETHING is the value of

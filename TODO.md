@@ -4,6 +4,9 @@ Things To Do
 Code
 ----
 
+ - [ ] Make the `MonkeyMan`'s `plug` method checking if the plugin has been
+       installed already.
+        - suggested on `2016.07.04` by `melnik13`
  - [ ] Add the `EXCEPTION` method on demand when loading the
        `MonkeyMan::Exception` package.
         - suggested on `2016.04.07` by `melnik13`
@@ -57,9 +60,12 @@ Code
 Functionality
 -------------
 
- - [ ] Port bin/makesnapshots.pl from the `stables` branch to
+ - [ ] Port `bin/cloudstack/makesnapshots.pl` from the `stables` branch to
        the current one
         - suggested on `2016.01.18` by `melnik13`
+ - [ ] Make `bin/cloudstack/makesnapshots.pl` support more than one queues
+       for the same domain (see `Tucha#2016062913000542`)
+        - suggested on `2016.06.13` by `melnik13`
  - [x] Let the user set the default `MonkeyMan::Logger` instance
         - suggested on `2016.01.19` by `melnik13`
         - completed on `2016.01.19`
