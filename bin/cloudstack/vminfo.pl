@@ -128,7 +128,7 @@ foreach my $vm ($api->get_elements(
 
     foreach (@doms) {
         if     (defined($be_short) && $be_short > 1) {
-            print($_->findvalue('*'));
+            printf("%s\n", $_->findvalue('*'));
         } elsif(defined($be_short) && $be_short > 0) {
             print($_->toString(0));
         } else {
