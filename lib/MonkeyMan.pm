@@ -693,11 +693,11 @@ method _mm_init {
         $p{'actor_class'}               =   defined($plugin_configuration->{'actor_class'}) ?
                                                     $plugin_configuration->{'actor_class'} :
                                                     'MonkeyMan::' . camelize($p{'plugin_name'});
-        # Who will be the default actor? It can be defined by a command-line parameter or by a constant
+        # What will be the name of the attribute containing the default actor's name?
         my $n_actor_default_parameter   =   defined($plugin_configuration->{'actor_default_parameter'}) ?
                                                     $plugin_configuration->{'actor_default_parameter'} :
                                                     'get_mm_default_' . $p{'plugin_name'};
-        # Whos is the default actor?
+        # What actor is the default one?
         $p{'actor_default'}             =   defined($self->get_parameters->$n_actor_default_parameter) ?
                                                     $self->get_parameters->$n_actor_default_parameter :
                                                     defined($plugin_configuration->{'actor_default_actor'}) ?
