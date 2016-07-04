@@ -9,7 +9,7 @@ use lib("$FindBin::Bin/../../lib");
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version :cloudstack);
 
-use Test::More (tests => 3);
+use Test::More (tests => 2);
 
 
 
@@ -20,6 +20,5 @@ my $monkeyman = MonkeyMan->new(
     app_version         => MM_VERSION
 );
 
-ok($monkeyman->_get_cloudstacks->{$monkeyman->get_default_cloudstack_id} == $monkeyman->get_cloudstack);
 ok($monkeyman->get_cloudstack == $monkeyman->get_cloudstack);
-ok($monkeyman->get_cloudstack == $monkeyman->get_cloudstack($monkeyman->get_default_cloudstack_id));
+ok($monkeyman->get_cloudstack == $monkeyman->get_cloudstack($monkeyman->get_cloudstack_plug->get_actor_default));

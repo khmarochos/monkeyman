@@ -9,7 +9,7 @@ use lib("$FindBin::Bin/../../lib");
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version :logging);
 
-use Test::More (tests => 3);
+use Test::More (tests => 2);
 use Method::Signatures;
 
 
@@ -21,6 +21,5 @@ my $monkeyman = MonkeyMan->new(
     app_version         => MM_VERSION
 );
 
-ok($monkeyman->_get_loggers->{$monkeyman->get_default_logger_id} == $monkeyman->get_logger);
 ok($monkeyman->get_logger == $monkeyman->get_logger);
-ok($monkeyman->get_logger == $monkeyman->get_logger($monkeyman->get_default_logger_id));
+ok($monkeyman->get_logger == $monkeyman->get_logger($monkeyman->get_logger_plug->get_actor_default));

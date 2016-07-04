@@ -25,16 +25,17 @@ use Array::Utils qw(array_diff);
 
 my $type            = defined($monkeyman->get_parameters->get_type) ?
                         $monkeyman->get_parameters->get_type :
-                            'VirtualMachine';
+                        'VirtualMachine';
 my $logger          = $monkeyman->get_logger;
 my $cloudstack      = $monkeyman->get_cloudstack;
 my $api             = $cloudstack->get_api;
-my %magic_words     = $api->get_magic_words($type);
 
-my $biglist     = $api->run_command(parameters => {
-                    command => $magic_words{'find_command'},
-                    listall => 'true'
-});
+my $biglist         = $api->run_command(
+    command => $api->get_vocabulary($type)->compose_request(
+        action      => 'list',
+        parameters  => { all => 1 }
+    )->get_command
+);
 
 $logger->tracef("Have got %s as the list of all elements", $biglist);
 
@@ -49,9 +50,8 @@ $logger->debug("Getting IDs as values");
 
 foreach my $id ($api->qxp(
     dom         => $biglist,
-    query       =>  '/' . $magic_words{'list_tag_global'} . 
-                    '/' . $magic_words{'list_tag_entity'} .
-                    '[nic/id]' .
+    query       =>  '/' . $api->get_vocabulary($type)->vocabulary_lookup(words => [qw(actions list response response_node)]) .
+                    '/' . $api->get_vocabulary($type)->vocabulary_lookup(words => [qw(entity_node)]) .
                     '/id',
     return_as   => 'value'
 )) {
@@ -70,12 +70,11 @@ $logger->debug("Getting elements as DOMs");
 
 foreach my $dom ($api->qxp(
     dom         => $biglist,
-    query       =>  '/' . $magic_words{'list_tag_global'} . 
-                    '/' . $magic_words{'list_tag_entity'} .
-                    '[nic/id]',
+    query       =>  '/' . $api->get_vocabulary($type)->vocabulary_lookup(words => [qw(actions list response response_node)]) .
+                    '/' . $api->get_vocabulary($type)->vocabulary_lookup(words => [qw(entity_node)]),
     return_as   => 'dom'
 )) {
-    my $id = $dom->findvalue('/' . $magic_words{'list_tag_entity'} . '/id');
+    my $id = $dom->findvalue('/' . $api->get_vocabulary($type)->vocabulary_lookup(words => [qw(entity_node)]) . '/id');
     $logger->tracef("Have got %s as a DOM, its ID is %s", $dom, $id);
     push(@ids_local, $id);
 }
@@ -90,10 +89,9 @@ $logger->debug("Getting elements");
 
 foreach my $vm ($api->qxp(
     dom         => $biglist,
-    query       =>  '/' . $magic_words{'list_tag_global'} . 
-                    '/' . $magic_words{'list_tag_entity'} .
-                    '[nic/id]',
-    return_as   => 'element[' . $type . ']'
+    query       =>  '/' . $api->get_vocabulary($type)->vocabulary_lookup(words => [qw(actions list response response_node)]) .
+                    '/' . $api->get_vocabulary($type)->vocabulary_lookup(words => [qw(entity_node)]),
+    return_as   => 'element'
 )) {
     my $id = $vm->get_id;
     $logger->tracef("Have got %s as %s, it ID is %s", $vm, $vm->get_type(noun => 1, a => 1), $id);
@@ -110,10 +108,9 @@ $logger->debug("Getting elements' IDs");
 
 foreach my $id ($api->qxp(
     dom         => $biglist,
-    query       =>  '/' . $magic_words{'list_tag_global'} . 
-                    '/' . $magic_words{'list_tag_entity'} .
-                    '[nic/id]',
-    return_as   => 'id[' . $type . ']'
+    query       =>  '/' . $api->get_vocabulary($type)->vocabulary_lookup(words => [qw(actions list response response_node)]) .
+                    '/' . $api->get_vocabulary($type)->vocabulary_lookup(words => [qw(entity_node)]),
+    return_as   => 'id'
 )) {
     $logger->tracef("Have got ID as ID, it's %s", $id);
     push(@ids_local, $id);
