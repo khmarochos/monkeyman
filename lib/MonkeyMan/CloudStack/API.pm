@@ -628,8 +628,8 @@ method get_related(
 =head2 C<find_doms()>
 
 The method returns the list of DOMs of elements of type defined matching
-XPath-condtions defined. You'll probably need to use this method, because it
-only performs dirty work for C<get_elements()>.
+XPath-condtions defined. You probably will never need to use this method, because
+it only performs dirty work for C<get_elements()>.
 
 Anyhow, it consumes the following parameters:
 
@@ -654,8 +654,9 @@ method find_doms(
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
 
-    $criterions = { all => 1 }
-        unless(defined($criterions));
+    # $criterions = { all => 1 }
+    #     unless(defined($criterions));
+    # ^^^ TODO: Make sure it's okay that it's been removed
 
     $logger->tracef("Looking for %s matching the %s set of criterias",
         $self->translate_type(type => $type, noun => 1, plural => 1),
@@ -1149,6 +1150,9 @@ method translate_type(
 
 method BUILD(...) {
 
+    # We need to initialize the plug of vocabularies, the vocabularies will be
+    # initialized automatically, there's no "default" vocabulary, so one shall
+    # always refer the concrete vocabulary
     $self->get_cloudstack->get_monkeyman->plug(
         plugin_name         => 'vocabulary',
         actor_class         => 'MonkeyMan::CloudStack::API::Vocabulary',

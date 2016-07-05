@@ -37,10 +37,10 @@ has action => (
 
 has parameters => (
     is          => 'ro',
-    isa         => 'HashRef',
+    isa         => 'Maybe[HashRef]',
     reader      =>  'get_parameters',
     writer      => '_set_parameters',
-    required    => 1,
+    required    => 0,
     lazy        => 0
 );
 

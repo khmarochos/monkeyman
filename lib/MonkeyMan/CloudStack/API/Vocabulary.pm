@@ -239,7 +239,7 @@ method vocabulary_lookup(
 
 method compose_request(
     Str             :$action!,
-    HashRef         :$parameters,
+    Maybe[HashRef]  :$parameters = {},
     Maybe[HashRef]  :$macros,
     Maybe[Bool]     :$return_as_hashref
 ) {

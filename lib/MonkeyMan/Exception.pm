@@ -105,11 +105,11 @@ method throwf(...) {
         push(@values, $_)
     }
 
-    my $new_message = mm_sprintf($message, @values);
+    my $new_message = MonkeyMan::Utils::mm_sprintf($message, @values);
+    # We have to address to it as MonkeyMan::Utils::mm_sprintf, because the
+    # current subclass may not have such subroutine in its namespace!
 
-    $self->throw(
-        message => $new_message
-    );
+    $self->throw(message => $new_message);
 
 }
 
