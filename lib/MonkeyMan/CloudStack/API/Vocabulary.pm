@@ -36,6 +36,19 @@ has 'type' => (
     required    => 1
 );
 
+around 'get_type' => sub {
+
+    my $orig = shift;
+    my $self = shift;
+
+    if(@_) {
+        return($self->get_api->translate_type(type => $self->$orig, @_));
+    } else {
+        return($self->$orig);
+    }
+};
+
+
 
 
 has 'global_macros' => (
@@ -188,8 +201,8 @@ method vocabulary_lookup(
     ArrayRef[Str]       :$words!,
     HashRef             :$tree?         = $self->get_vocabulary_tree,
     Maybe[Bool]         :$fatal         = 1,
-    Maybe[HashRef]      :$macros,
-    Bool                :$resolve       = 1
+    Bool                :$resolve       = 1,
+    Maybe[HashRef]      :$macros
 ) {
 
     my $result;
@@ -492,6 +505,7 @@ method interpret_response(
 
     my @results;
 
+    # If the action hasn't been defined, let's try to guess it
     $action = ($self->recognize_response(dom => $dom))[1]
         unless(defined($action));
 

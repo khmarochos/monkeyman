@@ -112,8 +112,8 @@ our %vocabulary_tree = (
         our_virtual_machines => {
             type    => 'VirtualMachine',
             keys    => [ {
-                value   => { queries    => [ '<%OUR_ENTITY_NODE%>/id' ] },
-                foreign => { requested  => [ { filter_by_domain_id => '<%OUR_KEY_VALUE%>' } ] },
+                own     => { queries    => [ '<%OUR_ENTITY_NODE%>/id' ] },
+                foreign => { parameters => [ { filter_by_domain_id => '<%OUR_KEY_VALUE%>' } ] },
             } ]
         },
     }

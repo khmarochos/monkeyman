@@ -615,12 +615,46 @@ method get_related(
     MonkeyMan::CloudStack::API::Roles::Element  :$element!,
     Str                                         :$related
 ) {
-#    $self->perform_action(
-#        type        => $type,
-#        action      => $action,
-#        parameters  => $parameters,
-#        macros      => $macros
-#    );
+
+    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+
+    my $vocabulary = $element->get_vocabulary;
+    my $vocabulary_subtree_profile = $vocabulary->vocabulary_lookup(
+        words   => [ 'related', $related ],
+        fatal   => 1
+    );
+    my $type = $vocabulary->vocabulary_lookup(
+        words   => [ 'type' ],
+        tree    => $vocabulary_subtree_profile,
+        fatal   => 1
+    );
+
+    $logger->tracef(
+        "Going to find the %s related as %s to the %s %s",
+        $self->translate_type(type => $type, plural => 1),
+        $related,
+        $element,
+        $element->get_type(noun => 1)
+    );
+
+    my @criterions;
+    my @xpaths;
+
+    foreach my $key (@{ $vocabulary->vocabulary_lookup(
+        words   => [ 'keys' ],
+        tree    => $vocabulary_subtree_profile,
+        fatal   => 0
+    ) }) {
+        my $dom = $element->get_dom;
+        my $key_value;
+        foreach my $key_query (@{ $vocabulary->vocabulary_lookup(
+            words   => [ 'own', 'queries' ],
+            tree    => $key,
+            fatal   => 0
+        ) }) {
+        }
+    }
+
 }
 
 
@@ -1034,7 +1068,7 @@ C<MonkeyMan::CloudStack::API::Element::TYPE> objects.
 =cut
 
 method qxp(
-    Str :$query!,
+    Str|ArrayRef[Str] :$query!,
     XML::LibXML::Document :$dom!, # DON'T ADD SPACES HERE!
     Maybe[MonkeyMan::CloudStack::Types::ReturnAs] :$return_as
 ) {
@@ -1045,6 +1079,10 @@ method qxp(
         $logger->warnf("%s isn't a XML::LibXML::Document object");
         return;
     }
+    my @queries_to_proceed = ref($query) eq 'ARRAY' ?
+        (@{ $query }) :
+        (   $query  );
+    $query = shift(@queries_to_proceed);
 
     $logger->tracef(
         'Querying the %s DOM with the "%s" XPath-query (expecting %s)',
@@ -1053,30 +1091,57 @@ method qxp(
 
     my @results;
 
+    # TODO: It would be good if it was returning a single XML-DOM of results
+    # *OR* a list of separate DOMs as an option
+
     foreach my $new_node (
-        map { $_->cloneNode(1) } ( $dom->findnodes($query)->get_nodelist)
+        map { $_->cloneNode(1) } ( $dom->findnodes($query)->get_nodelist )
     ) {
         my $new_dom = XML::LibXML::Document->new();
            $new_dom->addChild($new_node);
-        my $result = $self->return_as($new_dom, $return_as);
-        push(@results, $result);
+
+        if(@queries_to_proceed) {
+            foreach my $result ($self->qxp(
+                query       => \@queries_to_proceed,
+                dom         => $new_dom,
+                return_as   => $return_as
+            )) {
+                push(@results, $result);
+            }
+        } else {
+            my $result = $self->return_as($new_dom, $return_as);
+            push(@results, $result);
+        }
+    }
+
+    if(@results) {
+        foreach my $result (@results) {
+            $logger->tracef(
+                'Returning the %s element in the %s list of results',
+                ref($result) ? $result : \$result, \@results
+            );
+        }
+    } else {
         $logger->tracef(
-            'Added the %s element to the %s list of results',
-            ref($result) ? $result : \$result, \@results
+            'Returning an empty list as the %s list of results',
+            \@results
         );
     }
+
 
     return(@results);
 
 }
 
+# TODO: It would be good if it was returning a single DOM of results *OR*
+# a list of separate DOMs
 method return_as(
     Defined                                 $source!,
     MonkeyMan::CloudStack::Types::ReturnAs  $return_as!
 ) {
 
     $self->get_cloudstack->get_monkeyman->get_logger->tracef(
-        "Going to show %s as %s", $source, A($return_as)
+        "Returning %s as %s", $source, A($return_as)
     );
 
     if(ref($source) eq 'MonkeyMan::CloudStack::API::Element') {

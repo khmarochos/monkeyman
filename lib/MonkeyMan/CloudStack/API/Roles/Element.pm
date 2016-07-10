@@ -334,17 +334,6 @@ around 'get_id' => sub {
 
 
 
-method get_related(Str :$related!) {
-
-    return($self->get_api->get_related(
-        element => $self,
-        related => $related
-    ));
-
-}
-
-
-
 #method BUILD(...) {
 #
 #    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
@@ -353,7 +342,18 @@ method get_related(Str :$related!) {
 
 
 
-# Some proxy-like methods goes here...
+#
+# Proxy methods go here...
+#
+
+method get_related(Str :$related!) {
+
+    return($self->get_api->get_related(
+        element => $self,
+        related => $related
+    ));
+
+}
 
 method qxp(
     Str                     :$query!,
