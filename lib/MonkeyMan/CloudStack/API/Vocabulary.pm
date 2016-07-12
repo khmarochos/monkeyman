@@ -83,6 +83,9 @@ method resolve_macros(
     Bool            :$fatal = 1
 ) {
 
+    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+
+    my $source_original = $source;
     my @result;
 
     my %macros_all = %{ $self->get_global_macros };
@@ -118,7 +121,16 @@ method resolve_macros(
 #        "!!! %s !!!", join('', @result)
 #    #);
 
-    return(join('', @result));
+    my $result_string = join('', @result);
+
+    $logger->tracef(
+        "Resolved macroses in the %s (%s) expression, " .
+        "the global index is at %s, the result is at %s (%s)",
+        \$source_original, $source_original,
+        \%macros_all, \$result_string, $result_string
+    );
+
+    return($result_string);
 
 }
 
@@ -199,9 +211,10 @@ method check_vocabulary(
 
 method vocabulary_lookup(
     ArrayRef[Str]       :$words!,
-    HashRef             :$tree?         = $self->get_vocabulary_tree,
-    Maybe[Bool]         :$fatal         = 1,
-    Bool                :$resolve       = 1,
+    HashRef             :$tree?             = $self->get_vocabulary_tree,
+    Maybe[Bool]         :$fatal             = 1,
+    Bool                :$resolve           = 1,
+    Bool                :$resolve_deeper    = 0,
     Maybe[HashRef]      :$macros
 ) {
 
@@ -236,12 +249,31 @@ method vocabulary_lookup(
         )
     }
 
-    if($resolve && defined($result) && !ref($result)) {
-        $result = $self->resolve_macros(
-            source  => $result,
-            macros  => $macros,
-            fatal   => 1
-        );
+    if($resolve && defined($result)) {
+
+        my  $resultref = ref($result);
+        if(!$resultref) {
+            $result = $self->resolve_macros(
+                source  => $result,
+                macros  => $macros,
+                fatal   => 1
+            );
+        } elsif(($resolve_deeper > 0) && ($resultref eq 'ARRAY'))  {
+            my @resulting_array = map { $self->resolve_macros(
+                source  => $_,
+                macros  => $macros,
+                fatal   => 1
+            ) }  @{ $result };
+            $result = \@resulting_array;
+        } elsif(($resolve_deeper > 0) && ($resultref eq 'HASH'))  {
+            my %resulting_hash = map { $self->resolve_macros(
+                source  => $_,
+                macros  => $macros,
+                fatal   => 1
+            ) }  each(%{ $result });
+            $result = \%resulting_hash;
+        }
+
     }
 
     return($result);
@@ -564,21 +596,18 @@ method interpret_response(
                     $result, A($return_as), $self
                 );
             }
-            foreach my $xpath (@{ $self->vocabulary_lookup(
+            my @queries = map {
+                $self->resolve_macros(source => $_, macros => $macros_complete)
+            } (@{ $self->vocabulary_lookup(
                 words   => [ 'queries' ],
                 fatal   => 1,
                 tree    => $results_subtree,
-            ) }) {
-                $xpath = $self->resolve_macros(
-                    source  => $xpath,
-                    macros  => $macros_complete
-                );
-                push(@results, $self->get_api->qxp(
-                    dom         => $dom,
-                    query       => $xpath,
-                    return_as   => $return_as
-                ));
-            }
+            ) });
+            push(@results, $self->get_api->qxp(
+                dom         => $dom,
+                query       => \@queries,
+                return_as   => $return_as
+            ));
         }
 
 #        (__PACKAGE__ . '::Exception::InvalidResultRequested')->throwf(

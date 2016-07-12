@@ -611,18 +611,49 @@ method perform_action(
 
 
 
+=head2 C<get_related>
+
+    Interprets this structure in the element type's vocabulary:
+
+    related => {
+        our_virtual_machines => {
+            type    => 'VirtualMachine',
+            keys    => {
+                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/id' ] },
+                foreign => { parameters => { filter_by_domain_id => '<%OWN_KEY_VALUE%>' } },
+            }
+        },
+    }
+
+=cut
+
 method get_related(
     MonkeyMan::CloudStack::API::Roles::Element  :$element!,
-    Str                                         :$related
+    Str                                         :$related!,
+    Bool                                        :$fatal = 0,
+    MonkeyMan::CloudStack::Types::ReturnAs      :$return_as = 'element'
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
 
     my $vocabulary = $element->get_vocabulary;
+    # related => {
+    #     our_virtual_machines => {
     my $vocabulary_subtree_profile = $vocabulary->vocabulary_lookup(
         words   => [ 'related', $related ],
         fatal   => 1
     );
+    # related => {
+    #     our_virtual_machines => {
+    #         keys    => {
+    my $vocabulary_subtree_keys = $vocabulary->vocabulary_lookup(
+        words   => [ 'keys' ],
+        tree    => $vocabulary_subtree_profile,
+        fatal   => 1
+    );
+    # related => {
+    #     our_virtual_machines => {
+    #         type    => 'VirtualMachine',
     my $type = $vocabulary->vocabulary_lookup(
         words   => [ 'type' ],
         tree    => $vocabulary_subtree_profile,
@@ -640,20 +671,79 @@ method get_related(
     my @criterions;
     my @xpaths;
 
-    foreach my $key (@{ $vocabulary->vocabulary_lookup(
-        words   => [ 'keys' ],
-        tree    => $vocabulary_subtree_profile,
-        fatal   => 0
-    ) }) {
-        my $dom = $element->get_dom;
-        my $key_value;
-        foreach my $key_query (@{ $vocabulary->vocabulary_lookup(
-            words   => [ 'own', 'queries' ],
-            tree    => $key,
-            fatal   => 0
-        ) }) {
-        }
+    # related => {
+    #     our_virtual_machines => {
+    #         keys    => {
+    #             own     => {
+    #                 queries    => [ '/<%OUR_ENTITY_NODE%>/id' ]
+    my $vocabulaty_subtree_key_own = $vocabulary->vocabulary_lookup(
+        words           => [ 'own' ],
+        tree            => $vocabulary_subtree_keys,
+        fatal           => 1
+    );
+    my $own_key_queries = $vocabulary->vocabulary_lookup(
+        words           => [ 'queries' ],
+        tree            => $vocabulaty_subtree_key_own,
+        fatal           => 1,
+        resolve         => 1,
+        resolve_deeper  => 1
+    );
+    my @own_key_values = $self->qxp(
+        query           => $own_key_queries,
+        dom             => $element->get_dom,
+        return_as       => 'value'
+    );
+    if(@own_key_values > 1) {
+        #TODO: Log a warning
+    } elsif(@own_key_values < 1) {
+        #TODO: Return an empty list or raise an exception if $fatal
     }
+    my $macros = { OWN_KEY_VALUE => shift(@own_key_values) };
+
+    # related => {
+    #     our_virtual_machines => {
+    #         keys    => {
+    #             foreign => {
+    my $vocabulary_subtree_key_foreign = $vocabulary->vocabulary_lookup(
+        words       => [ 'foreign' ],
+        tree        => $vocabulary_subtree_keys,
+        fatal       => 1
+    );
+
+    my @results = $self->perform_action(
+        type        => $type,
+        action      => 'list',
+        macros      => $macros,
+        # related => {
+        #     our_virtual_machines => {
+        #         keys    => {
+        #             foreign => {
+        #                 parameters => { filter_by_domain_id => '<%OWN_KEY_VALUE%>' }
+        parameters  => $vocabulary->vocabulary_lookup(
+            words           => [ 'parameters' ],
+            tree            => $vocabulary_subtree_key_foreign,
+            fatal           => 1,
+            resolve         => 1,
+            resolve_deeper  => 1,
+            macros          => $macros
+        ),
+        requested   => { element => $return_as }
+    );
+
+    if(@results) {
+        foreach my $result (@results) {
+            $logger->tracef(
+                'Returning the %s element in the %s list of results',
+                ref($result) ? $result : \$result, \@results
+            );
+        }
+    } else {
+        $logger->tracef(
+            'Returning an empty list as the %s list of results',
+            \@results
+        );
+    }
+    return(@results);
 
 }
 
@@ -1127,7 +1217,6 @@ method qxp(
             \@results
         );
     }
-
 
     return(@results);
 
