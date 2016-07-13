@@ -117,19 +117,13 @@ method resolve_macros(
 
     unshift(@result, $source);
 
-#    $self->get_api->get_cloudstack->get_monkeyman->get_logger->debugf(
-#        "!!! %s !!!", join('', @result)
-#    #);
-
     my $result_string = join('', @result);
-
-    $logger->tracef(
-        "Resolved macroses in the %s (%s) expression, " .
-        "the global index is at %s, the result is at %s (%s)",
-        \$source_original, $source_original,
-        \%macros_all, \$result_string, $result_string
-    );
-
+#    $logger->tracef(
+#        "Resolved macroses in the %s (%s) expression, " .
+#        "the global index is at %s, the result is at %s (%s)",
+#        \$source_original, $source_original,
+#        \%macros_all, \$result_string, $result_string
+#    );
     return($result_string);
 
 }

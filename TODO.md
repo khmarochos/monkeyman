@@ -13,7 +13,7 @@ Code
  - [ ] Add the `fatal` parameter to all vocabulary-related methods.
         - suggested on `2016.02.09` by `melnik13`
  - [ ] Make it possible to dump all data structures right to the same log-file
-       where it has been mentioned.
+       where it has been mentioned (as an option that could be set or unset).
         - suggested on `2016.01.28` by `melnik13`
  - [ ] Make some helper to find the framework's library directory
         - on `2016.01.17` by `melnik13`

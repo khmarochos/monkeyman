@@ -19,6 +19,7 @@ our @_ElementType_values = qw(
     Domain
     Account
     User
+    ServiceOffering
 );
 subtype ElementType,
     as Str,

@@ -48,6 +48,7 @@ use MonkeyMan::Exception qw(
     CanNotLoadPackage
     InvalidParametersValue
     InvalidResponse
+    CommandFailed
     MagicWordsArentDefined
     DOMIsNotDefined
     NoParameters
@@ -430,16 +431,54 @@ method run_command(
     }
 
     my $job_run = $self->get_time_current_rough;
-    my $result  = $command_to_run->run(
-        fatal_fail  => $fatal_fail,
-        fatal_empty => $fatal_empty,
-        fatal_431   => $fatal_431
-    );
-    my $dom = XML::LibXML->new->load_xml(string => $result);
-    $logger->tracef(
-        "The %s reply has been recognized as a DOM: %s",
-            \$result, $dom
-    );
+
+    my $result;
+    my $failure;
+    try {
+        $result  = $command_to_run->run(fatal_fail => 1);
+    } catch (MonkeyMan::Exception $failure_api) {
+        $failure = $failure_api->{'message'};
+        $result  = $command_to_run->get_http_response->content
+                if($command_to_run->has_http_response);
+    } catch ($failure_api) {
+        $failure = $failure_api;
+    }
+    if(defined($failure)) {
+        $logger->tracef(
+            "The %s command has failed to run: %s (contents %s)",
+            $command_to_run, $failure, \$result
+        );
+    }
+
+    my $dom;
+    try {
+        $dom = XML::LibXML->new->load_xml(string => $result);
+    } catch ($failure_xml) {
+        $failure = $failure_xml
+            unless(defined($failure));
+    }
+    if(defined($dom)) {
+        $logger->tracef(
+            "The %s reply has been recognized as a DOM: %s",
+                \$result, $dom
+        );
+    }
+
+    if($failure && $fatal_fail) {
+        if(defined($dom) && blessed($dom) && $dom->DOES('XML::LibXML::Document')) {
+            my $errorcode = $dom->findvalue('/*/errorcode');
+            my $errortext = $dom->findvalue('/*/errortext');
+            (__PACKAGE__ . '::Exception::CommandFailed')->throwf(
+                "In reply to the %s command the %s CloudStack returned: %s %s (%s)",
+                $command_to_run, $self->get_cloudstack, $errorcode, $errortext, $failure
+            );
+        } else {
+            (__PACKAGE__ . '::Exception::CommandFailed')->throwf(
+                "In reply to the %s command the %s CloudStack returned: %s",
+                $command_to_run, $self->get_cloudstack, $failure
+            );
+        }
+    }
 
     if(my $jobid = $dom->findvalue('/*/jobid')) {
 

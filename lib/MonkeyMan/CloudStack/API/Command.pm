@@ -123,8 +123,7 @@ has http_response => (
     reader      =>    'get_http_response',
     writer      =>   '_set_http_response',
     predicate   =>    'has_http_response',
-    builder     => '_build_http_response',
-    lazy        => 1
+    lazy        => 0
 );
 
 method run(
@@ -139,7 +138,7 @@ method run(
 
     $logger->tracef("Running the %s command", $self);
 
-    unless($self->get_url || $self->get_parameters) {
+    unless(defined($self->get_url)) {
         MonkeyMan::Exception->throw(
             "Can't run the command: " .
             "neither the URL nor the parameters set are defined"
@@ -159,8 +158,9 @@ method run(
             $self->get_http_request
         )
     );
-    $logger->tracef(" <-- The server's response is: %s",
-        $self->get_http_response->status_line
+    $logger->tracef(" <-- The server's response is: %s (contents %s)",
+        $self->get_http_response->status_line,
+        \$self->get_http_response->as_string,
     );
 
     # Is everything fine?

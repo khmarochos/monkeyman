@@ -188,7 +188,8 @@ method parse_everything(Bool :$strict? = 0) {
             )
         );
 
-        $self->$writer($parameters_got->{$parameter_name});
+        $self->$writer($parameters_got->{$parameter_name})
+            if(defined($parameters_got->{$parameter_name}));
     }
 
     # Validating all the parameters
