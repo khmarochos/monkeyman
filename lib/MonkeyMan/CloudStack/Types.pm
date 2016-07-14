@@ -20,6 +20,7 @@ our @_ElementType_values = qw(
     Account
     User
     ServiceOffering
+    Template
 );
 subtype ElementType,
     as Str,

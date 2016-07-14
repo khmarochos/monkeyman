@@ -54,8 +54,11 @@ This application recognizes the following parameters:
         [opt*]      The domain's ID
   * You can set only 1 of these 3 parameters.
 
-    --account-name <name>, -a <name>
-        [opt]       The account's name
+    --account-name <name>
+        [opt*]      The account's name
+    --account-id <id>
+        [opt*]      The account's name
+  * One of these is required if the domain is choosen (you can set only one).
 
     --password <password>
         [opt*]      The user's password
@@ -77,24 +80,46 @@ service-offering-id=s:
   service_offering_id:
     conflicts_any:
       - service_offering_name
+template-name=s:
+  template_name:
+    conflicts_any:
+      - template_id
+template-id=s:
+  template_id:
+    conflicts_any:
+      - template_name
 domain-name=s:
   domain_name:
+    requires_any:
+      - account_id
+      - account_name
     conflicts_any:
       - domain_id
       - domain_name_short
 domain-name-short=s:
   domain_name_short:
+    requires_any:
+      - account_id
+      - account_name
     conflicts_any:
       - domain_id
       - domain_name
 domain-id=s:
   domain_id:
+    requires_any:
+      - account_id
+      - account_name
     conflicts_any:
       - create_domain
       - domain_name
       - domain_name_short
 account-name=s:
   account_name:
+    requires_any:
+      - domain_name
+      - domain_id
+account-id=s:
+  account_id:
     requires_any:
       - domain_name
       - domain_id
@@ -128,11 +153,13 @@ my $logger      = $monkeyman->get_logger;
 my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
 
-my %deployment_parameters;
+my %deployment_parameters;  # The parameters to be given to the deployment method
+my %elements_found;         # The references to the elements found are to be kept here
 
+# 
+# Dealing with the service offering (a mandatory parameter)
 #
-# Dealing with the service offering
-#
+
 if(
     $parameters->has_service_offering_id ||
     $parameters->has_service_offering_name
@@ -167,17 +194,88 @@ if(
         MonkeyMan::Exception->throw("The service offering hasn't been found");
     }
 
-    $deployment_parameters{'service_offering_id'} = $service_offerings[0]->get_id;
+    $elements_found{'service_offering'} = $service_offerings[0];
+    $deployment_parameters{'service_offering_id'} = $elements_found{'service_offering'}->get_id;
 
-    $logger->tracef("The %s service offering has been found, its ID is: %s", $service_offerings[0], $service_offerings[0]->get_id);
+    $logger->debugf(
+        "The %s service offering has been found, its ID is: %s",
+        $elements_found{'service_offering'},
+        $elements_found{'service_offering'}->get_id
+    );
 
 } else {
-    MonkeyMan::Exception->throw("The service offering (a required parameter) hasn't been defined");
+
+    # The service offering parameter is mandatory
+    MonkeyMan::Exception->throw("The service offering (a required parameter) hasn't been choosen");
+
+}
+
+#
+# Dealing with the template (another mandatory parameter)
+#
+
+if(
+    $parameters->has_template_id ||
+    $parameters->has_template_name
+) {
+
+    my @templates;
+
+    if(defined($parameters->get_template_id)) {
+        # The ID is defined, so it will be easy to find the templae
+        @templates = $api->perform_action(
+            type        => 'Template',
+            action      => 'list',
+            parameters  => {
+                filter_by_type  => 'executable',
+                filter_by_id    => $parameters->get_template_id
+            },
+            requested   => { element => 'element' }
+        );
+    } elsif(defined($parameters->get_template_name)) {
+        # Okay, they want to find the template by the name
+        @templates = $api->perform_action(
+            type        => 'Template',
+            action      => 'list',
+            parameters  => {
+                filter_by_type  => 'executable',
+                filter_by_name  => $parameters->get_template_name
+            },
+            requested   => { element => 'element' }
+        );
+    }
+
+    if(@templates > 1) {
+        MonkeyMan::Exception->throwf(
+            "Too many templates have been found, their IDs are: %s",
+            join(', ', map({ $_->get_id } @templates))
+        );
+    } elsif(@templates < 1) {
+        MonkeyMan::Exception->throw("The template hasn't been found");
+    }
+
+    $elements_found{'template'} = $templates[0];
+    $deployment_parameters{'template_id'} = $elements_found{'template'}->get_id;
+
+    $logger->debugf(
+        "The %s template has been found, its ID is: %s",
+        $elements_found{'template'},
+        $elements_found{'template'}->get_id
+    );
+
+} else {
+
+    # The service offering parameter is mandatory
+    MonkeyMan::Exception->throw("The template (a required parameter) hasn't been choosen");
+
 }
 
 #
 # Dealing with the domain (if referenced)
 #
+
+my $domain_selected;
+
 if(
     $parameters->has_domain_id          ||
     $parameters->has_domain_name        ||
@@ -222,17 +320,76 @@ if(
         MonkeyMan::Exception->throw("The domain hasn't been found");
     }
 
-    $deployment_parameters{'domain_id'} = $domains[0]->get_id;
+    $elements_found{'domain'} = $domains[0];
+    $deployment_parameters{'domain_id'} = $elements_found{'domain'}->get_id;
 
-    $logger->tracef("The %s domain has been found, its ID is: %s", $domains[0], $domains[0]->get_id);
+    $logger->debugf(
+        "The %s domain has been found, its ID is: %s",
+        $elements_found{'domain'},
+        $elements_found{'domain'}->get_id
+    );
+
+} else {
+
+    $logger->tracef("The %s domain hasn't been choosen");
 
 }
 
 #
-# Dealing with the account (if defined
+# Dealing with the account (if defined)
 #
-if($parameters->has_account_name) {
+if(
+    $parameters->has_account_name ||
+    $parameters->has_account_id
+) {
+
+    my @accounts;
+
+    if(defined($parameters->get_account_id)) {
+        # Okay, they want to find the account by the name
+        @accounts = $api->perform_action(
+            type        => 'Account',
+            action      => 'list',
+            parameters  => {
+                filter_by_id        => $parameters->get_account_id,
+                filter_by_domainid  => $elements_found{'domain'}->get_id
+            },
+            requested   => { element => 'element' }
+        );
+    } elsif(defined($parameters->get_account_name)) {
+        @accounts = $api->perform_action(
+            type        => 'Account',
+            action      => 'list',
+            parameters  => {
+                filter_by_name      => $parameters->get_account_name,
+                filter_by_domainid  => $elements_found{'domain'}->get_id
+            },
+            requested   => { element => 'element' }
+        );
+    }
+
+    if(@accounts > 1) {
+        MonkeyMan::Exception->throwf(
+            "Too many accounts have been found, their IDs are: %s",
+            join(', ', map({ $_->get_id } @accounts))
+        );
+    } elsif(@accounts < 1) {
+        MonkeyMan::Exception->throw("The account hasn't been found");
+    }
+
+    $elements_found{'account'} = $accounts[0];
     $deployment_parameters{'account_name'} = $parameters->get_account_name;
+
+    $logger->debugf(
+        "The %s account has been found, its ID is: %s",
+        $elements_found{'account'},
+        $elements_found{'account'}->get_id
+    );
+
+} else {
+
+    $logger->tracef("The %s domain hasn't been set");
+
 }
 
 

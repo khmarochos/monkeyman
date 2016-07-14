@@ -366,12 +366,14 @@ method qxp(
         if($self->is_dom_expired($best_before));
 
     my @results = $self->get_api->qxp(
-        query       => sprintf('/%s/%s',
+        query       => sprintf('/%s%s%s',
             $self->get_vocabulary->vocabulary_lookup(
                 words   => [ 'entity_node' ],
                 fatal   => 1,
                 resolve => 0
-            ), $query
+            ),
+            $query =~ qr(^/) ? '' : '/',
+            $query
         ),
         dom         => $dom,
         return_as   => $return_as

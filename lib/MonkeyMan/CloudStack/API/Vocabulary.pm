@@ -95,6 +95,10 @@ method resolve_macros(
         }
     }
 
+#    $logger->tracef(
+#        "Resolving macroses in the %s (%s) expression, the global index is at %s",
+#        \$source_original, $source_original, \%macros_all,
+#    );
     while ($source =~ /^(.*)<%(.+)%>(.*)$/) {
 
         my($left, $middle, $right) = ($1, $2, $3);

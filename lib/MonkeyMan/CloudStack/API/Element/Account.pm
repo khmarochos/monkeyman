@@ -129,15 +129,6 @@ our %vocabulary_tree = (
                 }
             }
         }
-    },
-    related => {
-        our_virtual_machines => {
-            type    => 'VirtualMachine',
-            keys    => [ {
-                value   => { queries    => [ '<%OUR_ENTITY_NODE%>/id' ] },
-                foreign => { requested  => [ { filter_by_account_id => '<%OUR_KEY_VALUE%>' } ] },
-            } ]
-        },
     }
 );
 
