@@ -121,6 +121,11 @@ our %vocabulary_tree = (
 
 
 
+# Actually it's okay to create a domain with calling the perform_action()
+# method, which is the "true" way, but I wanted to have a method to create
+# a domain recursively (with all the parents needed), so the ...::Domain
+# element class has a method for that.
+
 func create_domain(
     Str                         :$desired_name!,
     Bool                        :$recursive = 0,
