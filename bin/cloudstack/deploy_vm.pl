@@ -11,12 +11,13 @@ use lib("$FindBin::Bin/../../lib");
 # Use my own modules
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
-use MonkeyMan::CloudStack::API;
+use MonkeyMan::Exception;
 
 # Use some third-party libraries
 use Method::Signatures;
 use File::Basename;
 use Term::ReadKey;
+use Lingua::EN::Inflect qw(PL);
 
 
 
@@ -28,23 +29,23 @@ my $monkeyman = MonkeyMan->new(
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
 
+    --zone-name <name>
+        [req*]      The zone's name
+    --zone-id <name>
+        [req*]      The zone's ID
+  * It's required to define at least one of them (but only one).
+
     --service-offering-name <name>
         [req*]      The service offering's name
     --service-offering-id <name>
         [req*]      The service offering's ID
-  * It's required to define at least one of them (you can set only one).
+  * It's required to define at least one of them (but only one).
 
     --template-name <name>
         [req*]      The template's name
     --template-id <name>
         [req*]      The template's ID
-  * It's required to define at least one of them (you can set only one).
-
-    --zone-name <name>
-        [req*]      The zone's name
-    --zone-id <name>
-        [req*]      The zone's ID
-  * It's required to define at least one of them (you can set only one).
+  * It's required to define at least one of them (but only one).
 
     --domain-name <name>
         [opt*]      The domain's full name and path (includung "ROOT")
@@ -72,6 +73,14 @@ This application recognizes the following parameters:
 __END_OF_USAGE_HELP__
     parameters_to_get_validated => <<__END_OF_PARAMETERS_TO_GET_VALIDATED__
 ---
+zone-name=s:
+  zone_name:
+    conflicts_any:
+      - zone_id
+zone-id=s:
+  zone_id:
+    conflicts_any:
+      - zone_name
 service-offering-name=s:
   service_offering_name:
     conflicts_any:
@@ -156,241 +165,148 @@ my $parameters  = $monkeyman->get_parameters;
 my %deployment_parameters;  # The parameters to be given to the deployment method
 my %elements_found;         # The references to the elements found are to be kept here
 
-# 
-# Dealing with the service offering (a mandatory parameter)
-#
+my $what_is_what = {
+    'zone'              => {
+        type                => 'Zone',
+        number              => 1,
+        mandatory           => 1,
+        results             => { zone_id => { query => '/id' } },
+        parameters_fixed    => { available => 'true' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'zone_id' },
+            filter_by_name          => { from_parameters => 'zone_name' }
+        }
+    },
+    'service offering'  => {
+        type                => 'ServiceOffering',
+        number              => 2,
+        mandatory           => 1,
+        results             => { service_offering_id => { query => '/id' } },
+        parameters_fixed    => { all => 'true' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'service_offering_id' },
+            filter_by_name          => { from_parameters => 'service_offering_name' }
+        }
+    },
+    'template'          => {
+        type                => 'Template',
+        number              => 3,
+        mandatory           => 1,
+        results             => { template_id => { query => '/id' } },
+        parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'template_id' },
+            filter_by_name          => { from_parameters => 'template_name' }
+        }
+    },
+    'domain'            => {
+        type                => 'Domain',
+        number              => 4,
+        mandatory           => 0,
+        results             => { domain_id => { query => '/id' } },
+        parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'domain_id' },
+            filter_by_path          => { from_parameters => 'domain_name' },
+            filter_by_name          => { from_parameters => 'domain_name_short'}
+        }
+    },
+    'account'            => {
+        type                => 'Account',
+        number              => 5,
+        mandatory           => 0,
+        results             => { account_id => { query => '/id' } },
+        parameters_fixed    => { all => 'true' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'account_id' },
+            filter_by_name          => { from_parameters => 'account_name' },
+            filter_by_domainid      => { from_results => 'domain_id' }
+        }
+    }
+};
 
-if(
-    $parameters->has_service_offering_id ||
-    $parameters->has_service_offering_name
+foreach my $huerga (
+    sort(
+        {
+            $what_is_what->{$a}->{'number'} <=> $what_is_what->{$b}->{'number'}
+        }
+        keys(%{ $what_is_what })
+    )
 ) {
 
-    my @service_offerings;
+    $logger->tracef("Selecting the %s desired", $huerga);
 
-    if(defined($parameters->get_service_offering_id)) {
-        # The ID is defined, so it will be easy to find the service offering
-        @service_offerings = $api->perform_action(
-            type        => 'ServiceOffering',
+    my @huerga_desired;
+    my %huerga_parameters = ref($what_is_what->{$huerga}->{'parameters_fixed'}) eq 'HASH' ?
+        (%{ $what_is_what->{$huerga}->{'parameters_fixed'} }) :
+        ();
+    foreach my $parameter_name (keys(%{ $what_is_what->{$huerga}->{'parameters_variable'} })) {
+        my $parameter_source = $what_is_what->{$huerga}->{'parameters_variable'}->{$parameter_name};
+        if(defined($parameter_source->{'from_results'})) {
+            $huerga_parameters{$parameter_name} = $deployment_parameters{ $parameter_source->{'from_results'} };
+        } elsif(defined($parameter_source->{'from_parameters'})) {
+            my $predicate = 'has_' . $parameter_source->{'from_parameters'};
+            my $reader    = 'get_' . $parameter_source->{'from_parameters'};
+            if($monkeyman->get_parameters->$predicate) {
+                my $value = $monkeyman->get_parameters->$reader;
+                push(@huerga_desired, { $parameter_source->{'from_parameters'} => $value });
+                # ^^^ To keep in mind that the operator asked for it
+                $huerga_parameters{$parameter_name} = $value;
+                # ^^^ To perform the action in a moment (see below)
+            }
+        }
+    }
+    if(@huerga_desired) {
+        my @huerga_found = $api->perform_action(
+            type        => $what_is_what->{$huerga}->{'type'},
             action      => 'list',
-            parameters  => { filter_by_id => $parameters->get_service_offering_id },
+            parameters  => \%huerga_parameters,
             requested   => { element => 'element' }
         );
-    } elsif(defined($parameters->get_service_offering_name)) {
-        # Okay, they want to find the service_offering by the name
-        @service_offerings = $api->perform_action(
-            type        => 'ServiceOffering',
-            action      => 'list',
-            parameters  => { filter_by_name => $parameters->get_service_offering_name },
-            requested   => { element => 'element' }
-        );
+        if(@huerga_found < 1) {
+            MonkeyMan::Exception->throwf(
+                "The %s desired (%s) has not been found",
+                $huerga,
+                join(', ', map({ join(': ', each(%{ $_ })) } @huerga_desired))
+            );
+        } elsif(@huerga_found > 1) {
+            MonkeyMan::Exception->throwf(
+                "Too many %s have been found, their IDs are: %s",
+                PL($huerga),
+                join(', ', map({ $_->get_id } @huerga_found))
+            );
+        } else {
+            my $huerga_selected = $huerga_found[0];
+            $logger->debugf(
+                "The %s %s has been found, its ID is: %s",
+                $huerga_selected,
+                $huerga,
+                $huerga_selected->get_id
+            );
+            $elements_found{$huerga} = $huerga_selected;
+            foreach my $deployment_parameter (keys(%{ $what_is_what->{$huerga}->{'results'} })) {
+                my $query = $what_is_what->{$huerga}->{'results'}->{$deployment_parameter}->{'query'};
+                if(defined($query)) {
+                    my @results = $huerga_selected->qxp(
+                        query       => $query,
+                        return_as   => 'value'
+                    );
+                    if(@results < 1) {
+                        MonkeyMan::Exception->throwf("Expected a result, have got none");
+                    } elsif(@huerga_found > 1) {
+                        MonkeyMan::Exception->throwf("Expected a result, have got too many");
+                    } else {
+                        $deployment_parameters{$deployment_parameter} = $results[0];
+                    }
+                }
+            }
+        }
+    } elsif($what_is_what->{$huerga}->{'mandatory'}) {
+        MonkeyMan::Exception->throwf("The %s (a required parameter) hasn't been choosen");
     }
-
-    if(@service_offerings > 1) {
-        MonkeyMan::Exception->throwf(
-            "Too many service offerings have been found, their IDs are: %s",
-            join(', ', map({ $_->get_id } @service_offerings))
-        );
-    } elsif(@service_offerings < 1) {
-        MonkeyMan::Exception->throw("The service offering hasn't been found");
-    }
-
-    $elements_found{'service_offering'} = $service_offerings[0];
-    $deployment_parameters{'service_offering_id'} = $elements_found{'service_offering'}->get_id;
-
-    $logger->debugf(
-        "The %s service offering has been found, its ID is: %s",
-        $elements_found{'service_offering'},
-        $elements_found{'service_offering'}->get_id
-    );
-
-} else {
-
-    # The service offering parameter is mandatory
-    MonkeyMan::Exception->throw("The service offering (a required parameter) hasn't been choosen");
 
 }
 
-#
-# Dealing with the template (another mandatory parameter)
-#
-
-if(
-    $parameters->has_template_id ||
-    $parameters->has_template_name
-) {
-
-    my @templates;
-
-    if(defined($parameters->get_template_id)) {
-        # The ID is defined, so it will be easy to find the templae
-        @templates = $api->perform_action(
-            type        => 'Template',
-            action      => 'list',
-            parameters  => {
-                filter_by_type  => 'executable',
-                filter_by_id    => $parameters->get_template_id
-            },
-            requested   => { element => 'element' }
-        );
-    } elsif(defined($parameters->get_template_name)) {
-        # Okay, they want to find the template by the name
-        @templates = $api->perform_action(
-            type        => 'Template',
-            action      => 'list',
-            parameters  => {
-                filter_by_type  => 'executable',
-                filter_by_name  => $parameters->get_template_name
-            },
-            requested   => { element => 'element' }
-        );
-    }
-
-    if(@templates > 1) {
-        MonkeyMan::Exception->throwf(
-            "Too many templates have been found, their IDs are: %s",
-            join(', ', map({ $_->get_id } @templates))
-        );
-    } elsif(@templates < 1) {
-        MonkeyMan::Exception->throw("The template hasn't been found");
-    }
-
-    $elements_found{'template'} = $templates[0];
-    $deployment_parameters{'template_id'} = $elements_found{'template'}->get_id;
-
-    $logger->debugf(
-        "The %s template has been found, its ID is: %s",
-        $elements_found{'template'},
-        $elements_found{'template'}->get_id
-    );
-
-} else {
-
-    # The service offering parameter is mandatory
-    MonkeyMan::Exception->throw("The template (a required parameter) hasn't been choosen");
-
-}
-
-#
-# Dealing with the domain (if referenced)
-#
-
-my $domain_selected;
-
-if(
-    $parameters->has_domain_id          ||
-    $parameters->has_domain_name        ||
-    $parameters->get_domain_name_short
-) {
-
-    my @domains;
-
-    if(defined($parameters->get_domain_id)) {
-        # The ID is defined, so it will be easy to find the domain
-        @domains = $api->perform_action(
-            type        => 'Domain',
-            action      => 'list',
-            parameters  => { filter_by_id => $parameters->get_domain_id },
-            requested   => { element => 'element' }
-        );
-    } elsif(defined($parameters->get_domain_name)) {
-        # Okay, they want to find the domain by the "full name", so let's make sure
-        # that the path matches
-        @domains = $api->perform_action(
-            type        => 'Domain',
-            action      => 'list',
-            parameters  => { filter_by_path_all => $parameters->get_domain_name },
-            requested   => { element => 'element' }
-        );
-    } elsif(defined($parameters->get_domain_name_short)) {
-        @domains = $api->perform_action(
-            type        => 'Domain',
-            action      => 'list',
-            parameters  => { filter_by_name => $parameters->get_domain_name_short },
-            requested   => { element => 'element' }
-        );
-    }
-
-    if(@domains > 1) {
-        # It may happen when the short name requested occures more than once
-        MonkeyMan::Exception->throwf(
-            "Too many domains have been found, their IDs are: %s",
-            join(', ', map({ $_->get_id } @domains))
-        );
-    } elsif(@domains < 1) {
-        MonkeyMan::Exception->throw("The domain hasn't been found");
-    }
-
-    $elements_found{'domain'} = $domains[0];
-    $deployment_parameters{'domain_id'} = $elements_found{'domain'}->get_id;
-
-    $logger->debugf(
-        "The %s domain has been found, its ID is: %s",
-        $elements_found{'domain'},
-        $elements_found{'domain'}->get_id
-    );
-
-} else {
-
-    $logger->tracef("The %s domain hasn't been choosen");
-
-}
-
-#
-# Dealing with the account (if defined)
-#
-if(
-    $parameters->has_account_name ||
-    $parameters->has_account_id
-) {
-
-    my @accounts;
-
-    if(defined($parameters->get_account_id)) {
-        # Okay, they want to find the account by the name
-        @accounts = $api->perform_action(
-            type        => 'Account',
-            action      => 'list',
-            parameters  => {
-                filter_by_id        => $parameters->get_account_id,
-                filter_by_domainid  => $elements_found{'domain'}->get_id
-            },
-            requested   => { element => 'element' }
-        );
-    } elsif(defined($parameters->get_account_name)) {
-        @accounts = $api->perform_action(
-            type        => 'Account',
-            action      => 'list',
-            parameters  => {
-                filter_by_name      => $parameters->get_account_name,
-                filter_by_domainid  => $elements_found{'domain'}->get_id
-            },
-            requested   => { element => 'element' }
-        );
-    }
-
-    if(@accounts > 1) {
-        MonkeyMan::Exception->throwf(
-            "Too many accounts have been found, their IDs are: %s",
-            join(', ', map({ $_->get_id } @accounts))
-        );
-    } elsif(@accounts < 1) {
-        MonkeyMan::Exception->throw("The account hasn't been found");
-    }
-
-    $elements_found{'account'} = $accounts[0];
-    $deployment_parameters{'account_name'} = $parameters->get_account_name;
-
-    $logger->debugf(
-        "The %s account has been found, its ID is: %s",
-        $elements_found{'account'},
-        $elements_found{'account'}->get_id
-    );
-
-} else {
-
-    $logger->tracef("The %s domain hasn't been set");
-
-}
 
 
 

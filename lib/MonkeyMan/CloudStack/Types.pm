@@ -15,10 +15,11 @@ use MooseX::Types::Moose qw(Str);
 
 
 our @_ElementType_values = qw(
-    VirtualMachine
+    Zone
     Domain
     Account
     User
+    VirtualMachine
     ServiceOffering
     Template
 );
