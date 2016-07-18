@@ -22,6 +22,7 @@ our @_ElementType_values = qw(
     VirtualMachine
     ServiceOffering
     Template
+    Network
 );
 subtype ElementType,
     as Str,

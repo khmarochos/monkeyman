@@ -31,21 +31,32 @@ This application recognizes the following parameters:
 
     --zone-name <name>
         [req*]      The zone's name
-    --zone-id <name>
+    --zone-id <id>
         [req*]      The zone's ID
   * It's required to define at least one of them (but only one).
 
     --service-offering-name <name>
         [req*]      The service offering's name
-    --service-offering-id <name>
+    --service-offering-id <id>
         [req*]      The service offering's ID
   * It's required to define at least one of them (but only one).
 
     --template-name <name>
         [req*]      The template's name
-    --template-id <name>
+    --template-id <id>
         [req*]      The template's ID
   * It's required to define at least one of them (but only one).
+
+    --network-names <name1> <name2> ... <nameN>
+        [opt*] [mul] The list of networks' names
+    --network-ids <id1> <id2> ... <idN>
+        [opt*] [mul] The list of networks' IDs
+  * You can set only 1 of these 2 parameters.
+
+    --ipv4-addresses <address1> <address2> ... <addressN>
+        [opt] [mul] The list of IPv4-addresses
+    --ipv6-addresses <address1> <address2> ... <addressN>
+        [opt] [mul] The list of IPv6-addresses
 
     --domain-name <name>
         [opt*]      The domain's full name and path (includung "ROOT")
@@ -97,6 +108,24 @@ template-id=s:
   template_id:
     conflicts_any:
       - template_name
+networks-names=s\@:
+  networks_names:
+    conflicts_any:
+      - networks_ids
+networks-ids=s\@:
+  networks_ids:
+    conflicts_any:
+      - networks_names
+ipv4-addresses=s\%:
+  ipv4_addresses:
+    requires_any:
+      - networks_names
+      - networks_ids
+ipv6-addresses=s\%:
+  ipv6_addresses:
+    requires_any:
+      - networks_names
+      - networks_ids
 domain-name=s:
   domain_name:
     requires_any:
@@ -199,9 +228,21 @@ my $what_is_what = {
             filter_by_name          => { from_parameters => 'template_name' }
         }
     },
+    'network'          => {
+        type                => 'Network',
+        number              => 4,
+        mandatory           => 0,
+        ref                 => 'ARRAY', # There'll be multiple networks to be found!
+        results             => { network_id => { query => '/id' } },
+        parameters_fixed    => { all => 'true' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'networks_ids' },
+            filter_by_name          => { from_parameters => 'networks_names' }
+        }
+    },
     'domain'            => {
         type                => 'Domain',
-        number              => 4,
+        number              => 5,
         mandatory           => 0,
         results             => { domain_id => { query => '/id' } },
         parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
@@ -213,7 +254,7 @@ my $what_is_what = {
     },
     'account'            => {
         type                => 'Account',
-        number              => 5,
+        number              => 6,
         mandatory           => 0,
         results             => { account_id => { query => '/id' } },
         parameters_fixed    => { all => 'true' },
@@ -225,83 +266,158 @@ my $what_is_what = {
     }
 };
 
-foreach my $huerga (
+foreach my $huerga_name (
     sort(
         {
+            # We need to have it sorted, because certain parameters need some
+            # other parameters to have been proceeded beforehand. For example,
+            # the "account" parametr that is depentant on the "domain" one.
             $what_is_what->{$a}->{'number'} <=> $what_is_what->{$b}->{'number'}
         }
         keys(%{ $what_is_what })
     )
 ) {
 
-    $logger->tracef("Selecting the %s desired", $huerga);
+    # We've got the key, now let's get the value...
+    my $huerga_configuration = $what_is_what->{$huerga_name};
 
-    my @huerga_desired;
-    my %huerga_parameters = ref($what_is_what->{$huerga}->{'parameters_fixed'}) eq 'HASH' ?
-        (%{ $what_is_what->{$huerga}->{'parameters_fixed'} }) :
+    $logger->debugf(
+        "Selecting the %s desired (as defined in %s)",
+        $huerga_name,
+        $huerga_configuration
+    );
+
+    # Later we'll need to know what exactly search criterions had been really set
+    my %huerga_desired;
+
+    # Now let's define the hash that will be passed to the perform_action() method,
+    # it shall contain all the search criterions for the huerga we proceed.
+    my %action_parameters = ref($huerga_configuration->{'parameters_fixed'}) eq 'HASH' ?
+        (%{ $huerga_configuration->{'parameters_fixed'} }) :
         ();
-    foreach my $parameter_name (keys(%{ $what_is_what->{$huerga}->{'parameters_variable'} })) {
-        my $parameter_source = $what_is_what->{$huerga}->{'parameters_variable'}->{$parameter_name};
-        if(defined($parameter_source->{'from_results'})) {
-            $huerga_parameters{$parameter_name} = $deployment_parameters{ $parameter_source->{'from_results'} };
-        } elsif(defined($parameter_source->{'from_parameters'})) {
-            my $predicate = 'has_' . $parameter_source->{'from_parameters'};
-            my $reader    = 'get_' . $parameter_source->{'from_parameters'};
+
+    # What variable parameters do we have for this huerga?
+    foreach my $action_parameter_name (keys(%{ $huerga_configuration->{'parameters_variable'} })) {
+
+        # The value will be needed later
+        my $action_parameter_configuration = $huerga_configuration->{'parameters_variable'}->{$action_parameter_name};
+
+        my $source;
+        my $value;
+        if(($source = $action_parameter_configuration->{'from_results'}) && defined($source)) {
+            # The parameter's value needs to be fetched from the results that have been already got
+            $value = $deployment_parameters{ $source };
+        } elsif(($source = $action_parameter_configuration->{'from_parameters'}) && defined($source)) {
+            # The parameter's value needs to be fetched from the command-line paramters
+            my $predicate = 'has_' . $source;
+            my $reader    = 'get_' . $source;
             if($monkeyman->get_parameters->$predicate) {
-                my $value = $monkeyman->get_parameters->$reader;
-                push(@huerga_desired, { $parameter_source->{'from_parameters'} => $value });
-                # ^^^ To keep in mind that the operator asked for it
-                $huerga_parameters{$parameter_name} = $value;
-                # ^^^ To perform the action in a moment (see below)
+                $value = $monkeyman->get_parameters->$reader;
+            }
+        }
+        if(defined($value)) {
+            if(ref($value) eq 'ARRAY') {
+                $huerga_desired{$action_parameter_name} = $value;
+            } else {
+                $huerga_desired{$action_parameter_name} = [ $value ];
             }
         }
     }
-    if(@huerga_desired) {
-        my @huerga_found = $api->perform_action(
-            type        => $what_is_what->{$huerga}->{'type'},
-            action      => 'list',
-            parameters  => \%huerga_parameters,
-            requested   => { element => 'element' }
+
+    $logger->debugf(
+        "We're ready to perform list-getting actions to find the following element(s): %s",
+        \%huerga_desired
+    );
+
+    if(
+        # So, have we got any command-line parameters about this huerga?
+        (my @action_parameters_names = keys(%huerga_desired)) ||
+        # Or shall it be proceeded even without the command-line parameters given?
+        ($huerga_configuration->{'forced'})
+    ) {
+
+        my @action_parameters_sets = ();
+
+        # It's a recursive subrouting that is generating all possible combinations of the parameters.
+        generate_parameters(
+            parameters_input    => \%huerga_desired,
+            parameters_names    => \@action_parameters_names,
+            parameters_output   => \@action_parameters_sets
         );
-        if(@huerga_found < 1) {
-            MonkeyMan::Exception->throwf(
-                "The %s desired (%s) has not been found",
-                $huerga,
-                join(', ', map({ join(': ', each(%{ $_ })) } @huerga_desired))
+
+        $logger->debugf(
+            "The following list of parameters' sets are needed to be proceeded: %s",
+            \@action_parameters_sets
+        );
+
+        # There can be multiple parameters sets (for example, in the case when the operator defined multiple networks),
+        # so we're going to fetch them all
+        foreach my $action_parameters_set (@action_parameters_sets) {
+
+            # OK, let's perform the action
+            my @huerga_found = $api->perform_action(
+                type        => $huerga_configuration->{'type'},
+                action      => 'list',
+                parameters  => { %action_parameters, %{ $action_parameters_set } },
+                requested   => { element => 'element' }
             );
-        } elsif(@huerga_found > 1) {
-            MonkeyMan::Exception->throwf(
-                "Too many %s have been found, their IDs are: %s",
-                PL($huerga),
-                join(', ', map({ $_->get_id } @huerga_found))
-            );
-        } else {
-            my $huerga_selected = $huerga_found[0];
-            $logger->debugf(
-                "The %s %s has been found, its ID is: %s",
-                $huerga_selected,
-                $huerga,
-                $huerga_selected->get_id
-            );
-            $elements_found{$huerga} = $huerga_selected;
-            foreach my $deployment_parameter (keys(%{ $what_is_what->{$huerga}->{'results'} })) {
-                my $query = $what_is_what->{$huerga}->{'results'}->{$deployment_parameter}->{'query'};
-                if(defined($query)) {
-                    my @results = $huerga_selected->qxp(
-                        query       => $query,
-                        return_as   => 'value'
-                    );
-                    if(@results < 1) {
-                        MonkeyMan::Exception->throwf("Expected a result, have got none");
-                    } elsif(@huerga_found > 1) {
-                        MonkeyMan::Exception->throwf("Expected a result, have got too many");
-                    } else {
-                        $deployment_parameters{$deployment_parameter} = $results[0];
+
+            # How much huerga have we found?
+            if(@huerga_found < 1) {
+                # Too little (less than 1 element)
+                MonkeyMan::Exception->throwf(
+                    "The %s desired (%s) has not been found",
+                    $huerga_name, join(', ', map({ sprintf("%s: %s", $_, $huerga_desired{$_})} keys(%{ %huerga_desired })))
+                );
+            } elsif(@huerga_found > 1) {
+                # Too much (more than 1 element)
+                MonkeyMan::Exception->throwf(
+                    "Too many %s have been found, their IDs are: %s",
+                    PL($huerga_name), join(', ', map({ $_->get_id } @huerga_found))
+                );
+            } else {
+                # Perfect! :)
+                my $huerga_selected = $huerga_found[0];
+                $logger->debugf(
+                    "The %s %s has been found, its ID is: %s",
+                    $huerga_selected,
+                    $huerga_name,
+                    $huerga_selected->get_id
+                );
+                foreach my $deployment_parameter (keys(%{ $huerga_configuration->{'results'} })) {
+                    if(defined(my $query = $huerga_configuration->{'results'}->{$deployment_parameter}->{'query'})) {
+                        my @results = $huerga_selected->qxp(
+                            query       => $query,
+                            return_as   => 'value'
+                        );
+                        if(@results < 1) {
+                            MonkeyMan::Exception->throwf("Expected a result, have got none");
+                        } elsif(@results > 1) {
+                            MonkeyMan::Exception->throwf("Expected a result, have got too many");
+                        } else {
+                            if(@action_parameters_sets == 1) {
+                                # If we need to get only one element, we'll simply put it
+                                # to the $deployment_parameters hash as a scalar value
+                                $deployment_parameters{$deployment_parameter} = $results[0];
+                            } else {
+                                # If we need to get multiple elements, we'll put it
+                                # to an array referenced from the $deployment_parameters hash
+                                unless(defined($deployment_parameters{$deployment_parameter})) {
+                                    # If it hasn't been initialized yet
+                                    $deployment_parameters{$deployment_parameter} = [ $results[0] ];
+                                } else {
+                                    # Otherwise, we'll push the new element
+                                    push(@{ $deployment_parameters{$deployment_parameter} }, $results[0]);
+                                }
+                            }
+                        }
                     }
                 }
             }
+
         }
-    } elsif($what_is_what->{$huerga}->{'mandatory'}) {
+
+    } elsif($huerga_configuration->{'mandatory'}) {
         MonkeyMan::Exception->throwf("The %s (a required parameter) hasn't been choosen");
     }
 
@@ -318,3 +434,32 @@ $logger->debugf(
     "the following parameters' set is to be used: %s",
     \%deployment_parameters
 );
+
+
+
+exit;
+
+
+func generate_parameters (
+    HashRef     :$parameters_input!,
+    ArrayRef    :$parameters_names!,
+    ArrayRef    :$parameters_output!,
+    HashRef     :$state = {},
+    Int         :$depth = 0
+) {
+    my $current_parameter_name = $parameters_names->[$depth];
+    foreach my $current_parameter_value (@{ $parameters_input->{$current_parameter_name} }) {
+        $state->{$current_parameter_name} = $current_parameter_value;
+        if($depth < @{ $parameters_names } - 1) {
+            generate_parameters(
+                parameters_input    => $parameters_input,
+                parameters_names    => $parameters_names,
+                parameters_output   => $parameters_output,
+                state               => $state,
+                depth               => $depth + 1
+            );
+        } else {
+            push(@{ $parameters_output }, { %{ $state } });
+        }
+    }
+}
