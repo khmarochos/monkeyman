@@ -594,7 +594,7 @@ $logger->debugf(
 $deployment_parameters{'command'} = 'deployVirtualMachine';
 my $result = $api->run_command(
     parameters  => \%deployment_parameters,
-    wait        => 1,
+    wait        => 300,
     fatal_empty => 1,
     fatal_fail  => 1
 );

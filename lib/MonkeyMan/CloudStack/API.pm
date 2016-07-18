@@ -372,7 +372,7 @@ method run_command(
     MonkeyMan::CloudStack::API::Command :$command,
     HashRef :$parameters,
     Str     :$url,
-    Bool    :$wait          = 0,
+    Int     :$wait          = 0,
     Bool    :$fatal_empty   = 0,
     Bool    :$fatal_fail    = 1,
     Bool    :$fatal_431     =
