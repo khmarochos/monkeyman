@@ -1,4 +1,4 @@
-package MonkeyMan::CloudStack::API::Element::Network;
+package MonkeyMan::CloudStack::API::Element::DiskOffering;
 
 use strict;
 use warnings;
@@ -13,13 +13,13 @@ use Method::Signatures;
 
 
 our %vocabulary_tree = (
-    type => 'Network',
-    name => 'network',
-    entity_node => 'network',
+    type => 'DiskOffering',
+    name => 'disk offering',
+    entity_node => 'diskoffering',
     actions => {
         list => {
             request => {
-                command             => 'listNetworks',
+                command             => 'listDiskOfferings',
                 async               => 0,
                 paged               => 1,
                 parameters          => {
@@ -33,12 +33,12 @@ our %vocabulary_tree = (
                     },
                     filter_by_name => {
                         required            => 0,
-                        filters             => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>[name = "<%VALUE%>"]' ]
-                    }
+                        command_parameters  => { 'name' => '<%VALUE%>' },
+                    },
                 }
             },
             response => {
-                response_node   => 'listnetworksresponse',
+                response_node   => 'listdiskofferingsresponse',
                 results         => {
                     element         => {
                         return_as       => [ qw( dom element id ) ],

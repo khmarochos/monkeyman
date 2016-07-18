@@ -29,16 +29,15 @@ my $monkeyman = MonkeyMan->new(
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
 
+    --name <name>
+        [opt]       The virtual macine's name
+    --display-name <name>
+        [opt]       The virtual macine's display name
+
     --zone-name <name>
         [req*]      The zone's name
     --zone-id <id>
         [req*]      The zone's ID
-  * It's required to define at least one of them (but only one).
-
-    --service-offering-name <name>
-        [req*]      The service offering's name
-    --service-offering-id <id>
-        [req*]      The service offering's ID
   * It's required to define at least one of them (but only one).
 
     --template-name <name>
@@ -47,6 +46,28 @@ This application recognizes the following parameters:
         [req*]      The template's ID
   * It's required to define at least one of them (but only one).
 
+    --service-offering-name <name>
+        [req*]      The service offering's name
+    --service-offering-id <id>
+        [req*]      The service offering's ID
+  * It's required to define at least one of them (but only one).
+
+    --root-disk-size <size>
+        [opt]       The root disk's size (GB)
+    --root-disk-offering-name <name>
+        [opt*]      The root disk's offering's name
+    --root-disk-offering-id <id>
+        [opt*]      The root disk's offering's ID
+  * You can set only 1 of these 2 parameters.
+
+    --data-disk-size <size>
+        [opt]       The data disk's size (GB)
+    --data-disk-offering-name <name>
+        [opt*]      The data disk's offering's name
+    --data-disk-offering-id <id>
+        [opt*]      The data disk's offering's ID
+  * You can set only 1 of these 2 parameters.
+
     --network-names <name1> <name2> ... <nameN>
         [opt*] [mul] The list of networks' names
     --network-ids <id1> <id2> ... <idN>
@@ -54,9 +75,9 @@ This application recognizes the following parameters:
   * You can set only 1 of these 2 parameters.
 
     --ipv4-addresses <address1> <address2> ... <addressN>
-        [opt] [mul] The list of IPv4-addresses
+        [opt] [mul] The list of IPv4-addresses in the order of the networks
     --ipv6-addresses <address1> <address2> ... <addressN>
-        [opt] [mul] The list of IPv6-addresses
+        [opt] [mul] The list of IPv6-addresses in the order of the networks
 
     --domain-name <name>
         [opt*]      The domain's full name and path (includung "ROOT")
@@ -69,8 +90,14 @@ This application recognizes the following parameters:
     --account-name <name>
         [opt*]      The account's name
     --account-id <id>
-        [opt*]      The account's name
+        [opt*]      The account's ID
   * One of these is required if the domain is choosen (you can set only one).
+
+    --host-name <name>
+        [opt*]      The deployment host's name
+    --host-id <id>
+        [opt*]      The deployment host's ID
+  * You can set only 1 of these 2 parameters.
 
     --password <password>
         [opt*]      The user's password
@@ -84,6 +111,10 @@ This application recognizes the following parameters:
 __END_OF_USAGE_HELP__
     parameters_to_get_validated => <<__END_OF_PARAMETERS_TO_GET_VALIDATED__
 ---
+name=s:
+  name:
+display-name=s:
+  display_name:
 zone-name=s:
   zone_name:
     conflicts_any:
@@ -92,14 +123,6 @@ zone-id=s:
   zone_id:
     conflicts_any:
       - zone_name
-service-offering-name=s:
-  service_offering_name:
-    conflicts_any:
-      - service_offering_id
-service-offering-id=s:
-  service_offering_id:
-    conflicts_any:
-      - service_offering_name
 template-name=s:
   template_name:
     conflicts_any:
@@ -108,6 +131,40 @@ template-id=s:
   template_id:
     conflicts_any:
       - template_name
+service-offering-name=s:
+  service_offering_name:
+    conflicts_any:
+      - service_offering_id
+service-offering-id=s:
+  service_offering_id:
+    conflicts_any:
+      - service_offering_name
+root-disk-offering-size=i:
+  root_disk_offering_size:
+    requires_any:
+      - root_disk_offering_name
+      - root_disk_offering_id
+root-disk-offering-name=s:
+  root_disk_offering_name:
+    conflicts_any:
+      - root_disk_offering_id
+root-disk-offering-id=s:
+  root_disk_offering_id:
+    conflicts_any:
+      - root_disk_offering_name
+data-disk-offering-size=i:
+  data_disk_offering_size:
+    requires_any:
+      - data_disk_offering_name
+      - data_disk_offering_id
+data-disk-offering-name=s:
+  data_disk_offering_name:
+    conflicts_any:
+      - data_disk_offering_id
+data-disk-offering-id=s:
+  data_disk_offering_id:
+    conflicts_any:
+      - data_disk_offering_name
 networks-names=s\@:
   networks_names:
     conflicts_any:
@@ -116,12 +173,12 @@ networks-ids=s\@:
   networks_ids:
     conflicts_any:
       - networks_names
-ipv4-addresses=s\%:
+ipv4-addresses=s\@:
   ipv4_addresses:
     requires_any:
       - networks_names
       - networks_ids
-ipv6-addresses=s\%:
+ipv6-addresses=s\@:
   ipv6_addresses:
     requires_any:
       - networks_names
@@ -161,6 +218,14 @@ account-id=s:
     requires_any:
       - domain_name
       - domain_id
+host-name=s:
+  host_name:
+    conflicts_any:
+      - host_id
+host-id=s:
+  host_id:
+    conflicts_any:
+      - host_name
 password=s:
   password:
     conflicts_any:
@@ -194,46 +259,81 @@ my $parameters  = $monkeyman->get_parameters;
 my %deployment_parameters;  # The parameters to be given to the deployment method
 my %elements_found;         # The references to the elements found are to be kept here
 
+#
+# Setting names
+#
+
+$deployment_parameters{'name'} = $monkeyman->get_parameters->get_name
+    if($monkeyman->get_parameters->has_name);
+$deployment_parameters{'displayname'} = $monkeyman->get_parameters->get_display_name
+    if($monkeyman->get_parameters->has_display_name);
+
+#
+# Finding all the elements that have been mentioned by their names or ID
+#
+
 my $what_is_what = {
     'zone'              => {
         type                => 'Zone',
         number              => 1,
         mandatory           => 1,
-        results             => { zone_id => { query => '/id' } },
+        results             => { zoneid => { query => '/id' } },
         parameters_fixed    => { available => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'zone_id' },
             filter_by_name          => { from_parameters => 'zone_name' }
         }
     },
-    'service offering'  => {
-        type                => 'ServiceOffering',
-        number              => 2,
-        mandatory           => 1,
-        results             => { service_offering_id => { query => '/id' } },
-        parameters_fixed    => { all => 'true' },
-        parameters_variable => {
-            filter_by_id            => { from_parameters => 'service_offering_id' },
-            filter_by_name          => { from_parameters => 'service_offering_name' }
-        }
-    },
     'template'          => {
         type                => 'Template',
-        number              => 3,
+        number              => 2,
         mandatory           => 1,
-        results             => { template_id => { query => '/id' } },
+        results             => { templateid => { query => '/id' } },
         parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'template_id' },
             filter_by_name          => { from_parameters => 'template_name' }
         }
     },
-    'network'          => {
-        type                => 'Network',
+    'service offering'  => {
+        type                => 'ServiceOffering',
+        number              => 3,
+        mandatory           => 1,
+        results             => { serviceofferingid => { query => '/id' } },
+        parameters_fixed    => { all => 'true' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'service_offering_id' },
+            filter_by_name          => { from_parameters => 'service_offering_name' }
+        }
+    },
+    'root disk offering'  => {
+        type                => 'DiskOffering',
         number              => 4,
         mandatory           => 0,
+        results             => { diskofferingid => { query => '/id' } },
+        parameters_fixed    => { all => 'true' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'root_disk_offering_id' },
+            filter_by_name          => { from_parameters => 'root_disk_offering_name' }
+        }
+    },
+    'data disk offering'  => {
+        type                => 'DiskOffering',
+        number              => 5,
+        mandatory           => 0,
+        results             => { diskofferingid => { query => '/id' } },
+        parameters_fixed    => { all => 'true' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'root_disk_offering_id' },
+            filter_by_name          => { from_parameters => 'root_disk_offering_name' }
+        }
+    },
+    'network'          => {
+        type                => 'Network',
+        number              => 6,
+        mandatory           => 0,
         ref                 => 'ARRAY', # There'll be multiple networks to be found!
-        results             => { network_id => { query => '/id' } },
+        results             => { _networks => { query => '/id' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'networks_ids' },
@@ -244,7 +344,7 @@ my $what_is_what = {
         type                => 'Domain',
         number              => 5,
         mandatory           => 0,
-        results             => { domain_id => { query => '/id' } },
+        results             => { domainid => { query => '/id' } },
         parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'domain_id' },
@@ -256,12 +356,23 @@ my $what_is_what = {
         type                => 'Account',
         number              => 6,
         mandatory           => 0,
-        results             => { account_id => { query => '/id' } },
+        results             => { account => { query => '/name' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'account_id' },
             filter_by_name          => { from_parameters => 'account_name' },
-            filter_by_domainid      => { from_results => 'domain_id' }
+            filter_by_domainid      => { from_results => 'domainid' }
+        }
+    },
+    'host'            => {
+        type                => 'Host',
+        number              => 7,
+        mandatory           => 0,
+        results             => { hostid => { query => '/id' } },
+        parameters_fixed    => { all => 'true' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'host_id' },
+            filter_by_name          => { from_parameters => 'host_name' },
         }
     }
 };
@@ -281,7 +392,7 @@ foreach my $huerga_name (
     # We've got the key, now let's get the value...
     my $huerga_configuration = $what_is_what->{$huerga_name};
 
-    $logger->debugf(
+    $logger->tracef(
         "Selecting the %s desired (as defined in %s)",
         $huerga_name,
         $huerga_configuration
@@ -324,7 +435,7 @@ foreach my $huerga_name (
         }
     }
 
-    $logger->debugf(
+    $logger->tracef(
         "We're ready to perform list-getting actions to find the following element(s): %s",
         \%huerga_desired
     );
@@ -345,7 +456,7 @@ foreach my $huerga_name (
             parameters_output   => \@action_parameters_sets
         );
 
-        $logger->debugf(
+        $logger->tracef(
             "The following list of parameters' sets are needed to be proceeded: %s",
             \@action_parameters_sets
         );
@@ -367,7 +478,7 @@ foreach my $huerga_name (
                 # Too little (less than 1 element)
                 MonkeyMan::Exception->throwf(
                     "The %s desired (%s) has not been found",
-                    $huerga_name, join(', ', map({ sprintf("%s: %s", $_, $huerga_desired{$_})} keys(%{ %huerga_desired })))
+                    $huerga_name, join(', ', map({ sprintf("%s: %s", $_, $huerga_desired{$_})} keys(%huerga_desired)))
                 );
             } elsif(@huerga_found > 1) {
                 # Too much (more than 1 element)
@@ -395,11 +506,7 @@ foreach my $huerga_name (
                         } elsif(@results > 1) {
                             MonkeyMan::Exception->throwf("Expected a result, have got too many");
                         } else {
-                            if(@action_parameters_sets == 1) {
-                                # If we need to get only one element, we'll simply put it
-                                # to the $deployment_parameters hash as a scalar value
-                                $deployment_parameters{$deployment_parameter} = $results[0];
-                            } else {
+                            if(defined($huerga_configuration->{'ref'}) && $huerga_configuration->{'ref'} eq 'ARRAY') {
                                 # If we need to get multiple elements, we'll put it
                                 # to an array referenced from the $deployment_parameters hash
                                 unless(defined($deployment_parameters{$deployment_parameter})) {
@@ -409,6 +516,10 @@ foreach my $huerga_name (
                                     # Otherwise, we'll push the new element
                                     push(@{ $deployment_parameters{$deployment_parameter} }, $results[0]);
                                 }
+                            } else {
+                                # If we need to get only one element, we'll simply put it
+                                # to the $deployment_parameters hash as a scalar value
+                                $deployment_parameters{$deployment_parameter} = $results[0];
                             }
                         }
                     }
@@ -423,21 +534,81 @@ foreach my $huerga_name (
 
 }
 
+#
+# Dealing with networks and IP-addresses
+#
+
+my @networks_ids = (
+    defined($deployment_parameters{'_networks'}) &&
+        ref($deployment_parameters{'_networks'}) eq 'ARRAY'
+) ? @{ $deployment_parameters{'_networks'} } : ( );
+# Getting rid of a temporary parameter
+delete($deployment_parameters{'_networks'})
+    if(@networks_ids);
+my @ipv4_addresses = (
+           ($monkeyman->get_parameters->has_ipv4_addresses) &&
+    defined($monkeyman->get_parameters->get_ipv4_addresses) &&
+        ref($monkeyman->get_parameters->get_ipv4_addresses) eq 'ARRAY'
+) ? @{ $monkeyman->get_parameters->get_ipv4_addresses } : ();
+my @ipv6_addresses = (
+           ($monkeyman->get_parameters->has_ipv6_addresses) &&
+    defined($monkeyman->get_parameters->get_ipv6_addresses) &&
+        ref($monkeyman->get_parameters->get_ipv6_addresses) eq 'ARRAY'
+) ? @{ $monkeyman->get_parameters->get_ipv6_addresses } : ();
+if(@ipv4_addresses || @ipv6_addresses) {
+    if(
+        (@ipv4_addresses != @networks_ids) ||
+        (@ipv6_addresses != @networks_ids)
+    ) {
+        MonkeyMan::Exception->throwf(
+            "The quanttity of the IP-addresses (IPv4: %s; IPv6: %s) doesn't match the quantity of the networks (%s)",
+            join(', ', @ipv4_addresses  ? @ipv4_addresses   : qw(-)),
+            join(', ', @ipv6_addresses  ? @ipv6_addresses   : qw(-)),
+            join(', ', @networks_ids    ? @networks_ids     : qw(-))
+        );
+    }
+    for(my $i = 0; $i < @networks_ids; $i++) {
+        $deployment_parameters{"iptonetworklist[$i].networkid"} = $networks_ids[$i];
+        $deployment_parameters{"iptonetworklist[$i].ip"}        = $ipv4_addresses[$i]
+            if(defined($ipv4_addresses[$i]) && $ipv4_addresses[$i] !~ /auto/i);
+        $deployment_parameters{"iptonetworklist[$i].ipv6"}      = $ipv6_addresses[$i]
+            if(defined($ipv6_addresses[$i]) && $ipv6_addresses[$i] !~ /auto/i);
+    }
+} elsif(@networks_ids) {
+    @deployment_parameters{'networkids'} = join(' ', @networks_ids);
+}
+
 
 
 
 #
 # Deploying a VM
 #
+
 $logger->debugf(
     "Going to deploy a virtual machine, " .
     "the following parameters' set is to be used: %s",
     \%deployment_parameters
 );
 
+$deployment_parameters{'command'} = 'deployVirtualMachine';
+my $result = $api->run_command(
+    parameters  => \%deployment_parameters,
+    wait        => 1,
+    fatal_empty => 1,
+    fatal_fail  => 1
+);
+print($result);
 
+
+
+#
+# That's all!
+#
 
 exit;
+
+
 
 
 func generate_parameters (
