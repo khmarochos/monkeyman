@@ -1,4 +1,4 @@
-package MonkeyMan::CloudStack::API::Element::VirtualMachine;
+package MonkeyMan::CloudStack::API::Element::ISO;
 
 use strict;
 use warnings;
@@ -13,16 +13,20 @@ use Method::Signatures;
 
 
 our %vocabulary_tree = (
-    type => 'VirtualMachine',
-    name => 'virtual machine',
-    entity_node => 'virtualmachine',
+    type => 'ISO',
+    name => 'iso',
+    entity_node => 'iso',
     actions => {
         list => {
             request => {
-                command             => 'listVirtualMachines',
+                command             => 'listIsos',
                 async               => 0,
                 paged               => 1,
                 parameters          => {
+                    filter_by_type => {
+                        required            => 1,
+                        command_parameters  => { 'isofilter' => '<%VALUE%>' }
+                    },
                     all => {
                         required            => 0,
                         command_parameters  => { 'listall' => 'true' },
@@ -31,9 +35,9 @@ our %vocabulary_tree = (
                         required            => 0,
                         command_parameters  => { 'id' => '<%VALUE%>' },
                     },
-                    filter_by_domain_id => {
+                    filter_by_name => {
                         required            => 0,
-                        command_parameters  => { 'domainid' => '<%VALUE%>' },
+                        command_parameters  => { 'name' => '<%VALUE%>' },
                     },
                     filter_by_zoneid => {
                         required            => 0,
@@ -42,7 +46,7 @@ our %vocabulary_tree = (
                 }
             },
             response => {
-                response_node   => 'listvirtualmachinesresponse',
+                response_node   => 'listisosresponse',
                 results         => {
                     element         => {
                         return_as       => [ qw( dom element id ) ],
@@ -58,7 +62,7 @@ our %vocabulary_tree = (
                     },
                 }
             }
-        }
+        },
     }
 );
 

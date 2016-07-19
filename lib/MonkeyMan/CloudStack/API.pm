@@ -370,12 +370,12 @@ is 1.
 
 method run_command(
     MonkeyMan::CloudStack::API::Command :$command,
-    HashRef :$parameters,
-    Str     :$url,
-    Int     :$wait          = 0,
-    Bool    :$fatal_empty   = 0,
-    Bool    :$fatal_fail    = 1,
-    Bool    :$fatal_431     =
+    HashRef     :$parameters,
+    Str         :$url,
+    Maybe[Int]  :$wait          = 0,
+    Maybe[Bool] :$fatal_empty   = 0,
+    Maybe[Bool] :$fatal_fail    = 1,
+    Maybe[Bool] :$fatal_431     =
         ! $self->get_configuration->{'ignore_431_code'}
 ) {
 
@@ -503,7 +503,7 @@ method run_command(
 
                 my $job_result = $self->get_job_result($jobid);
 
-                if($job_result->findvalue('/*/jobstatus') ne '0') {
+                if($job_result->findvalue('/queryasyncjobresultresponse/jobstatus') ne '0') {
                     $logger->tracef("The job %s is finished", $jobid);
                     $dom = $job_result;
                     last;

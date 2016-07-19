@@ -25,7 +25,7 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'deploy_vm.pl',
     app_description     => 'Deploys virtual machines',
-    app_version         => MM_VERSION,
+    app_version         => '0.1.0',
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
 
@@ -41,32 +41,55 @@ This application recognizes the following parameters:
   * It's required to define at least one of them (but only one).
 
     --template-name <name>
-        [req*]      The template's name
+        [req*,**]   The template's name
     --template-id <id>
-        [req*]      The template's ID
-  * It's required to define at least one of them (but only one).
+        [req*,**]   The template's ID
+  * Alternatively, you can choose an ISO instead of a template.
+ ** It's required to define at least one of them (but only one).
+
+    --iso-name <name>
+        [req*,**]   The ISO's name
+    --iso-id <id>
+        [req*,**]   The ISO's ID
+  * Alternatively, you can choose a template instead of an ISO.
+ ** It's required to define at least one of them (but only one).
+
+    --hypervisor-type <type>
+        [opt*]      The hypervisor's type
+  * May be required if not defined for the template or the ISO.
 
     --service-offering-name <name>
         [req*]      The service offering's name
     --service-offering-id <id>
         [req*]      The service offering's ID
+    --cpu-cores <number>
+        [opt**]     The number of CPUs (in MHz)
+    --cpu-speed <number>
+        [opt**]     The CPUs' speed
+    --ram-size <number>
+        [opt**]     The quantity of RAM (in MB)
   * It's required to define at least one of them (but only one).
+ ** This option requires a custom-sized service offering to be selected.
 
-    --root-disk-size <size>
-        [opt]       The root disk's size (GB)
     --root-disk-offering-name <name>
-        [opt*]      The root disk's offering's name
+        [opt*,**] The root disk's offering's name
     --root-disk-offering-id <id>
-        [opt*]      The root disk's offering's ID
-  * You can set only 1 of these 2 parameters.
+        [opt*,**] The root disk's offering's ID
+    --root-disk-size <size>
+        [opt*,**]   The root disk's size (GB)
+  * You can configure either a root disk or a data disk (not both of them).
+ ** You can set only 1 of these 2 parameters.
+*** This option requires a custom-sized disk offering to be selected.
 
-    --data-disk-size <size>
-        [opt]       The data disk's size (GB)
     --data-disk-offering-name <name>
-        [opt*]      The data disk's offering's name
+        [opt**,***] The data disk's offering's name
     --data-disk-offering-id <id>
-        [opt*]      The data disk's offering's ID
-  * You can set only 1 of these 2 parameters.
+        [opt**,***] The data disk's offering's ID
+    --data-disk-size <size>
+        [opt*,**]   The data disk's size (GB)
+  * This option requires a custom-sized disk offering to be selected.
+ ** You can configure either a root disk or a data disk (not both of them).
+*** You can set only 1 of these 2 parameters.
 
     --network-names <name1> <name2> ... <nameN>
         [opt*] [mul] The list of networks' names
@@ -98,16 +121,6 @@ This application recognizes the following parameters:
     --host-id <id>
         [opt*]      The deployment host's ID
   * You can set only 1 of these 2 parameters.
-
-    --password <password>
-        [opt*]      The user's password
-    --password-generate <length>
-        [opt]       The user's password needs to be generated
-    --password-stdin
-        [opt]       The user's password needs to be got from STDIN
-    --password-prompt
-        [opt]       The user's password needs to be entered twice
-  * We don't recommend you to use this option, it may lead to password leak!
 __END_OF_USAGE_HELP__
     parameters_to_get_validated => <<__END_OF_PARAMETERS_TO_GET_VALIDATED__
 ---
@@ -127,10 +140,34 @@ template-name=s:
   template_name:
     conflicts_any:
       - template_id
+      - iso_id
+      - iso_name
 template-id=s:
   template_id:
     conflicts_any:
       - template_name
+      - iso_id
+      - iso_name
+iso-name=s:
+  iso_name:
+    requires_any:
+      - root_disk_offering_id
+      - root_disk_offering_name
+    conflicts_any:
+      - iso_id
+      - template_id
+      - template_name
+iso-id=s:
+  iso_id:
+    requires_any:
+      - root_disk_offering_id
+      - root_disk_offering_name
+    conflicts_any:
+      - iso_name
+      - template_id
+      - template_name
+hypervisor-type=s:
+  hypervisor_type:
 service-offering-name=s:
   service_offering_name:
     conflicts_any:
@@ -139,32 +176,59 @@ service-offering-id=s:
   service_offering_id:
     conflicts_any:
       - service_offering_name
-root-disk-offering-size=i:
-  root_disk_offering_size:
-    requires_any:
-      - root_disk_offering_name
-      - root_disk_offering_id
+cpu-cores=i:
+  cpu_cores:
+    requires_each:
+      - cpu_speed
+      - ram_size
+cpu-speed=i:
+  cpu_speed:
+    requires_each:
+      - cpu_cores
+      - ram_size
+ram-size=i:
+  ram_size:
+    requires_each:
+      - cpu_cores
+      - cpu_speed
 root-disk-offering-name=s:
   root_disk_offering_name:
     conflicts_any:
       - root_disk_offering_id
+    requires_any:
+      - iso_id
+      - iso_name
 root-disk-offering-id=s:
   root_disk_offering_id:
     conflicts_any:
       - root_disk_offering_name
-data-disk-offering-size=i:
-  data_disk_offering_size:
     requires_any:
-      - data_disk_offering_name
-      - data_disk_offering_id
+      - iso_id
+      - iso_name
+root-disk-size=i:
+  root_disk_size:
+    requires_any:
+      - root_disk_offering_name
+      - root_disk_offering_id
 data-disk-offering-name=s:
   data_disk_offering_name:
     conflicts_any:
       - data_disk_offering_id
+    requires_any:
+      - template_id
+      - template_name
 data-disk-offering-id=s:
   data_disk_offering_id:
     conflicts_any:
       - data_disk_offering_name
+    requires_any:
+      - template_id
+      - template_name
+data-disk-size=i:
+  data_disk_size:
+    requires_any:
+      - data_disk_offering_name
+      - data_disk_offering_id
 networks-names=s\@:
   networks_names:
     conflicts_any:
@@ -226,30 +290,6 @@ host-id=s:
   host_id:
     conflicts_any:
       - host_name
-password=s:
-  password:
-    conflicts_any:
-      - password_generate
-      - password_stdin
-      - password_prompt
-password-generate:
-  password_generate:
-    conflicts_any:
-      - password
-      - password_stdin
-      - password_prompt
-password-stdin:
-  password_stdin:
-    conflicts_any:
-      - password
-      - password_generate
-      - password_prompt
-password-prompt:
-  password_prompt:
-    conflicts_any:
-      - password
-      - password_generate
-      - password_stdin
 __END_OF_PARAMETERS_TO_GET_VALIDATED__
 );
 my $logger      = $monkeyman->get_logger;
@@ -287,17 +327,30 @@ my $what_is_what = {
     'template'          => {
         type                => 'Template',
         number              => 2,
-        mandatory           => 1,
+        mandatory           => 0,
         results             => { templateid => { query => '/id' } },
         parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'template_id' },
-            filter_by_name          => { from_parameters => 'template_name' }
+            filter_by_name          => { from_parameters => 'template_name' },
+            filter_by_zoneid        => { from_results => 'zoneid' }
+        }
+    },
+    'ISO'          => {
+        type                => 'ISO',
+        number              => 3,
+        mandatory           => 0,
+        results             => { templateid => { query => '/id' } },
+        parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
+        parameters_variable => {
+            filter_by_id            => { from_parameters => 'iso_id' },
+            filter_by_name          => { from_parameters => 'iso_name' },
+            filter_by_zoneid        => { from_results => 'zoneid' }
         }
     },
     'service offering'  => {
         type                => 'ServiceOffering',
-        number              => 3,
+        number              => 4,
         mandatory           => 1,
         results             => { serviceofferingid => { query => '/id' } },
         parameters_fixed    => { all => 'true' },
@@ -308,7 +361,7 @@ my $what_is_what = {
     },
     'root disk offering'  => {
         type                => 'DiskOffering',
-        number              => 4,
+        number              => 5,
         mandatory           => 0,
         results             => { diskofferingid => { query => '/id' } },
         parameters_fixed    => { all => 'true' },
@@ -319,18 +372,18 @@ my $what_is_what = {
     },
     'data disk offering'  => {
         type                => 'DiskOffering',
-        number              => 5,
+        number              => 6,
         mandatory           => 0,
         results             => { diskofferingid => { query => '/id' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
-            filter_by_id            => { from_parameters => 'root_disk_offering_id' },
-            filter_by_name          => { from_parameters => 'root_disk_offering_name' }
+            filter_by_id            => { from_parameters => 'data_disk_offering_id' },
+            filter_by_name          => { from_parameters => 'data_disk_offering_name' }
         }
     },
     'network'          => {
         type                => 'Network',
-        number              => 6,
+        number              => 7,
         mandatory           => 0,
         ref                 => 'ARRAY', # There'll be multiple networks to be found!
         results             => { _networks => { query => '/id' } },
@@ -342,7 +395,7 @@ my $what_is_what = {
     },
     'domain'            => {
         type                => 'Domain',
-        number              => 5,
+        number              => 8,
         mandatory           => 0,
         results             => { domainid => { query => '/id' } },
         parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
@@ -354,7 +407,7 @@ my $what_is_what = {
     },
     'account'            => {
         type                => 'Account',
-        number              => 6,
+        number              => 9,
         mandatory           => 0,
         results             => { account => { query => '/name' } },
         parameters_fixed    => { all => 'true' },
@@ -366,13 +419,14 @@ my $what_is_what = {
     },
     'host'            => {
         type                => 'Host',
-        number              => 7,
+        number              => 10,
         mandatory           => 0,
         results             => { hostid => { query => '/id' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'host_id' },
             filter_by_name          => { from_parameters => 'host_name' },
+            filter_by_zoneid        => { from_results => 'zoneid' }
         }
     }
 };
@@ -407,6 +461,8 @@ foreach my $huerga_name (
         (%{ $huerga_configuration->{'parameters_fixed'} }) :
         ();
 
+    # Is this huerga choosen by the operator?
+    my $huerga_choosen = 0;
     # What variable parameters do we have for this huerga?
     foreach my $action_parameter_name (keys(%{ $huerga_configuration->{'parameters_variable'} })) {
 
@@ -424,6 +480,7 @@ foreach my $huerga_name (
             my $reader    = 'get_' . $source;
             if($monkeyman->get_parameters->$predicate) {
                 $value = $monkeyman->get_parameters->$reader;
+                $huerga_choosen++; # This huerga has been choosen by the operator!
             }
         }
         if(defined($value)) {
@@ -442,7 +499,7 @@ foreach my $huerga_name (
 
     if(
         # So, have we got any command-line parameters about this huerga?
-        (my @action_parameters_names = keys(%huerga_desired)) ||
+        ($huerga_choosen && (my @action_parameters_names = keys(%huerga_desired))) ||
         # Or shall it be proceeded even without the command-line parameters given?
         ($huerga_configuration->{'forced'})
     ) {
@@ -535,6 +592,29 @@ foreach my $huerga_name (
 }
 
 #
+# Dealing with custom offerings
+#
+
+$deployment_parameters{'size'} = $monkeyman->get_parameters->get_root_disk_size
+    if($monkeyman->get_parameters->has_root_disk_size);
+$deployment_parameters{'size'} = $monkeyman->get_parameters->get_data_disk_size
+    if($monkeyman->get_parameters->has_data_disk_size);
+$deployment_parameters{'details[0].cpuNumber'} = $monkeyman->get_parameters->get_cpu_cores
+    if($monkeyman->get_parameters->has_cpu_cores);
+$deployment_parameters{'details[0].cpuSpeed'} = $monkeyman->get_parameters->get_cpu_speed
+    if($monkeyman->get_parameters->has_cpu_speed);
+$deployment_parameters{'details[0].memory'} = $monkeyman->get_parameters->get_ram_size
+    if($monkeyman->get_parameters->has_ram_size);
+
+#
+# It's required
+#
+
+$deployment_parameters{'hypervisor'} = $monkeyman->get_parameters->get_hypervisor_type
+    if($monkeyman->get_parameters->has_hypervisor_type);
+
+
+#
 # Dealing with networks and IP-addresses
 #
 
@@ -598,13 +678,14 @@ my $result = $api->run_command(
     fatal_empty => 1,
     fatal_fail  => 1
 );
-print($result);
 
 
 
 #
 # That's all!
 #
+
+printf("The virtual machine's ID is %s\n", $result->findvalue('/queryasyncjobresultresponse/jobresult/virtualmachine/id'));
 
 exit;
 

@@ -35,6 +35,10 @@ our %vocabulary_tree = (
                         required            => 0,
                         command_parameters  => { 'name' => '<%VALUE%>' },
                     },
+                    filter_by_zoneid => {
+                        required            => 0,
+                        command_parameters  => { 'zoneid' => '<%VALUE%>' },
+                    },
                 }
             },
             response => {

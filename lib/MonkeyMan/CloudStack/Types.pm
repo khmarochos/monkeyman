@@ -23,6 +23,7 @@ our @_ElementType_values = qw(
     ServiceOffering
     DiskOffering
     Template
+    ISO
     Network
     Host
 );
