@@ -80,7 +80,8 @@ method _build_global_macros {
 method resolve_macros(
     Str             :$source!,
     Maybe[HashRef]  :$macros,
-    Bool            :$fatal = 1
+    Maybe[Bool]     :$references    = 1,
+    Maybe[Bool]     :$fatal         = 1
 ) {
 
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
@@ -103,7 +104,7 @@ method resolve_macros(
 
         my($left, $middle, $right) = ($1, $2, $3);
 
-        if(defined($right)) {
+        if(length($right)) {
             unshift(@result, $right);
         }
 
@@ -119,9 +120,13 @@ method resolve_macros(
 
     }
 
-    unshift(@result, $source);
+    if(length($source)) {
+        unshift(@result, $source);
+    }
 
-    my $result_string = join('', @result);
+    my $result_string = ($references) && (@result == 1) && ref($result[0]) ?
+        $result[0] : join('', @result);
+
 #    $logger->tracef(
 #        "Resolved macroses in the %s (%s) expression, " .
 #        "the global index is at %s, the result is at %s (%s)",
@@ -351,20 +356,19 @@ method compose_request(
         );
         if(defined($filters) && ref($filters) eq 'ARRAY') {
             foreach my $filter (
-                map { $self->resolve_macros(
-                    source => $_,
-                    macros => $macros_complete
-                ) } (@{ $filters })
+                map {
+                    $self->resolve_macros(
+                        source => $_,
+                        macros => $macros_complete
+                    )
+                } (@{ $filters })
             ) {
                 push(@{ $r->{'filters'} }, $filter);
             }
         }
         
         my $command_parameters_subtree = $self->vocabulary_lookup(
-            words => [
-                'request',  'parameters',
-                $parameter, 'command_parameters'
-            ],
+            words   => [ 'request', 'parameters', $parameter, 'command_parameters' ],
             fatal   => 0,
             tree    => $action_subtree,
         );
@@ -376,13 +380,33 @@ method compose_request(
                 my(
                     $command_parameter_name,
                     $command_parameter_value
-                ) = map { $self->resolve_macros(
-                    source => $_,
-                    macros => $macros_complete
-                ) } each(%{ $command_parameters_subtree })
+                ) = map {
+                    $self->resolve_macros(
+                        source      => $_,
+                        macros      => $macros_complete
+                    )
+                } each(%{ $command_parameters_subtree })
             ) {
-                $command_parameters->{$command_parameter_name} =
-                $command_parameter_value;
+                if(ref($command_parameter_value) eq 'ARRAY') {
+                    for(my $i = 0; $i < @{ $command_parameter_value }; $i++) {
+                        if(ref($command_parameter_value->[$i]) eq 'HASH') {
+                            foreach (keys(%{ $command_parameter_value->[$i] })) {
+                                $command_parameters->{$command_parameter_name . "[$i]" . ".$_"} =
+                                $command_parameter_value->[$i]->{$_};
+                            }
+                        } elsif(ref($command_parameter_value->[$i])) {
+                            # TODO: Raise an exception!
+                        } else {
+                            $command_parameters->{$command_parameter_name . "[$i]"} =
+                            $command_parameter_value->[$i];
+                        }
+                    }
+                } elsif(ref($command_parameter_value)) {
+                    # TODO: Raise an exception!
+                } else {
+                    $command_parameters->{$command_parameter_name} =
+                    $command_parameter_value;
+                }
             }
         }
     }
@@ -431,6 +455,12 @@ method apply_filters(
 ) {
 
     my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+
+    $logger->tracef(
+        "Applying filters to %s, action is %s, parameters are %s, " .
+        "additional filters are in %s, request is in %s, macroses are in %s",
+        $dom, $action, $parameters, $filters, $request, $macros
+    );
 
     # FIXME: Need to decide what exactly has the highest priority:
     # the $action-$parameters pair, the $request name or the $filters list
@@ -534,6 +564,8 @@ method interpret_response(
     my $logger  = $api->get_cloudstack->get_monkeyman->get_logger;
 
     my @results;
+
+    $logger->tracef("Interpreting the responce contained in %s", $dom);
 
     # If the action hasn't been defined, let's try to guess it
     $action = ($self->recognize_response(dom => $dom))[1]

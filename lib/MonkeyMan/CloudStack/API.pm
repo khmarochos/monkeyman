@@ -522,17 +522,21 @@ method run_command(
                     );
                 }
 
-                sleep(
-                    defined($configuration->{'sleep'}) ?
+                my $time_to_sleep = defined($configuration->{'sleep'}) ?
                             $configuration->{'sleep'} :
-                            MM_CLOUDSTACK_API_SLEEP
+                            MM_CLOUDSTACK_API_SLEEP;
+                $logger->tracef(
+                    "Sleeping for %d seconds while waiting for the %s job",
+                    $time_to_sleep,
+                    $jobid
                 );
+                sleep($time_to_sleep);
 
             }
 
         } else {
 
-            $logger->tracef("We won't wait for the result of the %s job", $jobid);
+            $logger->tracef("This time we won't wait for the result of the %s job", $jobid);
 
         }
     }
@@ -584,7 +588,7 @@ method apply_filters(
 }
 
 method interpret_response(
-    XML::LibXML::Document                               :$dom!,
+    XML::LibXML::Document :$dom!,
     Maybe[MonkeyMan::CloudStack::Types::ElementType]    :$type,
     Maybe[Str]                                          :$action,
     Maybe[HashRef]                                      :$macros,
@@ -596,6 +600,7 @@ method interpret_response(
     )->interpret_response(
         dom         => $dom,
         action      => $action,
+        macros      => $macros,
         requested   => $requested
     ));
 
@@ -616,6 +621,14 @@ method perform_action(
     HashRef|ArrayRef[HashRef]                   :$requested!
 ) {
 
+    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+
+    $logger->tracef(
+        "Performing the %s action, elements' type is %s, " .
+        "parameters are contained in %s, macroses are in %s",
+        $action, $type, $parameters, $requested
+    );
+
     my $request = $self->compose_request(
         type        => $type,
         action      => $action,
@@ -624,11 +637,13 @@ method perform_action(
     );
 
     my $dom = $self->run_command(
-        command     => $request->get_command
+        command     => $request->get_command,
+        wait        => $request->get_async ? -1 : 0
     );
 
     $dom = $self->apply_filters(
         dom         => $dom,
+        type        => $type,
         request     => $request
     );
     # If we've got an empty DOM after applying filters, let's mimic an empty
@@ -639,10 +654,11 @@ method perform_action(
     )
         unless(defined($dom));
 
-    # The wantarray() function will detect what the caller expects
+    # The wantarray() function will detect what exactly the caller expects
     return($self->interpret_response(
         dom         => $dom,
         type        => $type,
+        action      => $action,
         requested   => $requested
     ))
 
@@ -961,9 +977,9 @@ method recognize_dom(
 }
 
 method recognize_response (
-    XML::LibXML::Document   :$dom!,
-    Maybe[Str]              :$vocabulary,
-    Maybe[Bool]             :$fatal = 1
+    XML::LibXML::Document :$dom!,
+    Maybe[Str]            :$vocabulary,
+    Maybe[Bool]           :$fatal = 1
 ) {
 
     my $logger = $self->get_cloudstack->get_monkeyman->get_logger;

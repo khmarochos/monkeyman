@@ -58,6 +58,93 @@ our %vocabulary_tree = (
                     },
                 }
             }
+        },
+        create => {
+            request => {
+                command             => 'deployVirtualMachine',
+                async               => 1,
+                paged               => 0,
+                parameters          => {
+                    zoneid => {
+                        required            => 1,
+                        command_parameters  => { 'zoneid' => '<%VALUE%>' },
+                    },
+                    templateid => {
+                        required            => 1,
+                        command_parameters  => { 'templateid' => '<%VALUE%>' },
+                    },
+                    serviceofferingid => {
+                        required            => 1,
+                        command_parameters  => { 'serviceofferingid' => '<%VALUE%>' },
+                    },
+                    diskofferingid => {
+                        required            => 0,
+                        command_parameters  => { 'diskofferingid' => '<%VALUE%>' },
+                    },
+                    size => {
+                        required            => 0,
+                        command_parameters  => { 'size' => '<%VALUE%>' },
+                    },
+                    details => {
+                        required            => 0,
+                        command_parameters  => { 'details' => '<%VALUE%>' },
+                    },
+                    networkids => {
+                        required            => 0,
+                        command_parameters  => { 'networkids' => '<%VALUE%>' },
+                    },
+                    iptonetworklist => {
+                        required            => 0,
+                        command_parameters  => { 'iptonetworklist' => '<%VALUE%>' }
+                    },
+                    domainid => {
+                        required            => 0,
+                        command_parameters  => { 'domainid' => '<%VALUE%>' },
+                    },
+                    account => {
+                        required            => 0,
+                        command_parameters  => { 'account' => '<%VALUE%>' },
+                    },
+                    hostid => {
+                        required            => 0,
+                        command_parameters  => { 'hostid' => '<%VALUE%>' },
+                    },
+                    name => {
+                        required            => 0,
+                        command_parameters  => { 'name' => '<%VALUE%>' },
+                    },
+                    displayname => {
+                        required            => 0,
+                        command_parameters  => { 'displayname' => '<%VALUE%>' },
+                    },
+                    hypervisor => {
+                        required            => 0,
+                        command_parameters  => { 'hypervisor' => '<%VALUE%>' },
+                    },
+                    startvm => {
+                        required            => 0,
+                        command_parameters  => { 'startvm' => '<%VALUE%>' },
+                    }
+                }
+            },
+            response => {
+                response_node   => 'deployvirtualmachinesresponse',
+                results         => {
+                    element         => {
+                        return_as       => [ qw( dom element id ) ],
+#                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
+                        queries         => [ '/queryasyncjobresultresponse/jobresult/<%OUR_ENTITY_NODE%>' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    }
+                }
+            }
         }
     }
 );

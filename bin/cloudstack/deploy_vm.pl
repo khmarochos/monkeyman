@@ -121,6 +121,9 @@ This application recognizes the following parameters:
     --host-id <id>
         [opt*]      The deployment host's ID
   * You can set only 1 of these 2 parameters.
+
+    --stopped
+        [opt]       The virtual machine shall not be started
 __END_OF_USAGE_HELP__
     parameters_to_get_validated => <<__END_OF_PARAMETERS_TO_GET_VALIDATED__
 ---
@@ -290,8 +293,11 @@ host-id=s:
   host_id:
     conflicts_any:
       - host_name
+stopped:
+  stopped:
 __END_OF_PARAMETERS_TO_GET_VALIDATED__
 );
+
 my $logger      = $monkeyman->get_logger;
 my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
@@ -299,14 +305,7 @@ my $parameters  = $monkeyman->get_parameters;
 my %deployment_parameters;  # The parameters to be given to the deployment method
 my %elements_found;         # The references to the elements found are to be kept here
 
-#
-# Setting names
-#
 
-$deployment_parameters{'name'} = $monkeyman->get_parameters->get_name
-    if($monkeyman->get_parameters->has_name);
-$deployment_parameters{'displayname'} = $monkeyman->get_parameters->get_display_name
-    if($monkeyman->get_parameters->has_display_name);
 
 #
 # Finding all the elements that have been mentioned by their names or ID
@@ -431,6 +430,33 @@ my $what_is_what = {
     }
 };
 
+# This is a recursively-called function needed to generate all the possible
+# combinations of parameters for each huerga. It's needed if the operator 
+# selects multiple networks by their names or IDs, so we'll need to find them.
+
+func generate_parameters (
+    HashRef     :$parameters_input!,
+    ArrayRef    :$parameters_output!,
+    HashRef     :$state = {},
+    Int         :$depth = 0
+) {
+    my @parameters_names = sort(keys(%{ $parameters_input }));
+    my $current_parameter_name = $parameters_names[$depth];
+    foreach my $current_parameter_value (@{ $parameters_input->{$current_parameter_name} }) {
+        $state->{$current_parameter_name} = $current_parameter_value;
+        if($depth < @parameters_names - 1) {
+            generate_parameters(
+                parameters_input    => $parameters_input,
+                parameters_output   => $parameters_output,
+                state               => $state,
+                depth               => $depth + 1
+            );
+        } else {
+            push(@{ $parameters_output }, { %{ $state } });
+        }
+    }
+}
+
 foreach my $huerga_name (
     sort(
         {
@@ -499,7 +525,7 @@ foreach my $huerga_name (
 
     if(
         # So, have we got any command-line parameters about this huerga?
-        ($huerga_choosen && (my @action_parameters_names = keys(%huerga_desired))) ||
+        ($huerga_choosen) ||
         # Or shall it be proceeded even without the command-line parameters given?
         ($huerga_configuration->{'forced'})
     ) {
@@ -509,7 +535,6 @@ foreach my $huerga_name (
         # It's a recursive subrouting that is generating all possible combinations of the parameters.
         generate_parameters(
             parameters_input    => \%huerga_desired,
-            parameters_names    => \@action_parameters_names,
             parameters_output   => \@action_parameters_sets
         );
 
@@ -591,27 +616,33 @@ foreach my $huerga_name (
 
 }
 
+
+
 #
-# Dealing with custom offerings
+# Dealing with custom offerings and other options
 #
 
+$deployment_parameters{'name'} = $monkeyman->get_parameters->get_name
+    if($monkeyman->get_parameters->has_name);
+$deployment_parameters{'displayname'} = $monkeyman->get_parameters->get_display_name
+    if($monkeyman->get_parameters->has_display_name);
 $deployment_parameters{'size'} = $monkeyman->get_parameters->get_root_disk_size
     if($monkeyman->get_parameters->has_root_disk_size);
 $deployment_parameters{'size'} = $monkeyman->get_parameters->get_data_disk_size
     if($monkeyman->get_parameters->has_data_disk_size);
-$deployment_parameters{'details[0].cpuNumber'} = $monkeyman->get_parameters->get_cpu_cores
-    if($monkeyman->get_parameters->has_cpu_cores);
-$deployment_parameters{'details[0].cpuSpeed'} = $monkeyman->get_parameters->get_cpu_speed
-    if($monkeyman->get_parameters->has_cpu_speed);
-$deployment_parameters{'details[0].memory'} = $monkeyman->get_parameters->get_ram_size
-    if($monkeyman->get_parameters->has_ram_size);
-
-#
-# It's required
-#
-
 $deployment_parameters{'hypervisor'} = $monkeyman->get_parameters->get_hypervisor_type
     if($monkeyman->get_parameters->has_hypervisor_type);
+$deployment_parameters{'startvm'} = 'false'
+    if($monkeyman->get_parameters->has_stopped);
+my $details = [ { } ];
+$details->[0]->{'cpuNumber'} = $monkeyman->get_parameters->get_cpu_cores
+    if($monkeyman->get_parameters->has_cpu_cores);
+$details->[0]->{'cpuSpeed'} = $monkeyman->get_parameters->get_cpu_speed
+    if($monkeyman->get_parameters->has_cpu_speed);
+$details->[0]->{'memory'} = $monkeyman->get_parameters->get_ram_size
+    if($monkeyman->get_parameters->has_ram_size);
+$deployment_parameters{'details'} = $details
+    if(keys(%{ $details->[0] }));
 
 
 #
@@ -671,47 +702,12 @@ $logger->debugf(
     \%deployment_parameters
 );
 
-$deployment_parameters{'command'} = 'deployVirtualMachine';
-my $result = $api->run_command(
+my $vm = $api->perform_action(
+    type        => 'VirtualMachine',
+    action      => 'create',
     parameters  => \%deployment_parameters,
-    wait        => 300,
-    fatal_empty => 1,
-    fatal_fail  => 1
+    requested   => { 'element' => 'element' }
 );
 
+printf("The virtual machine's ID is %s\n", $vm->get_id);
 
-
-#
-# That's all!
-#
-
-printf("The virtual machine's ID is %s\n", $result->findvalue('/queryasyncjobresultresponse/jobresult/virtualmachine/id'));
-
-exit;
-
-
-
-
-func generate_parameters (
-    HashRef     :$parameters_input!,
-    ArrayRef    :$parameters_names!,
-    ArrayRef    :$parameters_output!,
-    HashRef     :$state = {},
-    Int         :$depth = 0
-) {
-    my $current_parameter_name = $parameters_names->[$depth];
-    foreach my $current_parameter_value (@{ $parameters_input->{$current_parameter_name} }) {
-        $state->{$current_parameter_name} = $current_parameter_value;
-        if($depth < @{ $parameters_names } - 1) {
-            generate_parameters(
-                parameters_input    => $parameters_input,
-                parameters_names    => $parameters_names,
-                parameters_output   => $parameters_output,
-                state               => $state,
-                depth               => $depth + 1
-            );
-        } else {
-            push(@{ $parameters_output }, { %{ $state } });
-        }
-    }
-}
