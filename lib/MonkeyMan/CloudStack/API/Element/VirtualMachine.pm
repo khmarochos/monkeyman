@@ -138,7 +138,7 @@ our %vocabulary_tree = (
                     },
                     id              => {
                         return_as       => [ qw( value ) ],
-                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>/id' ],
                         required        => 0,
                         multiple        => 1
                     }

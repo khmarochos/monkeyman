@@ -708,6 +708,10 @@ my $vm = $api->perform_action(
     parameters  => \%deployment_parameters,
     requested   => { 'element' => 'element' }
 );
-
-printf("The virtual machine's ID is %s\n", $vm->get_id);
+my $vm_id       =  $vm->get_id;
+my $vm_password = ($vm->qxp(query => '/password', return_as => 'value'))[0];
+printf(
+    "The virtual machine's ID is %s%s\n",
+    $vm_id, defined($vm_password) ? sprintf(', the password is %s', $vm_password) : ''
+);
 
