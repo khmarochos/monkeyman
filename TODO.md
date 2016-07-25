@@ -1,6 +1,13 @@
 Things To Do
 ============
 
+Bugs
+----
+
+ - [x] Fix `MonkeyMan::CloudStack::API::Vocabulary::interpret_response`.
+        - suggested on `2016.07.25` by `melnik13`
+	- completed on `2016.07.25`
+
 Code
 ----
 
@@ -12,9 +19,6 @@ Code
         - suggested on `2016.04.07` by `melnik13`
  - [ ] Add the `fatal` parameter to all vocabulary-related methods.
         - suggested on `2016.02.09` by `melnik13`
- - [ ] Make it possible to dump all data structures right to the same log-file
-       where it has been mentioned (as an option that could be set or unset).
-        - suggested on `2016.01.28` by `melnik13`
  - [ ] Make some helper to find the framework's library directory
         - on `2016.01.17` by `melnik13`
  - [ ] Build a proper `Makefile`
@@ -66,6 +70,9 @@ Functionality
  - [ ] Make `bin/cloudstack/makesnapshots.pl` support more than one queues
        for the same domain (see `Tucha#2016062913000542`)
         - suggested on `2016.06.13` by `melnik13`
+ - [ ] Make it possible to dump all the data structures right to the same
+       log-file where it has been mentioned (as an option).
+        - suggested on `2016.01.28` by `melnik13`
  - [x] Let the user set the default `MonkeyMan::Logger` instance
         - suggested on `2016.01.19` by `melnik13`
         - completed on `2016.01.19`

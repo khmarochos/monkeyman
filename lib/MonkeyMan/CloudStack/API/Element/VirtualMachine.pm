@@ -128,12 +128,11 @@ our %vocabulary_tree = (
                 }
             },
             response => {
-                response_node   => 'deployvirtualmachinesresponse',
+                response_node   => 'queryasyncjobresultresponse',
                 results         => {
                     element         => {
                         return_as       => [ qw( dom element id ) ],
-#                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
-                        queries         => [ '/queryasyncjobresultresponse/jobresult/<%OUR_ENTITY_NODE%>' ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>' ],
                         required        => 0,
                         multiple        => 1
                     },

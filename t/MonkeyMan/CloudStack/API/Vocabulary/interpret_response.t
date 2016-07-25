@@ -27,4 +27,4 @@ my $api                     = $cloudstack->get_api;
 my $dom = XML::LibXML->load_xml(location => $monkeyman->get_parameters->get_xml_file);
 
 #$api->interpret_response(dom => $dom, type => 'VirtualMachine', action => 'create', requested => { element => 'element' });
-$api->interpret_response(dom => $dom, type => 'VirtualMachine', action => 'create', requested => { element => 'element' });
+$api->interpret_response(dom => $dom, type => 'VirtualMachine', requested => { element => 'element' });

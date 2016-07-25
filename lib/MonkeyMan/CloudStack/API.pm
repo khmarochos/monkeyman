@@ -1020,7 +1020,7 @@ method recognize_response (
                             "recognized as a response to the %s:%s action",
                             $dom,
                             $self->translate_type(
-                                type => $vocabulary->get_type
+                                 type => $vocabulary->get_type
                             ),
                             $action,
                             $self->translate_type(
