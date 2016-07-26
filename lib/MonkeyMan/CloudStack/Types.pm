@@ -24,8 +24,8 @@ our @_ElementType_values = qw(
     DiskOffering
     Template
     ISO
-    Network
     Host
+    Network
 );
 subtype ElementType,
     as Str,

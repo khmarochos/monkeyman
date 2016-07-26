@@ -34,7 +34,6 @@ use warnings;
 
 # Use Moose and be happy :)
 use Moose;
-use MooseX::Handies;
 use namespace::autoclean;
 
 # Inherit some essentials

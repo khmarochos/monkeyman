@@ -11,8 +11,6 @@ use lib("$FindBin::Bin/../../lib");
 # Use my own modules
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
-use MonkeyMan::Utils;
-use MonkeyMan::CloudStack::API::Element::VirtualMachine;
 
 use Method::Signatures;
 
@@ -26,7 +24,7 @@ my $monkeyman = MonkeyMan->new(
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
 
-    -o <condition>, --condition <condition>
+    -c <condition>, --condition <condition>
         [mul]       Look up for virtual machines by certain conditions
     -x <query>, --xpath <query>
         [opt] [mul] Apply some XPath-queries and show their result
@@ -34,7 +32,7 @@ This application recognizes the following parameters:
         [opt] [mul] Get the result in a short form (try to add it twice!)
 __END_OF_USAGE_HELP__
     parameters_to_get   => {
-        'o|cond|condition|conditions=s%{,}' => 'conditions',
+        'c|cond|condition|conditions=s%{,}' => 'conditions',
         'x|xpath|xpaths=s@'                 => 'xpaths',
         's|short|be-short+'                 => 'be_short'
     }
