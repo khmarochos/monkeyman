@@ -17,8 +17,8 @@ use Method::Signatures;
 use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
-use LWP::UserAgent;
 use HTTP::Request;
+use LWP::UserAgent;
 
 
 
@@ -160,21 +160,27 @@ method run(
     );
     $logger->tracef(" <-- The server's response is: %s (contents %s)",
         $self->get_http_response->status_line,
-        \$self->get_http_response->as_string,
+       \$self->get_http_response->as_string,
     );
 
     # Is everything fine?
-    if(! $self->get_http_response->is_success && $fatal_fail) {
-        if($self->get_http_response->code eq 431 && ! $fatal_431) {
-            $logger->warnf(
-                "Have got the 431 reply from the API server " . 
-                "in reply to the %s command",
-                $self
-            );
+    if(! $self->get_http_response->is_success) {
+        if($fatal_fail) {
+            if($self->get_http_response->code eq 431 && ! $fatal_431) {
+                $logger->warnf(
+                    "Have got the 431 reply from the API server " . 
+                    "in reply to the %s command",
+                    $self
+                );
+            } else {
+                (__PACKAGE__ . '::Exception::BadResponse')->throwf(
+                    "The command has failed to run: %s",
+                        $self->get_http_response->status_line
+                );
+            }
         } else {
-            (__PACKAGE__ . '::Exception::BadResponse')->throwf(
-                "The command has failed to run: %s",
-                    $self->get_http_response->status_line
+            $logger->warnf("The command has failed to run: %s",
+                $self->get_http_response->status_line
             );
         }
     }

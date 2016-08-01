@@ -9,7 +9,7 @@ use namespace::autoclean;
 
 
 
-has 'cloudstack' => (
+has 'zendesk' => (
     is          => 'ro',
     isa         => 'MonkeyMan::Zendesk',
     reader      =>  'get_zendesk',

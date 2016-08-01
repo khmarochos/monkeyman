@@ -546,6 +546,23 @@ method run_command(
 
 
 
+method get_job_result(Str $jobid!) {
+
+    $self->run_command(
+        parameters  => {
+            command     => 'queryAsyncJobResult',
+            jobid       => $jobid
+        },
+        fatal_fail  => 1,
+        fatal_empty => 1
+    );
+
+}
+
+
+
+
+
 method compose_request(
     MonkeyMan::CloudStack::Types::ElementType   :$type!,
     Str                                         :$action!,
@@ -877,21 +894,6 @@ method find_doms(
     }
 
     return(@results);
-
-}
-
-
-
-method get_job_result(Str $jobid!) {
-
-    $self->run_command(
-        parameters  => {
-            command     => 'queryAsyncJobResult',
-            jobid       => $jobid
-        },
-        fatal_fail  => 1,
-        fatal_empty => 1
-    );
 
 }
 
