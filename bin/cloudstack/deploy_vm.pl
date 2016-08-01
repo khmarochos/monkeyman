@@ -560,7 +560,7 @@ foreach my $huerga_name (
                 # Too little (less than 1 element)
                 MonkeyMan::Exception->throwf(
                     "The %s desired (%s) has not been found",
-                    $huerga_name, join(', ', map({ sprintf("%s: %s", $_, $huerga_desired{$_})} keys(%huerga_desired)))
+                    $huerga_name, join(', ', map({ sprintf("%s: %s", $_, join('/', @{ $huerga_desired{$_} }))} keys(%huerga_desired)))
                 );
             } elsif(@huerga_found > 1) {
                 # Too much (more than 1 element)
@@ -678,11 +678,13 @@ if(@ipv4_addresses || @ipv6_addresses) {
             join(', ', @networks_ids    ? @networks_ids     : qw(-))
         );
     }
+    $deployment_parameters{'iptonetworklist'} = [];
     for(my $i = 0; $i < @networks_ids; $i++) {
-        $deployment_parameters{"iptonetworklist[$i].networkid"} = $networks_ids[$i];
-        $deployment_parameters{"iptonetworklist[$i].ip"}        = $ipv4_addresses[$i]
+        $deployment_parameters{'iptonetworklist'}->[$i] = {};
+        $deployment_parameters{'iptonetworklist'}->[$i]->{'networkid'}  = $networks_ids[$i];
+        $deployment_parameters{'iptonetworklist'}->[$i]->{'ip'}         = $ipv4_addresses[$i]
             if(defined($ipv4_addresses[$i]) && $ipv4_addresses[$i] !~ /auto/i);
-        $deployment_parameters{"iptonetworklist[$i].ipv6"}      = $ipv6_addresses[$i]
+        $deployment_parameters{'iptonetworklist'}->[$i]->{'ipv6'}       = $ipv6_addresses[$i]
             if(defined($ipv6_addresses[$i]) && $ipv6_addresses[$i] !~ /auto/i);
     }
 } elsif(@networks_ids) {

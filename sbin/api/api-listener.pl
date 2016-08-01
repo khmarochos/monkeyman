@@ -18,12 +18,14 @@ get '/welcome' => sub {
     $self->render('welcome');
 };
 
-put '/api' => sub {
+any '/api' => sub {
 
     my $self = shift;
 
-    $self->redirect_to('/welcome')
+    $self->reply->exception('Oops!')
         unless($self->basic_auth(realm => 'zendesk' => '********'));
+
+    $self->render('api-response');
 };
 
 app->start;
@@ -35,3 +37,6 @@ __DATA__
   <head><title>Welcome to MonkeyMan API</title></head>
   <body>Hello, world!</body>
 </html>
+
+@@ api-response.html.ep
+OK
