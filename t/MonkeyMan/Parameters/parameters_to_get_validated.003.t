@@ -140,7 +140,7 @@ z|zaloopa:
 p|pizdets:
   pizdets
 __YAML__
-), '!=', 0, 'One of conflicting parameters is given (should be OK)');
+), '!=', 0, 'A conflicting parameter is given (should fail)');
 
 # conflicts_each
 
@@ -205,11 +205,11 @@ cmp_ok(test_validation(
 ---
 e|ebashevo=s:
   ebashevo:
-    matches_each:
+    matches_any:
      - .+
      - ^13\$
 __YAML__
-), '!=', 0);
+), '==', 0);
 
 cmp_ok(test_validation(
     parameters  => [qw(-e 666)],
@@ -240,7 +240,7 @@ func test_validation(
         @{ $parameters }
     );
     print(PROBE_IN $yaml); close(PROBE_IN);
-    my $error = <PROBE_ERR>; close(PROBE_ERR); diag($error) if defined($error);
+    my $error = <PROBE_ERR>; close(PROBE_ERR); note($error) if defined($error);
     close(PROBE_OUT);
     waitpid($pid, 0);
     return($?);

@@ -93,7 +93,6 @@ use MonkeyMan::Parameters;
 use MonkeyMan::Plug;
 
 # Use 3rd-party libraries
-use MooseX::Handies;
 use MooseX::Singleton;
 use Method::Signatures;
 use TryCatch;
