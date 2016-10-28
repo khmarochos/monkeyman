@@ -109,6 +109,13 @@ our %vocabulary_tree = (
         }
     },
     related => {
+        our_accounts => {
+            type    => 'Account',
+            keys    => {
+                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/id' ] },
+                foreign => { parameters => { filter_by_domain_id => '<%OWN_KEY_VALUE%>' } },
+            }
+        },
         our_virtual_machines => {
             type    => 'VirtualMachine',
             keys    => {

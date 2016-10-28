@@ -859,7 +859,7 @@ method print_full_usage_help {
         [opt]       Print usage help text and do nothing
     -V, --version
         [opt]       Print version number and do nothing
-    -c <filename>, --configuration <filename>
+    -C <filename>, --configuration <filename>
         [opt]       The main configuration file
     -v, --verbose
         [opt] [mul] Increases verbosity

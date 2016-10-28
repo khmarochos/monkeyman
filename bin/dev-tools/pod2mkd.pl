@@ -4,10 +4,6 @@
 use strict;
 use warnings;
 
-# Find the libraries-directory
-use FindBin;
-use lib("$FindBin::Bin/../../lib");
-
 use MonkeyMan;
 use MonkeyMan::Constants qw(:directories);
 use MonkeyMan::Exception;

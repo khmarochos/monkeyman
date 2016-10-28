@@ -10,15 +10,12 @@ our $_PrimaryZaloopaValue   = 13;
 
 package _Zaloopator;
 
-use FindBin;
-use lib "$FindBin::Bin/../../../lib";
-
 use Moose;
 use MooseX::Handies;
 use namespace::autoclean;
 
 has 'zaloopas' => (
-    isa     => 'HashRef[Int]',
+    isa     => 'HashRef',
     is      => 'ro',
     reader  => 'get_zaloopas',
     default => sub {{}},

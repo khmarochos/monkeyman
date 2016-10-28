@@ -47,7 +47,7 @@ method _build_reserved {
     my %reserved = (
         'h|help'                        => 'mm_show_help',
         'V|version'                     => 'mm_show_version',
-        'c|configuration=s'             => 'mm_configuration',
+        'C|configuration=s'             => 'mm_configuration',
         'v|verbose+'                    => 'mm_be_verbose',
         'q|quiet+'                      => 'mm_be_quiet',
     );

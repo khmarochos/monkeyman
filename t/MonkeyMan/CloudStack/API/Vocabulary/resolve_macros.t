@@ -3,9 +3,6 @@
 use strict;
 use warnings;
 
-use FindBin;
-use lib("$FindBin::Bin/../../../../../lib");
-
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
 
@@ -38,3 +35,4 @@ ok($vocabulary->resolve_macros(
     macros  => { OUR_RESPONSE_NODE => $our_response_node }
 ) eq sprintf('/%s/%s', $our_response_node, $api->translate_type(type => $element_type)));
 
+done_testing;

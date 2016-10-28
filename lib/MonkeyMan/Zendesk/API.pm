@@ -11,7 +11,7 @@ use namespace::autoclean;
 with 'MonkeyMan::Zendesk::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
-use MonkeyMan::Utils;
+use MonkeyMan::Utils qw(mm_sprintf);
 use MonkeyMan::Exception qw(BadResponse);
 
 use Method::Signatures;

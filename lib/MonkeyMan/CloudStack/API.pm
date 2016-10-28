@@ -63,6 +63,8 @@ use URI::Encode qw(uri_encode uri_decode);
 use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
 use XML::LibXML;
+use Module::List qw(list_modules);
+use Data::Dumper;
 
 
 
@@ -1373,6 +1375,17 @@ method BUILD(...) {
         actor_handle        => 'vocabulary',
         plug_handle         => 'vocabulary_plug'
     );
+
+    foreach my $vocabulary (keys(%{
+        list_modules(
+            __PACKAGE__ . '::Element::', {
+                list_modules => 1,
+            }
+        )
+    })) {
+        $vocabulary =~ s/^.+::(?!::)(.+)$/$1/g;
+        $self->get_vocabulary($vocabulary);
+    }
 
 }
 

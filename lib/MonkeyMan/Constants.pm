@@ -3,10 +3,9 @@ package MonkeyMan::Constants;
 use strict;
 use warnings;
 
-use FindBin;
-use Exporter;
-
 use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
+
+use FindBin qw($Bin);
 
 
 

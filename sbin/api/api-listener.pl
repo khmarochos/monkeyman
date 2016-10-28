@@ -3,29 +3,26 @@
 use strict;
 use warnings;
 
-use FindBin;
-use lib("$FindBin::Bin/../../lib");
-
 use MonkeyMan;
 use Mojolicious::Lite;
 
 plugin 'basic_auth';
 
-get '/welcome' => sub {
-
-    my $self = shift;
-
-    $self->render('welcome');
-};
-
 any '/api' => sub {
 
-    my $self = shift;
+    my $c = shift;
+    my $l = Mojo::Log->new;
 
-    $self->reply->exception('Oops!')
-        unless($self->basic_auth(realm => 'zendesk' => '********'));
+    unless($c->basic_auth(realm => 'zendesk' => '********')) {
+        $c->res->headers->www_authenticate('Basic');
+        $c->render(text => 'Authentication required', status => 401);
+        return;
+    }
 
-    $self->render('api-response');
+    $l->debug($c->dumper($c->req->json));
+
+    $c->render('api-response');
+
 };
 
 app->start;
@@ -39,4 +36,4 @@ __DATA__
 </html>
 
 @@ api-response.html.ep
-OK
+OK, thank you!

@@ -3,9 +3,6 @@
 use strict;
 use warnings;
 
-use FindBin;
-use lib("$FindBin::Bin/../../../../lib");
-
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
 
@@ -33,17 +30,17 @@ foreach my $domain ($api->get_elements(type => 'Domain')) {
     );
     # 2016/07/06 14:08:37 [D] [main] Have got the [MonkeyMan::CloudStack::API::Element::Domain@0x......./................................] domain (Zaloopa)
 
-    foreach my $virtualmachine ($domain->get_related(related => 'our_virtual_machines')) {
+    foreach my $account ($domain->get_related(related => 'our_accounts')) {
 
         $logger->debugf(
                 "Have got the %s %s (%s)",
-            $virtualmachine,
-            $virtualmachine->get_type(noun => 1),
-            $virtualmachine->qxp(query => 'name', return_as => 'value')
+            $account,
+            $account->get_type(noun => 1),
+            $account->qxp(query => 'name', return_as => 'value')
         );
-        # 2016/07/06 14:08:37 [D] [main] Have got the [MonkeyMan::CloudStack::API::Element::VirtualMachine@0xdeadbee/badcaffefeeddeafbeefbabedeadface] virualmachinegun :)
+        # 2016/07/06 14:08:37 [D] [main] Have got the [MonkeyMan::CloudStack::API::Element::Account@0xdeadbee/badcaffefeeddeafbeefbabedeadface] account
 
-        ok($virtualmachine->get_id);
+        ok($account->get_id);
 
     }
 

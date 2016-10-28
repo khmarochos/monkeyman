@@ -3,9 +3,6 @@
 use strict;
 use warnings;
 
-use FindBin;
-use lib("$FindBin::Bin/../../../../lib");
-
 use MonkeyMan;
 use MonkeyMan::Constants qw(:version);
 
@@ -25,11 +22,12 @@ my $cloudstack      = $monkeyman->get_cloudstack;
 my $api             = $cloudstack->get_api;
 
 
-foreach my $vm ($api->get_elements(
-    type        => 'VirtualMachine',
+foreach my $account ($api->get_elements(
+    type        => 'Account',
+    return_as   => 'element',
     criterions  => { listall => 1 }
 )) {
-    ok($vm->get_id eq $vm->get_dom->findvalue('/virtualmachine/id'));
+    ok($account->get_id eq $account->get_dom->findvalue('/account/id'));
 }
 
 

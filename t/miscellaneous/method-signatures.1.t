@@ -6,8 +6,6 @@ use warnings;
 use Test::More tests => 2;
 use Method::Signatures;
 
-die;
-
 my $defval = 'DefVal';
 
 #my $parameters = sprintf(

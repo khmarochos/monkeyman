@@ -3,12 +3,10 @@
 use strict;
 use warnings;
 
-use FindBin;
-use lib("$FindBin::Bin/../../../lib");
-
 use Method::Signatures;
 use Test::More tests => 13;
 use IPC::Open3;
+use FindBin;
 
 
 # requires_each for self-required parameters
@@ -209,9 +207,9 @@ e|ebashevo=s:
   ebashevo:
     matches_each:
      - .+
-     - 6+
+     - ^13\$
 __YAML__
-), '==', 0);
+), '!=', 0);
 
 cmp_ok(test_validation(
     parameters  => [qw(-e 666)],
@@ -238,7 +236,7 @@ func test_validation(
         \*PROBE_IN,
         \*PROBE_OUT,
         \*PROBE_ERR,
-        $FindBin::Bin . '/parameters_to_get_validated.YAML-STDIN.t',
+        $FindBin::Bin . '/parameters_to_get_validated.YAML-STDIN.pl',
         @{ $parameters }
     );
     print(PROBE_IN $yaml); close(PROBE_IN);
