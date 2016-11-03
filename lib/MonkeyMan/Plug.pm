@@ -15,6 +15,7 @@ use namespace::autoclean;
 
 # Use 3rd-party libraries
 use Method::Signatures;
+use Scalar::Util qw(weaken);
 
 
 

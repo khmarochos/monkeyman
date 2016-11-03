@@ -103,6 +103,13 @@ use String::CamelCase qw(camelize);
 use YAML::XS;
 use File::Slurp;
 
+# I have to use Log::Log4perl here, because it adds the END-block which
+# destroys all the loggers. I need this block to be added before I add my
+# END-block which needs the loggers. I let the Log::Log4perl to add its
+# block before mine, so my block will be executed before its one...
+use Log::Log4perl;
+# ...yes, it's ugly, but it works. :-P
+
 
 
 =head1 METHODS
@@ -118,21 +125,14 @@ This method initializes the framework and runs the application.
 method BUILD(...) {
 
     $self->_mm_init;
-    $self->get_logger->debugf("<%s> Hello world!", $self->get_time_passed_formatted);
-    {
-        END: {
-            $self->get_logger->debugf("<%s> Goodbye world!", $self->get_time_passed_formatted)
-                if($self->can('get_logger') && $self->get_logger->can('debugf'));
-            $self->_mm_shutdown
-                if($self->can('_mm_shutdown'));
-        };
-    };
+
     if(defined($self->get_app_code)) {
         $self->_app_start;
         $self->_app_run;
         $self->_app_finish;
     }
 
+    END { MonkeyMan->instance->_mm_shutdown; };
 
 }
 
@@ -591,11 +591,6 @@ method plug(
     Maybe[HashRef]  :$configuration_index?
 ) {
 
-#   my $plug_class = Moose::Meta::Class->create('MonkeyMan::Plug',
-#       roles   => [ 'MonkeyMan::Roles::WithPlug' ]
-#   );
-#   ^^^ I used to create a define a separate class for each plug, now I don't
-
     my %p;
     $p{'plugin_name'}           = $plugin_name;
     $p{'actor_class'}           = $actor_class;
@@ -611,9 +606,9 @@ method plug(
     my $plug_object = MonkeyMan::Plug->new(%p);
 
     my $parent_meta = $actor_parent->meta;
-    # FIXME: I should check now, hasn't the plug been initalized yet, so we
-    # wouldn't install the plugin's method and attribute which can lead to
-    # exception raising
+    # FIXME: I should check now if the plug nasn't been initalized yet, so we
+    # wouldn't install the plugin's method and attribute again, as it would
+    # lead to exception raising
 
     # Now we'll add the method get_SOMETHING (where SOMETHING is the value of
     # the actor_handle parameter) to the parent class
@@ -784,7 +779,7 @@ method _app_start {
 
 method _app_run {
 
-    &{ $self->{app_code}; }($self);
+    &{ $self->{'app_code'}; }($self);
 
     $self->get_logger->debugf("<%s> The application has been executed",
         $self->get_time_passed_formatted
@@ -806,11 +801,15 @@ method _app_finish {
 
 method _mm_shutdown {
 
-    $self->get_logger->debugf("<%s> The framework is shutting itself down",
-        $self->get_time_passed_formatted,
-        $self
-    )
-        if($self->can('get_logger') && $self->get_logger->can('debugf'));
+    if(
+        $self->can('get_logger') &&
+        $self->get_logger->can('debugf')
+    ) {
+        $self->get_logger->debugf("<%s> The framework is shutting itself down",
+            $self->get_time_passed_formatted,
+            $self
+        );
+    }
 
 }
 
@@ -844,7 +843,8 @@ method print_full_usage_help {
     foreach my $plugin_name (keys(%{ $self->get_plugins_loaded })) {
         my $plugin_configuration   = $self->get_plugins_loaded->{$plugin_name};
         $plugins_usage_help .= sprintf(
-            "    --%s <ID> (the default actor is %s)\n        [opt]       %s\n",
+                (' ' x 4) . "--%s <ID> (the default actor is %s)\n" .
+                (' ' x 8) . '[opt]' . (' ' x 7) . "%s\n",
             $plugin_configuration->{'parameter_key'},
             $plugin_configuration->{'actor_default_actor'},
             $plugin_configuration->{'parameter_help'}

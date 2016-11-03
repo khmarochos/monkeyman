@@ -131,7 +131,7 @@ method BUILD(...) {
         );
         $logger_console_appender->layout($logger_console_layout);
         $logger_console_appender->threshold((&MM_VERBOSITY_LEVELS)[$log_console_level]);
-        $self->find_log4perl_logger('')->add_appender($logger_console_appender);
+        $self->find_log4perl_logger()->add_appender($logger_console_appender);
 
     }
 
@@ -139,15 +139,15 @@ method BUILD(...) {
 
     foreach my $helper_name (qw(fatal error warn info debug trace)) {
 
-        my $log_straight    = sub {
-            shift->find_log4perl_logger((caller(0))[0])->$helper_name(
-                "@_"
-            );
+        my $log_straight = sub {
+            if(defined(my $logger = shift->find_log4perl_logger((caller(0))[0]))) {
+                $logger->$helper_name("@_");
+            }
         };
-        my $log_formatted   = sub {
-            shift->find_log4perl_logger((caller(0))[0])->$helper_name(
-                mm_sprintf(@_)
-            );
+        my $log_formatted = sub {
+            if(defined(my $logger = shift->find_log4perl_logger((caller(0))[0]))) {
+                $logger->$helper_name(mm_sprintf(@_));
+            }
         };
 
         $self->meta->add_method(
@@ -169,14 +169,31 @@ method BUILD(...) {
 
     }
 
+    $self->debugf("<%s> Hello world!", $self->get_time_passed_formatted);
+
 }
 
 
 
-method find_log4perl_logger(Str $module!) {
-    $self->_get_log4perl_loggers->{$module} ?
-        $self->_get_log4perl_loggers->{$module} :
-       ($self->_get_log4perl_loggers->{$module} = Log::Log4perl->get_logger($module));
+method DEMOLISH(...) {
+
+    $self->debugf("<%s> Goodbye world!", $self->get_time_passed_formatted);
+
+}
+
+
+method find_log4perl_logger(Str $module = '') {
+
+    if(Log::Log4perl->initialized) {
+        return(
+            $self->_get_log4perl_loggers->{$module} ?
+                $self->_get_log4perl_loggers->{$module} :
+               ($self->_get_log4perl_loggers->{$module} = Log::Log4perl->get_logger($module))
+        );
+    } else {
+        return(undef);
+    }
+
 }
 
 
