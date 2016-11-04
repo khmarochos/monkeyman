@@ -77,7 +77,7 @@ func _showref(Ref $ref!) {
         $dumpdir    = $conftree->{'dump'}->{'directory'};
     } catch($e) {
         warn(sprintf(
-            "Can't determine if I should dump the data structure. " .
+            "Can't determine if I should really dump the data structure. " .
             "It seems that MonkeyMan hasn't been initialized properly yet. " .
             "%s",
             $e
@@ -123,7 +123,7 @@ func _showref(Ref $ref!) {
                 );
         } catch($e) {
             $logger->warnf("Can't dump: %s", $e);
-            return("[$ref_id_short]");
+            $ref_id_long='...CORRUPTED...';
         }
 
         $result = sprintf("%s/%s", $ref_id_short, $ref_id_long);

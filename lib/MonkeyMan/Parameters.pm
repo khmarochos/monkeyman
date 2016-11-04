@@ -33,16 +33,16 @@ use YAML::XS;
 
 
 
-has 'reserved' => (
+has '_parameters_reserved' => (
     is          => 'ro',
     isa         => 'HashRef',
-    predicate   =>   '_has_reserved',
-    reader      =>   '_get_reserved',
-    builder     => '_build_reserved',
+    predicate   =>   '_has_parameters_reserved',
+    reader      =>   '_get_parameters_reserved',
+    builder     => '_build_parameters_reserved',
     lazy        => 1
 );
 
-method _build_reserved {
+method _build_parameters_reserved {
 
     my %reserved = (
         'h|help'                        => 'mm_show_help',
@@ -50,6 +50,8 @@ method _build_reserved {
         'C|configuration=s'             => 'mm_configuration',
         'v|verbose+'                    => 'mm_be_verbose',
         'q|quiet+'                      => 'mm_be_quiet',
+        '-parameters'                   => '_parameters',
+        '-parameters-reserved'          => '_parameters_reserved'
     );
     foreach my $plugin_name (keys(%{ $self->get_monkeyman->get_plugins_loaded })) {
         my $plugin_configuration   = $self->get_monkeyman->get_plugins_loaded->{$plugin_name};
@@ -63,7 +65,7 @@ method _build_reserved {
 
 
 
-has 'parameters' => (
+has '_parameters' => (
     is          => 'ro',
     isa         => 'HashRef',
     init_arg    => undef,
@@ -165,8 +167,6 @@ method parse_everything(Bool :$strict? = 0) {
     }
     MonkeyMan::Exception->throwf("Can't get command-line parameters: %s", $yammer)
         if($yammer);
-
-    #use Data::Dumper; die(Dumper(%parameters));
 
     # Adding methods
     my $meta = $self->meta;
@@ -348,7 +348,7 @@ method check_reserved(
 ) {
     # Adding common parameters handling instructions,
     # making sure they aren't overriding any settings discovered previously
-    my %default_parameters = (%{ $self->_get_reserved });
+    my %default_parameters = (%{ $self->_get_parameters_reserved });
     my @forbidden_keys;
     my @forbidden_names;
     while(my($reserved_keys, $reserved_name) = each(%default_parameters)) {

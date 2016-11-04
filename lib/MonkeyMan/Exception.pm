@@ -103,10 +103,6 @@ has 'stack_trace' => (
 );
 
 method _build_stack_trace {
-    return($self->_generate_stack_trace);
-}
-
-func _generate_stack_trace($self?) {
     return(Devel::StackTrace->new(
         (defined($self) && blessed($self)) ?
             %{ $self->get_stack_trace_parameters } :
@@ -123,16 +119,13 @@ func throw(...) {
     unless(blessed($arg)) {
         $arg = $arg->new(
             message     => "@_",
-            stack_trace => _generate_stack_trace
+            stack_trace => _build_stack_trace
         );
     }
 
     die($arg);
 
 }
-
-
-
 
 method throwf(...) {
 
@@ -146,11 +139,9 @@ method throwf(...) {
         );
     }
 
-    my $new_message = MonkeyMan::Utils::mm_sprintf($message, @values);
+    $self->throw(MonkeyMan::Utils::mm_sprintf($message, @values));
     # We have to address to it as MonkeyMan::Utils::mm_sprintf, because the
     # current subclass may not have such subroutine in its namespace!
-
-    $self->throw($new_message);
 
 }
 
@@ -173,7 +164,9 @@ func find_exceptions(...) {
 method as_string(...) {
     return(
         MonkeyMan::Utils::mm_sprintf(
-            "[!] %s\n^^^ Thrown at %s\n^^^ %s",
+            "[!] %s\n" .
+            "^^^ The exception had been thrown at %s\n" .
+            "^^^ %s",
                 $self->get_message,
                 $self->get_timestamp_formatted,
                 $self->get_stack_trace->as_string
