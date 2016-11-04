@@ -7,12 +7,13 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
-extends 'Throwable::Error';
-
 use MonkeyMan::Utils qw(mm_sprintf);
 
 use Method::Signatures;
-use TryCatch;
+use Devel::StackTrace;
+use POSIX qw(strftime);
+
+use overload q{""} => 'as_string';
 
 
 
@@ -38,56 +39,98 @@ func _register_exception(Str $exception!) {
 
 
 
+has 'message' => (
+    is          => 'ro',
+    isa         => 'Str',
+    required    => 1,
+    reader      =>    'get_message',
+    writer      =>   '_set_message'
+);
+
+method message {
+    return($self->get_message);
+}
+
+
+
 has 'timestamp' => (
-    is      => 'ro',
-    isa     => 'Int',
-    lazy    => 1,
-    builder => '_build_timestamp'
+    is          => 'ro',
+    isa         => 'Int',
+    lazy        => 0,
+    reader      =>    'get_timestamp',
+    writer      =>   '_set_timestamp',
+    predicate   =>    'has_timestamp',
+    builder     => '_build_timestamp'
 );
 
-has 'stack_trace_args' => (
-    is      => 'ro',
-    lazy    => 1,
-    builder => '_build_stack_trace_args'
+method _build_timestamp {
+    return(time);
+}
+
+method get_timestamp_formatted(Str $format? = '%a, %d %b %Y %T %z') {
+    return(strftime($format, localtime($self->get_timestamp)));
+}
+
+
+
+has 'stack_trace_parameters' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    lazy        => 1,
+    reader      =>    'get_stack_trace_parameters',
+    writer      =>   '_set_stack_trace_parameters',
+    predicate   =>    'has_stack_trace_parameters',
+    builder     => '_build_stack_trace_parameters',
 );
 
+method _build_stack_trace_parameters {
+    return({
+        indent          => 1,
+        ignore_class    => [ qw(MonkeyMan::Exception) ]
+    });
+}
 
 
-around 'throw' => func(...){
 
-    my $method  = shift;
-    my $class   = shift;
+has 'stack_trace' => (
+    is          => 'ro',
+    isa         => 'Devel::StackTrace',
+    lazy        => 1,
+    reader      =>    'get_stack_trace',
+    writer      =>   '_set_stack_trace',
+    predicate   =>   '_has_stack_trace',
+    builder     => '_build_stack_trace'
+);
 
-    # Let's look what have we got
-    if(scalar(@_) == 0) {
+method _build_stack_trace {
+    return($self->_generate_stack_trace);
+}
 
-        $class->$method;
+func _generate_stack_trace($self?) {
+    return(Devel::StackTrace->new(
+        (defined($self) && blessed($self)) ?
+            %{ $self->get_stack_trace_parameters } :
+            %{     _build_stack_trace_parameters() }
+    ));
+}
 
-    } elsif(scalar(@_) == 1) {
 
-        if(find_exceptions($_)) {
 
-            # If we already have a MonkeyMan::Exception-based object, just rethrow it
-            $_[0]->throw;
+func throw(...) {
 
-        } else {
+    my $arg = shift;
 
-            # If we have only one parameter and it's not a MonkeyMan::Exception-based object, let's consider it's a message
-            $class->$method(message => "$_[0]");
-
-        }
-
-    } else {
-
-        # Okay, so let's consider it's a set of parameters for Throwable::Error->throw() and pass them all to the method
-
-        $class->$method(@_);
-
+    unless(blessed($arg)) {
+        $arg = $arg->new(
+            message     => "@_",
+            stack_trace => _generate_stack_trace
+        );
     }
 
-    confess("Something really odd has happened: the flow shouldn't has come to this point!");
+    die($arg);
 
-};
+}
+
 
 
 
@@ -95,59 +138,19 @@ method throwf(...) {
 
     my $message = shift;
     my @values;
-    my @exceptions;
 
-    foreach (@_) {
-        if(find_exceptions($_)) {
-            push(@exceptions, $_);
-            $_ = $_->message;
-        }
-        push(@values, $_)
+    foreach my $element (@_) {
+        push(@values, find_exceptions($element) ?
+            $element->message :
+            $element
+        );
     }
 
     my $new_message = MonkeyMan::Utils::mm_sprintf($message, @values);
     # We have to address to it as MonkeyMan::Utils::mm_sprintf, because the
     # current subclass may not have such subroutine in its namespace!
 
-    $self->throw(message => $new_message);
-
-}
-
-
-
-method _build_timestamp {
-
-    return(time);
-
-}
-
-
-
-func _build_stack_trace_args(...) {
-
-#    my $talktalk = 0;
-
-    return(
-        [
-            'indent',       1,
-            'no_args',      0, # y u no lemme huv sum urgs dolan pls
-            #'frame_filter', sub { return(0); }
-        ]
-    );
-#
-#           The following piece of code makes the builder of the stack trace
-#           skipping some ugly frames of the caller's stack, it doesn't work
-#           properly at the moment, but I'm going to return here when I have
-#           a bit more of spare time (FIXME)
-#
-#            'frame_filter', sub {
-#                return 1
-#                    if($talktalk >= 3);
-#                $talktalk++
-#                    if($talktalk >1);
-#                $talktalk++
-#                    if(index($_[0]->{'caller'}[0], 'MonkeyMan::Exception') == 0);
-#            }
+    $self->throw($new_message);
 
 }
 
@@ -157,12 +160,25 @@ func find_exceptions(...) {
     my @result;
     foreach (@_) {
         push(@result, $_)
-            if(defined(blessed($_[0])) && (
+            if(blessed($_[0]) && (
                 $_[0]->DOES('MonkeyMan::Exception') ||
                 $_[0]->DOES('Moose::Exception')
             ));
     }
     return(@result);
+}
+
+
+
+method as_string(...) {
+    return(
+        MonkeyMan::Utils::mm_sprintf(
+            "[!] %s\n^^^ Thrown at %s\n^^^ %s",
+                $self->get_message,
+                $self->get_timestamp_formatted,
+                $self->get_stack_trace->as_string
+        )
+     );
 }
 
 

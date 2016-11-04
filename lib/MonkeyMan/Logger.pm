@@ -20,9 +20,6 @@ use MonkeyMan::Constants qw(:filenames :logging);
 use MonkeyMan::Utils qw(mm_sprintf);
 use MonkeyMan::Exception;
 
-# Consume some roles
-with 'MonkeyMan::Roles::WithTimer';
-
 # Use 3rd-party libraries
 use Method::Signatures;
 use TryCatch;
@@ -169,17 +166,8 @@ method BUILD(...) {
 
     }
 
-    $self->debugf("<%s> Hello world!", $self->get_time_passed_formatted);
-
 }
 
-
-
-method DEMOLISH(...) {
-
-    $self->debugf("<%s> Goodbye world!", $self->get_time_passed_formatted);
-
-}
 
 
 method find_log4perl_logger(Str $module = '') {
