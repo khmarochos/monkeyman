@@ -6,7 +6,7 @@ Bugs
 
  - [x] Fix `MonkeyMan::CloudStack::API::Vocabulary::interpret_response`.
         - suggested on `2016.07.25` by `melnik13`
-	- completed on `2016.07.25`
+        - completed on `2016.07.25`
 
 Code
 ----
@@ -56,7 +56,7 @@ Code
  - [x] Add the `perform_action()` method to the `MonkeyMan::CloudStack::API`
        class.
         - suggested on `2016.02.09` by `melnik13`
-	- completed on `2016.02.16`
+        - completed on `2016.02.16`
  - [x] Use `%::*::_magic_words in t/qxp.t`
         - suggested on `2016.01.17` by `melnik13`
         - completed on `2016.01.17`

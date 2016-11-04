@@ -6,6 +6,7 @@ use warnings;
 
 # Use my own modules
 use MonkeyMan;
+use MonkeyMan::Exception qw(ParametersNotDefined);
 use MonkeyMan::Constants qw(:version);
 use MonkeyMan::CloudStack::API;
 
@@ -47,6 +48,10 @@ my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
 
 
+
+main::Exception::ParametersNotDefined->throw(
+    'The command and its parameters are missing'
+);
 
 my @doms = (
     $api->run_command(
