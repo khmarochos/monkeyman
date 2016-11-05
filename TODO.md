@@ -11,6 +11,8 @@ Bugs
 Code
 ----
 
+ - [ ] Encapsulate all the shit!
+        - suggested on `2016.11.06` by `melnik13`
  - [ ] Let other applications use `MonkeyMan` as a module, not as a framework
         - suggested on `2016.11.04` by `melnik13`
  - [ ] Make the `MonkeyMan`'s `plug` method checking if the plugin has been
