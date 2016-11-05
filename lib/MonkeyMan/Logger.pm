@@ -89,18 +89,21 @@ method BUILD(...) {
 
     unless(Log::Log4perl->initialized) {
 
-        # Okay, shall we any some certain configuration or we should get it
-        # from some configuration file?
-
+        # Let's prepare the Log::Log4perl configuration
         my $log4perl_configuration;
         if($self->_has_configuration_string) {
+            # When the Log4perl configuration is given as a big string value
             $log4perl_configuration = $self->_get_configuration_string;
         } else {
+            # Otherwise we'll try to fetch it from a file
             my $log_configuration_file = $self->_has_configuration_file ?
+                # Is the file's name given in an attribute?
                 $self->_get_configuration_file :
                 defined($self->get_configuration->{'conf'}) ?
+                    # Is the file's name fiven in a configuration structure?
                         $self->get_configuration->{'conf'} :
                         MM_CONFIG_LOGGER;
+            # OK, let's read it from the file
             $log4perl_configuration = read_file($log_configuration_file)
         }
 
