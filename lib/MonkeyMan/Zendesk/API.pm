@@ -187,11 +187,11 @@ method run_command(
         $result = decode_json($response->content);
     } else {
         $result = {};
-        my $message = mm_sprintf("The command has failed to run: %s", $response->status_line);
+        my @message = ("The command has failed to run: %s", $response->status_line);
         if($fatal) {
-            (__PACKAGE__ . '::Exception::BadResponse')->throw($message);
+            (__PACKAGE__ . '::Exception::BadResponse')->throwf(@message);
         } else {
-            $logger->warn($message);
+            $logger->warnf(@message);
         }
     }
 

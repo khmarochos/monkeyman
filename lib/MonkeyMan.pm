@@ -864,6 +864,8 @@ method print_full_usage_help {
         [opt] [mul] Increases verbosity
     -q, --quiet
         [opt] [mul] Decreases verbosity
+    --no-color
+        [opt]       Suppresses colored output to console
 
 %s
 __END_OF_USAGE_HELP__

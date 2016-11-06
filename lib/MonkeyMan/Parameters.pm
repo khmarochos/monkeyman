@@ -50,6 +50,7 @@ method _build_parameters_reserved {
         'C|configuration=s'             => 'mm_configuration',
         'v|verbose+'                    => 'mm_be_verbose',
         'q|quiet+'                      => 'mm_be_quiet',
+        'color!'                        => 'mm_color',
         '-parameters'                   => '_parameters',
         '-parameters-reserved'          => '_parameters_reserved'
     );

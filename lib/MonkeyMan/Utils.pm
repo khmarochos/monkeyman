@@ -24,6 +24,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 my @MM_utils_all = qw(
     mm_sprintf
+    mm_showref
     mm_find_package
     mm_load_package
 );
@@ -43,7 +44,7 @@ sub mm_sprintf {
         if(!defined($value)) {
             $values[$i] = "[UNDEF]";
         } elsif(ref($value)) {
-            $values[$i] = _showref($values[$i]);
+            $values[$i] = mm_showref($values[$i]);
         }
     }
 
@@ -51,7 +52,7 @@ sub mm_sprintf {
 
 }
 
-func _showref(Ref $ref!) {
+func mm_showref(Ref $ref!) {
 
     my $ref_id_short = sprintf(
         "%s\@0x%x",
@@ -67,21 +68,28 @@ func _showref(Ref $ref!) {
     my $dumpdir;
     my $dumpxml;
     my $dumpfile;
+
     try {
-        $monkeyman  = MonkeyMan->instance;
-        $monkeyman_started = $monkeyman->get_time_started_formatted;
-        $logger     = $monkeyman->get_logger;
-        $conftree   = $logger->get_configuration;
-        $dumped     = $conftree->{'dump'}->{'enabled'};
-        $dumpxml    = $conftree->{'dump'}->{'add_xml'};
-        $dumpdir    = $conftree->{'dump'}->{'directory'};
+        MonkeyMan->initialize;
     } catch($e) {
-        warn(sprintf(
+        try {
+            $monkeyman  = MonkeyMan->instance;
+            $monkeyman_started = $monkeyman->get_time_started_formatted;
+            $logger     = $monkeyman->get_logger;
+            $conftree   = $logger->get_configuration;
+            $dumped     = $conftree->{'dump'}->{'enabled'};
+            $dumpxml    = $conftree->{'dump'}->{'add_xml'};
+            $dumpdir    = $conftree->{'dump'}->{'directory'};
+        } catch($e) {
+            warn($e);
+        }
+    }
+
+    unless(defined($monkeyman)) {
+        warn(
             "Can't determine if I should really dump the data structure. " .
-            "It seems that MonkeyMan hasn't been initialized properly yet. " .
-            "%s",
-            $e
-        ));
+            "It seems that MonkeyMan hasn't been initialized properly yet."
+        );
         return("[$ref_id_short]");
     }
 
