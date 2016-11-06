@@ -9,11 +9,15 @@ use FindBin qw($Bin);
 
 
 
-# :version
+# :miscellaneous
 
-use constant MM_VERSION => '2.2.0'; # See http://semver.org/
+use constant MM_DEFAULT_ACTOR => 'PRIMARY';
+# MonkeyMan
+use constant MM_VERSION => '3.0.0'; # See http://semver.org/
+# MonkeyMan
 
-my @mm_constants_version = qw(
+my @mm_constants_miscellaneous = qw(
+    MM_DEFAULT_ACTOR
     MM_VERSION
 );
 
@@ -27,8 +31,11 @@ sub MM_DIRECTORY_ROOT {
     }
 }
 use constant MM_DIRECTORY_LIB           => MM_DIRECTORY_ROOT . '/lib';
+# ^^^ MonkeyMan
 use constant MM_DIRECTORY_CONFIG_MAIN   => MM_DIRECTORY_ROOT . '/etc';
+# ^^^ MonkeyMan::Constants
 use constant MM_DIRECTORY_DUMP          => MM_DIRECTORY_ROOT . '/var/dump/objects';
+# ^^^ MonkeyMan::Utils
 
 my @mm_constants_directories = qw(
     MM_DIRECTORY_ROOT
@@ -39,62 +46,51 @@ my @mm_constants_directories = qw(
 # :filenames
 
 use constant MM_CONFIG_PLUGINS      => MM_DIRECTORY_LIB . '/MonkeyMan/plugins.yaml';
+# ^^^ MonkeyMan
 use constant MM_CONFIG_MAIN         => MM_DIRECTORY_CONFIG_MAIN . '/monkeyman.conf';
-use constant MM_CONFIG_LOGGER       => MM_DIRECTORY_CONFIG_MAIN . '/logger.conf';
-use constant MM_CONFIG_CLOUDSTACK   => MM_DIRECTORY_CONFIG_MAIN . '/cloudstack.conf';
+# ^^^ MonkeyMan
+use constant MM_CONFIG_LOG4PERL     => MM_DIRECTORY_CONFIG_MAIN . '/' . MM_DEFAULT_ACTOR . '/logger.conf';
+# ^^^ MonkeyMan
+use constant MM_CONFIG_CLOUDSTACK   => MM_DIRECTORY_CONFIG_MAIN . '/' . MM_DEFAULT_ACTOR . '/cloudstack.conf';
+# ^^^ MonkeyMan
 
 my @mm_constants_filenames = qw(
     MM_CONFIG_PLUGINS
     MM_CONFIG_MAIN
-    MM_CONFIG_LOGGER
+    MM_CONFIG_LOG4PERL
     MM_CONFIG_CLOUDSTACK
 );
 
-# :logging
 
-use constant MM_VERBOSITY_LEVELS        => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
-use constant MM_VERBOSITY_LEVEL_BASE    => 4;
-use constant MM_DATE_TIME_FORMAT        => '%Y/%m/%d %H:%M:%S';
-
-my @mm_constants_logging = qw(
-    MM_VERBOSITY_LEVELS
-    MM_VERBOSITY_LEVEL_BASE
-    MM_DATE_TIME_FORMAT
-    MM_LOGGER_DEFAULT_HANDY
-);
 
 # :cloudstack
 
 use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH      => 3600;
+# ^^^ MonkeyMan::CloudStack
 use constant MM_CLOUDSTACK_API_SLEEP                => 10;
+# ^^^ MonkeyMan::CloudStack
 use constant MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME   => 100;
+# ^^^ MonkeyMan::CloudStack
 
 my @mm_constants_cloudstack = qw(
     MM_CLOUDSTACK_API_WAIT_FOR_FINISH
     MM_CLOUDSTACK_API_SLEEP
     MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME
-    MM_CLOUDSTACK_DEFAULT_HANDY
 );
 
 # :passwords
 
 use constant MM_DEFAULT_PASSWORD_LENGTH             => 13;
+# ^^^ MonkeyMan::PasswordGenerator
 use constant MM_DEFAULT_PASSWORD_ALL_CHARACTERS     => 1;
+# ^^^ MonkeyMan::PasswordGenerator
 use constant MM_DEFAULT_PASSWORD_READABLE_ONLY      => 1;
+# ^^^ MonkeyMan::PasswordGenerator
 
 my @mm_constants_passwords = qw(
     MM_DEFAULT_PASSWORD_LENGTH
     MM_DEFAULT_PASSWORD_ALL_CHARACTERS
     MM_DEFAULT_PASSWORD_READABLE_ONLY
-    MM_PASSWORD_GENERATOR_DEFAULT_HANDY
-);
-
-# :miscellaneous
-
-use constant MM_DEFAULT_ACTOR => 'PRIMARY';
-
-my @mm_constants_miscellaneous = qw(
-    MM_DEFAULT_ACTOR
 );
 
 
@@ -102,13 +98,11 @@ my @mm_constants_miscellaneous = qw(
 # :ALL
 
 my @mm_constants_all = (
-    @mm_constants_version,
+    @mm_constants_miscellaneous,
     @mm_constants_directories,
     @mm_constants_filenames,
-    @mm_constants_logging,
     @mm_constants_cloudstack,
-    @mm_constants_passwords,
-    @mm_constants_miscellaneous
+    @mm_constants_passwords
 );
 
 
@@ -118,13 +112,11 @@ my @mm_constants_all = (
 @EXPORT_OK          = @mm_constants_all;
 %EXPORT_TAGS        = (
     ALL                 => \@mm_constants_all,
-    version             => \@mm_constants_version,
+    miscellaneous       => \@mm_constants_miscellaneous,
     directories         => \@mm_constants_directories,
     filenames           => \@mm_constants_filenames,
     passwords           => \@mm_constants_passwords,
-    logging             => \@mm_constants_logging,
-    cloudstack          => \@mm_constants_cloudstack,
-    miscellaneous       => \@mm_constants_miscellaneous
+    cloudstack          => \@mm_constants_cloudstack
 );
 
 

@@ -75,7 +75,7 @@ use 5.20.1;
 use strict;
 use warnings;
 
-our $VERSION='v2.1.0-dev_melnik13_v3';
+use constant CONSOLE_VERBOSITY_LEVEL_BASE => 4;
 
 # Use Moose and be happy :)
 use Moose 2.1604;
@@ -91,6 +91,8 @@ use MonkeyMan::Utils qw(mm_load_package);
 use MonkeyMan::Exception qw(CanNotLoadPackage);
 use MonkeyMan::Parameters;
 use MonkeyMan::Plug;
+
+our $VERSION = MM_VERSION;
 
 # Use 3rd-party libraries
 use MooseX::Singleton;
@@ -831,10 +833,10 @@ method _configure_logger_parameters(Str $actor_name) {
 
     return({
         log4perl_configuration_file =>
-                defined($self->get_configuration->{'logger'}->{$actor_name}->{'conf'}) ?
-                        $self->get_configuration->{'logger'}->{$actor_name}->{'conf'} :
-                        MM_CONFIG_LOGGER,
-        console_verbosity => MM_VERBOSITY_LEVEL_BASE + (
+                defined($self->get_configuration->{'logger'}->{$actor_name}->{'log4perl'}) ?
+                        $self->get_configuration->{'logger'}->{$actor_name}->{'log4perl'} :
+                        MM_CONFIG_LOG4PERL,
+        console_verbosity => CONSOLE_VERBOSITY_LEVEL_BASE + (
                 defined($self->get_parameters->get_mm_be_verbose) ?
                         $self->get_parameters->get_mm_be_verbose :
                         0

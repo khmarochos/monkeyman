@@ -6,7 +6,7 @@ use warnings;
 
 # Use my own modules
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
+use MonkeyMan::Constants qw(:miscellaneous);
 
 use Method::Signatures;
 

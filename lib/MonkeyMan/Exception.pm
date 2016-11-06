@@ -3,6 +3,8 @@ package MonkeyMan::Exception;
 use strict;
 use warnings;
 
+use constant DEFAULT_DATE_TIME_FORMAT => '%Y/%m/%d %H:%M:%S';
+
 # Use Moose and be happy :)
 use Moose;
 use namespace::autoclean;
@@ -67,7 +69,7 @@ method _build_timestamp {
     return(time);
 }
 
-method get_timestamp_formatted(Str $format? = '%a, %d %b %Y %T %z') {
+method get_timestamp_formatted(Str $format? = DEFAULT_DATE_TIME_FORMAT) {
     return(strftime($format, localtime($self->get_timestamp)));
 }
 

@@ -9,14 +9,13 @@ MonkeyMan::Logger - MonkeyMan's chronicler :)
 use strict;
 use warnings;
 
+use constant CONSOLE_LOGGER_NAME        => 'console';
+use constant CONSOLE_VERBOSITY_LEVELS   => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
+
 # Use Moose and be happy :)
 use Moose;
 use namespace::autoclean;
 
-# Inherit some essentials
-with 'MonkeyMan::Essentials';
-
-use MonkeyMan::Constants qw(:filenames :logging);
 use MonkeyMan::Utils qw(mm_showref);
 use MonkeyMan::Exception;
 
@@ -26,8 +25,6 @@ use TryCatch;
 use File::Slurp;
 use Term::ANSIColor;
 use Log::Log4perl qw(:no_extra_logdie_message);
-
-use constant CONSOLE_LOGGER => 'CONSOLE';
 
 
 
@@ -73,21 +70,28 @@ has 'console_colored' => (
     default     => 1
 );
 
-has 'console_colorscheme' => (
+has 'colorscheme' => (
     is          => 'ro',
     isa         => 'HashRef',
-    reader      =>   '_get_console_colorscheme',
-    writer      =>   '_set_console_colorscheme',
-    predicate   =>   '_has_console_colorscheme',
-    builder     => '_build_console_colorscheme',
+    reader      =>   '_get_colorscheme',
+    writer      =>   '_set_colorscheme',
+    predicate   =>   '_has_colorscheme',
+    builder     => '_build_colorscheme',
     lazy        => 1
 );
 
-method _build_console_colorscheme {
-    return($self->get_configuration->{'colorscheme'});
+method _build_colorscheme {
+    return(
+        defined($self->get_configuration->{'colorscheme'}) ?
+                $self->get_configuration->{'colorscheme'}  :
+                {}
+    );
 }
 
-method _get_console_color(Str $class? = 'NORMAL', HashRef $colorscheme? = $self->_get_console_colorscheme) {
+method get_color(
+    Str     $class?         = 'NORMAL',
+    HashRef $colorscheme?   = $self->_get_colorscheme
+) {
     return(
         (
             defined($colorscheme) &&
@@ -110,16 +114,20 @@ has 'log4perl_loggers' => (
 );
 
 method _build_log4perl_loggers {
-
     return({});
-
 }
 
-#   has 'dumped' => (
-#       is          => 'ro',
-#       isa         => 'Str',
-#       reader      => 'get_dumped'
-#   );
+method find_log4perl_logger(Str $name = '') {
+    if(Log::Log4perl->initialized) {
+        return(
+            $self->_get_log4perl_loggers->{$name} ?
+                $self->_get_log4perl_loggers->{$name} :
+               ($self->_get_log4perl_loggers->{$name} = Log::Log4perl->get_logger($name))
+        );
+    } else {
+        return(undef);
+    }
+}
 
 
 
@@ -148,14 +156,14 @@ method BUILD(...) {
             Log::Log4perl::Layout::PatternLayout::add_global_cspec('U',
                 func($layout, $message, $category, $priority, $caller_level) {
                     return(sprintf("%s%s%s",
-                        $self->_get_console_color('LEVEL_' . $priority),
+                        $self->get_color('LEVEL_' . $priority),
                         substr($priority, 0, 1),
                         color('reset')
                     ));
                 }
             );
             $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
-                '%d [%U] ' . $self->_get_console_color('CATEGORY') . '%c' . $self->_get_console_color('NORMAL') . ' %m%n'
+                '%d [%U] ' . $self->get_color('CATEGORY') . '%c' . $self->get_color('NORMAL') . ' %m%n'
             );
         } else {
             $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
@@ -163,8 +171,8 @@ method BUILD(...) {
             );
         }
         $logger_console_appender->layout($logger_console_layout);
-        $logger_console_appender->threshold((&MM_VERBOSITY_LEVELS)[$self->_get_console_verbosity]);
-        $self->find_log4perl_logger(CONSOLE_LOGGER)->add_appender($logger_console_appender);
+        $logger_console_appender->threshold((&CONSOLE_VERBOSITY_LEVELS)[$self->_get_console_verbosity]);
+        $self->find_log4perl_logger(CONSOLE_LOGGER_NAME)->add_appender($logger_console_appender);
 
     }
 
@@ -201,7 +209,7 @@ method BUILD(...) {
 method _log(Str $level!, Str $module!, Bool $formatted!, @message_chunks) {
 
     my $logger_primary = $self->find_log4perl_logger($module);
-    my $logger_console = $self->find_log4perl_logger(CONSOLE_LOGGER . "::$module");
+    my $logger_console = $self->find_log4perl_logger(CONSOLE_LOGGER_NAME . "::$module");
 
     my $message_primary;
     my $message_console;
@@ -242,32 +250,32 @@ method _sprintf(Bool $colored!, Str $format!, @values?) {
                 if(defined($1) && defined($2) && defined($3)) {
                     $value_new = sprintf(
                         '%s[%s%s%s@%s%s%s/%s%s%s]%s',
-                        $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('REF_CLASS'), $1,
-                        $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('REF_ADDRESS'), $2,
-                        $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('REF_MD5SUM'), $3,
-                        $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('NORMAL')
+                        $self->get_color('ACCENTED'),
+                        $self->get_color('REF_CLASS'), $1,
+                        $self->get_color('ACCENTED'),
+                        $self->get_color('REF_ADDRESS'), $2,
+                        $self->get_color('ACCENTED'),
+                        $self->get_color('REF_MD5SUM'), $3,
+                        $self->get_color('ACCENTED'),
+                        $self->get_color('NORMAL')
                     );
                 } elsif(defined($1) && defined($2)) {
                     $value_new = sprintf(
                         '%s[%s%s%s@%s%s%s]%s',
-                        $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('REF_CLASS'), $1,
-                        $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('REF_ADDRESS'), $2,
-                        $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('NORMAL')
+                        $self->get_color('ACCENTED'),
+                        $self->get_color('REF_CLASS'), $1,
+                        $self->get_color('ACCENTED'),
+                        $self->get_color('REF_ADDRESS'), $2,
+                        $self->get_color('ACCENTED'),
+                        $self->get_color('NORMAL')
                     );
                 } else {
                     $value_new = sprintf(
                         '%s[%s%s%s]%s',
-                        $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('REF_CLASS'), $1,
-                        $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('NORMAL')
+                        $self->get_color('ACCENTED'),
+                        $self->get_color('REF_CLASS'), $1,
+                        $self->get_color('ACCENTED'),
+                        $self->get_color('NORMAL')
                     );
                 }
             }
@@ -278,22 +286,6 @@ method _sprintf(Bool $colored!, Str $format!, @values?) {
     }
 
     return(sprintf($format, @values));
-
-}
-
-
-
-method find_log4perl_logger(Str $module = '') {
-
-    if(Log::Log4perl->initialized) {
-        return(
-            $self->_get_log4perl_loggers->{$module} ?
-                $self->_get_log4perl_loggers->{$module} :
-               ($self->_get_log4perl_loggers->{$module} = Log::Log4perl->get_logger($module))
-        );
-    } else {
-        return(undef);
-    }
 
 }
 
