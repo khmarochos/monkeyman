@@ -680,6 +680,14 @@ method _mm_init {
         [ "We've got the configuration: %s", $self->get_configuration ]
     );
 
+    my $plugin_parameters = {
+        'logger'    => $self->_configure_logger_parameters(
+                            $self->get_parameters->has_mm_default_logger ?
+                            $self->get_parameters->get_mm_default_logger :
+                            MM_DEFAULT_ACTOR
+        )
+    };
+
     # Connecting plugins
     foreach my $plugin_name (keys(%{ $self->get_plugins_loaded })) {
 
@@ -696,6 +704,9 @@ method _mm_init {
                                                     $plugin_configuration->{'plugin_name'} :
                                                     $plugin_name;
         # The plugin should have the monkeyman attribute pointing to MonkeyMan
+        $p{'actor_parameters'}          =   defined($plugin_parameters->{$p{'plugin_name'}}) ?
+                                                    $plugin_parameters->{$p{'plugin_name'}} :
+                                                    {};
         $p{'actor_parent'}              =   $self;
         $p{'actor_parent_as'}           =   'monkeyman';
         # Of course, we'll need to know the class name
@@ -727,9 +738,10 @@ method _mm_init {
                                                       get_configuration->
                                                           { $plugin_configuration->{'configuration_index_branch'} } :
                                                   $self->get_configuration->{ $p{'plugin_name'} };
+        # The primary actor's configuration shall be present, we can't plug the module if it isn't
         unless(ref($p{'configuration_index'}) eq 'HASH' && defined($p{'configuration_index'}->{ $p{'actor_default'} })) {
             push(@postponed_messages, [
-                'The primary (ID: %s) actor\'s configuration is missing, skipping the %s module',
+                "The primary (ID: %s) actor's configuration is missing, skipping the %s module",
                 $p{'actor_default'},
                 $p{'plugin_name'}
             ]);
@@ -810,6 +822,32 @@ method _mm_shutdown {
             $self
         );
     }
+
+}
+
+
+
+method _configure_logger_parameters(Str $actor_name) {
+
+    return({
+        log4perl_configuration_file =>
+                defined($self->get_configuration->{'logger'}->{$actor_name}->{'conf'}) ?
+                        $self->get_configuration->{'logger'}->{$actor_name}->{'conf'} :
+                        MM_CONFIG_LOGGER,
+        console_verbosity => MM_VERBOSITY_LEVEL_BASE + (
+                defined($self->get_parameters->get_mm_be_verbose) ?
+                        $self->get_parameters->get_mm_be_verbose :
+                        0
+            ) - (
+                defined($self->get_parameters->get_mm_be_quiet) ?
+                        $self->get_parameters->get_mm_be_quiet :
+                        0
+            ),
+        console_colored =>
+                defined($self->get_parameters->get_mm_color) ?
+                        $self->get_parameters->get_mm_color :
+                        1
+    });
 
 }
 

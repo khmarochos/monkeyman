@@ -39,20 +39,20 @@ has 'configuration' => (
     predicate   => '_has_configuration',
 );
 
-has 'configuration_string' => (
+has 'log4perl_configuration_string' => (
     is          => 'ro',
     isa         => 'Str',
-    reader      => '_get_configuration_string',
-    writer      => '_set_configuration_string',
-    predicate   => '_has_configuration_string'
+    reader      => '_get_log4perl_configuration_string',
+    writer      => '_set_log4perl_configuration_string',
+    predicate   => '_has_log4perl_configuration_string'
 );
 
-has 'configuration_file' => (
+has 'log4perl_configuration_file' => (
     is          => 'ro',
     isa         => 'Str',
-    reader      => '_get_configuration_file',
-    writer      => '_set_configuration_file',
-    predicate   => '_has_configuration_file'
+    reader      => '_get_log4perl_configuration_file',
+    writer      => '_set_log4perl_configuration_file',
+    predicate   => '_has_log4perl_configuration_file'
 );
 
 has 'console_verbosity' => (
@@ -60,7 +60,8 @@ has 'console_verbosity' => (
     isa         => 'Int',
     reader      => '_get_console_verbosity',
     writer      => '_set_console_verbosity',
-    predicate   => '_has_console_verbosity'
+    predicate   => '_has_console_verbosity',
+    default     => 0
 );
 
 has 'console_colored' => (
@@ -68,7 +69,8 @@ has 'console_colored' => (
     isa         => 'Int',
     reader      => '_get_console_colored',
     writer      => '_set_console_colored',
-    predicate   => '_has_console_colored'
+    predicate   => '_has_console_colored',
+    default     => 1
 );
 
 has 'console_colorscheme' => (
@@ -125,47 +127,17 @@ method BUILD(...) {
 
     unless(Log::Log4perl->initialized) {
 
-        # Let's prepare the Log::Log4perl configuration
         my $log4perl_configuration;
-        if($self->_has_configuration_string) {
-            # When the Log4perl configuration is given as a big string value
-            $log4perl_configuration = $self->_get_configuration_string;
-        } else {
-            # Otherwise we'll try to fetch it from a file
-            my $log_configuration_file = $self->_has_configuration_file ?
-                # Is the file's name given in an attribute?
-                $self->_get_configuration_file :
-                defined($self->get_configuration->{'conf'}) ?
-                    # Is the file's name fiven in a configuration structure?
-                        $self->get_configuration->{'conf'} :
-                        MM_CONFIG_LOGGER;
-            # OK, let's read it from the file
-            $log4perl_configuration = read_file($log_configuration_file)
+        if($self->_has_log4perl_configuration_string) {
+            $log4perl_configuration = $self->_get_log4perl_configuration_string;
+        } elsif($self->_has_log4perl_configuration_file) {
+            $log4perl_configuration = read_file($self->_get_log4perl_configuration_file);
         }
+
 
         Log::Log4perl->init_once(\$log4perl_configuration);
         Log::Log4perl->wrapper_register(__PACKAGE__);
 
-        $self->_set_console_verbosity($self->_has_console_verbosity ?
-            $self->_get_console_verbosity : (
-                MM_VERBOSITY_LEVEL_BASE + (
-                    defined($self->get_monkeyman->get_parameters->get_mm_be_verbose) ?
-                            $self->get_monkeyman->get_parameters->get_mm_be_verbose :
-                            0
-                ) - (
-                    defined($self->get_monkeyman->get_parameters->get_mm_be_quiet) ?
-                            $self->get_monkeyman->get_parameters->get_mm_be_quiet :
-                            0
-                )
-            )
-        );
-        $self->_set_console_colored($self->_has_console_colored ?
-            $self->_get_console_colored : (
-                defined($self->get_monkeyman->get_parameters->get_mm_color) ?
-                        $self->get_monkeyman->get_parameters->get_mm_color :
-                        1
-            )
-        );
         my $logger_console_appender = Log::Log4perl::Appender->new(
             'Log::Log4perl::Appender::Screen',
             name            => 'console',
@@ -176,7 +148,7 @@ method BUILD(...) {
             Log::Log4perl::Layout::PatternLayout::add_global_cspec('U',
                 func($layout, $message, $category, $priority, $caller_level) {
                     return(sprintf("%s%s%s",
-                        $self->_get_console_color('LOG_' . $priority),
+                        $self->_get_console_color('LEVEL_' . $priority),
                         substr($priority, 0, 1),
                         color('reset')
                     ));
@@ -275,7 +247,7 @@ method _sprintf(Bool $colored!, Str $format!, @values?) {
                         $self->_get_console_color('ACCENTED'),
                         $self->_get_console_color('REF_ADDRESS'), $2,
                         $self->_get_console_color('ACCENTED'),
-                        $self->_get_console_color('MD5_SUM'), $3,
+                        $self->_get_console_color('REF_MD5SUM'), $3,
                         $self->_get_console_color('ACCENTED'),
                         $self->_get_console_color('NORMAL')
                     );
