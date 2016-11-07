@@ -340,9 +340,30 @@ has 'parameters' => (
 );
 
 method _build_parameters {
-
-    return(MonkeyMan::Parameters->new(monkeyman => $self));
-
+    my %reserved = (
+        'h|help'            => 'mm_show_help',
+        'V|version'         => 'mm_show_version',
+        'C|configuration=s' => 'mm_configuration',
+        'v|verbose+'        => 'mm_be_verbose',
+        'q|quiet+'          => 'mm_be_quiet',
+        'color!'            => 'mm_color'
+    );
+    foreach my $plugin_name (keys(%{ $self->get_plugins_loaded })) {
+        my $plugin_configuration   = $self->get_plugins_loaded->{$plugin_name};
+        $reserved{
+            $plugin_configuration->{'parameter_key'} . '=s'
+        } = $plugin_configuration->{'parameter_name'};
+    }
+    return(
+        MonkeyMan::Parameters->new(
+            (%reserved) ?
+                (parameters_reserved         => \%reserved) : (),
+            $self->_has_parameters_to_get ?
+                (parameters_to_get           => $self->_get_parameters_to_get) : (),
+            $self->_has_parameters_to_get_validated ?
+                (parameters_to_get_validated => $self->_get_parameters_to_get_validated) : ()
+        )
+     )
 }
 
 

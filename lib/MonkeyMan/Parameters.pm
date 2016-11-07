@@ -22,9 +22,6 @@ use MonkeyMan::Exception qw(
 use Moose;
 use namespace::autoclean;
 
-# Inherit some essentials
-with 'MonkeyMan::Essentials';
-
 # Use 3rd-party libraries
 use Method::Signatures;
 use TryCatch;
@@ -33,7 +30,7 @@ use YAML::XS;
 
 
 
-has '_parameters_reserved' => (
+has 'parameters_reserved' => (
     is          => 'ro',
     isa         => 'HashRef',
     predicate   =>   '_has_parameters_reserved',
@@ -43,28 +40,22 @@ has '_parameters_reserved' => (
 );
 
 method _build_parameters_reserved {
-
-    my %reserved = (
-        'h|help'                        => 'mm_show_help',
-        'V|version'                     => 'mm_show_version',
-        'C|configuration=s'             => 'mm_configuration',
-        'v|verbose+'                    => 'mm_be_verbose',
-        'q|quiet+'                      => 'mm_be_quiet',
-        'color!'                        => 'mm_color',
-        '-parameters'                   => '_parameters',
-        '-parameters-reserved'          => '_parameters_reserved'
-    );
-    foreach my $plugin_name (keys(%{ $self->get_monkeyman->get_plugins_loaded })) {
-        my $plugin_configuration   = $self->get_monkeyman->get_plugins_loaded->{$plugin_name};
-        $reserved{
-            $plugin_configuration->{'parameter_key'} . '=s'
-        } = $plugin_configuration->{'parameter_name'};
-    }
-    return(\%reserved);
-
+    return({});
 }
 
+has 'parameters_to_get' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    predicate   => '_has_parameters_to_get',
+    reader      => '_get_parameters_to_get'
+);
 
+has 'parameters_to_get_validated' => (
+    is          => 'ro',
+    isa         => 'Str',
+    predicate   => '_has_parameters_to_get_validated',
+    reader      => '_get_parameters_to_get_validated'
+);
 
 has '_parameters' => (
     is          => 'ro',
@@ -92,19 +83,18 @@ method BUILD(...) {
 
 method parse_everything(Bool :$strict? = 0) {
 
-    my $monkeyman       = $self->get_monkeyman;
-    my $parameters_got  = $self->_get_parameters;
+    my $parameters_got = $self->_get_parameters;
 
     # Getting lists of parameters' keys and attribute names defined by the
     # parameters_to_get attribute of MonkeyMan
     my @parameter_keys_defined;
     my @parameter_names_defined;
-    if($monkeyman->_has_parameters_to_get) {
+    if($self->_has_parameters_to_get) {
         while(
             my(
                 $parameter_keys,
                 $parameter_name
-            ) = each(%{ $monkeyman->_get_parameters_to_get })
+            ) = each(%{ $self->_get_parameters_to_get })
         ) {
             push(@parameter_keys_defined, ($parameter_keys =~ /(?:\|?([a-zA-Z\-]+)(?:=.+)?)/g));
             push(@parameter_names_defined, $parameter_name);
@@ -114,8 +104,8 @@ method parse_everything(Bool :$strict? = 0) {
     # Parsing some YAML here, filling the HASH referenced by parameters_to_get,
     # overriding everything without any warnings as it's documented.
     my $parameters_to_get_validated;
-    if($monkeyman->_has_parameters_to_get_validated) {
-        $parameters_to_get_validated = Load($monkeyman->_get_parameters_to_get_validated);
+    if($self->_has_parameters_to_get_validated) {
+        $parameters_to_get_validated = Load($self->_get_parameters_to_get_validated);
         while(
             my(
                 $parameter_keys,
@@ -140,7 +130,7 @@ method parse_everything(Bool :$strict? = 0) {
             push(@parameter_keys_defined, ($parameter_keys =~ /(?:\|?([a-zA-Z\-]+)(?:=.+)?)/g));
             push(@parameter_names_defined, $parameter_name);
             #warn("$parameter_keys, $parameter_name");
-            $monkeyman->_get_parameters_to_get->{ $parameter_keys } = $parameter_name;
+            $self->_get_parameters_to_get->{ $parameter_keys } = $parameter_name;
         }
     }
 
@@ -156,7 +146,7 @@ method parse_everything(Bool :$strict? = 0) {
         my(
             $parameter_keys,
             $parameter_name
-        ) = each(%{$monkeyman->_get_parameters_to_get})
+        ) = each(%{$self->_get_parameters_to_get})
     ) {
         $parameters{$parameter_keys} = \($parameters_got->{$parameter_name});
     }
@@ -349,7 +339,10 @@ method check_reserved(
 ) {
     # Adding common parameters handling instructions,
     # making sure they aren't overriding any settings discovered previously
-    my %default_parameters = (%{ $self->_get_parameters_reserved });
+    my %default_parameters = %{ $self->_get_parameters_reserved };
+    foreach my $attribute ($self->meta->get_all_attributes) {
+        $default_parameters{ $attribute->name =~ s/_/-/r } = $attribute->name;
+    }
     my @forbidden_keys;
     my @forbidden_names;
     while(my($reserved_keys, $reserved_name) = each(%default_parameters)) {
@@ -371,7 +364,7 @@ method check_reserved(
             ) if ($fatal);
             push(@forbidden_names, $forbidden_name);
         }
-        $self->get_monkeyman->_get_parameters_to_get->{$reserved_keys} = $reserved_name;
+        $self->_get_parameters_to_get->{$reserved_keys} = $reserved_name;
     }
     return(\@forbidden_keys, \@forbidden_names);
 }

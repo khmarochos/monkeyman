@@ -20,6 +20,13 @@ use Moose;
 use Moose::Exporter;
 use namespace::autoclean;
 
+Moose::Exporter->setup_import_methods(
+    as_is   => [
+        \&MonkeyMan::Logger::mm_sprintf,
+        \&MonkeyMan::Logger::mm_sprintfmm_sprintf_colored
+    ]
+);
+
 use MonkeyMan::Exception;
 
 # Use 3rd-party libraries
@@ -31,10 +38,6 @@ use Log::Log4perl qw(:no_extra_logdie_message);
 use Scalar::Util qw(blessed refaddr);
 use Digest::MD5 qw(md5_hex);
 use File::Path qw(make_path);
-
-Moose::Exporter->setup_import_methods(
-    as_is   => [ 'mm_sprintf', 'mm_sprintf_colored' ]
-);
 
 
 
