@@ -340,33 +340,38 @@ method check_reserved(
     # Adding common parameters handling instructions,
     # making sure they aren't overriding any settings discovered previously
     my %default_parameters = %{ $self->_get_parameters_reserved };
-    foreach my $attribute ($self->meta->get_all_attributes) {
-        $default_parameters{ $attribute->name =~ s/_/-/r } = $attribute->name;
-    }
-    my @forbidden_keys;
-    my @forbidden_names;
-    while(my($reserved_keys, $reserved_name) = each(%default_parameters)) {
-        foreach my $reserved_key ($reserved_keys =~ /(?:\|?([a-zA-Z\-]+)(?:=.+)?)/g) {
-            foreach my $forbidden_key (grep({ $reserved_key eq $_ } @{ $parameter_keys_defined })) {
+    my @keys_declined;
+    my @keys_reserved = keys(%default_parameters);
+    my @names_declined;
+    my @names_reserved = values(%default_parameters);
+    # Forbid using this object's attributes' names
+    foreach ($self->meta->get_all_attributes) { push(@names_reserved, $_->name); }
+    # Check parameters' keys (e.g. "h|help|help-me-please" or "f|file|filename=s")
+    foreach (@keys_reserved) {
+        foreach my $key_reserved ($_ =~ /(?:\|?([a-zA-Z\-]+)(?:=.+)?)/g) {
+            foreach my $key_declined (grep({ $key_reserved eq $_ } @{ $parameter_keys_defined })) {
                 (__PACKAGE__ . '::Exception::ParameterKeyReserved')->throwf(
                     "The %s command-line parameter key is reserved, " .
                     "you shouldn't have tried to use it",
-                    $forbidden_key
+                    $key_declined
                 ) if($fatal);
-                push(@forbidden_keys, $forbidden_key);
+                push(@keys_declined, $key_declined);
             }
         }
-        foreach my $forbidden_name (grep({ $reserved_name eq $_ } @{ $parameter_names_defined })) {
+        $self->_get_parameters_to_get->{$_} = $default_parameters{$_};
+    }
+    # Check parameter's names (e.g. "help_needed" or "filename")
+    foreach my $name (@names_reserved) {
+        foreach my $name_declined (grep({ $name eq $_ } @{ $parameter_names_defined })) {
             (__PACKAGE__ . '::Exception::ParameterNameReserved')->throwf(
                 "The %s command-line parameter attribute name is reserved, " .
                 "you shouldn't have tried to use it",
-                $forbidden_name
+                $name_declined
             ) if ($fatal);
-            push(@forbidden_names, $forbidden_name);
+            push(@names_declined, $name_declined);
         }
-        $self->_get_parameters_to_get->{$reserved_keys} = $reserved_name;
     }
-    return(\@forbidden_keys, \@forbidden_names);
+    return(\@keys_declined, \@names_declined);
 }
 
 
