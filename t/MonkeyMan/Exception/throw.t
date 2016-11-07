@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
 use MonkeyMan::Utils qw(mm_sprintf);
 use MonkeyMan::Exception qw(Test);
 
@@ -12,7 +11,7 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'throw.t',
     app_description     => 'MonkeyMan::Exception::throw() testing script',
-    app_version         => MM_VERSION
+    app_version         => $MonkeyMan::VERSION
 );
 
 my $logger          = $monkeyman->get_logger;

@@ -11,12 +11,14 @@ use warnings;
 
 use constant CONSOLE_LOGGER_NAME        => 'console';
 use constant CONSOLE_VERBOSITY_LEVELS   => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
+use constant DUMP_ENABLED               => 0;
+use constant DUMP_DIRECTORY             => undef;
+use constant DUMP_INTROSPECT_XML        => 1;
 
 # Use Moose and be happy :)
 use Moose;
 use namespace::autoclean;
 
-use MonkeyMan::Utils qw(mm_showref);
 use MonkeyMan::Exception;
 
 # Use 3rd-party libraries
@@ -25,6 +27,9 @@ use TryCatch;
 use File::Slurp;
 use Term::ANSIColor;
 use Log::Log4perl qw(:no_extra_logdie_message);
+use Scalar::Util qw(blessed refaddr);
+use Digest::MD5 qw(md5_hex);
+use File::Path qw(make_path);
 
 
 
@@ -102,6 +107,21 @@ method get_color(
     );
 }
 
+method colorify(
+    Str     $class!         = 'NORMAL',
+    Str     $string!,
+    Bool    $normalize?     = 0,
+    HashRef $colorscheme?   = $self->_get_colorscheme
+) {
+    return(
+        sprintf('%s%s%s',   
+                         $self->get_color($class, $colorscheme),
+                         $string,
+            $normalize ? $self->get_color('NORMAL', $colorscheme) : ''
+        )
+    );
+}
+
 has 'log4perl_loggers' => (
     is          => 'ro',
     isa         => 'HashRef',
@@ -129,6 +149,48 @@ method find_log4perl_logger(Str $name = '') {
     }
 }
 
+has 'dump_enabled' => (
+    is          => 'ro',
+    isa         => 'Bool',
+    reader      =>   '_get_dump_enabled',
+    writer      =>   '_set_dump_enabled',
+    predicate   =>   '_has_dump_enabled',
+    builder     => '_build_dump_enabled',
+    lazy        => 1
+);
+
+method _build_dump_enabled {
+    return($self->get_configuration->{'dump'}->{'enabled'})
+}
+
+has 'dump_directory' => (
+    is          => 'ro',
+    isa         => 'Str',
+    reader      =>   '_get_dump_directory',
+    writer      =>   '_set_dump_directory',
+    predicate   =>   '_has_dump_directory',
+    builder     => '_build_dump_directory',
+    lazy        => 1
+);
+
+method _build_dump_directory {
+    return($self->get_configuration->{'dump'}->{'directory'})
+}
+
+has 'dump_introspect_xml' => (
+    is          => 'ro',
+    isa         => 'Bool',
+    reader      =>   '_get_dump_introspect_xml',
+    writer      =>   '_set_dump_introspect_xml',
+    predicate   =>   '_has_dump_introspect_xml',
+    builder     => '_build_dump_introspect_xml',
+    lazy        => 1
+);
+
+method _build_dump_introspect_xml {
+    return($self->get_configuration->{'dump'}->{'introspect_xml'});
+}
+
 
 
 method BUILD(...) {
@@ -142,7 +204,6 @@ method BUILD(...) {
             $log4perl_configuration = read_file($self->_get_log4perl_configuration_file);
         }
 
-
         Log::Log4perl->init_once(\$log4perl_configuration);
         Log::Log4perl->wrapper_register(__PACKAGE__);
 
@@ -155,15 +216,11 @@ method BUILD(...) {
         if($self->_get_console_colored) {
             Log::Log4perl::Layout::PatternLayout::add_global_cspec('U',
                 func($layout, $message, $category, $priority, $caller_level) {
-                    return(sprintf("%s%s%s",
-                        $self->get_color('LEVEL_' . $priority),
-                        substr($priority, 0, 1),
-                        color('reset')
-                    ));
+                    return($self->colorify('LEVEL_' . $priority, substr($priority, 0, 1), 1));
                 }
             );
             $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
-                '%d [%U] ' . $self->get_color('CATEGORY') . '%c' . $self->get_color('NORMAL') . ' %m%n'
+                '%d [%U] ' . $self->colorify('CATEGORY', '%c', 1) . ' %m%n'
             );
         } else {
             $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
@@ -180,8 +237,8 @@ method BUILD(...) {
 
     foreach my $helper_name (qw(fatal error warn info debug trace)) {
 
-        my $log_straight    = sub { shift->_log($helper_name, (caller(0))[0], 0, "@_"); };
-        my $log_formatted   = sub { shift->_log($helper_name, (caller(0))[0], 1, @_); };
+        my $log_straight    = sub { shift->log($helper_name, (caller(0))[0], 0, "@_"); };
+        my $log_formatted   = sub { shift->log($helper_name, (caller(0))[0], 1, @_); };
 
         $self->meta->add_method(
             $helper_name => Class::MOP::Method->wrap(
@@ -206,7 +263,7 @@ method BUILD(...) {
 
 
 
-method _log(Str $level!, Str $module!, Bool $formatted!, @message_chunks) {
+method log(Str $level!, Str $module!, Bool $formatted!, @message_chunks) {
 
     my $logger_primary = $self->find_log4perl_logger($module);
     my $logger_console = $self->find_log4perl_logger(CONSOLE_LOGGER_NAME . "::$module");
@@ -214,8 +271,8 @@ method _log(Str $level!, Str $module!, Bool $formatted!, @message_chunks) {
     my $message_primary;
     my $message_console;
     if($formatted) {
-        $message_primary = $self->_sprintf(0, @message_chunks);
-        $message_console = $self->_sprintf(1, @message_chunks);
+        $message_primary = $self->mm_sprintf        (@message_chunks);
+        $message_console = $self->mm_sprintf_colored(@message_chunks);
     } else {
         $message_console = $message_primary = join(' ', @message_chunks);
     }
@@ -227,56 +284,66 @@ method _log(Str $level!, Str $module!, Bool $formatted!, @message_chunks) {
 
 
 
-method _sprintf(Bool $colored!, Str $format!, @values?) {
+func mm_sprintf_colored(...) {
+    return(mm_sprintf(@_));
+}
 
-    for(my $i = 0; $i < scalar(@_); $i++) {
+func mm_sprintf(...) {
+
+    # Am I being called as a class' method or as a regular function?
+    my $self = (
+        defined($_[0]) &&
+        blessed($_[0]) &&
+        $_[0]->DOES(__PACKAGE__)
+    ) ?
+        shift :
+        undef;
+    # Am I called from the mm_sprintf_colored() wrapper?
+    my $colored = defined($self) ?
+        (((caller(1))[3] =~ 'mm_sprintf_colored$') ? $self->_get_console_colored : 0) :
+        0;
+    my $format = shift;
+    my @values = @_;
+
+    for(my $i = 0; $i < scalar(@values); $i++) {
 
         my $value_new;
 
         if(!defined($values[$i])) {
             $value_new = '[UNDEF]';
         } elsif(ref($values[$i])) {
-            $value_new = mm_showref($values[$i]);
+            $value_new = defined($self) ?
+                $self->mm_showref($values[$i]) :
+                       mm_showref($values[$i])
         } else {
             $value_new = $values[$i];
         }
 
         if(
-            $colored &&
-            $self->_get_console_colored &&
-            (!defined($values[$i]) || ($value_new ne $values[$i]))
+            $colored && defined($self) && (!defined($values[$i]) || ($value_new ne $values[$i]))
         ) {
             if($value_new =~ /^\[([^\@\/\]]+)(?:\@(0x[0-9a-f]+))?(?:\/([0-9a-f]+))?\]$/) {
                 if(defined($1) && defined($2) && defined($3)) {
-                    $value_new = sprintf(
-                        '%s[%s%s%s@%s%s%s/%s%s%s]%s',
-                        $self->get_color('ACCENTED'),
-                        $self->get_color('REF_CLASS'), $1,
-                        $self->get_color('ACCENTED'),
-                        $self->get_color('REF_ADDRESS'), $2,
-                        $self->get_color('ACCENTED'),
-                        $self->get_color('REF_MD5SUM'), $3,
-                        $self->get_color('ACCENTED'),
-                        $self->get_color('NORMAL')
-                    );
+                    $value_new = 
+                        $self->colorify('ACCENTED',     '[',    0) .
+                        $self->colorify('REF_CLASS',    $1,     0) .
+                        $self->colorify('ACCENTED',     '@',    0) .
+                        $self->colorify('REF_ADDRESS',  $2,     0) .
+                        $self->colorify('ACCENTED',     '/',    0) .
+                        $self->colorify('REF_MD5SUM',   $3,     0) .
+                        $self->colorify('ACCENTED',     ']',    1);
                 } elsif(defined($1) && defined($2)) {
-                    $value_new = sprintf(
-                        '%s[%s%s%s@%s%s%s]%s',
-                        $self->get_color('ACCENTED'),
-                        $self->get_color('REF_CLASS'), $1,
-                        $self->get_color('ACCENTED'),
-                        $self->get_color('REF_ADDRESS'), $2,
-                        $self->get_color('ACCENTED'),
-                        $self->get_color('NORMAL')
-                    );
+                    $value_new = 
+                        $self->colorify('ACCENTED',     '[',    0) .
+                        $self->colorify('REF_CLASS',    $1,     0) .
+                        $self->colorify('ACCENTED',     '@',    0) .
+                        $self->colorify('REF_ADDRESS',  $2,     0) .
+                        $self->colorify('ACCENTED',     ']',    1);
                 } else {
-                    $value_new = sprintf(
-                        '%s[%s%s%s]%s',
-                        $self->get_color('ACCENTED'),
-                        $self->get_color('REF_CLASS'), $1,
-                        $self->get_color('ACCENTED'),
-                        $self->get_color('NORMAL')
-                    );
+                    $value_new = 
+                        $self->colorify('ACCENTED',     '[',    0) .
+                        $self->colorify('LOG_ERROR',    $1,     0) .
+                        $self->colorify('ACCENTED',     ']',    1);
                 }
             }
         }
@@ -288,6 +355,101 @@ method _sprintf(Bool $colored!, Str $format!, @values?) {
     return(sprintf($format, @values));
 
 }
+
+
+
+func mm_showref(...) {
+
+    # Am I being called as a class' method or as a regular function?
+    my $self = (
+        defined($_[0]) &&
+        blessed($_[0]) &&
+        $_[0]->DOES(__PACKAGE__)
+    ) ?
+        shift :
+        undef;
+    my $ref = shift;
+
+    my $ref_id_short = sprintf(
+        "%s\@0x%x",
+        blessed($ref) ? blessed($ref) : ref($ref),
+        refaddr($ref)
+    );
+
+    my $dumping;
+    my $dumpdir;
+    my $dumpxml;
+    my $dumpfile;
+
+    if(defined($self)) {
+        $dumping    = $self->_get_dump_enabled;
+        $dumpdir    = $self->_get_dump_directory;
+        $dumpxml    = $self->_get_dump_introspect_xml;
+    } else {
+        $dumping    = DUMP_ENABLED;
+        $dumpdir    = DUMP_DIRECTORY;
+        $dumpxml    = DUMP_INTROSPECT_XML;
+    }
+
+    my $result;
+
+    if(defined($dumping) && defined($dumpdir)) {
+
+        my $dumper  = Data::Dumper->new([$ref]);
+        my $dump    = Data::Dumper->new([$ref])->Indent(1)->Terse(0)->Dump;
+
+        $dump = sprintf("%s\n%s", $dump, $ref->toString(1))
+            if($dumpxml && blessed($ref) && $ref->DOES('XML::LibXML::Node'));
+
+        my $ref_id_long = md5_hex($dump);
+
+        $dumpfile = sprintf('%s/%s',
+            $dumpdir = sprintf('%s/%d/%s',
+                $dumpdir,
+                $$,
+                $ref_id_short
+            ), $ref_id_long
+        );
+
+        try {
+            make_path($dumpdir);
+            open(my($filehandle), '>', $dumpfile) ||
+                MonkeyMan::Exception->throwf(
+                    "Can't open the %s file for writing: %s",
+                        $dumpfile,
+                        $!
+                );
+            print({$filehandle} $dump);
+            close($filehandle) ||
+                MonkeyMan::Exception->throwf(
+                    "Can't close the %s file: %s",
+                        $dumpfile,
+                        $!
+                );
+        } catch($e) {
+            my $message = sprintf("Can't dump: %s", $e);
+            if(defined($self)) {
+                $self->warn($message);
+            } else {
+                warn($message);
+            }
+            $result = 'CORRUPTED';
+        }
+
+        $result = sprintf("%s/%s", $ref_id_short, $ref_id_long)
+            unless($result);
+
+    } else {
+
+        $result = sprintf("%s", $ref_id_short)
+            unless($result);
+
+    }
+
+    return(sprintf("[%s]", $result));
+
+}
+
 
 
 
