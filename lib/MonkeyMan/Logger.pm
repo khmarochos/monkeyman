@@ -17,6 +17,7 @@ use constant DUMP_INTROSPECT_XML        => 1;
 
 # Use Moose and be happy :)
 use Moose;
+use Moose::Exporter;
 use namespace::autoclean;
 
 use MonkeyMan::Exception;
@@ -30,6 +31,10 @@ use Log::Log4perl qw(:no_extra_logdie_message);
 use Scalar::Util qw(blessed refaddr);
 use Digest::MD5 qw(md5_hex);
 use File::Path qw(make_path);
+
+Moose::Exporter->setup_import_methods(
+    as_is   => [ 'mm_sprintf', 'mm_sprintf_colored' ]
+);
 
 
 
@@ -233,16 +238,16 @@ method BUILD(...) {
 
     }
 
-    # Initialize helpers
+    # Initialize methods
 
     foreach my $helper_name (qw(fatal error warn info debug trace)) {
 
-        my $log_straight    = sub { shift->log($helper_name, (caller(0))[0], 0, "@_"); };
+        my $log_joined      = sub { shift->log($helper_name, (caller(0))[0], 0, join(' ', @_)); };
         my $log_formatted   = sub { shift->log($helper_name, (caller(0))[0], 1, @_); };
 
         $self->meta->add_method(
             $helper_name => Class::MOP::Method->wrap(
-                $log_straight, (
+                $log_joined, (
                     name            => $helper_name,
                     package_name    => __PACKAGE__
                 )
@@ -284,43 +289,70 @@ method log(Str $level!, Str $module!, Bool $formatted!, @message_chunks) {
 
 
 
-func mm_sprintf_colored(...) {
-    return(mm_sprintf(@_));
+func _find_myself(ArrayRef $values!) {
+    return(
+        (
+            defined($values->[0]) &&
+            blessed($values->[0]) &&
+            $values->[0]->DOES(__PACKAGE__)
+        ) ?
+            shift(@{ $values }) :
+            undef
+    );
 }
 
 func mm_sprintf(...) {
+    my $self    = _find_myself(\@_);
+    my $format  = shift;
+    return(
+        _sprintf(
+            self    => $self,
+            format  => $format,
+            values  => \@_,
+            colored => 0
+        )
+    );
+}
 
-    # Am I being called as a class' method or as a regular function?
-    my $self = (
-        defined($_[0]) &&
-        blessed($_[0]) &&
-        $_[0]->DOES(__PACKAGE__)
-    ) ?
-        shift :
-        undef;
-    # Am I called from the mm_sprintf_colored() wrapper?
-    my $colored = defined($self) ?
-        (((caller(1))[3] =~ 'mm_sprintf_colored$') ? $self->_get_console_colored : 0) :
-        0;
-    my $format = shift;
-    my @values = @_;
+func mm_sprintf_colored(...) {
+    my $self    = _find_myself(\@_);
+    my $format  = shift;
+    return(
+        _sprintf(
+            self    => $self,
+            format  => $format,
+            values  => \@_,
+            colored => 1
+        )
+    );
+}
 
-    for(my $i = 0; $i < scalar(@values); $i++) {
+func _sprintf(
+    Maybe[Object] :$self?,
+    Str         :$format?       = '',
+    ArrayRef    :$values?       = [],
+    Bool        :$colored?      = 0,
+    HashRef     :$colorscheme?  = {}
+) {
+
+    my @values_new = @{ $values };
+
+    for(my $i = 0; $i < scalar(@values_new); $i++) {
 
         my $value_new;
 
-        if(!defined($values[$i])) {
+        if(!defined($values_new[$i])) {
             $value_new = '[UNDEF]';
-        } elsif(ref($values[$i])) {
+        } elsif(ref($values_new[$i])) {
             $value_new = defined($self) ?
-                $self->mm_showref($values[$i]) :
-                       mm_showref($values[$i])
+                $self->mm_showref($values_new[$i]) :
+                       mm_showref($values_new[$i])
         } else {
-            $value_new = $values[$i];
+            $value_new = $values_new[$i];
         }
 
         if(
-            $colored && defined($self) && (!defined($values[$i]) || ($value_new ne $values[$i]))
+            $colored && defined($self) && $self->_get_console_colored && (!defined($values_new[$i]) || ($value_new ne $values_new[$i]))
         ) {
             if($value_new =~ /^\[([^\@\/\]]+)(?:\@(0x[0-9a-f]+))?(?:\/([0-9a-f]+))?\]$/) {
                 if(defined($1) && defined($2) && defined($3)) {
@@ -348,11 +380,11 @@ func mm_sprintf(...) {
             }
         }
 
-        $values[$i] = $value_new;
+        $values_new[$i] = $value_new;
 
     }
 
-    return(sprintf($format, @values));
+    return(sprintf($format, @values_new));
 
 }
 

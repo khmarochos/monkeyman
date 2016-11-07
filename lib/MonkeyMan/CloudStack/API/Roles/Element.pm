@@ -10,7 +10,7 @@ use namespace::autoclean;
 with 'MonkeyMan::CloudStack::API::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
-use MonkeyMan::Utils qw(mm_sprintf);
+use MonkeyMan::Logger qw(mm_sprintf);
 use MonkeyMan::Exception qw(
     UndeterminableElementType
     MagicWordsArentDefined

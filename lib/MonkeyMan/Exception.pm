@@ -9,7 +9,7 @@ use constant DEFAULT_DATE_TIME_FORMAT => '%Y/%m/%d %H:%M:%S';
 use Moose;
 use namespace::autoclean;
 
-use MonkeyMan::Utils qw(mm_sprintf);
+use MonkeyMan::Logger;
 
 use Method::Signatures;
 use Devel::StackTrace;
@@ -141,8 +141,8 @@ method throwf(...) {
         );
     }
 
-    $self->throw(MonkeyMan::Utils::mm_sprintf($message, @values));
-    # We have to address to it as MonkeyMan::Utils::mm_sprintf, because the
+    $self->throw(MonkeyMan::Logger::mm_sprintf($message, @values));
+    # We have to address to it as MonkeyMan::Logger::mm_sprintf, because the
     # current subclass may not have such subroutine in its namespace!
 
 }
@@ -165,7 +165,7 @@ func find_exceptions(...) {
 
 method as_string(...) {
     return(
-        MonkeyMan::Utils::mm_sprintf(
+        MonkeyMan::Logger::mm_sprintf(
             "[!] %s\n" .
             "^^^ The exception had been thrown at %s\n" .
             "^^^ %s",

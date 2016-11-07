@@ -11,22 +11,14 @@ use MonkeyMan::Exception;
 # Use 3rd party libraries
 use Method::Signatures;
 use Module::Loaded;
-use Data::Dumper;
 use Exporter;
 use TryCatch;
-### vvv mm_showref vvv ###
-use Scalar::Util qw(blessed refaddr);
-use Digest::MD5 qw(md5_hex);
-use File::Path qw(make_path);
-### ^^^ mm_showref ^^^ ###
 
 use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 
 
 my @MM_utils_all = qw(
-    mm_sprintf
-    mm_showref
     mm_find_package
     mm_load_package
 );
@@ -36,23 +28,6 @@ my @MM_utils_all = qw(
 @EXPORT_OK          = @MM_utils_all;
 
 
-
-sub mm_sprintf {
-
-    my($message, @values) = @_;
-
-    for(my $i = 0; $i < scalar(@_); $i++) {
-        my $value = $values[$i];
-        if(!defined($value)) {
-            $values[$i] = "[UNDEF]";
-        } elsif(ref($value)) {
-            $values[$i] = mm_showref($values[$i]);
-        }
-    }
-
-    return(sprintf($message, @values));
-
-}
 
 func mm_find_package_file_name(Str $package_name!) {
     my $file_name = $package_name;

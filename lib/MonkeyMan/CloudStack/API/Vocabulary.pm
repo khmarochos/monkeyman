@@ -20,7 +20,7 @@ use MonkeyMan::Exception qw(
     SplitBrain
 );
 use MonkeyMan::CloudStack::API::Request;
-use MonkeyMan::Utils qw(mm_sprintf);
+use MonkeyMan::Logger qw(mm_sprintf);
 
 use Method::Signatures;
 use Lingua::EN::Inflect qw(A);
