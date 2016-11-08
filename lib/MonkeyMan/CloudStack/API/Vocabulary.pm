@@ -84,7 +84,7 @@ method resolve_macros(
     Maybe[Bool]     :$fatal         = 1
 ) {
 
-    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_api->get_cloudstack->_get_logger;
 
     my $source_original = $source;
     my @result;
@@ -185,7 +185,7 @@ method check_vocabulary(
         [ qw(actions list request) ],
         [ qw(actions list response) ]
     ) {
-        $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+        $self->get_api->get_cloudstack->_get_logger->tracef(
             "Making sure if there is the %s word in the %s vocabulary tree",
             join(':', @{ $words }), $vocabulary_tree
         );
@@ -223,7 +223,7 @@ method vocabulary_lookup(
 
     my $result;
     
-    #my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+    #my $logger = $self->get_api->get_cloudstack->_get_logger;
     #$logger->tracef(
     #    "Looking for the %s word in the %s vocabulary tree",
     #    join(':', @{ $words }), $tree
@@ -433,7 +433,7 @@ method compose_request(
         tree     => $request_subtree
     );
 
-    $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+    $self->get_api->get_cloudstack->_get_logger->tracef(
         "Composed the %s set of parameters", $r
     );
 
@@ -454,7 +454,7 @@ method apply_filters(
     Maybe[HashRef]                              :$macros
 ) {
 
-    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_api->get_cloudstack->_get_logger;
 
     $logger->tracef(
         "Applying filters to %s, action is %s, parameters are %s, " .
@@ -561,7 +561,7 @@ method interpret_response(
 ) {
 
     my $api     = $self->get_api;
-    my $logger  = $api->get_cloudstack->get_monkeyman->get_logger;
+    my $logger  = $api->get_cloudstack->_get_logger;
 
     my @results;
 
@@ -680,7 +680,7 @@ method recognize_response (
     );
 
     if(scalar(@response_recognized)) {
-        $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+        $self->get_api->get_cloudstack->_get_logger->tracef(
             "The %s DOM has been recognized as the response to " .
             "the %s action of %s",
             $dom,

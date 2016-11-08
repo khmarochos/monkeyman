@@ -7,12 +7,12 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
-# Inherit some essentials
-with 'MonkeyMan::Essentials';
-
 use MonkeyMan::CloudStack::API;
+use MonkeyMan::Logger;
 
 use Method::Signatures;
+
+our $VERSION = $MonkeyMan::VERSION;
 
 
 
@@ -24,6 +24,25 @@ has 'configuration' => (
     writer      =>   '_set_configuration',
     required    => 0
 );
+
+has 'logger' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Logger',
+    reader      =>   '_get_logger',
+    writer      =>   '_set_logger',
+    builder     => '_build_logger',
+    lazy        => 1,
+    required    => 0
+);
+
+method _build_logger {
+
+    MonkeyMan::Logger->new(
+        console_verbosity   => 0,
+        console_colored     => 0
+    );
+
+}
 
 has 'api' => (
     is          => 'ro',

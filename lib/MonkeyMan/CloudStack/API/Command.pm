@@ -63,7 +63,7 @@ method _build_url {
 method craft_url(...) {
 
     my %parameters      = @_;
-    my $logger          = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+    my $logger          = $self->get_api->get_cloudstack->_get_logger;
     my $configuration   = $self->get_api->get_configuration;
 
     my $parameters_string;
@@ -134,7 +134,7 @@ method run(
         ! $self->get_api->get_configuration->{'ignore_431_code'}
 ) {
 
-    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_api->get_cloudstack->_get_logger;
 
     $logger->tracef("Running the %s command", $self);
 

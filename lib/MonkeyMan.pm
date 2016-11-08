@@ -87,7 +87,6 @@ with 'MonkeyMan::Roles::WithTimer';
 # (the time_started attribute and some methods to work with it)
 
 use MonkeyMan::Constants qw(:ALL);
-use MonkeyMan::Utils qw(mm_load_package);
 use MonkeyMan::Exception qw(CanNotLoadPackage);
 use MonkeyMan::Parameters;
 use MonkeyMan::Plug;
@@ -601,67 +600,6 @@ framework's version ID.
 
 
 
-method plug(
-    Str             :$plugin_name!,
-    Str             :$actor_class!,
-    Object          :$actor_parent,
-    Maybe[Str]      :$actor_parent_as?,
-    Maybe[Str]      :$actor_name_as?,
-    Maybe[Str]      :$actor_default?,
-    Maybe[HashRef]  :$actor_parameters?,
-    Maybe[Str]      :$actor_handle?         = $plugin_name              when undef,
-    Maybe[Str]      :$plug_handle?          = $plugin_name . '_plug'    when undef,
-    Maybe[HashRef]  :$configuration_index?
-) {
-
-    my %p;
-    $p{'plugin_name'}           = $plugin_name;
-    $p{'actor_class'}           = $actor_class;
-    $p{'actor_parent'}          = $actor_parent;
-    $p{'actor_parent_as'}       = $actor_parent_as      if(defined($actor_parent_as));
-    $p{'actor_name_as'}         = $actor_name_as        if(defined($actor_name_as));
-    $p{'actor_default'}         = $actor_default        if(defined($actor_default));
-    $p{'actor_parameters'}      = $actor_parameters     if(defined($actor_parameters));
-    $p{'actor_handle'}          = $actor_handle;
-    $p{'plug_handle'}           = $plug_handle;
-    $p{'configuration_index'}   = $configuration_index  if(defined($configuration_index));
-
-    my $plug_object = MonkeyMan::Plug->new(%p);
-
-    my $parent_meta = $actor_parent->meta;
-    # FIXME: I should check now if the plug nasn't been initalized yet, so we
-    # wouldn't install the plugin's method and attribute again, as it would
-    # lead to exception raising
-
-    # Now we'll add the method get_SOMETHING (where SOMETHING is the value of
-    # the actor_handle parameter) to the parent class
-    $parent_meta->add_method(
-        "get_$actor_handle" => sub { shift; $plug_object->get_actor($_[0]); }
-    );
-    # And don't forget to add the attribute with the name taken from the
-    # plug_handle parameter to the parent class as well
-    $parent_meta->add_attribute(
-        $plug_handle        => (
-            isa         => 'MonkeyMan::Plug',
-            is          => 'ro',
-            reader      =>          'get_' . $plug_handle,
-            writer      => my $w = '_set_' . $plug_handle,
-            predicate   =>         '_has_' . $plug_handle,
-        )
-    );
-    # And initialize its value (add the reference to the plug)
-    $actor_parent->$w($plug_object);
-
-    # We'll definitely need it later
-    mm_load_package($actor_class);
-
-    return($plug_object);
-
-}
-
-
-
-
 has 'plugins_loaded' => (
     is          => 'ro',
     isa         => 'HashRef',
@@ -703,16 +641,26 @@ method _mm_init {
         [ "We've got the configuration: %s", $self->get_configuration ]
     );
 
-    my $plugin_parameters = {
+    # We need to pass a bunch of parameters to the "logger" plugin
+    my %plugin_parameters = (
         'logger'    => $self->_configure_logger_parameters(
                             $self->get_parameters->has_mm_default_logger ?
                             $self->get_parameters->get_mm_default_logger :
                             MM_DEFAULT_ACTOR
         )
-    };
+    );
 
-    # Connecting plugins
-    foreach my $plugin_name (keys(%{ $self->get_plugins_loaded })) {
+    # Connecting plugins ("logger" always goes first)
+    my @plugins_to_load;
+    foreach (keys(%{ $self->get_plugins_loaded })) {
+        if($_ eq 'logger') {
+            unshift(@plugins_to_load, $_);
+        } else {
+            push(@plugins_to_load, $_);
+        }
+    }
+
+    foreach my $plugin_name (@plugins_to_load) {
 
         my $plugin_configuration = $self->get_plugins_loaded->{$plugin_name};
         push(@postponed_messages, [
@@ -726,10 +674,18 @@ method _mm_init {
         $p{'plugin_name'}               =   defined($plugin_configuration->{'plugin_name'}) ?
                                                     $plugin_configuration->{'plugin_name'} :
                                                     $plugin_name;
+        # Passing some extra parameters to the actor's new() method
+        $p{'actor_parameters'}          =   {
+            # Do we have any special messages for the actor?
+            scalar(keys(%{ $plugin_parameters{ $p{'plugin_name'} } })) ?
+                        %{ $plugin_parameters{ $p{'plugin_name'} } } :
+                        (),
+            # Do we have a logger to be passed?
+            $self->can('get_logger') ?
+                        ( logger => $self->get_logger ) :
+                        ()
+        };
         # The plugin should have the monkeyman attribute pointing to MonkeyMan
-        $p{'actor_parameters'}          =   defined($plugin_parameters->{$p{'plugin_name'}}) ?
-                                                    $plugin_parameters->{$p{'plugin_name'}} :
-                                                    {};
         $p{'actor_parent'}              =   $self;
         $p{'actor_parent_as'}           =   'monkeyman';
         # Of course, we'll need to know the class name
@@ -771,7 +727,7 @@ method _mm_init {
             next; # The rest aint going to happen, dude!
         }
 
-        $self->plug(%p);
+        MonkeyMan::Plug->plug(%p);
 
         push(@postponed_messages, [
             "The %s module has been plugged, " .

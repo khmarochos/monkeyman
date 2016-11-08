@@ -12,7 +12,7 @@ use warnings;
 use constant CONSOLE_LOGGER_NAME        => 'console';
 use constant CONSOLE_VERBOSITY_LEVELS   => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
 use constant DUMP_ENABLED               => 0;
-use constant DUMP_DIRECTORY             => undef;
+use constant DUMP_DIRECTORY             => '/tmp';
 use constant DUMP_INTROSPECT_XML        => 1;
 
 # Use Moose and be happy :)
@@ -44,10 +44,21 @@ use File::Path qw(make_path);
 has 'configuration' => (
     is          => 'ro',
     isa         => 'HashRef',
-    reader      =>  'get_configuration',
-    writer      => '_set_configuration',
-    predicate   => '_has_configuration',
+    reader      =>    'get_configuration',
+    writer      =>   '_set_configuration',
+    predicate   =>   '_has_configuration',
+    builder     => '_build_configuration',
 );
+
+method _build_configuration {
+    {
+        dump => {
+            enabled         => DUMP_ENABLED,
+            directory       => DUMP_DIRECTORY,
+            introspect_xml  => DUMP_INTROSPECT_XML
+        }
+    }
+}
 
 has 'log4perl_configuration_string' => (
     is          => 'ro',

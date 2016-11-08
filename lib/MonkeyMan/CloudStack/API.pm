@@ -42,7 +42,7 @@ with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::CloudStack::Types qw(ElementType ReturnAs);
 use MonkeyMan::Constants qw(:cloudstack);
-use MonkeyMan::Utils qw(mm_load_package);
+use MonkeyMan::Plug qw(load_package);
 use MonkeyMan::Exception qw(
     CanNotLoadPackage
     InvalidParametersValue
@@ -192,12 +192,10 @@ method _build_useragent_signature {
         $self->get_configuration->{'useragent_signature'};
 
     unless(defined($useragent_signature)) {
-        my $monkeyman = $self->get_cloudstack->get_monkeyman;
         $useragent_signature = sprintf(
-            "%s-%s (powered by MonkeyMan-%s) (libwww-perl/#.###)",
-                $monkeyman->get_app_name,
-                $monkeyman->get_app_version,
-                $monkeyman->get_mm_version
+            "%s (powered by MonkeyMan::CloudStack-%s) (libwww-perl/#.###)",
+                $0,
+                $MonkeyMan::CloudStack::VERSION
         );
     }
 
@@ -382,7 +380,7 @@ method run_command(
 
     my $configuration   = $self->get_configuration;
     my $cloudstack      = $self->get_cloudstack;
-    my $logger          = $cloudstack->get_monkeyman->get_logger;
+    my $logger          = $cloudstack->_get_logger;
 
     my $command_to_run;
 
@@ -639,7 +637,7 @@ method perform_action(
     HashRef|ArrayRef[HashRef]                   :$requested!
 ) {
 
-    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_cloudstack->_get_logger;
 
     $logger->tracef(
         "Performing the %s action, elements' type is %s, " .
@@ -707,7 +705,7 @@ method get_related(
     MonkeyMan::CloudStack::Types::ReturnAs      :$return_as = 'element'
 ) {
 
-    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_cloudstack->_get_logger;
 
     my $vocabulary = $element->get_vocabulary;
     # related => {
@@ -849,7 +847,7 @@ method find_doms(
     Maybe[ArrayRef[Str]]                        :$xpaths
 ) {
 
-    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_cloudstack->_get_logger;
 
     # $criterions = { all => 1 }
     #     unless(defined($criterions));
@@ -906,7 +904,7 @@ method load_element_package(MonkeyMan::CloudStack::Types::ElementType $type!) {
     my $package_name = __PACKAGE__ . '::Element::' . $type;
 
     try {
-        return(mm_load_package($package_name));
+        return(MonkeyMan::Plug::load_package($package_name));
     } catch($e) {
         (__PACKAGE__ . '::Exception::CanNotLoadPackage')->throwf(
             "Can't load the %s package for operating %s. %s",
@@ -925,7 +923,7 @@ method recognize_dom(
     Maybe[Bool]             :$fatal = 1
 ) {
 
-    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_cloudstack->_get_logger;
 
     my $dom_recognized;
 
@@ -985,7 +983,7 @@ method recognize_response (
     Maybe[Bool]           :$fatal = 1
 ) {
 
-    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_cloudstack->_get_logger;
 
     my @response_recognized;
 
@@ -1084,7 +1082,7 @@ method get_elements(
     Maybe[ArrayRef[XML::LibXML::Document]]              :$doms,
 ) {
 
-    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_cloudstack->_get_logger;
 
     unless(defined($type)) {
         unless(defined($doms) && scalar(@{ $doms })) {
@@ -1221,7 +1219,7 @@ method qxp(
     Maybe[MonkeyMan::CloudStack::Types::ReturnAs] :$return_as
 ) {
 
-    my $logger = $self->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->get_cloudstack->_get_logger;
 
     unless($dom->DOES('XML::LibXML::Document')) {
         $logger->warnf("%s isn't a XML::LibXML::Document object");
@@ -1287,7 +1285,7 @@ method return_as(
     MonkeyMan::CloudStack::Types::ReturnAs  $return_as!
 ) {
 
-    $self->get_cloudstack->get_monkeyman->get_logger->tracef(
+    $self->get_cloudstack->_get_logger->tracef(
         "Returning %s as %s", $source, A($return_as)
     );
 
@@ -1365,7 +1363,7 @@ method BUILD(...) {
     # We need to initialize the plug of vocabularies, the vocabularies will be
     # initialized automatically, there's no "default" vocabulary, so one shall
     # always refer the concrete vocabulary
-    $self->get_cloudstack->get_monkeyman->plug(
+    MonkeyMan::Plug->plug(
         plugin_name         => 'vocabulary',
         actor_class         => 'MonkeyMan::CloudStack::API::Vocabulary',
         actor_parent        => $self,

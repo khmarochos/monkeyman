@@ -15,7 +15,12 @@ use namespace::autoclean;
 
 # Use 3rd-party libraries
 use Method::Signatures;
-use Scalar::Util qw(weaken);
+use Module::Loaded;
+use TryCatch;
+
+Moose::Exporter->setup_import_methods(
+    as_is => [ \&MonkeyMan::Plug::load_package ]
+);
 
 
 
@@ -225,6 +230,93 @@ method initialize_actor(Str $actor_name!) {
     # Let's return the reference to the actor initialized with all these params
     return(($self->get_actor_class)->new(%actor_parameters));
 
+}
+
+
+
+method plug(
+    Str             :$plugin_name!,
+    Str             :$actor_class!,
+    Object          :$actor_parent,
+    Maybe[Str]      :$actor_parent_as?,
+    Maybe[Str]      :$actor_name_as?,
+    Maybe[Str]      :$actor_default?,
+    Maybe[HashRef]  :$actor_parameters?,
+    Maybe[Str]      :$actor_handle?         = $plugin_name              when undef,
+    Maybe[Str]      :$plug_handle?          = $plugin_name . '_plug'    when undef,
+    Maybe[HashRef]  :$configuration_index?
+) {
+
+    my %p;
+    $p{'plugin_name'}           = $plugin_name;
+    $p{'actor_class'}           = $actor_class;
+    $p{'actor_parent'}          = $actor_parent;
+    $p{'actor_parent_as'}       = $actor_parent_as      if(defined($actor_parent_as));
+    $p{'actor_name_as'}         = $actor_name_as        if(defined($actor_name_as));
+    $p{'actor_default'}         = $actor_default        if(defined($actor_default));
+    $p{'actor_parameters'}      = $actor_parameters     if(defined($actor_parameters));
+    $p{'actor_handle'}          = $actor_handle;
+    $p{'plug_handle'}           = $plug_handle;
+    $p{'configuration_index'}   = $configuration_index  if(defined($configuration_index));
+
+    my $plug_object = MonkeyMan::Plug->new(%p);
+
+    my $parent_meta = $actor_parent->meta;
+    # FIXME: I should check now if the plug nasn't been initalized yet, so we
+    # wouldn't install the plugin's method and attribute again, as it would
+    # lead to exception raising
+
+    # Now we'll add the method get_SOMETHING (where SOMETHING is the value of
+    # the actor_handle parameter) to the parent class
+    $parent_meta->add_method(
+        "get_$actor_handle" => sub { shift; $plug_object->get_actor($_[0]); }
+    );
+    # And don't forget to add the attribute with the name taken from the
+    # plug_handle parameter to the parent class as well
+    $parent_meta->add_attribute(
+        $plug_handle        => (
+            isa         => 'MonkeyMan::Plug',
+            is          => 'ro',
+            reader      =>          'get_' . $plug_handle,
+            writer      => my $w = '_set_' . $plug_handle,
+            predicate   =>         '_has_' . $plug_handle,
+        )
+    );
+    # And initialize its value (add the reference to the plug)
+    $actor_parent->$w($plug_object);
+
+    # We'll definitely need it later
+    load_package($actor_class);
+
+    return($plug_object);
+
+}
+
+
+
+func find_package_file_name(Str $package_name!) {
+    my $file_name = $package_name;
+       $file_name =~ s#::#/#g;
+       $file_name .= '.pm';
+    return($file_name);
+}
+
+func load_package(Str $package_name!) {
+
+    unless(is_loaded($package_name)) {
+        my $file_name = find_package_file_name($package_name);
+        try {
+            require($file_name);
+        } catch($e) {
+            MonkeyMan::Exception::CanNotLoadPackage->throwf(
+                "Can't load the %s package from the %s file. %s",
+                $package_name,
+                $file_name,
+                $e
+            );
+        }
+    }
+    return($package_name);
 }
 
 
