@@ -807,25 +807,25 @@ method _mm_shutdown {
 
 method _configure_logger_parameters(Str $actor_name) {
 
-    return({
-        log4perl_configuration_file =>
-                defined($self->get_configuration->{'logger'}->{$actor_name}->{'log4perl'}) ?
-                        $self->get_configuration->{'logger'}->{$actor_name}->{'log4perl'} :
-                        MM_CONFIG_LOG4PERL,
-        console_verbosity => CONSOLE_VERBOSITY_LEVEL_BASE + (
-                defined($self->get_parameters->get_mm_be_verbose) ?
-                        $self->get_parameters->get_mm_be_verbose :
-                        0
-            ) - (
-                defined($self->get_parameters->get_mm_be_quiet) ?
-                        $self->get_parameters->get_mm_be_quiet :
-                        0
-            ),
-        console_colored =>
-                defined($self->get_parameters->get_mm_color) ?
-                        $self->get_parameters->get_mm_color :
-                        1
-    });
+my %parameters;
+    $parameters{'log4perl_configuration_file'} =
+        defined($self->get_configuration->{'logger'}->{$actor_name}->{'log4perl'}) ?
+                $self->get_configuration->{'logger'}->{$actor_name}->{'log4perl'} :
+                undef;
+    $parameters{'console_verbosity'} = CONSOLE_VERBOSITY_LEVEL_BASE + (
+        defined($self->get_parameters->get_mm_be_verbose) ?
+                $self->get_parameters->get_mm_be_verbose :
+                0
+    ) - (
+        defined($self->get_parameters->get_mm_be_quiet) ?
+                $self->get_parameters->get_mm_be_quiet :
+                0
+    );
+    $parameters{'console_colored'} = 
+        defined($self->get_parameters->get_mm_color) ?
+                $self->get_parameters->get_mm_color :
+                1;
+    return(\%parameters);
 
 }
 

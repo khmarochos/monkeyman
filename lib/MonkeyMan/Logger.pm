@@ -7,7 +7,7 @@ use feature 'state';
 use constant CONSOLE_LOGGER_NAME        => 'console';
 use constant CONSOLE_VERBOSITY_LEVELS   => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
 use constant DUMP_ENABLED               => 0;
-use constant DUMP_DIRECTORY             => '/tmp';
+use constant DUMP_DIRECTORY             => '.';
 use constant DUMP_INTROSPECT_XML        => 1;
 
 # Use Moose and be happy :)
@@ -107,8 +107,20 @@ has 'colorscheme' => (
 method _build_colorscheme {
     return(
         defined($self->get_configuration->{'colorscheme'}) ?
-                $self->get_configuration->{'colorscheme'}  :
-                {}
+                $self->get_configuration->{'colorscheme'}  : {
+                    NORMAL          => 'reset,',
+                    ACCENTED        => 'bright_white',
+                    LEVEL_TRACE     => 'bright_cyan',
+                    LEVEL_DEBUG     => 'cyan',
+                    LEVEL_INFO      => 'white',
+                    LEVEL_WARNING   => 'magenta',
+                    LEVEL_ERROR     => 'red',
+                    LEVEL_FATAL     => 'bright_red',
+                    CATEGORY        => 'rgb541',
+                    REF_CLASS       => 'bright_cyan',
+                    REF_ADDRESS     => 'cyan',
+                    REF_MD5SUM      => 'cyan'
+                }
     );
 }
 
@@ -228,7 +240,7 @@ method BUILD(...) {
 
         my $logger_console_appender = Log::Log4perl::Appender->new(
             'Log::Log4perl::Appender::Screen',
-            name            => 'console',
+            name            => CONSOLE_LOGGER_NAME,
             stderr          => 1,
         );
         my $logger_console_layout;
@@ -255,10 +267,10 @@ method BUILD(...) {
             $appender->filter(
                 Log::Log4perl::Filter->new('main', sub {
                     my %p = @_;
-                    if(index($p{'log4p_category'}, 'console.', 0) == 0) {
+                    if(index($p{'log4p_category'}, CONSOLE_LOGGER_NAME . '.', 0) == 0) {
                         return(0);
                     } else {
-                        return 1;
+                        return(1);
                     }
                 })
             )
@@ -377,6 +389,19 @@ func _sprintf(
     HashRef     :$colorscheme?  = {}
 ) {
 
+    my %can_be_colored;
+    if($colored && defined($self) && $self->_get_console_colored) {
+        my $parameter_number = 0;
+        while($format =~ /%(.)/g) {
+            if($1 eq 's') {
+                $can_be_colored{$parameter_number} = 1;
+            } elsif($1 eq '%') {
+                next;
+            }
+            $parameter_number++;
+        }
+    }
+
     my @values_new = @{ $values };
 
     for(my $i = 0; $i < scalar(@values_new); $i++) {
@@ -384,42 +409,35 @@ func _sprintf(
         my $value_new;
 
         if(!defined($values_new[$i])) {
-            $value_new = '[UNDEF]';
+            $value_new = $can_be_colored{$i} ?
+                '[' . $self->colorify('ERROR', 'UNDEF', 1) . ']' :
+                '[UNDEF]'
         } elsif(ref($values_new[$i])) {
             $value_new = defined($self) ?
                 $self->mm_showref($values_new[$i]) :
-                       mm_showref($values_new[$i])
-        } else {
-            $value_new = $values_new[$i];
-        }
-
-        if(
-            $colored && defined($self) && $self->_get_console_colored && (!defined($values_new[$i]) || ($value_new ne $values_new[$i]))
-        ) {
-            if($value_new =~ /^\[([^\@\/\]]+)(?:\@(0x[0-9a-f]+))?(?:\/([0-9a-f]+))?\]$/) {
+                       mm_showref($values_new[$i]);
+            if($can_be_colored{$i} && $value_new =~ /^\[([^\@\/\]]+)(?:\@(0x[0-9a-f]+))?(?:\/([0-9a-f]+))?\]$/) {
                 if(defined($1) && defined($2) && defined($3)) {
-                    $value_new = 
-                        $self->colorify('ACCENTED',     '[',    0) .
-                        $self->colorify('REF_CLASS',    $1,     0) .
-                        $self->colorify('ACCENTED',     '@',    0) .
-                        $self->colorify('REF_ADDRESS',  $2,     0) .
-                        $self->colorify('ACCENTED',     '/',    0) .
-                        $self->colorify('REF_MD5SUM',   $3,     0) .
-                        $self->colorify('ACCENTED',     ']',    1);
+                    $value_new = sprintf('[%s@%s/%s]',
+                        $self->colorify('REF_CLASS',    $1, 1),
+                        $self->colorify('REF_ADDRESS',  $2, 1),
+                        $self->colorify('REF_MD5SUM',   $3, 1)
+                    );
                 } elsif(defined($1) && defined($2)) {
-                    $value_new = 
-                        $self->colorify('ACCENTED',     '[',    0) .
-                        $self->colorify('REF_CLASS',    $1,     0) .
-                        $self->colorify('ACCENTED',     '@',    0) .
-                        $self->colorify('REF_ADDRESS',  $2,     0) .
-                        $self->colorify('ACCENTED',     ']',    1);
+                    $value_new = sprintf('[%s@%s]',
+                        $self->colorify('REF_CLASS',    $1, 1),
+                        $self->colorify('REF_ADDRESS',  $2, 1)
+                    );
                 } else {
-                    $value_new = 
-                        $self->colorify('ACCENTED',     '[',    0) .
-                        $self->colorify('LOG_ERROR',    $1,     0) .
-                        $self->colorify('ACCENTED',     ']',    1);
+                    $value_new = sprintf('[%s@%s]',
+                        $self->colorify('LOG_ERROR',    $1, 1)
+                    );
                 }
             }
+        } else {
+            $value_new = $can_be_colored{$i} ?
+                $self->colorify('ACCENTED', $values_new[$i], 1) :
+                $values_new[$i];
         }
 
         $values_new[$i] = $value_new;
