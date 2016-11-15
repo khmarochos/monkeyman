@@ -6,7 +6,6 @@ use warnings;
 
 # Use my own modules
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
 use MonkeyMan::Exception;
 
 # Use some third-party libraries
@@ -21,7 +20,7 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'deploy_vm.pl',
     app_description     => 'Deploys virtual machines',
-    app_version         => '0.1.0',
+    app_version         => $MonkeyMan::VERSION,
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
 

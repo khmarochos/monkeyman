@@ -4,13 +4,12 @@ use strict;
 use warnings;
 
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
 
 my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'get_related.t',
     app_description     => 'MonkeyMan::CloudStack::API::get_related testing script',
-    app_version         => MM_VERSION,
+    app_version         => $MonkeyMan::VERSION
 );
 
 use Test::More;

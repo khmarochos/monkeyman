@@ -12,7 +12,7 @@ Apache CloudStack.
 =head1 SYNOPSIS
 
     my $api = MonkeyMan::CloudStack::API->new(
-        cloudstack = 
+        configuration   => ...
     );
 
     my $result = $api->run_command(
@@ -37,11 +37,9 @@ use Moose;
 use namespace::autoclean;
 
 # Inherit some essentials
-with 'MonkeyMan::CloudStack::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::CloudStack::Types qw(ElementType ReturnAs);
-use MonkeyMan::Constants qw(:cloudstack);
 use MonkeyMan::Plug qw(load_package);
 use MonkeyMan::Exception qw(
     CanNotLoadPackage
@@ -55,6 +53,10 @@ use MonkeyMan::Exception qw(
 );
 use MonkeyMan::CloudStack::API::Command;
 use MonkeyMan::CloudStack::API::Vocabulary;
+
+use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH      => 3600;
+use constant MM_CLOUDSTACK_API_SLEEP                => 10;
+use constant MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME   => 100;
 
 use TryCatch;
 use Method::Signatures;
@@ -116,9 +118,23 @@ has 'configuration' => (
 );
 
 method _build_configuration {
+    return( {} );
+}
 
-    return($self->get_cloudstack->get_configuration->{'api'});
 
+
+has 'logger' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Logger',
+    reader      =>   '_get_logger',
+    writer      =>   '_set_logger',
+    builder     => '_build_logger',
+    lazy        => 1,
+    required    => 0
+);
+
+method _build_logger {
+    return(MonkeyMan::Logger->instance);
 }
 
 
@@ -379,8 +395,7 @@ method run_command(
 ) {
 
     my $configuration   = $self->get_configuration;
-    my $cloudstack      = $self->get_cloudstack;
-    my $logger          = $cloudstack->_get_logger;
+    my $logger          = $self->_get_logger;
 
     my $command_to_run;
 
@@ -393,8 +408,8 @@ method run_command(
         $logger->tracef("The %s URL is given to be run as a command", $url);
         unless(defined($command_to_run)) {
             $command_to_run = MonkeyMan::CloudStack::API::Command->new(
-                api => $self,
-                url => $url
+                api     => $self,
+                url     => $url
             );
         } else {
             $logger->warnf(
@@ -468,13 +483,13 @@ method run_command(
             my $errorcode = $dom->findvalue('/*/errorcode');
             my $errortext = $dom->findvalue('/*/errortext');
             (__PACKAGE__ . '::Exception::CommandFailed')->throwf(
-                "In reply to the %s command the %s CloudStack returned: %s %s (%s)",
-                $command_to_run, $self->get_cloudstack, $errorcode, $errortext, $failure
+                "In reply to the %s command CloudStack returned: %s %s (%s)",
+                $command_to_run, $errorcode, $errortext, $failure
             );
         } else {
             (__PACKAGE__ . '::Exception::CommandFailed')->throwf(
-                "In reply to the %s command the %s CloudStack returned: %s",
-                $command_to_run, $self->get_cloudstack, $failure
+                "In reply to the %s command CloudStack returned: %s",
+                $command_to_run, $failure
             );
         }
     }
@@ -637,7 +652,7 @@ method perform_action(
     HashRef|ArrayRef[HashRef]                   :$requested!
 ) {
 
-    my $logger = $self->get_cloudstack->_get_logger;
+    my $logger = $self->_get_logger;
 
     $logger->tracef(
         "Performing the %s action, elements' type is %s, " .
@@ -705,7 +720,7 @@ method get_related(
     MonkeyMan::CloudStack::Types::ReturnAs      :$return_as = 'element'
 ) {
 
-    my $logger = $self->get_cloudstack->_get_logger;
+    my $logger = $self->_get_logger;
 
     my $vocabulary = $element->get_vocabulary;
     # related => {
@@ -847,7 +862,7 @@ method find_doms(
     Maybe[ArrayRef[Str]]                        :$xpaths
 ) {
 
-    my $logger = $self->get_cloudstack->_get_logger;
+    my $logger = $self->_get_logger;
 
     # $criterions = { all => 1 }
     #     unless(defined($criterions));
@@ -923,7 +938,7 @@ method recognize_dom(
     Maybe[Bool]             :$fatal = 1
 ) {
 
-    my $logger = $self->get_cloudstack->_get_logger;
+    my $logger = $self->_get_logger;
 
     my $dom_recognized;
 
@@ -983,7 +998,7 @@ method recognize_response (
     Maybe[Bool]           :$fatal = 1
 ) {
 
-    my $logger = $self->get_cloudstack->_get_logger;
+    my $logger = $self->_get_logger;
 
     my @response_recognized;
 
@@ -1082,7 +1097,7 @@ method get_elements(
     Maybe[ArrayRef[XML::LibXML::Document]]              :$doms,
 ) {
 
-    my $logger = $self->get_cloudstack->_get_logger;
+    my $logger = $self->_get_logger;
 
     unless(defined($type)) {
         unless(defined($doms) && scalar(@{ $doms })) {
@@ -1219,7 +1234,7 @@ method qxp(
     Maybe[MonkeyMan::CloudStack::Types::ReturnAs] :$return_as
 ) {
 
-    my $logger = $self->get_cloudstack->_get_logger;
+    my $logger = $self->_get_logger;
 
     unless($dom->DOES('XML::LibXML::Document')) {
         $logger->warnf("%s isn't a XML::LibXML::Document object");
@@ -1285,7 +1300,7 @@ method return_as(
     MonkeyMan::CloudStack::Types::ReturnAs  $return_as!
 ) {
 
-    $self->get_cloudstack->_get_logger->tracef(
+    $self->_get_logger->tracef(
         "Returning %s as %s", $source, A($return_as)
     );
 
@@ -1371,6 +1386,7 @@ method BUILD(...) {
         actor_name_as       => 'type',
         actor_default       => undef,
         actor_handle        => 'vocabulary',
+        actor_parameters    => { logger => $self->_get_logger },
         plug_handle         => 'vocabulary_plug'
     );
 

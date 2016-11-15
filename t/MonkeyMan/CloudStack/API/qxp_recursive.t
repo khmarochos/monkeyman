@@ -4,13 +4,12 @@ use strict;
 use warnings;
 
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
 
 my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'qxp_recursive.t',
     app_description     => 'MonkeyMan::CloudStack::API::qxp testing script (recursive queries)',
-    app_version         => MM_VERSION,
+    app_version         => $MonkeyMan::VERSION,
     parameters_to_get   => {
         't|type=s'          => 'type'
     }

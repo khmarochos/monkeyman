@@ -7,7 +7,6 @@ use warnings;
 # Use my own modules
 use MonkeyMan;
 use MonkeyMan::Exception qw(ParametersNotDefined);
-use MonkeyMan::Constants qw(:version);
 use MonkeyMan::CloudStack::API;
 
 # Use some third-party libraries
@@ -19,7 +18,7 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'runcmd.pl',
     app_description     => 'The utility runs an API command and shows the result',
-    app_version         => MM_VERSION,
+    app_version         => $MonkeyMan::VERSION,
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
 
@@ -51,7 +50,8 @@ my $parameters  = $monkeyman->get_parameters;
 
 main::Exception::ParametersNotDefined->throw(
     'The command and its parameters are missing'
-);
+)
+    unless(scalar(keys(%{ $parameters })));
 
 my @doms = (
     $api->run_command(

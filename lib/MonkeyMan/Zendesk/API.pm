@@ -23,6 +23,22 @@ use JSON;
 
 
 
+has 'logger' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Logger',
+    reader      =>   '_get_logger',
+    writer      =>   '_set_logger',
+    predicate   =>   '_has_logger',
+    builder     => '_build_logger',
+    lazy        => 1
+);
+
+method _build_logger {
+    return(MonkeyMan::Logger->instance);
+}
+
+
+
 has 'configuration' => (
     is          => 'ro',
     isa         => 'HashRef',
@@ -78,12 +94,10 @@ method _build_useragent_signature {
         $self->get_configuration->{'useragent_signature'};
 
     unless(defined($useragent_signature)) {
-        my $monkeyman = $self->get_zendesk->get_monkeyman;
         $useragent_signature = sprintf(
-            "%s-%s (powered by MonkeyMan-%s) (libwww-perl/#.###)",
-                $monkeyman->get_app_name,
-                $monkeyman->get_app_version,
-                $monkeyman->get_mm_version
+            "%s (powered by MonkeyMan::CloudStack-%s) (libwww-perl/#.###)",
+                $0,
+                $MonkeyMan::CloudStack::VERSION
         );
     }
 
@@ -157,7 +171,7 @@ method run_command(
     Maybe[Str]      :$auth_password = $self->get_auth_password
 ) {
 
-    my $logger = $self->get_zendesk->get_monkeyman->get_logger;
+    my $logger = $self->_get_logger;
 
     my $auth_credentials = encode_base64($auth_email . ':' . $auth_password);
     my $request_url =

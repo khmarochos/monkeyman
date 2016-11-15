@@ -7,13 +7,25 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
-# Inherit some essentials
-with 'MonkeyMan::Essentials';
-
 use MonkeyMan::Zendesk::API;
 
 use Method::Signatures;
 
+
+
+has 'logger' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Logger',
+    reader      =>   '_get_logger',
+    writer      =>   '_set_logger',
+    predicate   =>   '_has_logger',
+    builder     => '_build_logger',
+    lazy        => 1
+);
+
+method _build_logger {
+    return(MonkeyMan::Logger->instance);
+}
 
 
 
@@ -35,12 +47,12 @@ has 'api' => (
 );
 
 method _build_api {
-
-    MonkeyMan::Zendesk::API->new(
-        zendesk         => $self,
-        configuration   => $self->get_configuration->{'api'}
+    return(
+        MonkeyMan::Zendesk::API->new(
+            zendesk         => $self,
+            configuration   => $self->get_configuration->{'api'}
+        )
     );
-
 }
 
 

@@ -1,13 +1,8 @@
 package MonkeyMan::Logger;
 
-=head1 NAME
-
-MonkeyMan::Logger - MonkeyMan's chronicler :)
-
-=cut
-
 use strict;
 use warnings;
+use feature 'state';
 
 use constant CONSOLE_LOGGER_NAME        => 'console';
 use constant CONSOLE_VERBOSITY_LEVELS   => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
@@ -20,16 +15,10 @@ use Moose;
 use Moose::Exporter;
 use namespace::autoclean;
 
-Moose::Exporter->setup_import_methods(
-    as_is   => [
-        \&MonkeyMan::Logger::mm_sprintf,
-        \&MonkeyMan::Logger::mm_sprintfmm_sprintf_colored
-    ]
-);
+with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::Exception;
 
-# Use 3rd-party libraries
 use Method::Signatures;
 use TryCatch;
 use File::Slurp;
@@ -38,6 +27,17 @@ use Log::Log4perl qw(:no_extra_logdie_message);
 use Scalar::Util qw(blessed refaddr);
 use Digest::MD5 qw(md5_hex);
 use File::Path qw(make_path);
+use Data::Dumper;
+use POSIX qw(strftime);
+
+state $_SINGLETON;
+
+Moose::Exporter->setup_import_methods(
+    as_is   => [
+        \&MonkeyMan::Logger::mm_sprintf,
+        \&MonkeyMan::Logger::mm_sprintfmm_sprintf_colored
+    ]
+);
 
 
 
@@ -239,16 +239,30 @@ method BUILD(...) {
                 }
             );
             $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
-                '%d [%U] ' . $self->colorify('CATEGORY', '%c', 1) . ' %m%n'
+                '%d [%U] [' . $self->colorify('CATEGORY', '%c', 1) . '] %m%n'
             );
         } else {
             $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
-                '%d [%p{1}] %c %m%n'
+                '%d [%p{1}] [%c] %m%n'
             );
         }
         $logger_console_appender->layout($logger_console_layout);
         $logger_console_appender->threshold((&CONSOLE_VERBOSITY_LEVELS)[$self->_get_console_verbosity]);
         $self->find_log4perl_logger(CONSOLE_LOGGER_NAME)->add_appender($logger_console_appender);
+
+        # Seems to be a dirty hack, but it works
+        if(my $appender = $Log::Log4perl::Logger::APPENDER_BY_NAME{'full'}) {
+            $appender->filter(
+                Log::Log4perl::Filter->new('main', sub {
+                    my %p = @_;
+                    if(index($p{'log4p_category'}, 'console.', 0) == 0) {
+                        return(0);
+                    } else {
+                        return 1;
+                    }
+                })
+            )
+        }
 
     }
 
@@ -276,6 +290,20 @@ method BUILD(...) {
             )
         );
 
+    }
+
+    $MonkeyMan::Logger::_SINGLETON = $self;
+
+}
+
+
+
+func instance(...) {
+
+    if(defined($MonkeyMan::Logger::_SINGLETON)) {
+        return($MonkeyMan::Logger::_SINGLETON);
+    } else {
+        return(__PACKAGE__->new);
     }
 
 }
@@ -450,8 +478,11 @@ func mm_showref(...) {
         my $ref_id_long = md5_hex($dump);
 
         $dumpfile = sprintf('%s/%s',
-            $dumpdir = sprintf('%s/%d/%s',
+            $dumpdir = sprintf('%s/%s/%d/%s',
                 $dumpdir,
+                defined($self) ?
+                    strftime('%Y.%m.%d.%H.%M.%S', localtime($self->get_time_started->[0])) :
+                    strftime('%Y.%m.%d.%H.%M.%S', localtime),
                 $$,
                 $ref_id_short
             ), $ref_id_long
@@ -500,3 +531,10 @@ func mm_showref(...) {
 
 
 1;
+
+=head1 NAME
+
+MonkeyMan::Logger - MonkeyMan's chronicler :)
+
+=cut
+

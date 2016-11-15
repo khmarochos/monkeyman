@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
 
 my $monkeyman;
 
@@ -20,7 +19,7 @@ try {
         app_code            => undef,
         app_name            => 'BUILD.t',
         app_description     => 'MonkeyMan::Parameters::BUILD testing script',
-        app_version         => MM_VERSION,
+        app_version         => $MonkeyMan::VERSION,
         parameters_to_get   => { 'h|zaloopa' => 'zaloopa' }
     );
     fail('h|zaloopa');
@@ -35,7 +34,7 @@ try {
         app_code            => undef,
         app_name            => 'BUILD.t',
         app_description     => 'MonkeyMan::Parameters::BUILD testing script',
-        app_version         => MM_VERSION,
+        app_version         => $MonkeyMan::VERSION,
         parameters_to_get   => { 'z|help' => 'zaloopa' }
     );
     fail('z|help');
@@ -50,7 +49,7 @@ try {
         app_code            => undef,
         app_name            => 'BUILD.t',
         app_description     => 'MonkeyMan::Parameters::BUILD testing script',
-        app_version         => MM_VERSION,
+        app_version         => $MonkeyMan::VERSION,
         parameters_to_get   => { 'z|zaloopa' => 'mm_show_help' }
     );
     fail('mm_show_help');

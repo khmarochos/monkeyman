@@ -8,7 +8,6 @@ use Moose;
 use namespace::autoclean;
 
 # Inherit some essentials
-with 'MonkeyMan::CloudStack::API::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
 #use MonkeyMan::Exception qw();

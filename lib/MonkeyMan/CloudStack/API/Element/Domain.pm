@@ -135,9 +135,9 @@ our %vocabulary_tree = (
 
 func create_domain(
     Str                         :$desired_name!,
-    Bool                        :$recursive = 0,
+    Bool                        :$recursive? = 0,
     MonkeyMan::CloudStack::API  :$api!,
-    MonkeyMan::Logger           :$logger = $api->get_cloudstack->get_monkeyman->get_logger
+    MonkeyMan::Logger           :$logger? = $api->_get_logger
 ) {
     my @parent_name_array = split('/', $desired_name);
     my $desired_name_tail = pop(@parent_name_array);

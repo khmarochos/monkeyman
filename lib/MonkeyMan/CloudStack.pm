@@ -22,26 +22,27 @@ has 'configuration' => (
     isa         => 'Maybe[HashRef]',
     reader      =>    'get_configuration',
     writer      =>   '_set_configuration',
-    required    => 0
+    predicate   =>   '_has_configuration',
+    builder     => '_build_configuration',
+    lazy        => 1
 );
+
+method _build_configuration {
+    return({});
+}
 
 has 'logger' => (
     is          => 'ro',
     isa         => 'MonkeyMan::Logger',
     reader      =>   '_get_logger',
     writer      =>   '_set_logger',
+    predicate   =>   '_has_logger',
     builder     => '_build_logger',
-    lazy        => 1,
-    required    => 0
+    lazy        => 1
 );
 
 method _build_logger {
-
-    MonkeyMan::Logger->new(
-        console_verbosity   => 0,
-        console_colored     => 0
-    );
-
+    return(MonkeyMan::Logger->instance);
 }
 
 has 'api' => (
@@ -49,17 +50,18 @@ has 'api' => (
     isa         => 'MonkeyMan::CloudStack::API',
     reader      =>    'get_api',
     writer      =>   '_set_api',
+    predicate   =>   '_has_api',
     builder     => '_build_api',
     lazy        => 1
 );
 
 method _build_api {
-
-    MonkeyMan::CloudStack::API->new(
-        cloudstack      => $self,
-        configuration   => $self->get_configuration->{'api'}
+    return(
+        MonkeyMan::CloudStack::API->new(
+            cloudstack      => $self,
+            configuration   => $self->get_configuration->{'api'}
+        )
     );
-
 }
 
 

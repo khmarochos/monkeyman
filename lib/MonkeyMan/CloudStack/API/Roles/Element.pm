@@ -7,7 +7,6 @@ use warnings;
 use Moose::Role;
 use namespace::autoclean;
 
-with 'MonkeyMan::CloudStack::API::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::Logger qw(mm_sprintf);
@@ -18,6 +17,33 @@ use MonkeyMan::Exception qw(
 );
 
 use Method::Signatures;
+
+
+
+has 'logger' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Logger',
+    reader      =>   '_get_logger',
+    writer      =>   '_set_logger',
+    builder     => '_build_logger',
+    lazy        => 1,
+    required    => 0
+);
+
+method _build_logger {
+    return(MonkeyMan::Logger->instance);
+}
+
+
+
+has 'api' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::CloudStack::API',
+    reader      =>  'get_api',
+    writer      => '_set_api',
+    predicate   => '_has_api',
+    required    => 1,
+);
 
 
 
@@ -186,7 +212,7 @@ before 'get_dom' => sub {
 
 method refresh_dom {
 
-    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
+    my $logger = $self->_get_logger;
 
     my $id = $self->get_id;
     unless(defined($id)) {
@@ -294,7 +320,7 @@ method is_dom_expired(Maybe[Str] $best_before) {
             "Invalid parameter's value: %s", $best_before
         )
     }
-    $self->get_api->get_cloudstack->get_monkeyman->get_logger->tracef(
+    $self->_get_logger->tracef(
         "The DOM of %s has been refreshed at %s, " .
         "so it's considered as %s if it's best before %s",
             $self,

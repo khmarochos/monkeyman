@@ -8,7 +8,6 @@ use Moose;
 use namespace::autoclean;
 
 # Inherit some essentials
-with 'MonkeyMan::CloudStack::API::Essentials';
 with 'MonkeyMan::Roles::WithTimer';
 
 use MonkeyMan::Exception qw(BadResponse);
@@ -19,6 +18,34 @@ use Digest::SHA qw(hmac_sha1);
 use MIME::Base64;
 use HTTP::Request;
 use LWP::UserAgent;
+
+
+
+has 'logger' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Logger',
+    reader      =>   '_get_logger',
+    writer      =>   '_set_logger',
+    builder     => '_build_logger',
+    lazy        => 1,
+    required    => 0
+);
+
+method _build_logger {
+    return(MonkeyMan::Logger->instance);
+}
+
+
+
+
+has 'api' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::CloudStack::API',
+    reader      =>  'get_api',
+    writer      => '_set_api',
+    predicate   => '_has_api',
+    required    => 1,
+);
 
 
 
@@ -63,7 +90,7 @@ method _build_url {
 method craft_url(...) {
 
     my %parameters      = @_;
-    my $logger          = $self->get_api->get_cloudstack->_get_logger;
+    my $logger          = $self->_get_logger;
     my $configuration   = $self->get_api->get_configuration;
 
     my $parameters_string;
@@ -134,7 +161,7 @@ method run(
         ! $self->get_api->get_configuration->{'ignore_431_code'}
 ) {
 
-    my $logger = $self->get_api->get_cloudstack->_get_logger;
+    my $logger = $self->_get_logger;
 
     $logger->tracef("Running the %s command", $self);
 

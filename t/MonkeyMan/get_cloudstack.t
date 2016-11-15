@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version :cloudstack);
 
 use Test::More (tests => 2);
 
@@ -14,7 +13,7 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'get_cloudstack.t',
     app_description     => 'MonkeyMan::get_cloudstack() testing script',
-    app_version         => MM_VERSION
+    app_version         => $MonkeyMan::VERSION
 );
 
 ok($monkeyman->get_cloudstack == $monkeyman->get_cloudstack);

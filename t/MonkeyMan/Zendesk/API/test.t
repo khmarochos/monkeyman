@@ -5,13 +5,12 @@ use warnings;
 use utf8;
 
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
 
 my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'test.t',
     app_description     => 'MonkeyMan::Zendesk::API very basic testing script',
-    app_version         => MM_VERSION
+    app_version         => $MonkeyMan::VERSION
 );
 
 use Test::More;

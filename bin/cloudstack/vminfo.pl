@@ -6,7 +6,7 @@ use warnings;
 
 # Use my own modules
 use MonkeyMan;
-use MonkeyMan::Constants qw(:miscellaneous);
+#use MonkeyMan::Constants qw(:miscellaneous);
 
 use Method::Signatures;
 
@@ -16,7 +16,7 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'vminfo',
     app_description     => 'The utility to get information about a virtual machine',
-    app_version         => MM_VERSION,
+    app_version         => $MonkeyMan::VERSION,
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
 

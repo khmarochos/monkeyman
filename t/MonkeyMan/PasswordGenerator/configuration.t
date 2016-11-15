@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
 
 my $monkeyman;
 
@@ -16,7 +15,7 @@ $monkeyman = MonkeyMan->new(
     app_code                => undef,
     app_name                => 'configuration.t',
     app_description         => 'MonkeyMan::PasswordGenerator testing script',
-    app_version             => MM_VERSION,
+    app_version             => $MonkeyMan::VERSION,
     configuration_append    => <<__END_OF_CONFIGURATION__
 <password_generator>
     <Huyarevo>

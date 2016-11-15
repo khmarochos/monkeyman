@@ -65,12 +65,6 @@ my @mm_constants_filenames = qw(
 
 # :cloudstack
 
-use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH      => 3600;
-# ^^^ MonkeyMan::CloudStack
-use constant MM_CLOUDSTACK_API_SLEEP                => 10;
-# ^^^ MonkeyMan::CloudStack
-use constant MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME   => 100;
-# ^^^ MonkeyMan::CloudStack
 
 my @mm_constants_cloudstack = qw(
     MM_CLOUDSTACK_API_WAIT_FOR_FINISH

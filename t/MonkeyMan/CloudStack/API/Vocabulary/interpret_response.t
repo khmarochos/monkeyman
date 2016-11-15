@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
 
 use File::Slurp;
 
@@ -12,7 +11,7 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'interpret_response.t',
     app_description     => 'MonkeyMan::CloudStack::API::Vocabulary::interpret_response testing script',
-    app_version         => MM_VERSION,
+    app_version         => $MonkeyMan::VERSION,
     parameters_to_get   => { 'x|xml-file=s' => 'xml_file' }
 );
 

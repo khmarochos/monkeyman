@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use MonkeyMan;
-use MonkeyMan::Utils qw(mm_sprintf);
+use MonkeyMan::Logger qw(mm_sprintf);
 use MonkeyMan::Exception qw(Test);
 
 my $monkeyman = MonkeyMan->new(

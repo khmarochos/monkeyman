@@ -46,7 +46,7 @@ method _build_time_started_formatted {
 
     sprintf(
         "%s.%06d",
-        strftime("%Y.%m.%d.%H.%M.%S", localtime($seconds)),
+        strftime(&MonkeyMan::DEFAULT_DATE_TIME_FORMAT, localtime($seconds)),
         $microseconds
     );
 

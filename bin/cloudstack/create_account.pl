@@ -6,7 +6,6 @@ use warnings;
 
 # Use my own modules
 use MonkeyMan;
-use MonkeyMan::Constants qw(:version);
 use MonkeyMan::CloudStack::API;
 use MonkeyMan::CloudStack::API::Element::Domain;
 
@@ -21,7 +20,7 @@ my $monkeyman = MonkeyMan->new(
     app_code            => undef,
     app_name            => 'create_account.pl',
     app_description     => 'Creates domains, accounts and users',
-    app_version         => MM_VERSION,
+    app_version         => $MonkeyMan::VERSION,
     app_usage_help      => sub { <<__END_OF_USAGE_HELP__; },
 This application recognizes the following parameters:
 

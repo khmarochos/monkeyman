@@ -16,9 +16,6 @@ use MonkeyMan::Exception;
 use Moose;
 use namespace::autoclean;
 
-# Inherit some essentials
-with 'MonkeyMan::Essentials';
-
 # Use 3rd-party libraries
 use Method::Signatures;
 use App::Genpass;

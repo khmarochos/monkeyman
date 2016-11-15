@@ -76,6 +76,7 @@ use strict;
 use warnings;
 
 use constant CONSOLE_VERBOSITY_LEVEL_BASE => 4;
+use constant DEFAULT_DATE_TIME_FORMAT => '%Y/%m/%d %H:%M:%S';
 
 # Use Moose and be happy :)
 use Moose 2.1604;
@@ -620,6 +621,8 @@ method _mm_init {
 
     my $meta = $self->meta;
 
+    my %plugin_parameters;
+    my @plugins_to_load;
     my @postponed_messages;
     my $logger;
 
@@ -641,20 +644,16 @@ method _mm_init {
         [ "We've got the configuration: %s", $self->get_configuration ]
     );
 
-    # We need to pass a bunch of parameters to the "logger" plugin
-    my %plugin_parameters = (
-        'logger'    => $self->_configure_logger_parameters(
-                            $self->get_parameters->has_mm_default_logger ?
-                            $self->get_parameters->get_mm_default_logger :
-                            MM_DEFAULT_ACTOR
-        )
-    );
-
-    # Connecting plugins ("logger" always goes first)
-    my @plugins_to_load;
     foreach (keys(%{ $self->get_plugins_loaded })) {
         if($_ eq 'logger') {
+            # The logger always goes first
             unshift(@plugins_to_load, $_);
+            # The logger needs some extra parameters to set console verbosity
+            $plugin_parameters{$_} = $self->_configure_logger_parameters(
+                 $self->get_parameters->has_mm_default_logger ?
+                 $self->get_parameters->get_mm_default_logger :
+                 MM_DEFAULT_ACTOR
+            );
         } else {
             push(@plugins_to_load, $_);
         }
@@ -680,12 +679,8 @@ method _mm_init {
             scalar(keys(%{ $plugin_parameters{ $p{'plugin_name'} } })) ?
                         %{ $plugin_parameters{ $p{'plugin_name'} } } :
                         (),
-            # Do we have a logger to be passed?
-            $self->can('get_logger') ?
-                        ( logger => $self->get_logger ) :
-                        ()
         };
-        # The plugin should have the monkeyman attribute pointing to MonkeyMan
+        # The plugin should have the monkeyman attribute pointing to the MonkeyMan-classed object
         $p{'actor_parent'}              =   $self;
         $p{'actor_parent_as'}           =   'monkeyman';
         # Of course, we'll need to know the class name
@@ -729,6 +724,8 @@ method _mm_init {
 
         MonkeyMan::Plug->plug(%p);
 
+        if($plugin_name eq 'logger') { $logger = $self->$n_actor_handle }
+
         push(@postponed_messages, [
             "The %s module has been plugged, " .
                 "so we've got the primary (ID: %s) actor: %s",
@@ -737,11 +734,13 @@ method _mm_init {
             $self->$n_actor_handle
         ]);
 
-        if($plugin_name eq 'logger') { $logger = $self->$n_actor_handle }
+        if(defined($logger)) {
+            while(my $postponed = shift(@postponed_messages)) {
+                $logger->tracef(@{$postponed});
+            }
+        }
 
     }
-
-    while(my $postponed = shift(@postponed_messages)) { $logger->tracef(@{$postponed}); }
 
     $logger->tracef("We've got the framework %s initialized by PID %d at %s",
         $self,
@@ -749,7 +748,7 @@ method _mm_init {
         $self->get_time_started_formatted
     );
 
-    $logger->debugf("<%s> The framework has been initialized",
+    $logger->debugf("<%s> The framework has been initialized: %s",
         $self->get_time_passed_formatted,
         $self
     );
