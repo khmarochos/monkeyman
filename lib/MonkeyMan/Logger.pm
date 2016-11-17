@@ -7,7 +7,7 @@ use feature 'state';
 use constant CONSOLE_LOGGER_NAME        => 'console';
 use constant CONSOLE_VERBOSITY_LEVELS   => qw(OFF FATAL ERROR WARN INFO DEBUG TRACE ALL);
 use constant DUMP_ENABLED               => 0;
-use constant DUMP_DIRECTORY             => '.';
+use constant DUMP_DIRECTORY             => undef;
 use constant DUMP_INTROSPECT_XML        => 1;
 
 # Use Moose and be happy :)
@@ -35,7 +35,8 @@ state $_SINGLETON;
 Moose::Exporter->setup_import_methods(
     as_is   => [
         \&MonkeyMan::Logger::mm_sprintf,
-        \&MonkeyMan::Logger::mm_sprintfmm_sprintf_colored
+        \&MonkeyMan::Logger::mm_sprintfmm_sprintf_colored,
+        \&MonkeyMan::Logger::mm_showref
     ]
 );
 
@@ -108,9 +109,9 @@ method _build_colorscheme {
     return(
         defined($self->get_configuration->{'colorscheme'}) ?
                 $self->get_configuration->{'colorscheme'}  : {
-                    NORMAL          => 'reset,',
+                    NORMAL          => 'reset',
                     ACCENTED        => 'bright_white',
-                    PARAMETER       => 'rgb555',
+                    PARAMETER       => 'rgb332',
                     LEVEL_TRACE     => 'bright_cyan',
                     LEVEL_DEBUG     => 'cyan',
                     LEVEL_INFO      => 'white',
@@ -229,7 +230,12 @@ method BUILD(...) {
 
     unless(Log::Log4perl->initialized) {
 
-        my $log4perl_configuration;
+        my $log4perl_configuration = <<__LOG4PERL_DEFAULT_CONFIGURATION__;
+log4perl.logger                     = ALL, default
+log4perl.appender.default           = Log::Dispatch::File
+log4perl.appender.default.layout    = Log::Log4perl::Layout::SimpleLayout
+log4perl.appender.default.filename  = /dev/null
+__LOG4PERL_DEFAULT_CONFIGURATION__
         if($self->_has_log4perl_configuration_string) {
             $log4perl_configuration = $self->_get_log4perl_configuration_string;
         } elsif($self->_has_log4perl_configuration_file) {
@@ -349,6 +355,7 @@ method log(Str $level!, Str $module!, Bool $formatted!, @message_chunks) {
 func _find_myself(ArrayRef $values!) {
     return(
         (
+            scalar(@{ $values }) > 1 &&
             defined($values->[0]) &&
             blessed($values->[0]) &&
             $values->[0]->DOES(__PACKAGE__)
@@ -392,7 +399,7 @@ func _sprintf(
     HashRef     :$colorscheme?  = {}
 ) {
 
-    my %can_be_colored;
+    my %shall_be_colored;
     if($colored && defined($self) && $self->_get_console_colored) {
         my $parameter_number = 0;
         while($format =~ /
@@ -409,7 +416,7 @@ func _sprintf(
             )
         /xg) {
             if($1 eq 's') {
-                $can_be_colored{$parameter_number} = 1;
+                $shall_be_colored{$parameter_number} = 1;
             } elsif($1 eq '%') {
                 next;
             }
@@ -424,14 +431,14 @@ func _sprintf(
         my $value_new;
 
         if(!defined($values_new[$i])) {
-            $value_new = $can_be_colored{$i} ?
+            $value_new = $shall_be_colored{$i} ?
                 '[' . $self->colorify('ERROR', 'UNDEF', 1) . ']' :
                 '[UNDEF]'
         } elsif(ref($values_new[$i])) {
             $value_new = defined($self) ?
                 $self->mm_showref($values_new[$i]) :
                        mm_showref($values_new[$i]);
-            if($can_be_colored{$i} && $value_new =~ /^\[([^\@\/\]]+)(?:\@(0x[0-9a-f]+))?(?:\/([0-9a-f]+))?\]$/) {
+            if($shall_be_colored{$i} && $value_new =~ /^\[([^\@\/\]]+)(?:\@(0x[0-9a-f]+))?(?:\/([0-9a-f]+))?\]$/) {
                 if(defined($1) && defined($2) && defined($3)) {
                     $value_new = sprintf('[%s@%s/%s]',
                         $self->colorify('REF_CLASS',    $1, 1),
@@ -450,7 +457,7 @@ func _sprintf(
                 }
             }
         } else {
-            $value_new = $can_be_colored{$i} ?
+            $value_new = $shall_be_colored{$i} ?
                 $self->colorify('PARAMETER', $values_new[$i], 1) :
                 $values_new[$i];
         }
@@ -483,14 +490,7 @@ method _build_showref_cache {
 func mm_showref(...) {
 
     # Am I being called as a class' method or as a regular function?
-    my $self = (
-        defined($_[1]) &&
-        defined($_[0]) &&
-        blessed($_[0]) &&
-        $_[0]->DOES(__PACKAGE__)
-    ) ?
-        shift :
-        undef;
+    my $self = _find_myself(\@_);
 
     my $ref = shift;
 

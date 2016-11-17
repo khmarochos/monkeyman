@@ -886,7 +886,7 @@ method print_full_usage_help {
 %s
 __END_OF_USAGE_HELP__
         , $app_usage_help ? ($app_usage_help . "\n") : ''
-        , $app_usage_help ? ' also ' : ' ',
+        , $app_usage_help ? ' also ' : ' '
         , $plugins_usage_help ? ("It also handles the following selectors:\n\n" . $plugins_usage_help) : ''
     );
 
