@@ -86,9 +86,9 @@ This application recognizes the following parameters:
  ** You can configure either a root disk or a data disk (not both of them).
 *** You can set only 1 of these 2 parameters.
 
-    --network-names <name1> <name2> ... <nameN>
+    --networks-names <name1> <name2> ... <nameN>
         [opt*] [mul] The list of networks' names
-    --network-ids <id1> <id2> ... <idN>
+    --networks-ids <id1> <id2> ... <idN>
         [opt*] [mul] The list of networks' IDs
   * You can set only 1 of these 2 parameters.
 
@@ -663,7 +663,7 @@ my @ipv6_addresses = (
 ) ? @{ $monkeyman->get_parameters->get_ipv6_addresses } : ();
 if(@ipv4_addresses || @ipv6_addresses) {
     if(
-        (@ipv4_addresses != @networks_ids) ||
+        (@ipv4_addresses != @networks_ids) &&
         (@ipv6_addresses != @networks_ids)
     ) {
         MonkeyMan::Exception->throwf(

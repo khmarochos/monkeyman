@@ -111,6 +111,7 @@ method _build_colorscheme {
                 $self->get_configuration->{'colorscheme'}  : {
                     NORMAL          => 'reset',
                     ACCENTED        => 'bright_white',
+                    WARNING         => 'red',
                     PARAMETER       => 'rgb332',
                     LEVEL_TRACE     => 'bright_cyan',
                     LEVEL_DEBUG     => 'cyan',
@@ -432,7 +433,7 @@ func _sprintf(
 
         if(!defined($values_new[$i])) {
             $value_new = $shall_be_colored{$i} ?
-                '[' . $self->colorify('ERROR', 'UNDEF', 1) . ']' :
+                '[' . $self->colorify('WARNING', 'UNDEF', 1) . ']' :
                 '[UNDEF]'
         } elsif(ref($values_new[$i])) {
             $value_new = defined($self) ?
