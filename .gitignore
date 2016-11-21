@@ -2,7 +2,3 @@
 .*.swo
 etc/*.conf
 etc/*/*.conf
-var/dump/*
-var/log/*.log*
-var/log/*/*.log*
-var/log/*/*/*.log*
