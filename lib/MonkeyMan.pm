@@ -654,13 +654,13 @@ method _mm_init {
     );
     if(!defined($euid_egid_ok)) {
         push(@postponed_messages, [
-            "Our effective UID & GID don't need to be checked",
+            "Our effective UID (%d) and GID (%d) don't need to be checked",
             $EFFECTIVE_USER_ID,
             $EFFECTIVE_GROUP_ID
         ]);
     } elsif($euid_egid_ok == 1) {
         push(@postponed_messages, [
-            'Our effective UID & GID are OK',
+            'Our effective UID (%d) and GID (%d) are OK',
             $EFFECTIVE_USER_ID,
             $EFFECTIVE_GROUP_ID
         ]);
