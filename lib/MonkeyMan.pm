@@ -935,19 +935,19 @@ method check_euid_egid(
     }
 
     for(my $i = 0; $i <= 1; $i++) {
-        if(defined($security_configuration->{'desired_euid'})) {
-            unless($security_configuration->{'desired_euid'} == $EFFECTIVE_USER_ID) {
+        if(defined($security_configuration->{'desired_egid'})) {
+            unless($security_configuration->{'desired_egid'} == $EFFECTIVE_GROUP_ID) {
                 if($try_to_set && $i < 1) {
-                    setuid($security_configuration->{'desired_euid'});
+                    setgid($security_configuration->{'desired_egid'});
                 } else {
                     return(0);
                 }
             }
         }
-        if(defined($security_configuration->{'desired_egid'})) {
-            unless($security_configuration->{'desired_egid'} == $EFFECTIVE_GROUP_ID) {
+        if(defined($security_configuration->{'desired_euid'})) {
+            unless($security_configuration->{'desired_euid'} == $EFFECTIVE_USER_ID) {
                 if($try_to_set && $i < 1) {
-                    setgid($security_configuration->{'desired_egid'});
+                    setuid($security_configuration->{'desired_euid'});
                 } else {
                     return(0);
                 }
