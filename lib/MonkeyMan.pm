@@ -795,7 +795,7 @@ method _mm_shutdown {
         $self->can('get_logger') &&
         $self->get_logger->can('debugf')
     ) {
-        $self->get_logger->debugf("<%s> The framework is shutting itself down",
+        $self->get_logger->debugf("<%s> The framework (%s) is shutting itself down",
             $self->get_time_passed_formatted,
             $self
         );
