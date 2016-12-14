@@ -11,10 +11,8 @@ use FindBin qw($Bin);
 
 # :miscellaneous
 
-use constant MM_DEFAULT_ACTOR => 'PRIMARY';
-# MonkeyMan
-use constant MM_VERSION => '3.0.0'; # See http://semver.org/
-# MonkeyMan
+use constant MM_DEFAULT_ACTOR   => 'PRIMARY';
+use constant MM_VERSION         => '3.0.1'; # See http://semver.org/
 
 my @mm_constants_miscellaneous = qw(
     MM_DEFAULT_ACTOR
@@ -63,15 +61,6 @@ my @mm_constants_filenames = qw(
 
 
 
-# :cloudstack
-
-
-my @mm_constants_cloudstack = qw(
-    MM_CLOUDSTACK_API_WAIT_FOR_FINISH
-    MM_CLOUDSTACK_API_SLEEP
-    MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME
-);
-
 # :passwords
 
 use constant MM_DEFAULT_PASSWORD_LENGTH             => 13;
@@ -95,7 +84,6 @@ my @mm_constants_all = (
     @mm_constants_miscellaneous,
     @mm_constants_directories,
     @mm_constants_filenames,
-    @mm_constants_cloudstack,
     @mm_constants_passwords
 );
 
@@ -110,7 +98,6 @@ my @mm_constants_all = (
     directories         => \@mm_constants_directories,
     filenames           => \@mm_constants_filenames,
     passwords           => \@mm_constants_passwords,
-    cloudstack          => \@mm_constants_cloudstack
 );
 
 
