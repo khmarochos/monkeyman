@@ -2,5 +2,3 @@
 .*.swo
 etc/*.conf
 etc/*/*.conf
-var/*
-log/*

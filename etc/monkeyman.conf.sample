@@ -1,3 +1,10 @@
+<security>
+  desired_euid = 500
+  desired_egid = 500
+</security>
+
+
+
 # Logging facilities
 
 <logger>

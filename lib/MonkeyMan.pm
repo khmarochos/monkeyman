@@ -74,6 +74,7 @@ with high-level Perl5-applications.
 use 5.20.1;
 use strict;
 use warnings;
+use English;
 
 use constant CONSOLE_VERBOSITY_LEVEL_BASE => 4;
 use constant DEFAULT_DATE_TIME_FORMAT => '%Y/%m/%d %H:%M:%S';
@@ -88,13 +89,14 @@ with 'MonkeyMan::Roles::WithTimer';
 # (the time_started attribute and some methods to work with it)
 
 use MonkeyMan::Constants qw(:ALL);
-use MonkeyMan::Exception qw(CanNotLoadPackage);
+use MonkeyMan::Exception qw(CanNotLoadPackage SecurityCheckFailed);
 use MonkeyMan::Parameters;
 use MonkeyMan::Plug;
 
 our $VERSION = MM_VERSION;
 
 # Use 3rd-party libraries
+use POSIX qw(setuid setgid);
 use MooseX::Singleton;
 use Method::Signatures;
 use TryCatch;
@@ -617,6 +619,8 @@ method _build_plugins_loaded {
 
 }
 
+
+
 method _mm_init {
 
     my $meta = $self->meta;
@@ -643,6 +647,30 @@ method _mm_init {
         @postponed_messages,
         [ "We've got the configuration: %s", $self->get_configuration ]
     );
+
+    my $euid_egid_ok = $self->check_euid_egid(
+        security_configuration  => $self->get_configuration->{'security'},
+        try_to_set              => 1
+    );
+    if(!defined($euid_egid_ok)) {
+        push(@postponed_messages, [
+            "Our effective UID (%d) and GID (%d) don't need to be checked",
+            $EFFECTIVE_USER_ID,
+            $EFFECTIVE_GROUP_ID
+        ]);
+    } elsif($euid_egid_ok == 1) {
+        push(@postponed_messages, [
+            'Our effective UID (%d) and GID (%d) are OK',
+            $EFFECTIVE_USER_ID,
+            $EFFECTIVE_GROUP_ID
+        ]);
+    } elsif($euid_egid_ok == 0) {
+        MonkeyMan::Exception::SecurityCheckFailed->throwf(
+            "Our effective UID (%d) and/or GID (%d) aren't OK",
+            $EFFECTIVE_USER_ID,
+            $EFFECTIVE_GROUP_ID
+        );
+    }
 
     foreach (keys(%{ $self->get_plugins_loaded })) {
         if($_ eq 'logger') {
@@ -795,7 +823,7 @@ method _mm_shutdown {
         $self->can('get_logger') &&
         $self->get_logger->can('debugf')
     ) {
-        $self->get_logger->debugf("<%s> The framework is shutting itself down",
+        $self->get_logger->debugf("<%s> The framework (%s) is shutting itself down",
             $self->get_time_passed_formatted,
             $self
         );
@@ -889,6 +917,45 @@ __END_OF_USAGE_HELP__
         , $app_usage_help ? ' also ' : ' '
         , $plugins_usage_help ? ("It also handles the following selectors:\n\n" . $plugins_usage_help) : ''
     );
+
+}
+
+
+
+method check_euid_egid(
+    Maybe[HashRef]  :$security_configuration,
+    Bool            :$try_to_set
+) {
+
+    unless(
+        defined($security_configuration) &&
+            ref($security_configuration) eq 'HASH'
+    ) {
+        return(undef);
+    }
+
+    for(my $i = 0; $i <= 1; $i++) {
+        if(defined($security_configuration->{'desired_egid'})) {
+            unless($security_configuration->{'desired_egid'} == $EFFECTIVE_GROUP_ID) {
+                if($try_to_set && $i < 1) {
+                    setgid($security_configuration->{'desired_egid'});
+                } else {
+                    return(0);
+                }
+            }
+        }
+        if(defined($security_configuration->{'desired_euid'})) {
+            unless($security_configuration->{'desired_euid'} == $EFFECTIVE_USER_ID) {
+                if($try_to_set && $i < 1) {
+                    setuid($security_configuration->{'desired_euid'});
+                } else {
+                    return(0);
+                }
+            }
+        }
+    }
+
+    return(1);
 
 }
 

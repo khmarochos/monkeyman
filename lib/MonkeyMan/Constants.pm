@@ -24,7 +24,7 @@ my @mm_constants_miscellaneous = qw(
 # :directories
 
 sub MM_DIRECTORY_ROOT {
-    if($FindBin::Bin =~ m{^((/.+?)?/monkeyman\b)}) {
+    if($FindBin::Bin =~ m{^((/.+?)?/monkeyman\b(?!.*monkeyman\b)).*}) {
         return($1);
     } else {
         die("Can't find the root directory");
