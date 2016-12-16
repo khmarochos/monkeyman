@@ -60,6 +60,11 @@ if(defined($parameters->get_conditions)) {
                 $xpath_base,
                 $conditions{$condition}
             );
+        } elsif($condition =~ /^has_instancename/i) {
+            $xpath_to_apply = sprintf("%s[instancename = '%s']",
+                $xpath_base,
+                $conditions{$condition}
+            );
         } elsif($condition =~ /^has_ipaddress$/i) {
             $xpath_to_apply = sprintf("%s[nic/ipaddress = '%s']",
                 $xpath_base,
