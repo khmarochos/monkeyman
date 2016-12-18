@@ -13,6 +13,7 @@ use MonkeyMan::Exception qw(
     WordIsMissing
     MacrosIsUndefined
     RequiredParameterIsUnset
+    GivenParameterIsUnknown
     UnknownResultRequested
     ReturnAsDisallowed
     SplitBrain
@@ -372,7 +373,13 @@ method compose_request(
 
     foreach my $parameter (keys(%{ $parameters })) {
 
-        $macros_complete->{'VALUE'} = $parameters->{$parameter};
+        # We'll check this value later, 0 would mean that we haven't found this
+        # parameter in the vocabulary
+        my $parameter_applied = 0;
+
+        # If one needs the parameter's <%VALUE%>, it could be found in the macros
+        my $macros_of_parameter = \%{ $macros_complete };
+           $macros_of_parameter->{'VALUE'} = $parameters->{$parameter};
 
         my $filters = $self->vocabulary_lookup(
             words   => [ 'request', 'parameters', $parameter, 'filters' ],
@@ -380,11 +387,12 @@ method compose_request(
             tree    => $action_subtree
         );
         if(defined($filters) && ref($filters) eq 'ARRAY') {
+            $parameter_applied++;
             foreach my $filter (
                 map {
                     $self->resolve_macros(
                         source => $_,
-                        macros => $macros_complete
+                        macros => $macros_of_parameter
                     )
                 } (@{ $filters })
             ) {
@@ -401,6 +409,7 @@ method compose_request(
             defined($command_parameters_subtree) &&
                 ref($command_parameters_subtree) eq 'HASH'
         ) {
+            $parameter_applied++;
             while(
                 my(
                     $command_parameter_name,
@@ -408,7 +417,7 @@ method compose_request(
                 ) = map {
                     $self->resolve_macros(
                         source      => $_,
-                        macros      => $macros_complete
+                        macros      => $macros_of_parameter
                     )
                 } each(%{ $command_parameters_subtree })
             ) {
@@ -434,6 +443,14 @@ method compose_request(
                 }
             }
         }
+
+        if($parameter_applied < 1) {
+            (__PACKAGE__ . '::Exception::GivenParameterIsUnknown')->throwf(
+                "The %s parameter hasn't been recognized",
+                $parameter
+            );
+        }
+
     }
 
     $command_parameters->{'command'} = $self->vocabulary_lookup(

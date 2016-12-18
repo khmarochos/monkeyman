@@ -54,38 +54,6 @@
             never       = volume,virtualmachine,snapshot
         </cache>
     </PRIMARY>
-    <Tucha>
-        include /home/mmkeeper/monkeyman/etc/cloudstack/Tucha/api.conf
-        <cache>
-            enabled     = 1
-            ttl         = 300
-            never       = volume,virtualmachine,snapshot
-        </cache>
-    </TDWebServices>
-    <CloudBrix>
-        include /home/mmkeeper/monkeyman/etc/cloudstack/CloudBrix/api.conf
-        <cache>
-            enabled     = 1
-            ttl         = 300
-            never       = volume,virtualmachine,snapshot
-        </cache>
-    </CloudBrix>
-    <eManualOnline>
-        include /home/mmkeeper/monkeyman/etc/cloudstack/eManualOnline/api.conf
-        <cache>
-            enabled     = 1
-            ttl         = 300
-            never       = volume,virtualmachine,snapshot
-        </cache>
-    </eManualOnline>
-    <TDWebServices>
-        include /home/mmkeeper/monkeyman/etc/cloudstack/TDWebServices/api.conf
-        <cache>
-            enabled     = 1
-            ttl         = 300
-            never       = volume,virtualmachine,snapshot
-        </cache>
-    </TDWebServices>
 </cloudstack>
 
 
@@ -96,9 +64,6 @@
     <PRIMARY>
         include /home/mmkeeper/monkeyman/etc/zendesk/PRIMARY.conf
     </PRIMARY>
-    <Tucha>
-        include /home/mmkeeper/monkeyman/etc/zendesk/Tucha.conf
-    </Tucha>
 </zendesk>
 
 

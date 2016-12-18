@@ -15,7 +15,11 @@ with 'MonkeyMan::Roles::WithTimer';
 # (the time_started attribute and some methods to work with it)
 
 use MonkeyMan::Constants qw(:ALL);
-use MonkeyMan::Exception qw(CanNotLoadPackage SecurityCheckFailed PluginUnconfigured);
+use MonkeyMan::Exception qw(
+    CanNotLoadPackage
+    SecurityCheckFailed
+    PluginConfigurationMissing
+);
 use MonkeyMan::Parameters;
 use MonkeyMan::Plug;
 
@@ -421,7 +425,7 @@ method _mm_init {
                                                   $self->get_configuration->{ $p{'plugin_name'} };
         # The primary actor's configuration shall be present, we can't plug the module if it isn't
         unless(ref($p{'configuration_index'}) eq 'HASH' && defined($p{'configuration_index'}->{ $p{'actor_default'} })) {
-            MonkeyMan::Exception::PluginUnconfigured->throwf(
+            MonkeyMan::Exception::PluginConfigurationMissing->throwf(
                 "The primary (ID: %s) actor's configuration for the %s plugin is missing",
                 $p{'actor_default'},
                 $p{'plugin_name'}
