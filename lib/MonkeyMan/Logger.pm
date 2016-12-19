@@ -246,6 +246,7 @@ __LOG4PERL_DEFAULT_CONFIGURATION__
         Log::Log4perl->init_once(\$log4perl_configuration);
         Log::Log4perl->wrapper_register(__PACKAGE__);
 
+        # TODO: Actually we should add the Screen-appender only if it hasn't been added yet!
         my $logger_console_appender = Log::Log4perl::Appender->new(
             'Log::Log4perl::Appender::Screen',
             name            => CONSOLE_LOGGER_NAME,
@@ -270,16 +271,11 @@ __LOG4PERL_DEFAULT_CONFIGURATION__
         $logger_console_appender->threshold((&CONSOLE_VERBOSITY_LEVELS)[$self->_get_console_verbosity]);
         $self->find_log4perl_logger(CONSOLE_LOGGER_NAME)->add_appender($logger_console_appender);
 
-        # Seems to be a dirty hack, but it works
+        # We wouldn't like to see the messages intended for the console in the file
         if(my $appender = $Log::Log4perl::Logger::APPENDER_BY_NAME{'full'}) {
             $appender->filter(
-                Log::Log4perl::Filter->new('main', sub {
-                    my %p = @_;
-                    if(index($p{'log4p_category'}, CONSOLE_LOGGER_NAME . '.', 0) == 0) {
-                        return(0);
-                    } else {
-                        return(1);
-                    }
+                Log::Log4perl::Filter->new('filter', sub {
+                    my %p = @_; return(! index($p{'log4p_category'}, CONSOLE_LOGGER_NAME . '.', 0) == 0);
                 })
             )
         }

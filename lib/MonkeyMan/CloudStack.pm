@@ -7,7 +7,7 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
-use MonkeyMan::Exception qw(ParameterIsNotSet ParameterIsNotFound);
+use MonkeyMan::Exception qw(ParameterIsNotSet ElementIsNotFound);
 use MonkeyMan::CloudStack::API;
 use MonkeyMan::Logger;
 
@@ -265,7 +265,10 @@ method find_all_elements (
             }
 
         } elsif($element_configuration->{'mandatory'}) {
-            (__PACKAGE__ . '::Exception::ParameterIsNotSet')->throwf("The %s (a required parameter) hasn't been choosen");
+            (__PACKAGE__ . '::Exception::ParameterIsNotSet')->throwf(
+                "The %s (a required parameter) hasn't been set",
+                $element_name
+            );
         }
 
     }
