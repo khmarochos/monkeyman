@@ -12,6 +12,7 @@ use MonkeyMan::Exception;
 use Method::Signatures;
 use File::Basename;
 use Term::ReadKey;
+use Data::Dumper;
 use Lingua::EN::Inflect qw(PL);
 
 
@@ -118,7 +119,10 @@ This application recognizes the following parameters:
   * You can set only 1 of these 2 parameters.
 
     --stopped
-        [opt]       The virtual machine shall not be started
+        [opt]       The virtual machine shall not start after deployment
+    --dry-run
+        [opt]       The virtual machine shall not be deployed at all
+
 __END_OF_USAGE_HELP__
     parameters_to_get_validated => <<__END_OF_PARAMETERS_TO_GET_VALIDATED__
 ---
@@ -208,6 +212,8 @@ root-disk-size=i:
     requires_any:
       - root_disk_offering_name
       - root_disk_offering_id
+      - template_id
+      - template_name
 data-disk-offering-name=s:
   data_disk_offering_name:
     conflicts_any:
@@ -290,15 +296,17 @@ host-id=s:
       - host_name
 stopped:
   stopped:
+dry-run:
+  dry_run:
 __END_OF_PARAMETERS_TO_GET_VALIDATED__
 );
 
 my $logger      = $monkeyman->get_logger;
-my $api         = $monkeyman->get_cloudstack->get_api;
 my $parameters  = $monkeyman->get_parameters;
+my $cloudstack  = $monkeyman->get_cloudstack;
+my $api         = $cloudstack->get_api;
 
 my %deployment_parameters;  # The parameters to be given to the deployment method
-my %elements_found;         # The references to the elements found are to be kept here
 
 
 
@@ -392,7 +400,7 @@ my $what_is_what = {
         number              => 8,
         mandatory           => 0,
         results             => { domainid => { query => '/id' } },
-        parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
+        parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'domain_id' },
             filter_by_path          => { from_parameters => 'domain_name' },
@@ -425,193 +433,11 @@ my $what_is_what = {
     }
 };
 
-# This is a recursively-called function needed to generate all the possible
-# combinations of parameters for each huerga. It's needed if the operator 
-# selects multiple networks by their names or IDs, so we'll need to find them.
-
-func generate_parameters (
-    HashRef     :$parameters_input!,
-    ArrayRef    :$parameters_output!,
-    HashRef     :$state = {},
-    Int         :$depth = 0
-) {
-    my @parameters_names = sort(keys(%{ $parameters_input }));
-    my $current_parameter_name = $parameters_names[$depth];
-    foreach my $current_parameter_value (@{ $parameters_input->{$current_parameter_name} }) {
-        $state->{$current_parameter_name} = $current_parameter_value;
-        if($depth < @parameters_names - 1) {
-            generate_parameters(
-                parameters_input    => $parameters_input,
-                parameters_output   => $parameters_output,
-                state               => $state,
-                depth               => $depth + 1
-            );
-        } else {
-            push(@{ $parameters_output }, { %{ $state } });
-        }
-    }
-}
-
-foreach my $huerga_name (
-    sort(
-        {
-            # We need to have it sorted, because certain parameters need some
-            # other parameters to have been proceeded beforehand. For example,
-            # the "account" parametr that is depentant on the "domain" one.
-            $what_is_what->{$a}->{'number'} <=> $what_is_what->{$b}->{'number'}
-        }
-        keys(%{ $what_is_what })
-    )
-) {
-
-    # We've got the key, now let's get the value...
-    my $huerga_configuration = $what_is_what->{$huerga_name};
-
-    $logger->tracef(
-        "Selecting the %s desired (as defined in %s)",
-        $huerga_name,
-        $huerga_configuration
-    );
-
-    # Later we'll need to know what exactly search criterions had been really set
-    my %huerga_desired;
-
-    # Now let's define the hash that will be passed to the perform_action() method,
-    # it shall contain all the search criterions for the huerga we proceed.
-    my %action_parameters = ref($huerga_configuration->{'parameters_fixed'}) eq 'HASH' ?
-        (%{ $huerga_configuration->{'parameters_fixed'} }) :
-        ();
-
-    # Is this huerga choosen by the operator?
-    my $huerga_choosen = 0;
-    # What variable parameters do we have for this huerga?
-    foreach my $action_parameter_name (keys(%{ $huerga_configuration->{'parameters_variable'} })) {
-
-        # The value will be needed later
-        my $action_parameter_configuration = $huerga_configuration->{'parameters_variable'}->{$action_parameter_name};
-
-        my $source;
-        my $value;
-        if(($source = $action_parameter_configuration->{'from_results'}) && defined($source)) {
-            # The parameter's value needs to be fetched from the results that have been already got
-            $value = $deployment_parameters{ $source };
-        } elsif(($source = $action_parameter_configuration->{'from_parameters'}) && defined($source)) {
-            # The parameter's value needs to be fetched from the command-line paramters
-            my $predicate = 'has_' . $source;
-            my $reader    = 'get_' . $source;
-            if($monkeyman->get_parameters->$predicate) {
-                $value = $monkeyman->get_parameters->$reader;
-                $huerga_choosen++; # This huerga has been choosen by the operator!
-            }
-        }
-        if(defined($value)) {
-            if(ref($value) eq 'ARRAY') {
-                $huerga_desired{$action_parameter_name} = $value;
-            } else {
-                $huerga_desired{$action_parameter_name} = [ $value ];
-            }
-        }
-    }
-
-    $logger->tracef(
-        "We're ready to perform list-getting actions to find the following element(s): %s",
-        \%huerga_desired
-    );
-
-    if(
-        # So, have we got any command-line parameters about this huerga?
-        ($huerga_choosen) ||
-        # Or shall it be proceeded even without the command-line parameters given?
-        ($huerga_configuration->{'forced'})
-    ) {
-
-        my @action_parameters_sets = ();
-
-        # It's a recursive subrouting that is generating all possible combinations of the parameters.
-        generate_parameters(
-            parameters_input    => \%huerga_desired,
-            parameters_output   => \@action_parameters_sets
-        );
-
-        $logger->tracef(
-            "The following list of parameters' sets are needed to be proceeded: %s",
-            \@action_parameters_sets
-        );
-
-        # There can be multiple parameters sets (for example, in the case when the operator defined multiple networks),
-        # so we're going to fetch them all
-        foreach my $action_parameters_set (@action_parameters_sets) {
-
-            # OK, let's perform the action
-            my @huerga_found = $api->perform_action(
-                type        => $huerga_configuration->{'type'},
-                action      => 'list',
-                parameters  => { %action_parameters, %{ $action_parameters_set } },
-                requested   => { element => 'element' }
-            );
-
-            # How much huerga have we found?
-            if(@huerga_found < 1) {
-                # Too little (less than 1 element)
-                MonkeyMan::Exception->throwf(
-                    "The %s desired (%s) has not been found",
-                    $huerga_name, join(', ', map({ sprintf("%s: %s", $_, join('/', @{ $huerga_desired{$_} }))} keys(%huerga_desired)))
-                );
-            } elsif(@huerga_found > 1) {
-                # Too much (more than 1 element)
-                MonkeyMan::Exception->throwf(
-                    "Too many %s have been found, their IDs are: %s",
-                    PL($huerga_name), join(', ', map({ $_->get_id } @huerga_found))
-                );
-            } else {
-                # Perfect! :)
-                my $huerga_selected = $huerga_found[0];
-                $logger->debugf(
-                    "The %s %s has been found, its ID is: %s",
-                    $huerga_selected,
-                    $huerga_name,
-                    $huerga_selected->get_id
-                );
-                foreach my $deployment_parameter (keys(%{ $huerga_configuration->{'results'} })) {
-                    if(defined(my $query = $huerga_configuration->{'results'}->{$deployment_parameter}->{'query'})) {
-                        my @results = $huerga_selected->qxp(
-                            query       => $query,
-                            return_as   => 'value'
-                        );
-                        if(@results < 1) {
-                            MonkeyMan::Exception->throwf("Expected a result, have got none");
-                        } elsif(@results > 1) {
-                            MonkeyMan::Exception->throwf("Expected a result, have got too many");
-                        } else {
-                            if(defined($huerga_configuration->{'ref'}) && $huerga_configuration->{'ref'} eq 'ARRAY') {
-                                # If we need to get multiple elements, we'll put it
-                                # to an array referenced from the $deployment_parameters hash
-                                unless(defined($deployment_parameters{$deployment_parameter})) {
-                                    # If it hasn't been initialized yet
-                                    $deployment_parameters{$deployment_parameter} = [ $results[0] ];
-                                } else {
-                                    # Otherwise, we'll push the new element
-                                    push(@{ $deployment_parameters{$deployment_parameter} }, $results[0]);
-                                }
-                            } else {
-                                # If we need to get only one element, we'll simply put it
-                                # to the $deployment_parameters hash as a scalar value
-                                $deployment_parameters{$deployment_parameter} = $results[0];
-                            }
-                        }
-                    }
-                }
-            }
-
-        }
-
-    } elsif($huerga_configuration->{'mandatory'}) {
-        MonkeyMan::Exception->throwf("The %s (a required parameter) hasn't been choosen");
-    }
-
-}
-
-
+$cloudstack->find_all_objects(
+    parameters      => $parameters,
+    what_is_what    => $what_is_what,
+    who_is_who      => \%deployment_parameters
+);
 
 #
 # Dealing with custom offerings and other options
@@ -621,10 +447,15 @@ $deployment_parameters{'name'} = $monkeyman->get_parameters->get_name
     if($monkeyman->get_parameters->has_name);
 $deployment_parameters{'displayname'} = $monkeyman->get_parameters->get_display_name
     if($monkeyman->get_parameters->has_display_name);
-$deployment_parameters{'size'} = $monkeyman->get_parameters->get_root_disk_size
-    if($monkeyman->get_parameters->has_root_disk_size);
-$deployment_parameters{'size'} = $monkeyman->get_parameters->get_data_disk_size
-    if($monkeyman->get_parameters->has_data_disk_size);
+if($parameters->has_template_id || $parameters->has_template_name) {
+    $deployment_parameters{'rootdisksize'} = $monkeyman->get_parameters->get_root_disk_size
+        if($monkeyman->get_parameters->has_root_disk_size);
+    $deployment_parameters{'size'} = $monkeyman->get_parameters->get_data_disk_size
+        if($monkeyman->get_parameters->has_data_disk_size);
+} else {
+    $deployment_parameters{'size'} = $monkeyman->get_parameters->get_root_disk_size
+        if($monkeyman->get_parameters->has_root_disk_size);
+}
 $deployment_parameters{'hypervisor'} = $monkeyman->get_parameters->get_hypervisor_type
     if($monkeyman->get_parameters->has_hypervisor_type);
 $deployment_parameters{'startvm'} = 'false'
@@ -693,22 +524,28 @@ if(@ipv4_addresses || @ipv6_addresses) {
 # Deploying a VM
 #
 
-$logger->debugf(
-    "Going to deploy a virtual machine, " .
-    "the following parameters' set is to be used: %s",
-    \%deployment_parameters
-);
-
-my $vm = $api->perform_action(
-    type        => 'VirtualMachine',
-    action      => 'create',
-    parameters  => \%deployment_parameters,
-    requested   => { 'element' => 'element' }
-);
-my $vm_id       =  $vm->get_id;
-my $vm_password = ($vm->qxp(query => '/password', return_as => 'value'))[0];
-printf(
-    "The virtual machine's ID is %s%s\n",
-    $vm_id, defined($vm_password) ? sprintf(', the password is %s', $vm_password) : ''
-);
-
+if($parameters->get_dry_run) {
+    $logger->infof(
+        "A virtual machine would be deployed " .
+        "with the following parameters' set: %s",
+        Dumper(\%deployment_parameters)
+    );
+} else {
+    $logger->debugf(
+        "Going to deploy a virtual machine, " .
+        "the following parameters' set is to be used: %s",
+        \%deployment_parameters
+    );
+    my $vm = $api->perform_action(
+        type        => 'VirtualMachine',
+        action      => 'create',
+        parameters  => \%deployment_parameters,
+        requested   => { 'element' => 'element' }
+    );
+    my $vm_id       =  $vm->get_id;
+    my $vm_password = ($vm->qxp(query => '/password', return_as => 'value'))[0];
+    printf(
+        "The virtual machine's ID is %s%s\n",
+        $vm_id, defined($vm_password) ? sprintf(', the password is %s', $vm_password) : ''
+    );
+}

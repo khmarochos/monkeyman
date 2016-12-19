@@ -86,6 +86,7 @@ has 'stack_trace_parameters' => (
 method _build_stack_trace_parameters {
     return({
         indent          => 1,
+        no_args         => 1,
         ignore_class    => [ qw(MonkeyMan::Exception) ]
     });
 }
