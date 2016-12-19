@@ -433,10 +433,10 @@ my $what_is_what = {
     }
 };
 
-$cloudstack->find_all_objects(
-    parameters      => $parameters,
-    what_is_what    => $what_is_what,
-    who_is_who      => \%deployment_parameters
+$cloudstack->find_all_elements(
+    parameters          => $parameters,
+    elements_catalog    => $what_is_what,
+    elements_recognized => \%deployment_parameters
 );
 
 #

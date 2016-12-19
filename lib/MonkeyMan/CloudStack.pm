@@ -94,92 +94,92 @@ func _generate_parameters (
     }
 }
 
-method find_all_objects (
+method find_all_elements (
     MonkeyMan::Logger           :$logger?           = $self->_get_logger,
     MonkeyMan::CloudStack::API  :$api?              = $self->get_api,
     MonkeyMan::Parameters       :$parameters!,
-    HashRef                     :$what_is_what!,
-    HashRef                     :$who_is_who!
+    HashRef                     :$elements_catalog!,
+    HashRef                     :$elements_recognized!
 ) {
 
-    foreach my $huerga_name (
+    foreach my $element_name (
         sort(
             {
                 # We need to have it sorted, because certain parameters need some
                 # other parameters to have been proceeded beforehand. For example,
                 # the "account" parametr that is depentant on the "domain" one.
-                $what_is_what->{$a}->{'number'} <=> $what_is_what->{$b}->{'number'}
+                $elements_catalog->{$a}->{'number'} <=> $elements_catalog->{$b}->{'number'}
             }
-            keys(%{ $what_is_what })
+            keys(%{ $elements_catalog })
         )
     ) {
 
         # We've got the key, now let's get the value...
-        my $huerga_configuration = $what_is_what->{$huerga_name};
+        my $element_configuration = $elements_catalog->{$element_name};
 
         $logger->tracef(
             "Selecting the %s desired (as defined in %s)",
-            $huerga_name,
-            $huerga_configuration
+            $element_name,
+            $element_configuration
         );
 
         # Later we'll need to know what exactly search criterions had been really set
-        my %huerga_desired;
+        my %element_desired;
 
         # Now let's define the hash that will be passed to the perform_action() method,
-        # it shall contain all the search criterions for the huerga we proceed.
-        my %action_parameters = ref($huerga_configuration->{'parameters_fixed'}) eq 'HASH' ?
-            (%{ $huerga_configuration->{'parameters_fixed'} }) :
+        # it shall contain all the search criterions for the element we proceed.
+        my %action_parameters = ref($element_configuration->{'parameters_fixed'}) eq 'HASH' ?
+            (%{ $element_configuration->{'parameters_fixed'} }) :
             ();
 
-        # Is this huerga choosen by the operator?
-        my $huerga_choosen = 0;
-        # What variable parameters do we have for this huerga?
-        foreach my $action_parameter_name (keys(%{ $huerga_configuration->{'parameters_variable'} })) {
+        # Is this element choosen by the operator?
+        my $element_choosen = 0;
+        # What variable parameters do we have for this element?
+        foreach my $action_parameter_name (keys(%{ $element_configuration->{'parameters_variable'} })) {
 
             # The value will be needed later
-            my $action_parameter_configuration = $huerga_configuration->{'parameters_variable'}->{$action_parameter_name};
+            my $action_parameter_configuration = $element_configuration->{'parameters_variable'}->{$action_parameter_name};
 
             my $source;
             my $value;
             if(($source = $action_parameter_configuration->{'from_results'}) && defined($source)) {
                 # The parameter's value needs to be fetched from the results that have been already got
-                $value = $who_is_who->{ $source };
+                $value = $elements_recognized->{ $source };
             } elsif(($source = $action_parameter_configuration->{'from_parameters'}) && defined($source)) {
                 # The parameter's value needs to be fetched from the command-line paramters
                 my $predicate = 'has_' . $source;
                 my $reader    = 'get_' . $source;
                 if($parameters->$predicate) {
                     $value = $parameters->$reader;
-                    $huerga_choosen++; # This huerga has been choosen by the operator!
+                    $element_choosen++; # This element has been choosen by the operator!
                 }
             }
             if(defined($value)) {
                 if(ref($value) eq 'ARRAY') {
-                    $huerga_desired{$action_parameter_name} = $value;
+                    $element_desired{$action_parameter_name} = $value;
                 } else {
-                    $huerga_desired{$action_parameter_name} = [ $value ];
+                    $element_desired{$action_parameter_name} = [ $value ];
                 }
             }
         }
 
         $logger->tracef(
-            "We're ready to perform list-getting actions to find the following element(s): %s",
-            \%huerga_desired
+            "We're ready to perform the list-getting actions to find the following element(s): %s",
+            \%element_desired
         );
 
         if(
-            # So, have we got any command-line parameters about this huerga?
-            ($huerga_choosen) ||
+            # So, have we got any command-line parameters about this element?
+            ($element_choosen) ||
             # Or shall it be proceeded even without the command-line parameters given?
-            ($huerga_configuration->{'forced'})
+            ($element_configuration->{'forced'})
         ) {
 
             my @action_parameters_sets = ();
 
             # It's a recursive subroutine that is generating all possible combinations of the parameters.
             _generate_parameters(
-                parameters_input    => \%huerga_desired,
+                parameters_input    => \%element_desired,
                 parameters_output   => \@action_parameters_sets
             );
 
@@ -193,69 +193,78 @@ method find_all_objects (
             foreach my $action_parameters_set (@action_parameters_sets) {
 
                 # OK, let's perform the action
-                my @huerga_found = $api->perform_action(
-                    type        => $huerga_configuration->{'type'},
+                my @elements_found = $api->perform_action(
+                    type        => $element_configuration->{'type'},
                     action      => 'list',
                     parameters  => { %action_parameters, %{ $action_parameters_set } },
                     requested   => { element => 'element' }
                 );
 
-                # How much huerga have we found?
-                if(@huerga_found < 1) {
+                # How much element have we found?
+                if(@elements_found < 1) {
                     # Too little (less than 1 element)
-                    (__PACKAGE__ . '::Exception::ParameterIsNotFound')->throwf(
+                    (__PACKAGE__ . '::Exception::ElementIsNotFound')->throwf(
                         "The %s desired (%s) has not been found",
-                        $huerga_name, join(', ', map({ sprintf("%s: %s", $_, join('/', @{ $huerga_desired{$_} }))} keys(%huerga_desired)))
+                        $element_name, join(', ', map({ sprintf("%s: %s", $_, join('/', @{ $element_desired{$_} }))} keys(%element_desired)))
                     );
-                } elsif(@huerga_found > 1) {
+                } elsif(@elements_found > 1) {
                     # Too much (more than 1 element)
-                    (__PACKAGE__ . '::Exception::ParameterIsNotFound')->throwf(
+                    (__PACKAGE__ . '::Exception::ElementIsNotFound')->throwf(
                         "Too many %s have been found, their IDs are: %s",
-                        PL($huerga_name), join(', ', map({ $_->get_id } @huerga_found))
+                        PL($element_name), join(', ', map({ $_->get_id } @elements_found))
                     );
                 } else {
                     # Perfect! :)
-                    my $huerga_selected = $huerga_found[0];
+                    my $element_selected    = $elements_found[0];
+                    my $element_selected_id = $element_selected->get_id;
                     $logger->debugf(
                         "The %s %s has been found, its ID is: %s",
-                        $huerga_selected,
-                        $huerga_name,
-                        $huerga_selected->get_id
+                        $element_selected,
+                        $element_name,
+                        $element_selected_id
                     );
-                    foreach my $who_is_who_parameter (keys(%{ $huerga_configuration->{'results'} })) {
-                        if(defined(my $query = $huerga_configuration->{'results'}->{$who_is_who_parameter}->{'query'})) {
-                            my @results = $huerga_selected->qxp(
+                    foreach my $elements_recognized_parameter (keys(%{ $element_configuration->{'results'} })) {
+
+                        my $what_we_got;
+
+                        if(defined(my $query = $element_configuration->{'results'}->{$elements_recognized_parameter}->{'query'})) {
+                            my @results = $element_selected->qxp(
                                 query       => $query,
                                 return_as   => 'value'
                             );
                             if(@results < 1) {
-                                (__PACKAGE__ . '::Exception::ParameterIsNotFound')->throwf("Expected a result, have got none");
+                                (__PACKAGE__ . '::Exception::ElementIsNotFound')->throwf("Expected a result, have got none");
                             } elsif(@results > 1) {
-                                (__PACKAGE__ . '::Exception::ParameterIsNotFound')->throwf("Expected a result, have got too many");
+                                (__PACKAGE__ . '::Exception::ElementIsNotFound')->throwf("Expected a result, have got too many");
                             } else {
-                                if(defined($huerga_configuration->{'ref'}) && $huerga_configuration->{'ref'} eq 'ARRAY') {
-                                    # If we need to get multiple elements, we'll put it
-                                    # to an array referenced from the $who_is_who hash
-                                    unless(defined($who_is_who->{$who_is_who_parameter})) {
-                                        # If it hasn't been initialized yet
-                                        $who_is_who->{$who_is_who_parameter} = [ $results[0] ];
-                                    } else {
-                                        # Otherwise, we'll push the new element
-                                        push(@{ $who_is_who->{$who_is_who_parameter} }, $results[0]);
-                                    }
-                                } else {
-                                    # If we need to get only one element, we'll simply put it
-                                    # to the $who_is_who hash as a scalar value
-                                    $who_is_who->{$who_is_who_parameter} = $results[0];
-                                }
+                                $what_we_got = $results[0];
                             }
+                        } else {
+                            $what_we_got = $element_selected_id;
                         }
+
+                        if(defined($element_configuration->{'ref'}) && $element_configuration->{'ref'} eq 'ARRAY') {
+                            # If we need to get multiple elements, we'll put it
+                            # to an array referenced from the $elements_recognized hash
+                            unless(defined($elements_recognized->{$elements_recognized_parameter})) {
+                                # If it hasn't been initialized yet
+                                $elements_recognized->{$elements_recognized_parameter} = [ $what_we_got ];
+                            } else {
+                                # Otherwise, we'll push the new element
+                                push(@{ $elements_recognized->{$elements_recognized_parameter} }, $what_we_got);
+                            }
+                        } else {
+                            # If we need to get only one element, we'll simply put it
+                            # to the $elements_recognized hash as a scalar value
+                            $elements_recognized->{$elements_recognized_parameter} = $what_we_got;
+                        }
+
                     }
                 }
 
             }
 
-        } elsif($huerga_configuration->{'mandatory'}) {
+        } elsif($element_configuration->{'mandatory'}) {
             (__PACKAGE__ . '::Exception::ParameterIsNotSet')->throwf("The %s (a required parameter) hasn't been choosen");
         }
 
