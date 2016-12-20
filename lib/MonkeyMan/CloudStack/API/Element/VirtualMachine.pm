@@ -160,12 +160,6 @@ our %vocabulary_tree = (
             response => {
                 response_node   => 'queryasyncjobresultresponse',
                 results         => {
-                    jobstatus          => {
-                        return_as       => [ qw( value ) ],
-                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobstatus' ],
-                        required        => 0,
-                        multiple        => 1
-                    },
                     element         => {
                         return_as       => [ qw( dom element id ) ],
                         queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>' ],
@@ -196,12 +190,6 @@ our %vocabulary_tree = (
             response => {
                 response_node   => 'queryasyncjobresultresponse',
                 results         => {
-                    jobstatus          => {
-                        return_as       => [ qw( value ) ],
-                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobstatus' ],
-                        required        => 0,
-                        multiple        => 1
-                    },
                     element         => {
                         return_as       => [ qw( dom element id ) ],
                         queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>' ],
@@ -229,28 +217,22 @@ our %vocabulary_tree = (
                     },
                     id => {
                         auto                => 1,
-                        command_parameters  => { 'id' => '<%OUR_ID%>' },
+                        command_parameters  => { 'id' => '<% OUR_ID || VALUE %>' },
                     },
                 }
             },
             response => {
-                response_node   => 'queryasyncjobresultresponse',
+                response_node   => 'changeserviceforvirtualmachineresponse',
                 results         => {
-                    jobstatus          => {
-                        return_as       => [ qw( value ) ],
-                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobstatus' ],
-                        required        => 0,
-                        multiple        => 1
-                    },
                     element         => {
                         return_as       => [ qw( dom element id ) ],
-                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>' ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
                         required        => 0,
                         multiple        => 1
                     },
                     id              => {
                         return_as       => [ qw( value ) ],
-                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>/id' ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
                         required        => 0,
                         multiple        => 1
                     }

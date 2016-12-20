@@ -126,7 +126,7 @@ method resolve_macros(
 #        "Resolving macroses in the %s (%s) expression, the global index is at %s",
 #        \$source_original, $source_original, \%macros_all,
 #    );
-    while ($source =~ /^(.*)<%(.+)%>(.*)$/) {
+    while ($source =~ /^(.*)<%\s*(.+)\s*%>(.*)$/) {
 
         my($left, $middle, $right) = ($1, $2, $3);
 
@@ -134,9 +134,15 @@ method resolve_macros(
             unshift(@result, $right);
         }
 
-        if(defined(my $new_value = $macros_all{$middle})) {
-            unshift(@result, $new_value);
-        } elsif($fatal) {
+        my $resolved = 0;
+        foreach my $middle_chunk (split(/\s*\|{2}\s*/, $middle)) {
+            if(defined(my $new_value = $macros_all{$middle_chunk})) {
+                unshift(@result, $new_value);
+                $resolved++;
+                last;
+            }
+        }
+        if($fatal && ! $resolved) {
             (__PACKAGE__ . '::Exception::MacrosIsUndefined')->throwf(
                 "Can't resolve the %s macros", $middle
             )
