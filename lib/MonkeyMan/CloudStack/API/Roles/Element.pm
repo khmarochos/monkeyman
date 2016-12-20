@@ -95,7 +95,6 @@ has 'vocabulary' => (
         vocabulary_lookup
         compose_command
         interpret_response
-        action_perform
     ) ]
 );
 
@@ -371,6 +370,27 @@ around 'get_id' => sub {
 #
 # Proxy methods go here...
 #
+
+method perform_action(
+    Str                                         :$action!,
+    Maybe[HashRef]                              :$parameters,
+    Maybe[HashRef]                              :$macros,
+    HashRef|ArrayRef[HashRef]                   :$requested!
+) {
+
+    my $macros_complete = { defined($macros) ? %{ $macros } : () };
+
+    $macros_complete->{'OUR_ID'} = $self->get_id;
+
+    return($self->get_api->perform_action(
+        type        => $self->get_type,
+        action      => $action,
+        parameters  => $parameters,
+        macros      => $macros_complete,
+        requested   => $requested
+    ));
+
+}
 
 method get_related(Str :$related!) {
 

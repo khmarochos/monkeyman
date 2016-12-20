@@ -657,7 +657,7 @@ method perform_action(
     $logger->tracef(
         "Performing the %s action, elements' type is %s, " .
         "parameters are contained in %s, macroses are in %s",
-        $action, $type, $parameters, $requested
+        $action, $type, $parameters, $macros
     );
 
     my $request = $self->compose_request(

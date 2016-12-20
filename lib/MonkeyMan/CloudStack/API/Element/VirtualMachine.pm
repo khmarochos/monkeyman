@@ -144,7 +144,119 @@ our %vocabulary_tree = (
                     }
                 }
             }
-        }
+        },
+        start => {
+            request => {
+                command             => 'startVirtualMachine',
+                async               => 1,
+                paged               => 0,
+                parameters          => {
+                    id => {
+                        auto                => 1,
+                        command_parameters  => { 'id' => '<%OUR_ID%>' },
+                    },
+                }
+            },
+            response => {
+                response_node   => 'queryasyncjobresultresponse',
+                results         => {
+                    jobstatus          => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobstatus' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    element         => {
+                        return_as       => [ qw( dom element id ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    }
+                }
+            }
+        },
+        stop => {
+            request => {
+                command             => 'stopVirtualMachine',
+                async               => 1,
+                paged               => 0,
+                parameters          => {
+                    id => {
+                        auto                => 1,
+                        command_parameters  => { 'id' => '<%OUR_ID%>' },
+                    }
+                }
+            },
+            response => {
+                response_node   => 'queryasyncjobresultresponse',
+                results         => {
+                    jobstatus          => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobstatus' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    element         => {
+                        return_as       => [ qw( dom element id ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    }
+                }
+            }
+        },
+        change_service_offering => {
+            request => {
+                command             => 'changeServiceForVirtualMachine',
+                async               => 0,
+                paged               => 0,
+                parameters          => {
+                    service_offering_id => {
+                        required            => 1,
+                        command_parameters  => { 'serviceofferingid' => '<%VALUE%>' },
+                    },
+                    id => {
+                        auto                => 1,
+                        command_parameters  => { 'id' => '<%OUR_ID%>' },
+                    },
+                }
+            },
+            response => {
+                response_node   => 'queryasyncjobresultresponse',
+                results         => {
+                    jobstatus          => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobstatus' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    element         => {
+                        return_as       => [ qw( dom element id ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    }
+                }
+            }
+        },
     }
 );
 

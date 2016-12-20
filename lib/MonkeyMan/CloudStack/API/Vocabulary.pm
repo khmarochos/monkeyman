@@ -313,7 +313,7 @@ method vocabulary_lookup(
 
 method compose_request(
     Str             :$action!,
-    Maybe[HashRef]  :$parameters = {},
+    Maybe[HashRef]  :$parameters,
     Maybe[HashRef]  :$macros,
     Maybe[Bool]     :$return_as_hashref
 ) {
@@ -329,7 +329,8 @@ method compose_request(
         macros      => $macros
     };
 
-    my $macros_complete = { defined($macros) ? %{ $macros } : () };
+    my $macros_complete     = { defined($macros)        ? %{ $macros }      : () };
+    my $parameters_complete = { defined($parameters)    ? %{ $parameters }  : () };
 
     my $action_subtree = $self->vocabulary_lookup(
         words   => [ 'actions', $action ],
@@ -348,7 +349,6 @@ method compose_request(
     );
     $macros_complete->{'OUR_RESPONSE_NODE'} = $responde_node_name;
 
-    # Now let's make sure if all required action parameters have been defined
     while(my($parameter_name, $parameter_subtree) = each(%{
         $self->vocabulary_lookup(
             words   => [ qw(request parameters) ],
@@ -356,22 +356,33 @@ method compose_request(
             tree    => $action_subtree
         )
     })) {
+
+        # Now let's make sure if all required action parameters have been defined
         if($self->vocabulary_lookup(
             words   => [ 'required' ],
             fatal   => 0,
             tree    => $parameter_subtree
-        ) && !defined($parameters->{$parameter_name})) {
+        ) && !defined($parameters_complete->{$parameter_name})) {
             (__PACKAGE__ . '::Exception::RequiredParameterIsUnset')->throwf(
                 "The %s parameter is missing, it's required by the %s action",
                 $parameter_name, $action
             )
         }
+
+        if($self->vocabulary_lookup(
+            words   => [ 'auto' ],
+            fatal   => 0,
+            tree    => $parameter_subtree
+        ) && !defined($parameters_complete->{$parameter_name})) {
+            $parameters_complete->{$parameter_name} = { };
+        }
+
     }
 
     # Let's translate the method's parameters to the command's parameters
     my $command_parameters = { };
 
-    foreach my $parameter (keys(%{ $parameters })) {
+    foreach my $parameter (keys(%{ $parameters_complete })) {
 
         # We'll check this value later, 0 would mean that we haven't found this
         # parameter in the vocabulary
@@ -379,7 +390,7 @@ method compose_request(
 
         # If one needs the parameter's <%VALUE%>, it could be found in the macros
         my $macros_of_parameter = \%{ $macros_complete };
-           $macros_of_parameter->{'VALUE'} = $parameters->{$parameter};
+           $macros_of_parameter->{'VALUE'} = $parameters_complete->{$parameter};
 
         my $filters = $self->vocabulary_lookup(
             words   => [ 'request', 'parameters', $parameter, 'filters' ],
@@ -438,8 +449,7 @@ method compose_request(
                 } elsif(ref($command_parameter_value)) {
                     # TODO: Raise an exception!
                 } else {
-                    $command_parameters->{$command_parameter_name} =
-                    $command_parameter_value;
+                    $command_parameters->{$command_parameter_name} = $command_parameter_value;
                 }
             }
         }
