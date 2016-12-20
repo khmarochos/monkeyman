@@ -7,7 +7,7 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
-use MonkeyMan::Exception qw(ParameterIsNotSet ElementIsNotFound);
+use MonkeyMan::Exception qw(ParameterIsNotSet ElementIsNotFound InvalidQuery);
 use MonkeyMan::CloudStack::API;
 use MonkeyMan::Logger;
 
@@ -226,21 +226,26 @@ method find_all_elements (
                     foreach my $elements_recognized_parameter (keys(%{ $element_configuration->{'results'} })) {
 
                         my $what_we_got;
+                        my @what_to_get =
+                            (my $query = $element_configuration->{'results'}->{$elements_recognized_parameter}->{'query'}) =~
+                            /^([^:]+)(?::(.*))?$/;
 
-                        if(defined(my $query = $element_configuration->{'results'}->{$elements_recognized_parameter}->{'query'})) {
+                        if($what_to_get[0] eq 'value' || $what_to_get[0] eq 'element') {
                             my @results = $element_selected->qxp(
-                                query       => $query,
-                                return_as   => 'value'
+                                query       => (defined($what_to_get[1]) ? $what_to_get[1] : '.'),
+                                return_as   => $what_to_get[0]
                             );
                             if(@results < 1) {
-                                (__PACKAGE__ . '::Exception::ElementIsNotFound')->throwf("Expected a result, have got none");
+                                (__PACKAGE__ . '::Exception::ElementIsNotFound')->throw("Expected a result, have got none");
                             } elsif(@results > 1) {
-                                (__PACKAGE__ . '::Exception::ElementIsNotFound')->throwf("Expected a result, have got too many");
+                                (__PACKAGE__ . '::Exception::ElementIsNotFound')->throw("Expected a result, have got too many");
                             } else {
                                 $what_we_got = $results[0];
                             }
+                        } elsif($what_to_get[0] eq 'id') {
+                            $what_we_got = $element_selected->get_id;
                         } else {
-                            $what_we_got = $element_selected_id;
+                            (__PACKAGE__ . '::Exception::InvalidQuery')->throwf('Invalid query: %s', $query)
                         }
 
                         if(defined($element_configuration->{'ref'}) && $element_configuration->{'ref'} eq 'ARRAY') {

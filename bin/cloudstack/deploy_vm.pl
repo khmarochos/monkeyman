@@ -319,7 +319,7 @@ my $what_is_what = {
         type                => 'Zone',
         number              => 1,
         mandatory           => 1,
-        results             => { zoneid => { query => '/id' } },
+        results             => { zoneid => { query => 'value:/id' } },
         parameters_fixed    => { available => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'zone_id' },
@@ -330,7 +330,7 @@ my $what_is_what = {
         type                => 'Template',
         number              => 2,
         mandatory           => 0,
-        results             => { templateid => { query => '/id' } },
+        results             => { templateid => { query => 'value:/id' } },
         parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'template_id' },
@@ -342,7 +342,7 @@ my $what_is_what = {
         type                => 'ISO',
         number              => 3,
         mandatory           => 0,
-        results             => { templateid => { query => '/id' } },
+        results             => { templateid => { query => 'value:/id' } },
         parameters_fixed    => { all => 'true', filter_by_type => 'executable' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'iso_id' },
@@ -354,7 +354,7 @@ my $what_is_what = {
         type                => 'ServiceOffering',
         number              => 4,
         mandatory           => 1,
-        results             => { serviceofferingid => { query => '/id' } },
+        results             => { serviceofferingid => { query => 'value:/id' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'service_offering_id' },
@@ -365,7 +365,7 @@ my $what_is_what = {
         type                => 'DiskOffering',
         number              => 5,
         mandatory           => 0,
-        results             => { diskofferingid => { query => '/id' } },
+        results             => { diskofferingid => { query => 'value:/id' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'root_disk_offering_id' },
@@ -376,7 +376,7 @@ my $what_is_what = {
         type                => 'DiskOffering',
         number              => 6,
         mandatory           => 0,
-        results             => { diskofferingid => { query => '/id' } },
+        results             => { diskofferingid => { query => 'value:/id' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'data_disk_offering_id' },
@@ -388,7 +388,7 @@ my $what_is_what = {
         number              => 7,
         mandatory           => 0,
         ref                 => 'ARRAY', # There'll be multiple networks to be found!
-        results             => { _networks => { query => '/id' } },
+        results             => { _networks => { query => 'value:/id' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'networks_ids' },
@@ -399,7 +399,7 @@ my $what_is_what = {
         type                => 'Domain',
         number              => 8,
         mandatory           => 0,
-        results             => { domainid => { query => '/id' } },
+        results             => { domainid => { query => 'value:/id' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'domain_id' },
@@ -411,7 +411,7 @@ my $what_is_what = {
         type                => 'Account',
         number              => 9,
         mandatory           => 0,
-        results             => { account => { query => '/name' } },
+        results             => { account => { query => 'value:/name' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'account_id' },
@@ -423,7 +423,7 @@ my $what_is_what = {
         type                => 'Host',
         number              => 10,
         mandatory           => 0,
-        results             => { hostid => { query => '/id' } },
+        results             => { hostid => { query => 'value:/id' } },
         parameters_fixed    => { all => 'true' },
         parameters_variable => {
             filter_by_id            => { from_parameters => 'host_id' },
