@@ -65,7 +65,7 @@ our %vocabulary_tree = (
             type    => 'Snapshot',
             keys    => {
                 own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/id' ] },
-                foreign => { parameters => { filter_by_volume_id => '<%OWN_KEY_VALUE%>' } },
+                foreign => { parameters => { filter_by_volume_id => '<%OWN_KEY_VALUE%>', all => 1 } },
             }
         },
         our_storage_pools => {
@@ -79,6 +79,13 @@ our %vocabulary_tree = (
             type    => 'VirtualMachine',
             keys    => {
                 own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/virtualmachineid' ] },
+                foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
+            }
+        },
+        our_domains => {
+            type    => 'Domain',
+            keys    => {
+                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/domainid' ] },
                 foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
             }
         }

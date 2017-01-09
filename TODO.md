@@ -11,10 +11,13 @@ Bugs
 Code
 ----
 
+ - [ ] Get rid of the `is_dom_expired()` method and the `dom_updated` and
+       `dom_best_before` attributes of the
+       `MonkeyMan::CloudStack::API::Roles::Element` class.
+ - [ ] Make sure that the `best_before` parameter works fine for all methods.
+ 	- suggested on `2017.01.10` by `melnik13`
  - [ ] Encapsulate all the shit!
         - suggested on `2016.11.06` by `melnik13`
- - [ ] Let other applications use `MonkeyMan` as a module, not as a framework
-        - suggested on `2016.11.04` by `melnik13`
  - [ ] Make the `MonkeyMan`'s `plug` method checking if the plugin has been
        installed already.
         - suggested on `2016.07.04` by `melnik13`
@@ -29,6 +32,9 @@ Code
         - suggested on `2016.01.17` by `melnik13`
  - [ ] Use the `MonkeyMan::CloudStack::Types::*` types everywhere
         - on `2016.01.18` by `melnik13`
+ - [x] Let other applications use `MonkeyMan` as a module, not as a framework
+        - suggested on `2016.11.04` by `melnik13`
+	- completed on `2017.01.10`
  - [x] Make handies pluggable with `MonkeyMan::Plugin` role, get rid of
        `MooseX::Handies` and "handies".
         - suggested on `2016.04.23` by `melnik13`

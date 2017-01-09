@@ -63,29 +63,6 @@ our %vocabulary_tree = (
                 }
             }
         }
-    },
-    related => {
-        our_snapshots => {
-            type    => 'Snapshot',
-            keys    => {
-                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/id' ] },
-                foreign => { parameters => { filter_by_volume_id => '<%OWN_KEY_VALUE%>' } },
-            }
-        },
-        our_storage_pools => {
-            type    => 'StoragePool',
-            keys    => {
-                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/stroagepoolid' ] },
-                foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
-            }
-        },
-        our_virtual_machines => {
-            type    => 'VirtualMachine',
-            keys    => {
-                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/virtualmachineid' ] },
-                foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
-            }
-        }
     }
 );
 

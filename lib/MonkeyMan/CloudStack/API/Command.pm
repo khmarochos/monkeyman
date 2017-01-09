@@ -162,7 +162,8 @@ method run(
     Maybe[Bool] :$fatal_fail    = 1,
     Maybe[Bool] :$fatal_empty   = 0,
     Maybe[Bool] :$fatal_431     =
-        ! $self->get_api->get_configuration->{'ignore_431_code'}
+        ! $self->get_api->get_configuration->{'ignore_431_code'},
+    Maybe[Str]  :$best_before
 ) {
 
     my $logger  = $self->_get_logger;
@@ -180,7 +181,7 @@ method run(
 
     unless(
         $self->get_parameters->{'command'} =~ /^list.+/ &&
-        defined($content = $cache->restore_object($self->get_url))
+        defined($content = $cache->restore_object($self->get_url, $best_before))
     ) {
 
         # Prepating the HTTP-request

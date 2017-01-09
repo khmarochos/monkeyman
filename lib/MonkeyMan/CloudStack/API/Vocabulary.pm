@@ -298,14 +298,17 @@ method vocabulary_lookup(
                 source  => $_,
                 macros  => $macros,
                 fatal   => 1
-            ) }  @{ $result };
+            ) } @{ $result };
             $result = \@resulting_array;
         } elsif(($resolve_deeper > 0) && ($resultref eq 'HASH'))  {
-            my %resulting_hash = map { $self->resolve_macros(
+            my %resulting_hash;
+            while(my($key, $value) = map { $self->resolve_macros(
                 source  => $_,
                 macros  => $macros,
                 fatal   => 1
-            ) }  each(%{ $result });
+            ) } each(%{ $result })) {
+                $resulting_hash{ $key } = $value;
+            }
             $result = \%resulting_hash;
         }
 

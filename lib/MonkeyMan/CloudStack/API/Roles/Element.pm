@@ -351,19 +351,40 @@ around 'get_id' => sub {
     my $orig = shift;
     my $self = shift;
 
-    return(($self->qxp(
-        query       => '/id',
-        return_as   => 'value'
-    ))[0]);
+    return($self->get_value('/id'));
 };
 
 
-
-#method BUILD(...) {
-#
-#    my $logger = $self->get_api->get_cloudstack->get_monkeyman->get_logger;
-#
-#}
+method get_value(
+    Str         $q!,
+    Str         :$query?        = $q,
+    Maybe[Bool] :$fatal?        = 0,
+    Maybe[Str]  :$best_before
+) {
+    my @values = $self->get_values($query, fatal => $fatal, best_before => $best_before);
+    if(@values > 1) {
+        #FIXME: Throw a warning
+    } elsif(@values < 1) {
+        #FIXME: Throw an exception if $fatal
+    }
+    return($values[0]);
+}
+    
+method get_values(
+    Str         $q!,
+    Str         :$query?        = $q,
+    Maybe[Bool] :$fatal?        = 0,
+    Maybe[Str]  :$best_before
+) {
+    return(
+        $self->qxp(
+            query       => $query,
+            fatal       => $fatal,
+            best_before => $best_before,
+            return_as   => 'value'
+        )
+    );
+}
 
 
 
@@ -375,7 +396,8 @@ method perform_action(
     Str                                         :$action!,
     Maybe[HashRef]                              :$parameters,
     Maybe[HashRef]                              :$macros,
-    HashRef|ArrayRef[HashRef]                   :$requested!
+    HashRef|ArrayRef[HashRef]                   :$requested!,
+    Maybe[Str]                                  :$best_before
 ) {
 
     my $macros_complete = { defined($macros) ? %{ $macros } : () };
@@ -387,14 +409,16 @@ method perform_action(
         action      => $action,
         parameters  => $parameters,
         macros      => $macros_complete,
-        requested   => $requested
+        requested   => $requested,
+        best_before => $best_before
     ));
 
 }
 
 method get_related(
     Str                                         :$related!,
-    Bool                                        :$fatal     = 0,
+    Maybe[Str]                                  :$best_before,
+    Maybe[Bool]                                 :$fatal     = 0,
     MonkeyMan::CloudStack::Types::ReturnAs      :$return_as = 'element'
 ) {
 
@@ -402,6 +426,7 @@ method get_related(
         element     => $self,
         related     => $related,
         fatal       => $fatal,
+        best_before => $best_before,
         return_as   => $return_as
     ));
 
@@ -409,7 +434,8 @@ method get_related(
 
 method qxp(
     Str                     :$query!,
-    XML::LibXML::Document   :$dom = $self->get_dom,
+    XML::LibXML::Document   :$dom           = $self->get_dom,
+    Maybe[Bool]             :$fatal         = 0,
     Maybe[Str]              :$return_as,
     Maybe[Str]              :$best_before
 ) {
@@ -421,7 +447,7 @@ method qxp(
         query       => sprintf('/%s%s%s',
             $self->get_vocabulary->vocabulary_lookup(
                 words   => [ 'entity_node' ],
-                fatal   => 1,
+                fatal   => $fatal,
                 resolve => 0
             ),
             $query =~ qr(^/) ? '' : '/',

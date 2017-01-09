@@ -265,7 +265,8 @@ method test {
         wait        => 0,
         fatal_empty => 1,
         fatal_fail  => 1,
-        fatal_431   => 1
+        fatal_431   => 1,
+        best_before => 0
     );
 
 }
@@ -396,7 +397,8 @@ method run_command(
     Maybe[Bool] :$fatal_empty   = 0,
     Maybe[Bool] :$fatal_fail    = 1,
     Maybe[Bool] :$fatal_431     =
-        ! $self->get_configuration->{'ignore_431_code'}
+        ! $self->get_configuration->{'ignore_431_code'},
+    Maybe[Str]  :$best_before
 ) {
 
     my $configuration   = $self->get_configuration;
@@ -454,7 +456,10 @@ method run_command(
     my $result;
     my $failure;
     try {
-        $result  = $command_to_run->run(fatal_fail => 1);
+        $result  = $command_to_run->run(
+            fatal_fail  => 1,
+            best_before => $best_before
+        );
     } catch (MonkeyMan::Exception $failure_api) {
         $failure = $failure_api->{'message'};
         $result  = $command_to_run->get_http_response->content
@@ -574,7 +579,8 @@ method get_job_result(Str $jobid!) {
             jobid       => $jobid
         },
         fatal_fail  => 1,
-        fatal_empty => 1
+        fatal_empty => 1,
+        best_before => 0
     );
 
 }
@@ -654,7 +660,8 @@ method perform_action(
     Str                                         :$action!,
     Maybe[HashRef]                              :$parameters,
     Maybe[HashRef]                              :$macros,
-    HashRef|ArrayRef[HashRef]                   :$requested
+    HashRef|ArrayRef[HashRef]                   :$requested,
+    Maybe[Str]                                  :$best_before
 ) {
 
     my $logger = $self->_get_logger;
@@ -674,7 +681,8 @@ method perform_action(
 
     my $dom = $self->run_command(
         command     => $request->get_command,
-        wait        => $request->get_async ? -1 : 0
+        wait        => $request->get_async ? -1 : 0,
+        best_before => $best_before
     );
 
     $dom = $self->apply_filters(
@@ -721,8 +729,9 @@ method perform_action(
 method get_related(
     MonkeyMan::CloudStack::API::Roles::Element  :$element!,
     Str                                         :$related!,
-    Bool                                        :$fatal     = 0,
-    MonkeyMan::CloudStack::Types::ReturnAs      :$return_as = 'element'
+    Maybe[Str]                                  :$best_before,
+    Maybe[Bool]                                 :$fatal     = 0,
+    MonkeyMan::CloudStack::Types::ReturnAs      :$return_as = 'element',
 ) {
 
     my $logger = $self->_get_logger;
