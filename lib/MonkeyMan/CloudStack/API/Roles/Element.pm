@@ -392,11 +392,17 @@ method perform_action(
 
 }
 
-method get_related(Str :$related!) {
+method get_related(
+    Str                                         :$related!,
+    Bool                                        :$fatal     = 0,
+    MonkeyMan::CloudStack::Types::ReturnAs      :$return_as = 'element'
+) {
 
     return($self->get_api->get_related(
-        element => $self,
-        related => $related
+        element     => $self,
+        related     => $related,
+        fatal       => $fatal,
+        return_as   => $return_as
     ));
 
 }

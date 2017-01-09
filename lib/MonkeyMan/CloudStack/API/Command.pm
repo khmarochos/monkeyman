@@ -103,7 +103,11 @@ method craft_url(...) {
     $parameters{'apiKey'} = $configuration->{'api_key'};
 
     my @pairs_encoded;
-    my @parameters = sort(keys(%parameters));
+    my @parameters = sort({
+        (($b eq 'apiKey')   <=> ($a eq 'apiKey'))   ||  # the apiKey parameter always goes first
+        (($b eq 'command')  <=> ($a eq 'command'))  ||  # the command one goes second
+        ($a cmp $b)
+    } keys(%parameters));
     while(my $parameter = shift(@parameters)) {
         $logger->tracef(' ... encoding the "%s" parameter (%s)',
             $parameter,
@@ -161,7 +165,9 @@ method run(
         ! $self->get_api->get_configuration->{'ignore_431_code'}
 ) {
 
-    my $logger = $self->_get_logger;
+    my $logger  = $self->_get_logger;
+    my $cache   = $self->get_api->get_cache;
+    my $content;
 
     $logger->tracef("Running the %s command", $self);
 
@@ -172,51 +178,60 @@ method run(
         );
     }
 
-    # Prepating the HTTP-request
-    $self->_set_http_request(HTTP::Request->new(GET => $self->get_url));
-    $logger->tracef(" --> The following request will be sent: %s",
-        $self->get_http_request
-    );
+    unless(
+        $self->get_parameters->{'command'} =~ /^list.+/ &&
+        defined($content = $cache->restore_object($self->get_url))
+    ) {
 
-    # Sending the HTTP-request and putting the result to
-    # the http_response attribute
-    $self->_set_http_response(
-        $self->get_api->get_useragent->request(
+        # Prepating the HTTP-request
+        $self->_set_http_request(HTTP::Request->new(GET => $self->get_url));
+        $logger->tracef(" --> The following request will be sent: %s",
             $self->get_http_request
-        )
-    );
-    $logger->tracef(" <-- The server's response is: %s (contents %s)",
-        $self->get_http_response->status_line,
-       \$self->get_http_response->as_string,
-    );
+        );
 
-    # Is everything fine?
-    if(! $self->get_http_response->is_success) {
-        if($fatal_fail) {
-            if($self->get_http_response->code eq 431 && ! $fatal_431) {
-                $logger->warnf(
-                    "Have got the 431 reply from the API server " . 
-                    "in reply to the %s command",
-                    $self
-                );
+        # Sending the HTTP-request and putting the result to
+        # the http_response attribute
+        $self->_set_http_response(
+            $self->get_api->get_useragent->request(
+                $self->get_http_request
+            )
+        );
+        $logger->tracef(" <-- The server's response is: %s (contents %s)",
+            $self->get_http_response->status_line,
+           \$self->get_http_response->as_string,
+        );
+
+        # Is everything fine?
+        if(! $self->get_http_response->is_success) {
+            if($fatal_fail) {
+                if($self->get_http_response->code eq 431 && ! $fatal_431) {
+                    $logger->warnf(
+                        "Have got the 431 reply from the API server " . 
+                        "in reply to the %s command",
+                        $self
+                    );
+                } else {
+                    (__PACKAGE__ . '::Exception::BadResponse')->throwf(
+                        "The command has failed to run: %s",
+                            $self->get_http_response->status_line
+                    );
+                }
             } else {
-                (__PACKAGE__ . '::Exception::BadResponse')->throwf(
-                    "The command has failed to run: %s",
-                        $self->get_http_response->status_line
+                $logger->warnf("The command has failed to run: %s",
+                    $self->get_http_response->status_line
                 );
             }
-        } else {
-            $logger->warnf("The command has failed to run: %s",
-                $self->get_http_response->status_line
-            );
         }
+
+        $content = $self->get_http_response->content;
+
+        $cache->save_object($self->get_url, $content);
+
     }
 
-    $logger->tracef(" <-- The response content has been got: %s",
-        \$self->get_http_response->content
-    );
+    $logger->tracef(" <-- The response content has been got: %s", \$content);
 
-    return($self->get_http_response->content);
+    return($content);
 
 }
 

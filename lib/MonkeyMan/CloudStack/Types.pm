@@ -20,11 +20,14 @@ our @_ElementType_values = qw(
     Account
     User
     VirtualMachine
+    Volume
+    Snapshot
     ServiceOffering
     DiskOffering
     Template
     ISO
     Host
+    StoragePool
     Network
 );
 subtype ElementType,

@@ -123,6 +123,13 @@ our %vocabulary_tree = (
                 foreign => { parameters => { filter_by_domain_id => '<%OWN_KEY_VALUE%>' } },
             }
         },
+        our_volumes => {
+            type    => 'Volume',
+            keys    => {
+                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/id' ] },
+                foreign => { parameters => { filter_by_domain_id => '<%OWN_KEY_VALUE%>' } },
+            }
+        },
     }
 );
 

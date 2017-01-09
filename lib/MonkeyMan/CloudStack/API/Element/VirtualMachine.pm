@@ -238,7 +238,16 @@ our %vocabulary_tree = (
                     }
                 }
             }
-        },
+        }
+    },
+    related => {
+        our_hosts => {
+            type    => 'Host',
+            keys    => {
+                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/hostid' ] },
+                foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
+            }
+        }
     }
 );
 

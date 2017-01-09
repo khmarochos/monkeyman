@@ -49,14 +49,16 @@ use MonkeyMan::Exception qw(
     MagicWordsArentDefined
     DOMIsNotDefined
     NoParameters
+    NoKeyValue
     Timeout
 );
+use MonkeyMan::CloudStack::API::Cache;
 use MonkeyMan::CloudStack::API::Command;
 use MonkeyMan::CloudStack::API::Vocabulary;
 
-use constant MM_CLOUDSTACK_API_WAIT_FOR_FINISH      => 3600;
-use constant MM_CLOUDSTACK_API_SLEEP                => 10;
-use constant MM_CLOUDSTACK_API_DEFAULT_CACHE_TIME   => 100;
+use constant CLOUDSTACK_API_WAIT_FOR_FINISH     => 3600;
+use constant CLOUDSTACK_API_SLEEP               => 10;
+use constant CLOUDSTACK_API_DEFAULT_CACHE_TIME  => 600;
 
 use TryCatch;
 use Method::Signatures;
@@ -236,7 +238,10 @@ has cache => (
 
 method _build_cache {
     return(MonkeyMan::CloudStack::API::Cache->new(
-        api         => $self
+        cache_time  => defined($self->get_configuration->{'cache'}->{'default_cache_time'}) ?
+                               $self->get_configuration->{'cache'}->{'default_cache_time'} :
+                               CLOUDSTACK_API_DEFAULT_CACHE_TIME,
+        logger      => $self->_get_logger
     ));
 }
 
@@ -350,7 +355,7 @@ to complete, where N is the parameter's value.
 
 If it less than 0, we'll wait N seconds, where N will be got either
 from the C<$self->get_configuration->{'wait'}> configuration optopm or from the
-C<MM_CLOUDSTACK_API_WAIT_FOR_FINISH> constant.
+C<CLOUDSTACK_API_WAIT_FOR_FINISH> constant.
 
     $api->run(
         parameters => { command => 'performSomeCoolThing', id => '...' },
@@ -505,7 +510,7 @@ method run_command(
                     $wait :
                     defined($configuration->{'wait'}) ?
                             $configuration->{'wait'} :
-                            MM_CLOUDSTACK_API_WAIT_FOR_FINISH;
+                            CLOUDSTACK_API_WAIT_FOR_FINISH;
 
             $logger->tracef(
                 "We'll wait %d seconds for the result of the %s job",
@@ -538,7 +543,7 @@ method run_command(
 
                 my $time_to_sleep = defined($configuration->{'sleep'}) ?
                             $configuration->{'sleep'} :
-                            MM_CLOUDSTACK_API_SLEEP;
+                            CLOUDSTACK_API_SLEEP;
                 $logger->tracef(
                     "Sleeping for %d seconds while waiting for the %s job",
                     $time_to_sleep,
@@ -649,7 +654,7 @@ method perform_action(
     Str                                         :$action!,
     Maybe[HashRef]                              :$parameters,
     Maybe[HashRef]                              :$macros,
-    HashRef|ArrayRef[HashRef]                   :$requested!
+    HashRef|ArrayRef[HashRef]                   :$requested
 ) {
 
     my $logger = $self->_get_logger;
@@ -716,7 +721,7 @@ method perform_action(
 method get_related(
     MonkeyMan::CloudStack::API::Roles::Element  :$element!,
     Str                                         :$related!,
-    Bool                                        :$fatal = 0,
+    Bool                                        :$fatal     = 0,
     MonkeyMan::CloudStack::Types::ReturnAs      :$return_as = 'element'
 ) {
 
@@ -780,9 +785,15 @@ method get_related(
         return_as       => 'value'
     );
     if(@own_key_values > 1) {
-        #TODO: Log a warning
+        $logger->warnf("Too many values for the OWN_KEY_VALUE macros: %s", join(', ', @own_key_values));
     } elsif(@own_key_values < 1) {
-        #TODO: Return an empty list or raise an exception if $fatal
+        my $message = 'No value for the OWN_KEY_VALUE macros';
+        if($fatal) {
+            (__PACKAGE__ . '::Exeption::NoKeyValue')->throw($message);
+        } else {
+            $logger->trace($message);
+            return;
+        }
     }
     my $macros = { OWN_KEY_VALUE => shift(@own_key_values) };
 
@@ -1404,5 +1415,7 @@ method BUILD(...) {
 }
 
 
+
+#__PACKAGE__->meta->make_immutable;
 
 1;
