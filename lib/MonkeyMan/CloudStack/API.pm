@@ -1250,7 +1250,7 @@ C<MonkeyMan::CloudStack::API::Element::TYPE> objects.
 
 method qxp(
     Str|ArrayRef[Str]                               :$query!,
-    XML::LibXML::Document                           :$dom!, # DON'T ADD SPACES HERE!
+    XML::LibXML::Document :$dom!, # DON'T ADD SPACES HERE!
     Maybe[MonkeyMan::CloudStack::Types::ReturnAs]   :$return_as
 ) {
 
