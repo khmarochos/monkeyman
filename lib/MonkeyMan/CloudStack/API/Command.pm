@@ -105,7 +105,7 @@ method craft_url(...) {
     my @pairs_encoded;
     my @parameters = sort({
         (($b eq 'apiKey')   <=> ($a eq 'apiKey'))   ||  # the apiKey parameter always goes first
-        (($b eq 'command')  <=> ($a eq 'command'))  ||  # the command one goes second
+       #(($b eq 'command')  <=> ($a eq 'command'))  ||  # the command one goes second
         ($a cmp $b)
     } keys(%parameters));
     while(my $parameter = shift(@parameters)) {
