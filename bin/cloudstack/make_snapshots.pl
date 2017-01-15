@@ -118,7 +118,8 @@ LOOP: while(1) {
             type        => 'Volume',
             action      => 'list',
             parameters  => { 'all'      => 1 },
-            requested   => { 'element'  => 'element' }
+            requested   => { 'element'  => 'element' },
+            best_before => 0
         )) {
 
             refresh_component(
@@ -127,6 +128,7 @@ LOOP: while(1) {
                 $components,
                 $components_relations,
                 $components_indices,
+                $configuration,
                 1
             );
 
@@ -172,7 +174,8 @@ LOOP: while(1) {
                 $volume,
                 $snapshot,
                 $components,
-                $components_indices
+                $components_indices,
+                $configuration
             );
             $logger->tracef(
                 "The %s snapshot (%s) of the %s volume (%s) has been refreshed",
@@ -327,6 +330,7 @@ func refresh_component (
     HashRef                                     $components!,
     HashRef                                     $components_relations!,
     HashRef                                     $components_indices!,
+    HashRef                                     $configuration!,
     Bool                                        $recursive!
 ) {
 
@@ -336,7 +340,8 @@ func refresh_component (
         $master_element,
         $element,
         $components,
-        $components_indices
+        $components_indices,
+        $configuration
     );
 
     foreach my $related_type (keys(%{ $components_relations->{ $element_type } })) {
@@ -348,6 +353,7 @@ func refresh_component (
                 $components,
                 $components_relations->{ $element_type },
                 $components_indices,
+                $configuration,
                 1
             );
         }
@@ -361,39 +367,48 @@ func configure_component (
     MonkeyMan::CloudStack::API::Roles::Element  $master_element!,
     MonkeyMan::CloudStack::API::Roles::Element  $element!,
     HashRef                                     $components!,
-    HashRef                                     $components_indices!
+    HashRef                                     $components_indices!,
+    HashRef                                     $configuration!
 ) {
-    my $element_type            = $element->get_type;
-    my $component_configured    = {
-        element         => $element,
-        configuration   => {},
-        master          => {}
-    };
+    my $element_type = $element->get_type;
+    # Initialize the component only if it's needed
+    my $component;
+    unless(
+        defined($component = $components->{ $element_type }->{'by-id'}->{ $element->get_id }) &&
+            ref($component) eq 'HASH'
+    ) {
+                $component = $components->{ $element_type }->{'by-id'}->{ $element->get_id } = {};
+    }
     # Fetch the component's configuration
     while(my($index_type, $index_value_query) = each(%{ $components_indices->{ $element_type } })) {
         my $index_value = $element->get_value($index_value_query);
+        # Update the reference to the element
+        $component->{'element'} = $element;
+        # Start configuring the component
+        my %component_configuration = ();
         # Are there any pattern-defined settings to be applied?
         foreach my $pattern (grep(/\*/, keys(%{ $configuration->{ $element_type } }))) {
             if(match_glob($pattern, "$index_type:$index_value")) {
-                $component_configured->{'configuration'} = {
-                    %{ $component_configured->{'configuration'} },
+                %component_configuration = (
+                    %component_configuration,
                     %{ $configuration->{ $element_type }->{ $pattern } }
-                };
+                );
             }
         }
         # Are there any configuration settings for this exact component to be applied?
         if(defined($configuration->{ $element_type }->{ "$index_type:$index_value" })) {
-            $component_configured->{'configuration'} = {
-                %{ $component_configured->{'configuration'} },
+            %component_configuration = (
+                %component_configuration,
                 %{ $configuration->{ $element_type }->{ "$index_type:$index_value" } }
-            };
+            );
         }
-        # OK, the component is configured, add it to the global element's catalog...
+        # OK, the component is configured, update the configuration add the component to the global catalog...
+        $component->{'configuration'} = \%component_configuration;
         $components
             ->{ $element_type }
                 ->{ $index_type }
                     ->{ $index_value }
-                        = $component_configured;
+                        = $component;
         # ...as well as to the master component's related elements' list!
         $components
             ->{ $master_element->get_type }
@@ -403,10 +418,10 @@ func configure_component (
                             ->{ $element_type }
                                 ->{ $index_type }
                                     ->{ $index_value }
-                                        = $component_configured
+                                        = $component
                                             unless($master_element->get_type eq $element_type);
     }
-    # Shall we inherit any configuration parameters to the component of the master element?
+    # Shall we inherit any configuration from this component parameters to the component of the master element?
     my $inherited_parameters;
     if(
         defined($inherited_parameters =
@@ -438,7 +453,7 @@ func configure_component (
                 );
             }
             if(
-                defined(my $inherited_value = $component_configured->{'configuration'}->{ $inherited_parameter }) &&
+                defined(my $inherited_value = $component->{'configuration'}->{ $inherited_parameter }) &&
                 (
                     ($inheritance_mode eq 'forced') ||
                     ($inheritance_mode eq 'careful' && (! defined($master_element_configuration->{ $inherited_parameter })))
@@ -460,17 +475,17 @@ func snapshot_state_changed (
     MonkeyMan::Logger   $logger!
 ) {
     my $state_changed;
-    my $snapshots_active    = $volume_component->{'snapshots_active'};
-    my $snapshot_id         = $snapshot_component->{'element'}->get_id;
+    my $snapshots_state = $volume_component->{'snapshots_state'};
+    my $snapshot_id     = $snapshot_component->{'element'}->get_id;
 
-    unless(defined($snapshots_active)) {
-                   $snapshots_active = $volume_component->{'snapshots_active'} = {};
+    unless(defined($snapshots_state)) {
+                   $snapshots_state = $volume_component->{'snapshots_state'} = {};
     }
-    unless(defined($snapshots_active->{'by-id'}->{ $snapshot_id })) {
-                   $snapshots_active->{'by-id'}->{ $snapshot_id } = { state => 'Unknown', added => $time_now };
+    unless(defined($snapshots_state->{'by-id'}->{ $snapshot_id })) {
+                   $snapshots_state->{'by-id'}->{ $snapshot_id } = { state => 'Unknown', added => $time_now };
     }
 
-    my $snapshot_state_previous = $snapshots_active->{'by-id'}->{ $snapshot_id }->{'state'};
+    my $snapshot_state_previous = $snapshots_state->{'by-id'}->{ $snapshot_id }->{'state'};
     my $snapshot_state_current  = $snapshot_component->{'state'};
 
     my $sequence = {
@@ -491,33 +506,17 @@ func snapshot_state_changed (
         $snapshot_state_current,
         $snapshot_state_previous,
         $snapshot_component,
-        $snapshots_active
+        $snapshots_state
     );
 
-    if(
-        ($sequence->{ $snapshot_state_previous } < $sequence->{'Creating'}) &&
-        ($sequence->{ $snapshot_state_current }  > $sequence->{'BackingUp'})
-    ) {
-        # The snapshot neither was active nor is
-        delete($snapshots_active->{ $snapshot_id });
+    if ($sequence->{ $snapshot_state_current } == $sequence->{ $snapshot_state_previous }) {
+        # The snapshot is in the same state than it was
+        $snapshots_state->{'by-id'}->{ $snapshot_id }->{'updated'} = $time_now;
         return(0);
-    } elsif ($sequence->{ $snapshot_state_previous } == $sequence->{ $snapshot_state_current }) {
-        # The snapshot was active and still is
-        $snapshots_active->{'by-id'}->{ $snapshot_id }->{'updated'} = $time_now;
-        return(0);
-    } elsif($sequence->{ $snapshot_state_previous } < $sequence->{ $snapshot_state_current }) {
-        # The snapshot was active, its state has changed
-        if($sequence->{ $snapshot_state_current } > $sequence->{'BackingUp'}) {
-            # If we're here it means that the snapshot isn't active anymore,
-            # so we should delete it from the list of active ones
-            delete($snapshots_active->{ $snapshot_id });
-            return($sequence->{ $snapshot_state_current })
-        } else {
-            # It means that the snapshot is still active
-            $snapshots_active->{'by-id'}->{ $snapshot_id }->{'state'}   = $snapshot_state_current;
-            $snapshots_active->{'by-id'}->{ $snapshot_id }->{'updated'} = $time_now;
-            return($sequence->{ $snapshot_state_current })
-        }
+    } elsif($sequence->{ $snapshot_state_current } > $sequence->{ $snapshot_state_previous }) {
+        $snapshots_state->{'by-id'}->{ $snapshot_id }->{'state'}   = $snapshot_state_current;
+        $snapshots_state->{'by-id'}->{ $snapshot_id }->{'updated'} = $time_now;
+        return($sequence->{ $snapshot_state_current })
     } else {
         # FIXME: Show a warning here!
         return($sequence->{ $snapshot_state_current })
