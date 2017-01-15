@@ -1249,9 +1249,9 @@ C<MonkeyMan::CloudStack::API::Element::TYPE> objects.
 =cut
 
 method qxp(
-    Str|ArrayRef[Str] :$query!,
-    XML::LibXML::Document :$dom!, # DON'T ADD SPACES HERE!
-    Maybe[MonkeyMan::CloudStack::Types::ReturnAs] :$return_as
+    Str|ArrayRef[Str]                               :$query!,
+    XML::LibXML::Document                           :$dom!, # DON'T ADD SPACES HERE!
+    Maybe[MonkeyMan::CloudStack::Types::ReturnAs]   :$return_as
 ) {
 
     my $logger = $self->_get_logger;

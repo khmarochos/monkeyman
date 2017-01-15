@@ -25,7 +25,7 @@ has time_started => (
 );
 
 method _build_time_started {
-    $self->get_time_current_precise;
+    return($self->get_time_current_precise);
 }
 
 
@@ -41,10 +41,12 @@ has time_started_formatted => (
 
 method _build_time_started_formatted {
     my($seconds, $microseconds) = (@{$self->get_time_started});
-    sprintf(
-        "%s.%06d",
-        $self->format_time($seconds),
-        $microseconds
+    return(
+        sprintf(
+            "%s.%06d",
+            $self->format_time($seconds),
+            $microseconds
+        )
     );
 }
 

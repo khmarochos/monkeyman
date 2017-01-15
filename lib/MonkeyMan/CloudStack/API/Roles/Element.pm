@@ -379,8 +379,6 @@ method get_values(
     return(
         $self->qxp(
             query       => $query,
-            fatal       => $fatal,
-            best_before => $best_before,
             return_as   => 'value'
         )
     );
@@ -434,21 +432,20 @@ method get_related(
 
 method qxp(
     Str                     :$query!,
-    XML::LibXML::Document   :$dom           = $self->get_dom,
-    Maybe[Bool]             :$fatal         = 0,
-    Maybe[Str]              :$return_as,
-    Maybe[Str]              :$best_before
+    XML::LibXML::Document   :$dom = $self->get_dom,
+    Maybe[Bool]             :$fatal,
+    Maybe[Str]              :$best_before,
+    Maybe[Str]              :$return_as
 ) {
 
-    $self->refresh_dom
-        if($self->is_dom_expired($best_before));
+    # FIXME: make the fatal and best_before parameters working!
 
     my @results = $self->get_api->qxp(
         query       => sprintf('/%s%s%s',
             $self->get_vocabulary->vocabulary_lookup(
-                words   => [ 'entity_node' ],
-                fatal   => $fatal,
-                resolve => 0
+                words       => [ 'entity_node' ],
+                fatal       => 1,
+                resolve     => 0
             ),
             $query =~ qr(^/) ? '' : '/',
             $query
@@ -456,6 +453,7 @@ method qxp(
         dom         => $dom,
         return_as   => $return_as
     );
+
     return(@results);
 
 }
