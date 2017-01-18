@@ -85,6 +85,10 @@ our %vocabulary_tree = (
                         required            => 0,
                         command_parameters  => { 'size' => '<%VALUE%>' },
                     },
+                    rootdisksize => {
+                        required            => 0,
+                        command_parameters  => { 'rootdisksize' => '<%VALUE%>' },
+                    },
                     details => {
                         required            => 0,
                         command_parameters  => { 'details' => '<%VALUE%>' },
