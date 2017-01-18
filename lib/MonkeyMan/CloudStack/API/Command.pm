@@ -103,16 +103,7 @@ method craft_url(...) {
     $parameters{'apiKey'} = $configuration->{'api_key'};
 
     my @pairs_encoded;
-    my @parameters = sort({
-<<<<<<< HEAD
-#       (($b eq 'apiKey')   <=> ($a eq 'apiKey'))   ||  # the apiKey parameter always goes first
-#       (($b eq 'command')  <=> ($a eq 'command'))  ||  # the command one goes second
-=======
-        (($b eq 'apiKey')   <=> ($a eq 'apiKey'))   ||  # the apiKey parameter always goes first
-       #(($b eq 'command')  <=> ($a eq 'command'))  ||  # the command one goes second
->>>>>>> 1e8e067a59d715eb3d2650e9f915adf9826b3c73
-        ($a cmp $b)
-    } keys(%parameters));
+    my @parameters = sort(keys(%parameters));
     while(my $parameter = shift(@parameters)) {
         $logger->tracef(' ... encoding the "%s" parameter (%s)',
             $parameter,
