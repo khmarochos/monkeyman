@@ -325,9 +325,18 @@ LOOP: while(1) {
         ) ];
 
         # Determine which snapshots should be deleted
-        foreach my $snapshot_id(@{ $volume_component->{'snapshots_sorted'}->{'by-id'} }) {
-            my $snapshot_component = $components->{'Snapshot'}->{'by-id'}->{ $snapshot_id };
-            #...
+        if(defined(my $keep = $volume_element->{'configuration'}->{'keep'})) {
+            my $snapshots_completed = 0;
+            foreach my $snapshot_id(@{ $volume_component->{'snapshots_sorted'}->{'by-id'} }) {
+                my $snapshot_component = $components->{'Snapshot'}->{'by-id'}->{ $snapshot_id };
+                if($snapshot_component->{'state'} eq 'BackedUp' && ++$snapshots_completed > $keep) {
+                    $logger->infof("Removing the %s snapshot (%s)",
+                        $snapshot_id,
+                        $snapshot_component->{'element'}
+                    );
+                    # ...
+                }
+            }
         }
 
         # Get the newest snapshot and determine when the next one should has or had been created
@@ -406,6 +415,8 @@ LOOP: while(1) {
             $volume_id,
             $volume_element
         );
+
+        # ...
 
     }
 
