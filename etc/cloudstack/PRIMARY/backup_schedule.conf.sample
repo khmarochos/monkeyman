@@ -30,14 +30,14 @@
 
 # But it's much more convenient to use their names, right? ;-)
 <Domain by-path:ROOT*>
-    available   Always      # That's obvious
+    available   ALWAYS      # That's obvious
     frequency   86400       # Make a snapshot each 1 day
     keep        2           # Keep the last 2 snapshots, remove oldest
 </Domain>
 
 # And yes, we can use wildcards!
 <Domain by-path:ROOT/CUSTOMERS/*>
-    available   Night
+    available   NIGHT
     frequency   86400
     keep        3
 </Domain>
@@ -85,7 +85,7 @@
 # snapshots in the Creating state or at least one snapshot in the BackingUp
 # state
 <Host by-id:*>
-    available           Always
+    available           ALWAYS
     flows_creating      2
     flows_backing_up    1
 </Host>
@@ -94,14 +94,14 @@
 
 # We don't want to bother the local storages in a day
 <StoragePool by-name:*.tucha13.net Local Storage>
-    available           Night
-    flows_creating      1
+    available           NIGHT
+    flows_creating      2
     flows_backing_up    1
 </Storagepool>
 
 # Although a shared storage can do a lot of work!
 <StoragePool by-name:*.tucha13.net Shared Storage>
-    available           Always
+    available           ALWAYS
     flows_creating      10
     flows_backing_up    5
 </Storagepool>
