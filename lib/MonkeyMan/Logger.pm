@@ -450,37 +450,50 @@ func _sprintf(
             $value_new = defined($self) ?
                 $self->mm_showref($values_new[$i]) :
                        mm_showref($values_new[$i]);
-            if($shall_be_colored{$i} && $value_new =~ /^\[([^\@\/\]]+)(?:\@(0x[0-9a-f]+))?(?:\/([0-9a-f]+))(?:\|(.+))?\]$/) {
-                if(defined($1) && defined($2) && defined($3) && defined(my $monkeyman_info = $4)) {
-                    $monkeyman_info = join('|',
-                        map {
-                            $self->colorify('REF_INFO_NAME', $1, 1) . ':' . $self->colorify('REF_INFO_VALUE', $2, 1)
-                                if($_ =~ /^(.+):(.+)$/); # <- teh boobz :)
-                        }
-                            split(/\|/, $monkeyman_info)
-                    );
-                    $value_new = sprintf('[%s@%s/%s|%s]',
-                        $self->colorify('REF_CLASS',    $1, 1),
-                        $self->colorify('REF_ADDRESS',  $2, 1),
-                        $self->colorify('REF_MD5SUM',   $3, 1),
-                        $monkeyman_info
-                    );
-                } elsif(defined($1) && defined($2) && defined($3)) {
-                    $value_new = sprintf('[%s@%s/%s]',
-                        $self->colorify('REF_CLASS',    $1, 1),
-                        $self->colorify('REF_ADDRESS',  $2, 1),
-                        $self->colorify('REF_MD5SUM',   $3, 1)
-                    );
-                } elsif(defined($1) && defined($2)) {
-                    $value_new = sprintf('[%s@%s]',
-                        $self->colorify('REF_CLASS',    $1, 1),
-                        $self->colorify('REF_ADDRESS',  $2, 1)
-                    );
-                } else {
-                    $value_new = sprintf('[%s@%s]',
-                        $self->colorify('LOG_ERROR',    $1, 1)
-                    );
+            if($shall_be_colored{$i} && $value_new =~ /
+                ^
+                    \[
+                        (       [^\@\/\]]+                  )
+                        (?:     \@          (0x[0-9a-f]+)   )?
+                        (?:     \/            ([0-9a-f]+)   )?
+                        (?:     \|            (.+)          )?
+                    \]
+                $
+            /x) {
+                $value_new = '';
+                my $ref_class   = $1;
+                my $ref_address = $2;
+                my $ref_md5sum  = $3;
+                my $ref_info    = $4;
+                if(defined($4)) {
+                    $value_new =
+                        join('|', (
+                            map {
+                                ($_ =~ /^(.+):(.+)$/) ? (
+                                    $self->colorify('REF_INFO_NAME',  $1, 1) . ':' .
+                                    $self->colorify('REF_INFO_VALUE', $2, 1)
+                                ) : (
+                                    $self->colorify('REF_INFO_NAME',  $_, 1)
+                                )
+                            } split(/\|/, $4)
+                        ));
                 }
+                if(defined($3)) {
+                    $value_new =
+                        $self->colorify('REF_MD5SUM',   $3, 1) .
+                        $value_new;
+                }
+                if(defined($1) && defined($2)) {
+                    $value_new =
+                        $self->colorify('REF_CLASS',    $1, 1) . '@' .
+                        $self->colorify('REF_ADDRESS',  $2, 1) . '/' .
+                        $value_new;
+                }
+                unless(length($value_new)) {
+                    $value_new =
+                        $self->colorify('LOG_ERROR',    $1, 1);
+                }
+                $value_new = '[' . $value_new . ']';
             }
         } else {
             $value_new = $shall_be_colored{$i} ?
