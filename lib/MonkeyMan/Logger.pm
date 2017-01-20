@@ -9,6 +9,7 @@ use constant CONSOLE_VERBOSITY_LEVELS   => qw(OFF FATAL ERROR WARN INFO DEBUG TR
 use constant DUMP_ENABLED               => 0;
 use constant DUMP_DIRECTORY             => undef;
 use constant DUMP_INTROSPECT_XML        => 1;
+use constant SHOW_MONKEYMAN_INFO        => 1;
 
 # Use Moose and be happy :)
 use Moose;
@@ -122,7 +123,9 @@ method _build_colorscheme {
                     CATEGORY        => 'rgb541',
                     REF_CLASS       => 'bright_cyan',
                     REF_ADDRESS     => 'cyan',
-                    REF_MD5SUM      => 'cyan'
+                    REF_MD5SUM      => 'cyan',
+                    REF_INFO_NAME   => 'yellow',
+                    REF_INFO_VALUE  => 'bright_yellow'
                 }
     );
 }
@@ -223,6 +226,20 @@ has 'dump_introspect_xml' => (
 
 method _build_dump_introspect_xml {
     return($self->get_configuration->{'dump'}->{'introspect_xml'});
+}
+
+has 'show_monkeyman_info' => (
+    is          => 'ro',
+    isa         => 'Bool',
+    reader      =>   '_get_show_monkeyman_info',
+    writer      =>   '_set_show_monkeyman_info',
+    predicate   =>   '_has_show_monkeyman_info',
+    builder     => '_build_show_monkeyman_info',
+    lazy        => 1
+);
+
+method _build_show_monkeyman_info {
+    return($self->get_configuration->{'monkeyman_info'});
 }
 
 
@@ -433,8 +450,22 @@ func _sprintf(
             $value_new = defined($self) ?
                 $self->mm_showref($values_new[$i]) :
                        mm_showref($values_new[$i]);
-            if($shall_be_colored{$i} && $value_new =~ /^\[([^\@\/\]]+)(?:\@(0x[0-9a-f]+))?(?:\/([0-9a-f]+))?\]$/) {
-                if(defined($1) && defined($2) && defined($3)) {
+            if($shall_be_colored{$i} && $value_new =~ /^\[([^\@\/\]]+)(?:\@(0x[0-9a-f]+))?(?:\/([0-9a-f]+))(?:\|(.+))?\]$/) {
+                if(defined($1) && defined($2) && defined($3) && defined(my $monkeyman_info = $4)) {
+                    $monkeyman_info = join('|',
+                        map {
+                            $self->colorify('REF_INFO_NAME', $1, 1) . ':' . $self->colorify('REF_INFO_VALUE', $2, 1)
+                                if($_ =~ /^(.+):(.+)$/); # <- teh boobz :)
+                        }
+                            split(/\|/, $monkeyman_info)
+                    );
+                    $value_new = sprintf('[%s@%s/%s|%s]',
+                        $self->colorify('REF_CLASS',    $1, 1),
+                        $self->colorify('REF_ADDRESS',  $2, 1),
+                        $self->colorify('REF_MD5SUM',   $3, 1),
+                        $monkeyman_info
+                    );
+                } elsif(defined($1) && defined($2) && defined($3)) {
                     $value_new = sprintf('[%s@%s/%s]',
                         $self->colorify('REF_CLASS',    $1, 1),
                         $self->colorify('REF_ADDRESS',  $2, 1),
@@ -486,15 +517,18 @@ func mm_showref(...) {
     my $dumpdir;
     my $dumpxml;
     my $dumpfile;
+    my $showinfo;
 
     if(defined($self)) {
         $dumping    = $self->_get_dump_enabled;
         $dumpdir    = $self->_get_dump_directory;
         $dumpxml    = $self->_get_dump_introspect_xml;
+        $showinfo   = $self->_get_show_monkeyman_info;
     } else {
         $dumping    = DUMP_ENABLED;
         $dumpdir    = DUMP_DIRECTORY;
         $dumpxml    = DUMP_INTROSPECT_XML;
+        $showinfo   = SHOW_MONKEYMAN_INFO;
     }
 
     if($dumping && defined($dumpdir)) {
@@ -546,6 +580,10 @@ func mm_showref(...) {
 
         $result = $ref_id_short;
 
+    }
+
+    if(defined($ref) && blessed($ref) && $ref->can('monkeyman_info')) {
+        $result = sprintf("%s|%s", $result, $ref->monkeyman_info);
     }
 
     return('[' . $result . ']');

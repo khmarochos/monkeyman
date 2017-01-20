@@ -354,7 +354,6 @@ around 'get_id' => sub {
     return($self->get_value('/id'));
 };
 
-
 method get_value(
     Str         $q!,
     Str         :$query?        = $q,
@@ -382,6 +381,17 @@ method get_values(
             return_as   => 'value'
         )
     );
+}
+
+
+
+method monkeyman_info {
+    my $information = $self->get_vocabulary->vocabulary_lookup(
+        words       => [ 'information' ],
+        fatal       => 0,
+        resolve     => 0
+    );
+    return(join('|', map { sprintf("%s:%s", $_, $self->get_value($information->{ $_ })); } (sort(keys( %{ $information })))));
 }
 
 
@@ -440,16 +450,18 @@ method qxp(
 
     # FIXME: make the fatal and best_before parameters working!
 
-    my @results = $self->get_api->qxp(
-        query       => sprintf('/%s%s%s',
-            $self->get_vocabulary->vocabulary_lookup(
-                words       => [ 'entity_node' ],
-                fatal       => 1,
-                resolve     => 0
-            ),
-            $query =~ qr(^/) ? '' : '/',
-            $query
+    my $full_query = sprintf('/%s%s%s',
+        $self->get_vocabulary->vocabulary_lookup(
+            words       => [ 'entity_node' ],
+            fatal       => 1,
+            resolve     => 0
         ),
+        $query =~ qr(^/) ? '' : '/',
+        $query
+    );
+
+    my @results = $self->get_api->qxp(
+        query       => $full_query,
         dom         => $dom,
         return_as   => $return_as
     );
