@@ -462,7 +462,7 @@ func _sprintf(
             /x) {
                 $value_new = '';
                 if(defined($4)) {
-                    $value_new =
+                    $value_new = ' ' .
                         join(' ', (
                             map {
                                 ($_ =~ /^(.+):(.+)$/) ? (
@@ -475,15 +475,15 @@ func _sprintf(
                         ));
                 }
                 if(defined($3)) {
-                    $value_new =
+                    $value_new = '/' .
                         $self->colorify('REF_MD5SUM',   $3, 1) .
-                       (defined($value_new) ? (' ' . $value_new) : '')
+                        $value_new;
                 }
                 if(defined($1) && defined($2)) {
                     $value_new =
                         $self->colorify('REF_CLASS',    $1, 1) . '@' .
                         $self->colorify('REF_ADDRESS',  $2, 1) .
-                       (defined($value_new) ? ('/' . $value_new) : '')
+                        $value_new;
                 }
                 unless(length($value_new)) {
                     $value_new =
@@ -591,7 +591,13 @@ func mm_showref(...) {
 
     }
 
-    if(defined($ref) && blessed($ref) && $ref->can('monkeyman_info') && defined($ref->monkeyman_info)) {
+    if(
+            defined($ref)                   &&
+            blessed($ref)                   &&
+          $ref->can('monkeyman_info')       &&
+            defined($ref->monkeyman_info)   &&
+             length($ref->monkeyman_info)
+    ) {
         $result = sprintf("%s|%s", $result, $ref->monkeyman_info);
     }
 
