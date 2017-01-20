@@ -4,8 +4,21 @@
 use strict;
 use warnings;
 
+use constant 1.01;
 use constant DEFAULT_TIMING_REFRESH => 600;
 use constant DEFAULT_TIMING_SLEEP   => 10;
+use constant SNAPSHOT_STATES        => {
+    Unknown             => 0,
+    Allocated           => 1,
+    Creating            => 2,
+    CreatedOnPrimary    => 3,
+    Copying             => 4,
+    BackingUp           => 5,
+    BackedUp            => 6,
+    Error               => 7,
+    Destroying          => 8,
+    Destroyed           => 9
+};
 
 # Use my own modules
 use MonkeyMan;
@@ -18,6 +31,7 @@ use Lingua::EN::Inflect qw(PL);
 use String::CamelCase qw(decamelize);
 use Text::Glob qw(match_glob); $Text::Glob::strict_wildcard_slash = 0;
 use YAML::XS;
+use Time::Period;
 
 
 
@@ -198,6 +212,9 @@ LOOP: while(1) {
 
         # Examine each snapshot that is related to this volume
 
+        $volume_component->{'snapshots_creating'}     = [];
+        $volume_component->{'snapshots_backing_up'}   = [];
+
         foreach my $snapshot_id (keys(%{ $volume_component->{'related'}->{'Snapshot'}->{'by-id'} })) {
 
             my $snapshot_component_saved                = dig(1, $volume_component, 'snapshots_state',      'by-id', $snapshot_id);
@@ -208,7 +225,8 @@ LOOP: while(1) {
 
             switch($snapshot_component_fresh->{'state'}) {
 
-                case 'Creating' {
+                case [ qw(Allocated Creating) ] {
+                    push(@{ $volume_component->{'snapshots_creating'} }, $snapshot_id);
                     $logger->infof(
                         "The %s snapshot (%s) of the %s volume (%s) is being created",
                         $snapshot_id,
@@ -226,7 +244,8 @@ LOOP: while(1) {
                         ));
                 }
 
-                case [ qw(BackingUp CreatedOnPrimary) ] {
+                case [ qw(Copying BackingUp CreatedOnPrimary) ] {
+                    push(@{ $volume_component->{'snapshots_backing_up'} }, $snapshot_id);
                     $logger->infof(
                         "The %s snapshot (%s) of the %s volume (%s) is being backed up",
                         $snapshot_id,
@@ -295,23 +314,110 @@ LOOP: while(1) {
 
         }
 
+        my $snapshots_state_by_id = $volume_component->{'snapshots_state'}->{'by-id'};
+
         # Now let's sort the snapshots by their creation time
-        my @snapshots_sorted;
-        foreach my $snapshot_id (sort(
+        $volume_component->{'snapshots_sorted'}->{'by-id'} = [ sort(
             {
-                         $volume_component->{'snapshots_state'}->{'by-id'}->{ $a }->{'created'} <=>
-                         $volume_component->{'snapshots_state'}->{'by-id'}->{ $b }->{'created'}
+                       $snapshots_state_by_id->{ $b }->{'created'}
+                   <=> $snapshots_state_by_id->{ $a }->{'created'}
+            } (keys(%{ $snapshots_state_by_id }))
+        ) ];
+
+        # Determine which snapshots should be deleted
+        if(defined(my $keep = $volume_element->{'configuration'}->{'keep'})) {
+            my $snapshots_completed = 0;
+            foreach my $snapshot_id(@{ $volume_component->{'snapshots_sorted'}->{'by-id'} }) {
+                my $snapshot_component = $components->{'Snapshot'}->{'by-id'}->{ $snapshot_id };
+                if($snapshot_component->{'state'} eq 'BackedUp' && ++$snapshots_completed > $keep) {
+                    $logger->infof("Removing the %s snapshot (%s)",
+                        $snapshot_id,
+                        $snapshot_component->{'element'}
+                    );
+                    # ...
+                }
             }
-                (keys(%{ $volume_component->{'snapshots_state'}->{'by-id'} }))
-        )) {
-            push(@snapshots_sorted, $snapshot_id);
-            $logger->debugf(
-                "The %s snapshot had been created at %s",
-                $snapshot_id,
-                $monkeyman->format_time($volume_component->{'snapshots_state'}->{'by-id'}->{ $snapshot_id }->{'created'})
+        }
+
+        # Get the newest snapshot and determine when the next one should has or had been created
+        if(defined(my $snapshot_id = ${ $volume_component->{'snapshots_sorted'}->{'by-id'} }[0])) {
+            $volume_component->{'last_time'} = $snapshots_state_by_id->{ $snapshot_id }->{'created'};
+            $logger->debugf("The newest snapshot for the %s volume (%s) had been created at %s",
+                $volume_id,
+                $volume_element,
+                $monkeyman->format_time($volume_component->{'last_time'})
+            );
+        } else {
+            $volume_component->{'last_time'} = 0;
+            $logger->debugf("There are no snapshots for the %s volume (%s)",
+                $volume_id,
+                $volume_element
             );
         }
-        $volume_component->{'snapshots_sorted'}->{'by-id'} = \@snapshots_sorted;
+        if(defined(my $frequency = $volume_component->{'configuration'}->{'frequency'})) {
+            $volume_component->{'next_time'} = $volume_component->{'last_time'} + $frequency;
+            $logger->debugf("The next snapshot for the %s volume (%s) should %s created at %s",
+                $volume_id,
+                $volume_element,
+              (($volume_component->{'next_time'} >= $time_now) ? 'be' : 'had been'),
+                $monkeyman->format_time($volume_component->{'next_time'})
+            );
+        } else {
+            $logger->debugf("The next snapshot for the %s volume (%s) should never be created (frequency = 0)",
+                $volume_id,
+                $volume_element
+            );
+        }
+    }
+
+
+
+    # Start making the snapshots!
+    foreach my $volume_id (sort({
+              $components->{'Volume'}->{'by-id'}->{ $a }->{'next_time'}
+          <=> $components->{'Volume'}->{'by-id'}->{ $a }->{'next_time'}
+    } keys(%{ $components->{'Volume'}->{'by-id'} }))) {
+
+        my $volume_component    = $components->{'Volume'}->{'by-id'}->{ $volume_id };
+        my $volume_element      = $volume_component->{'element'};
+
+        unless($volume_component->{ 'next_time' } <= $time_now) {
+            $logger->tracef("It's too early to make a snapshot for the %s volume (%s)",
+                $volume_id,
+                $volume_element
+            );
+            next;
+        }
+
+        unless((my @suitable = suitable($volume_element, $components, $time_now))[0] eq 'OK') {
+            my(
+                $component_element,
+                $configuration_option,
+                $value
+            ) = @suitable;
+            my $component_id    = $component_element->get_id;
+            my $component_type  = $component_element->get_type;
+            $logger->tracef(
+                "The %s %s (%s) is unsuitable, " .
+                "as it has the %s configuration option which is equal to %s, " .
+                "whilst the current value is %s",
+                $component_id,
+                $component_element->get_type(plural => 0),
+                $component_element,
+                $configuration_option,
+                $components->{ $component_element->get_type }->{'by-id'}->{ $component_id }->{'configuration'}->{ $configuration_option },
+                $value
+            );
+            next;
+        }
+
+        $logger->infof("Creating a new snapshot for the %s volume (%s)",
+            $volume_id,
+            $volume_element
+        );
+
+        # ...
+
     }
 
 
@@ -379,12 +485,12 @@ func configure_component (
     # Initialize the component only if it's needed
     my $component = dig(1, $components, $element_type, 'by-id', $element_id);
     # Fetch the component's configuration
+    my %component_configuration = ();
     while(my($index_type, $index_value_query) = each(%{ $components_indices->{ $element_type } })) {
         my $index_value = $element->get_value($index_value_query);
         # Update the reference to the element
         $component->{'element'} = $element;
         # Start configuring the component
-        my %component_configuration = ();
         # Are there any pattern-defined settings to be applied?
         foreach my $pattern (grep(/\*/, keys(%{ $configuration->{ $element_type } }))) {
             if(match_glob($pattern, "$index_type:$index_value")) {
@@ -484,15 +590,6 @@ func snapshot_state_changed (
     my $snapshot_state_saved = $snapshot_component_saved->{'state'};
     my $snapshot_state_fresh = $snapshot_component_fresh->{'state'};
 
-    my $sequence = {
-        Unknown             => 0,
-        Creating            => 1,
-        CreatedOnPrimary    => 2,
-        BackingUp           => 3,
-        BackedUp            => 4,
-        Error               => 5
-    };
-
     $logger->debugf(
         "Checking the %s snapshot (%s): it's current state is %s, " .
         "it's previous state is %s",
@@ -504,9 +601,9 @@ func snapshot_state_changed (
 
     $snapshot_component_saved->{'updated'} = $time_now;
     $snapshot_component_saved->{'state'} = $snapshot_state_fresh
-        if(($sequence->{ $snapshot_state_fresh } != $sequence->{ $snapshot_state_saved }) && $change);
+        if(SNAPSHOT_STATES->{ $snapshot_state_fresh } != SNAPSHOT_STATES->{ $snapshot_state_saved } && $change);
 
-    return($sequence->{ $snapshot_state_fresh } - $sequence->{ $snapshot_state_saved });
+    return(SNAPSHOT_STATES->{ $snapshot_state_fresh }  - SNAPSHOT_STATES->{ $snapshot_state_saved });
 }
 
 
@@ -521,3 +618,124 @@ func dig (Bool $create!, HashRef $hashref!, @keys?) {
         return($hashref);
     }
 }
+
+
+
+func suitable (
+    MonkeyMan::CloudStack::API::Roles::Element  $element!,
+    HashRef                                     $components!,
+    Int                                         $time_now!
+) {
+
+    my @result = qw(OK);
+
+    my $element_id              = $element->get_id;
+    my $element_type            = $element->get_type;
+    my $component               = $components->{ $element_type }->{'by-id'}->{ $element_id };
+    my $component_related       = $component->{'related'};
+    my $component_configuration = $component->{'configuration'};
+
+    # Are there too many active snapshots for this component?
+    my $snapshots_active = count_snapshots($element, $components);
+    return($element, 'flows_creating', $snapshots_active->{'creating'})
+        if(
+            defined($component_configuration->{'flows_creating'}) &&
+                    $component_configuration->{'flows_creating'}  < $snapshots_active->{'creating'}
+        );
+    return($element, 'flows_backing_up', $snapshots_active->{'backing_up'})
+        if(
+            defined($component_configuration->{'flows_backing_up'}) &&
+                    $component_configuration->{'flows_backing_up'}  < $snapshots_active->{'backing_up'}
+        );
+
+    # Is the component unavailable at this moment?
+    return($element, 'available', $monkeyman->format_time($time_now))
+        if(
+            defined($component_configuration->{'available'}) &&
+            !timely($element, $components, $configuration, $time_now)
+        );
+
+    # What about the related components then, are they OK?
+    foreach my $related_type (keys(%{ $component->{'related'} })) {
+        foreach my $related_id (keys(%{ $component->{'related'}->{ $related_type }->{'by-id'} })) {
+            my $related_element =       $component->{'related'}->{ $related_type }->{'by-id'}->{ $related_id }->{'element'};
+            return(@result)
+                unless((@result = suitable($related_element, $components, $time_now))[0] eq 'OK');
+        }
+    }
+
+    return(@result);
+
+}
+
+
+
+func count_snapshots (
+    MonkeyMan::CloudStack::API::Roles::Element  $element!,
+    HashRef                                     $components!
+) {
+
+    my $element_stats;
+    my $element_id      = $element->get_id;
+    my $element_type    = $element->get_type;
+    my $component       = $components->{ $element_type }->{'by-id'}->{ $element_id };
+
+    if($element_type eq 'Volume') {
+        $element_stats = {
+            creating    => scalar(@{ $component->{'snapshots_creating'} }),
+            backing_up  => scalar(@{ $component->{'snapshots_backing_up'} })
+        };
+    } else {
+        $element_stats = {
+            creating    => 0,
+            backing_up  => 0
+        };
+        foreach my $volume_id (keys(%{ $components->{'Volume'}->{'by-id'} })) {
+            my $volume_component    = $components->{'Volume'}->{'by-id'}->{ $volume_id };
+            my $volume_element      = $volume_component->{'element'};
+            if(defined($volume_component->{'related'}->{ $element_type }->{'by-id'}->{ $element_id })) {
+                my $volume_stats = count_snapshots($volume_element, $components);
+                $element_stats->{'creating'}    = $element_stats->{'creating'}      + $volume_stats->{'creating'};
+                $element_stats->{'backing_up'}  = $element_stats->{'backing_up'}    + $volume_stats->{'backing_up'};
+            }
+        }
+    }
+    
+    return($element_stats);
+
+}
+
+
+func timely (
+    MonkeyMan::CloudStack::API::Roles::Element  $element!,
+    HashRef                                     $components!,
+    HashRef                                     $configuration!,
+    Int                                         $time_now!
+) {
+
+    my $element_id      = $element->get_id;
+    my $element_type    = $element->get_type;
+    my $component       = $components->{ $element_type }->{'by-id'}->{ $element_id };
+
+    my $available       = $component->{'configuration'}->{'available'};
+    return(1)
+        unless(defined($available));
+
+    my $timeperiod      = $configuration->{ 'timeperiod' }->{ $available };
+    MonkeyMan::Exception->throwf("The %s timeperiod isn't configured", $available)
+        unless(defined($timeperiod));
+
+    foreach my $period (
+         ref( $timeperiod->{'period'} ) eq 'ARRAY' ?
+           @{ $timeperiod->{'period'} } :
+              $timeperiod->{'period'}
+    ) {
+        return(1)
+            if(inPeriod($time_now, $period));
+    }
+
+    return(0);
+
+}
+
+

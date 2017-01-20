@@ -62,6 +62,70 @@ our %vocabulary_tree = (
                     },
                 }
             }
+        },
+        create => {
+            request => {
+                command             => 'createSnapshot',
+                async               => 1,
+                paged               => 0,
+                parameters          => {
+                    volumeid            => {
+                        required            => 1,
+                        command_parameters  => { 'volumeid' => '<%VALUE%>' },
+                    },
+                    name                => {
+                        required            => 0,
+                        command_parameters  => { 'name' => '<%VALUE%>' },
+                    }
+                }
+            },
+            response => {
+                response_node   => 'queryasyncjobresultresponse',
+                results         => {
+                    element         => {
+                        return_as       => [ qw( dom element id ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>' ],
+                        required        => 1,
+                        multiple        => 0
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 1,
+                        multiple        => 0
+                    }
+                }
+            }
+        },
+        delete => {
+            request => {
+                command             => 'deleteSnapshot',
+                async               => 1,
+                paged               => 0,
+                parameters          => {
+                    id                  => {
+                        required            => 1,
+                        command_parameters  => { 'id' => '<%VALUE%>' },
+                    }
+                }
+            },
+            response => {
+                response_node   => 'queryasyncjobresultresponse',
+                results         => {
+                    displaytext     => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>/displaytext' ],
+                        required        => 1,
+                        multiple        => 0
+                    },
+                    success         => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/jobresult/<%OUR_ENTITY_NODE%>/success' ],
+                        required        => 1,
+                        multiple        => 0
+                    }
+                }
+            }
         }
     }
 );
