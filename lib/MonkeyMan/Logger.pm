@@ -334,10 +334,8 @@ method log(Str $level!, Str $module!, Bool $formatted!, @message_chunks) {
     my $message_primary;
     my $message_console;
     if($formatted) {
-        $self->_set_showref_cache({});
         $message_primary = $self->mm_sprintf        (@message_chunks);
         $message_console = $self->mm_sprintf_colored(@message_chunks);
-        $self->_set_showref_cache(undef);
     } else {
         $message_console = $message_primary = join(' ', @message_chunks);
     }
@@ -469,21 +467,6 @@ func _sprintf(
 
 
 
-has 'showref_cache' => (
-    is          => 'ro',
-    isa         => 'Maybe[HashRef]',
-    reader      =>   '_get_showref_cache',
-    writer      =>   '_set_showref_cache',
-    predicate   =>   '_has_showref_cache',
-    builder     => '_build_showref_cache',
-    lazy        => 1
-);
-
-method _build_showref_cache {
-    return(undef);
-}
-
-
 func mm_showref(...) {
 
     # Am I being called as a class' method or as a regular function?
@@ -499,86 +482,69 @@ func mm_showref(...) {
 
     my $result;
 
-    if(
-        defined($self) &&
-        defined($self->_get_showref_cache) &&
-        defined($self->_get_showref_cache->{$ref_id_short})
-    ) {
+    my $dumping;
+    my $dumpdir;
+    my $dumpxml;
+    my $dumpfile;
 
-        $result = $self->_get_showref_cache->{$ref_id_short};
+    if(defined($self)) {
+        $dumping    = $self->_get_dump_enabled;
+        $dumpdir    = $self->_get_dump_directory;
+        $dumpxml    = $self->_get_dump_introspect_xml;
+    } else {
+        $dumping    = DUMP_ENABLED;
+        $dumpdir    = DUMP_DIRECTORY;
+        $dumpxml    = DUMP_INTROSPECT_XML;
+    }
+
+    if($dumping && defined($dumpdir)) {
+
+        my $dumper  = Data::Dumper->new([$ref]);
+        my $dump    = Data::Dumper->new([$ref])->Indent(1)->Terse(0)->Dump;
+
+        $dump = sprintf("%s\n%s", $dump, $ref->toString(1))
+            if($dumpxml && blessed($ref) && $ref->DOES('XML::LibXML::Node'));
+
+        my $ref_id_long = md5_hex($dump);
+
+        $dumpfile = sprintf('%s/%s',
+            $dumpdir = sprintf('%s/%s/%d/%s',
+                $dumpdir,
+                defined($self) ?
+                    strftime('%Y.%m.%d.%H.%M.%S', localtime($self->get_time_started->[0])) :
+                    strftime('%Y.%m.%d.%H.%M.%S', localtime),
+                $$,
+                $ref_id_short
+            ), $ref_id_long
+        );
+
+        try {
+            make_path($dumpdir);
+            open(my($filehandle), '>', $dumpfile) ||
+                MonkeyMan::Exception->throwf(
+                    "Can't open the %s file for writing: %s",
+                        $dumpfile,
+                        $!
+                );
+            print({$filehandle} $dump);
+            close($filehandle) ||
+                MonkeyMan::Exception->throwf(
+                    "Can't close the %s file: %s",
+                        $dumpfile,
+                        $!
+                );
+        } catch($e) {
+            my $message = sprintf("Can't dump: %s", $e);
+            if(defined($self)) { $self->warn($message); } else { warn($message); }
+            $result = 'CORRUPTED';
+        }
+
+        $result = sprintf("%s/%s", $ref_id_short, $ref_id_long)
+            unless($result);
 
     } else {
 
-        my $dumping;
-        my $dumpdir;
-        my $dumpxml;
-        my $dumpfile;
-
-        if(defined($self)) {
-            $dumping    = $self->_get_dump_enabled;
-            $dumpdir    = $self->_get_dump_directory;
-            $dumpxml    = $self->_get_dump_introspect_xml;
-        } else {
-            $dumping    = DUMP_ENABLED;
-            $dumpdir    = DUMP_DIRECTORY;
-            $dumpxml    = DUMP_INTROSPECT_XML;
-        }
-
-        if(defined($dumping) && defined($dumpdir)) {
-
-            my $dumper  = Data::Dumper->new([$ref]);
-            my $dump    = Data::Dumper->new([$ref])->Indent(1)->Terse(0)->Dump;
-
-            $dump = sprintf("%s\n%s", $dump, $ref->toString(1))
-                if($dumpxml && blessed($ref) && $ref->DOES('XML::LibXML::Node'));
-
-            my $ref_id_long = md5_hex($dump);
-
-            $dumpfile = sprintf('%s/%s',
-                $dumpdir = sprintf('%s/%s/%d/%s',
-                    $dumpdir,
-                    defined($self) ?
-                        strftime('%Y.%m.%d.%H.%M.%S', localtime($self->get_time_started->[0])) :
-                        strftime('%Y.%m.%d.%H.%M.%S', localtime),
-                    $$,
-                    $ref_id_short
-                ), $ref_id_long
-            );
-
-            try {
-                make_path($dumpdir);
-                open(my($filehandle), '>', $dumpfile) ||
-                    MonkeyMan::Exception->throwf(
-                        "Can't open the %s file for writing: %s",
-                            $dumpfile,
-                            $!
-                    );
-                print({$filehandle} $dump);
-                close($filehandle) ||
-                    MonkeyMan::Exception->throwf(
-                        "Can't close the %s file: %s",
-                            $dumpfile,
-                            $!
-                    );
-            } catch($e) {
-                my $message = sprintf("Can't dump: %s", $e);
-                if(defined($self)) { $self->warn($message); } else { warn($message); }
-                $result = 'CORRUPTED';
-            }
-
-            $result = sprintf("%s/%s", $ref_id_short, $ref_id_long)
-                unless($result);
-
-        } else {
-
-            $result = sprintf("%s", $ref_id_short)
-                unless($result);
-
-        }
-
-        if(defined($self) && defined($self->_get_showref_cache)) {
-            $self->_get_showref_cache->{$ref_id_short} = $result;
-        }
+        $result = $ref_id_short;
 
     }
 
