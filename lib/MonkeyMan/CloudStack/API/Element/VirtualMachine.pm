@@ -223,6 +223,10 @@ our %vocabulary_tree = (
                         auto                => 1,
                         command_parameters  => { 'id' => '<% OUR_ID || VALUE %>' },
                     },
+                    details => {
+                        required            => 0,
+                        command_parameters  => { 'details' => '<%VALUE%>' },
+                    }
                 }
             },
             response => {

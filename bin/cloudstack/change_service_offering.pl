@@ -143,6 +143,13 @@ $cloudstack->find_all_elements(
 my $zone                = $elements_recognized->{'zone'};
 my $virtual_machine     = $elements_recognized->{'virtual_machine'};
 my $service_offering    = $elements_recognized->{'service_offering'};
+my $details = [ { } ];
+$details->[0]->{'cpuNumber'} = $monkeyman->get_parameters->get_cpu_cores
+    if($monkeyman->get_parameters->has_cpu_cores);
+$details->[0]->{'cpuSpeed'} = $monkeyman->get_parameters->get_cpu_speed
+    if($monkeyman->get_parameters->has_cpu_speed);
+$details->[0]->{'memory'} = $monkeyman->get_parameters->get_ram_size
+    if($monkeyman->get_parameters->has_ram_size);
 
 $logger->debugf(
     "Going to switch the %s virtual machine in the %s zone to the %s service offering",
@@ -170,7 +177,7 @@ if($virtual_machine_state ne 'Stopped') {
 
 $virtual_machine->perform_action(
     action      => 'change_service_offering',
-    parameters  => { 'service_offering_id' => $service_offering->get_id },
+    parameters  => { 'service_offering_id' => $service_offering->get_id, 'details' => $details },
     requested   => { 'id' => 'value' }
 );
 $logger->infof(
