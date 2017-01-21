@@ -242,12 +242,11 @@ THE_LOOP: while(1) {
                 case [ qw(Allocated Creating) ] {
                     push(@{ $volume_component->{'snapshots_creating'} }, $snapshot_id);
                     $logger->infof(
-                        "The %s snapshot (%s) of the %s volume (%s) is being created (total active snapshots: %s)",
+                        "The %s snapshot (%s) of the %s volume (%s) is being created",
                         $snapshot_id,
                         $snapshot_element,
                         $volume_id,
-                        $volume_element,
-                      ++$in_progress
+                        $volume_element
                     )
                         if(snapshot_state_changed(
                             $snapshot_component_saved,
@@ -262,12 +261,11 @@ THE_LOOP: while(1) {
                 case [ qw(Copying BackingUp CreatedOnPrimary) ] {
                     push(@{ $volume_component->{'snapshots_backing_up'} }, $snapshot_id);
                     $logger->infof(
-                        "The %s snapshot (%s) of the %s volume (%s) is being backed up (total active snapshots: %s)",
+                        "The %s snapshot (%s) of the %s volume (%s) is being backed up",
                         $snapshot_id,
                         $snapshot_element,
                         $volume_id,
-                        $volume_element,
-                      ++$in_progress
+                        $volume_element
                     )
                         if(snapshot_state_changed(
                             $snapshot_component_saved,
@@ -329,6 +327,10 @@ THE_LOOP: while(1) {
                 }
 
             }
+
+            $in_progress =+
+                scalar(@{ $volume_component->{'snapshots_creating'} }) +
+                scalar(@{ $volume_component->{'snapshots_backing_up'} });
 
         }
 
