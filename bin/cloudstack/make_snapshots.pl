@@ -89,6 +89,8 @@ __END_OF_COMPONENTS_INDICES__
 
 
 
+my $in_progress = 0;
+
 THE_LOOP: while(1) {
 
     my $time_now = time;
@@ -108,15 +110,17 @@ THE_LOOP: while(1) {
 
     # Do we need to refresh the information about all the components?
     if(
-        (
-            defined($components->{'rebuilt'}) ?
-                    $components->{'rebuilt'} :
-                   ($components->{'rebuilt'} = 0)
-        ) + (
-            defined($configuration->{'timings'}->{'refresh'}) ?
-                    $configuration->{'timings'}->{'refresh'} :
-                    DEFAULT_TIMING_REFRESH
-        ) <= $time_now
+        (! $in_progress) && (
+            (
+                defined($components->{'rebuilt'}) ?
+                        $components->{'rebuilt'} :
+                       ($components->{'rebuilt'} = 0)
+            ) + (
+                defined($configuration->{'timings'}->{'refresh'}) ?
+                        $configuration->{'timings'}->{'refresh'} :
+                        DEFAULT_TIMING_REFRESH
+            ) <= $time_now
+        )
     ) {
 
         $logger->tracef(
@@ -210,6 +214,8 @@ THE_LOOP: while(1) {
 
     # Examine all the volumes' snapshots
 
+    $in_progress = 0;
+
     foreach my $volume_id (keys(%{ $components->{'Volume'}->{'by-id'} })) {
 
         my $volume_component    = $components->{'Volume'}->{'by-id'}->{ $volume_id };
@@ -236,11 +242,12 @@ THE_LOOP: while(1) {
                 case [ qw(Allocated Creating) ] {
                     push(@{ $volume_component->{'snapshots_creating'} }, $snapshot_id);
                     $logger->infof(
-                        "The %s snapshot (%s) of the %s volume (%s) is being created",
+                        "The %s snapshot (%s) of the %s volume (%s) is being created (total active snapshots: %s)",
                         $snapshot_id,
                         $snapshot_element,
                         $volume_id,
-                        $volume_element
+                        $volume_element,
+                      ++$in_progress
                     )
                         if(snapshot_state_changed(
                             $snapshot_component_saved,
@@ -255,11 +262,12 @@ THE_LOOP: while(1) {
                 case [ qw(Copying BackingUp CreatedOnPrimary) ] {
                     push(@{ $volume_component->{'snapshots_backing_up'} }, $snapshot_id);
                     $logger->infof(
-                        "The %s snapshot (%s) of the %s volume (%s) is being backed up",
+                        "The %s snapshot (%s) of the %s volume (%s) is being backed up (total active snapshots: %s)",
                         $snapshot_id,
                         $snapshot_element,
                         $volume_id,
-                        $volume_element
+                        $volume_element,
+                      ++$in_progress
                     )
                         if(snapshot_state_changed(
                             $snapshot_component_saved,
