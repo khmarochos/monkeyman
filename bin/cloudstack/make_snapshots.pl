@@ -248,14 +248,18 @@ THE_LOOP: while(1) {
                         $volume_id,
                         $volume_element
                     )
-                        if(snapshot_state_changed(
-                            $snapshot_component_saved,
-                            $snapshot_component_fresh,
-                            $volume_component,
-                            1,
-                            $time_now,
-                            $logger
-                        ));
+                        if(
+                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Allocated'} &&
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
+                            snapshot_state_changed(
+                                $snapshot_component_saved,
+                                $snapshot_component_fresh,
+                                $volume_component,
+                                1,
+                                $time_now,
+                                $logger
+                            );
+                        );
                 }
 
                 case [ qw(Copying BackingUp CreatedOnPrimary) ] {
@@ -267,25 +271,21 @@ THE_LOOP: while(1) {
                         $volume_id,
                         $volume_element
                     )
-                        if(snapshot_state_changed(
-                            $snapshot_component_saved,
-                            $snapshot_component_fresh,
-                            $volume_component,
-                            1,
-                            $time_now,
-                            $logger
-                        ));
+                        if(
+                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Copying'} &&
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
+                            snapshot_state_changed(
+                                $snapshot_component_saved,
+                                $snapshot_component_fresh,
+                                $volume_component,
+                                1,
+                                $time_now,
+                                $logger
+                            );
+                        );
                 }
 
                 case 'BackedUp' {
-                    my $diff = snapshot_state_changed(
-                        $snapshot_component_saved,
-                        $snapshot_component_fresh,
-                        $volume_component,
-                        1,
-                        $time_now,
-                        $logger
-                    );
                     $logger->infof(
                         "The %s snapshot (%s) of the %s volume (%s) has been made!",
                         $snapshot_id,
@@ -293,18 +293,21 @@ THE_LOOP: while(1) {
                         $volume_id,
                         $volume_element
                     )
-                        if(($diff > 0) && ($diff < 5))
+                        if(
+                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'BackedUp'} &&
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
+                            snapshot_state_changed(
+                                $snapshot_component_saved,
+                                $snapshot_component_fresh,
+                                $volume_component,
+                                1,
+                                $time_now,
+                                $logger
+                            );
+                        );
                 }
                 
                 case 'Error' {
-                    my $diff = snapshot_state_changed(
-                        $snapshot_component_saved,
-                        $snapshot_component_fresh,
-                        $volume_component,
-                        1,
-                        $time_now,
-                        $logger
-                    );
                     $logger->warnf(
                         "The %s snapshot (%s) of the %s volume (%s) is in the error state!",
                         $snapshot_id,
@@ -312,7 +315,18 @@ THE_LOOP: while(1) {
                         $volume_id,
                         $volume_element
                     )
-                        if(($diff > 0) && ($diff < 6))
+                        if(
+                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Error'} &&
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
+                            snapshot_state_changed(
+                                $snapshot_component_saved,
+                                $snapshot_component_fresh,
+                                $volume_component,
+                                1,
+                                $time_now,
+                                $logger
+                            );
+                        );
                 }
 
                 else {
@@ -323,7 +337,18 @@ THE_LOOP: while(1) {
                         $volume_id,
                         $volume_element,
                         $snapshot_component_fresh->{'state'}
-                    );
+                    )
+                        if(
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
+                            snapshot_state_changed(
+                                $snapshot_component_saved,
+                                $snapshot_component_fresh,
+                                $volume_component,
+                                1,
+                                $time_now,
+                                $logger
+                            );
+                        );
                 }
 
             }
