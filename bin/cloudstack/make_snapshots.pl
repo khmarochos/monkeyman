@@ -214,6 +214,7 @@ THE_LOOP: while(1) {
 
         $volume_component->{'snapshots_creating'}     = [];
         $volume_component->{'snapshots_backing_up'}   = [];
+        $volume_component->{'last_time'} = 0;
 
         foreach my $snapshot_id (keys(%{ $volume_component->{'related'}->{'Snapshot'}->{'by-id'} })) {
 
@@ -222,6 +223,8 @@ THE_LOOP: while(1) {
             my $snapshot_element                        = $snapshot_component_fresh->{'element'};
                $snapshot_component_fresh->{'created'}   = $monkeyman->parse_time($snapshot_element->get_value('/created'));
                $snapshot_component_fresh->{'state'}     =                        $snapshot_element->get_value('/state');
+               $volume_component->{'last_time'}         = $snapshot_component_fresh->{'created'} > $volume_component->{'last_time'} ?
+                                                          $snapshot_component_fresh->{'created'} : $volume_component->{'last_time'};
 
             switch($snapshot_component_fresh->{'state'}) {
 
@@ -314,47 +317,63 @@ THE_LOOP: while(1) {
 
         }
 
-        my $snapshots_state_by_id = $volume_component->{'snapshots_state'}->{'by-id'};
-
-        # Now let's sort the snapshots by their creation time
-        $volume_component->{'snapshots_sorted'}->{'by-id'} = [ sort(
-            {
-                       $snapshots_state_by_id->{ $b }->{'created'}
-                   <=> $snapshots_state_by_id->{ $a }->{'created'}
-            } (keys(%{ $snapshots_state_by_id }))
-        ) ];
-
         # Determine which snapshots should be deleted
-        if(defined(my $keep = $volume_element->{'configuration'}->{'keep'})) {
+        if(defined(my $keep = $volume_component->{'configuration'}->{'keep'})) {
             my $snapshots_completed = 0;
-            foreach my $snapshot_id(@{ $volume_component->{'snapshots_sorted'}->{'by-id'} }) {
+            my $snapshots_related_by_id = $volume_component->{'related'}->{'Snapshot'}->{'by-id'};
+            foreach my $snapshot_id (
+                sort(
+                    {
+                           $snapshots_related_by_id->{ $b }->{'created'}
+                       <=> $snapshots_related_by_id->{ $a }->{'created'}
+                    } (keys(%{ $snapshots_related_by_id }))
+                )
+            ) {
                 my $snapshot_component = $components->{'Snapshot'}->{'by-id'}->{ $snapshot_id };
                 if($snapshot_component->{'state'} eq 'BackedUp' && ++$snapshots_completed > $keep) {
-                    $logger->infof("Removing the %s snapshot (%s)",
-                        $snapshot_id,
-                        $snapshot_component->{'element'}
-                    );
-                    # ...
+                    my $snapshot_element = $snapshot_component->{'element'};
+                    if($parameters->get_dry_run) {
+                        $logger->infof("Pretending like we're removing the %s snapshot (%s) for the %s volume (%s)",
+                            $snapshot_id,
+                            $snapshot_element,
+                            $volume_id,
+                            $volume_element
+                        );
+                    } else {
+                        $logger->infof("Removing the %s snapshot (%s) for the %s volume (%s)",
+                            $snapshot_id,
+                            $snapshot_element,
+                            $volume_id,
+                            $volume_element
+                        );
+                        $api->perform_action(
+                            type        => 'Snapshot',
+                            action      => 'delete',
+                            parameters  => { 'id'      => $snapshot_id },
+                            requested   => { 'success' => 'value' },
+                            wait        => 0,
+                        );
+                    }
+
                 }
             }
         }
 
         # Get the newest snapshot and determine when the next one should has or had been created
-        if(defined(my $snapshot_id = ${ $volume_component->{'snapshots_sorted'}->{'by-id'} }[0])) {
-            $volume_component->{'last_time'} = $snapshots_state_by_id->{ $snapshot_id }->{'created'};
+        if($volume_component->{'last_time'}) {
             $logger->debugf("The newest snapshot for the %s volume (%s) had been created at %s",
                 $volume_id,
                 $volume_element,
                 $monkeyman->format_time($volume_component->{'last_time'})
             );
         } else {
-            $volume_component->{'last_time'} = 0;
             $logger->debugf("There are no snapshots for the %s volume (%s)",
                 $volume_id,
                 $volume_element
             );
         }
-        if(defined(my $frequency = $volume_component->{'configuration'}->{'frequency'})) {
+        my $frequency = $volume_component->{'configuration'}->{'frequency'};
+        if(defined($frequency) && $frequency) {
             $volume_component->{'next_time'} = $volume_component->{'last_time'} + $frequency;
             $logger->debugf("The next snapshot for the %s volume (%s) should %s created at %s",
                 $volume_id,
@@ -377,7 +396,7 @@ THE_LOOP: while(1) {
 
     foreach my $volume_id (sort({
               $components->{'Volume'}->{'by-id'}->{ $a }->{'next_time'}
-          <=> $components->{'Volume'}->{'by-id'}->{ $a }->{'next_time'}
+          <=> $components->{'Volume'}->{'by-id'}->{ $b }->{'next_time'}
     } keys(%{ $components->{'Volume'}->{'by-id'} }))) {
 
         my $volume_component    = $components->{'Volume'}->{'by-id'}->{ $volume_id };
@@ -508,31 +527,30 @@ func configure_component (
     my $master_element_type = $master_element->get_type;
     # Initialize the component only if it's needed
     my $component = dig(1, $components, $element_type, 'by-id', $element_id);
+    # Update the reference to the element
+    $component->{'element'} = $element;
     # Fetch the component's configuration
-    my %component_configuration = ();
+    my $component_configuration = dig(1, $component, 'configuration');
     while(my($index_type, $index_value_query) = each(%{ $components_indices->{ $element_type } })) {
         my $index_value = $element->get_value($index_value_query);
-        # Update the reference to the element
-        $component->{'element'} = $element;
         # Start configuring the component
         # Are there any pattern-defined settings to be applied?
         foreach my $pattern (grep(/\*/, keys(%{ $configuration->{ $element_type } }))) {
             if(match_glob($pattern, "$index_type:$index_value")) {
-                %component_configuration = (
-                    %component_configuration,
+                %{ $component_configuration } = (
+                    %{ $component_configuration },
                     %{ $configuration->{ $element_type }->{ $pattern } }
                 );
             }
         }
         # Are there any configuration settings for this exact component to be applied?
         if(defined($configuration->{ $element_type }->{ "$index_type:$index_value" })) {
-            %component_configuration = (
-                %component_configuration,
+            %{ $component_configuration } = (
+                %{ $component_configuration },
                 %{ $configuration->{ $element_type }->{ "$index_type:$index_value" } }
             );
         }
         # OK, the component is configured, update the configuration add the component to the global catalog...
-        $component->{'configuration'} = \%component_configuration;
         $components
             ->{ $element_type }
                 ->{ $index_type }
@@ -664,12 +682,12 @@ func suitable (
     return($element, 'flows_creating', $snapshots_active->{'creating'})
         if(
             defined($component_configuration->{'flows_creating'}) &&
-                    $component_configuration->{'flows_creating'}  < $snapshots_active->{'creating'}
+                    $component_configuration->{'flows_creating'}  <= $snapshots_active->{'creating'}
         );
     return($element, 'flows_backing_up', $snapshots_active->{'backing_up'})
         if(
             defined($component_configuration->{'flows_backing_up'}) &&
-                    $component_configuration->{'flows_backing_up'}  < $snapshots_active->{'backing_up'}
+                    $component_configuration->{'flows_backing_up'}  <= $snapshots_active->{'backing_up'}
         );
 
     # Is the component unavailable at this moment?
@@ -724,7 +742,7 @@ func count_snapshots (
             }
         }
     }
-    
+
     return($element_stats);
 
 }
