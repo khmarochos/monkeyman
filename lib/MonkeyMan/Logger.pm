@@ -10,6 +10,25 @@ use constant DUMP_ENABLED               => 0;
 use constant DUMP_DIRECTORY             => undef;
 use constant DUMP_INTROSPECT_XML        => 1;
 use constant SHOW_MONKEYMAN_INFO        => 1;
+use constant COLOR_CLASS_DEFAULT        => 'NORMAL';
+use constant COLORSCHEME_DEFAULT        => {
+    NORMAL          => 'reset',
+    ACCENTED        => 'bright_white',
+    WARNING         => 'red',
+    PARAMETER       => 'rgb332',
+    LEVEL_TRACE     => 'bright_cyan',
+    LEVEL_DEBUG     => 'cyan',
+    LEVEL_INFO      => 'white',
+    LEVEL_WARNING   => 'magenta',
+    LEVEL_ERROR     => 'red',
+    LEVEL_FATAL     => 'bright_red',
+    CATEGORY        => 'rgb541',
+    REF_CLASS       => 'bright_cyan',
+    REF_ADDRESS     => 'cyan',
+    REF_MD5SUM      => 'cyan',
+    REF_INFO_NAME   => 'color443',
+    REF_INFO_VALUE  => 'color554'
+};
 
 # Use Moose and be happy :)
 use Moose;
@@ -49,17 +68,11 @@ has 'configuration' => (
     reader      =>    'get_configuration',
     writer      =>   '_set_configuration',
     predicate   =>   '_has_configuration',
-    builder     => '_build_configuration',
+    builder     => '_build_configuration'
 );
 
 method _build_configuration {
-    {
-        dump => {
-            enabled         => DUMP_ENABLED,
-            directory       => DUMP_DIRECTORY,
-            introspect_xml  => DUMP_INTROSPECT_XML
-        }
-    }
+    {}
 }
 
 has 'log4perl_configuration_string' => (
@@ -81,81 +94,67 @@ has 'log4perl_configuration_file' => (
 has 'console_verbosity' => (
     is          => 'ro',
     isa         => 'Int',
-    reader      => '_get_console_verbosity',
-    writer      => '_set_console_verbosity',
-    predicate   => '_has_console_verbosity',
+    reader      => 'get_console_verbosity',
+    writer      => 'set_console_verbosity',
+    predicate   => 'has_console_verbosity',
     default     => 0
 );
 
 has 'console_colored' => (
     is          => 'ro',
     isa         => 'Int',
-    reader      => '_get_console_colored',
-    writer      => '_set_console_colored',
-    predicate   => '_has_console_colored',
+    reader      => 'get_console_colored',
+    writer      => 'set_console_colored',
+    predicate   => 'has_console_colored',
     default     => 1
 );
 
 has 'colorscheme' => (
     is          => 'ro',
     isa         => 'HashRef',
-    reader      =>   '_get_colorscheme',
-    writer      =>   '_set_colorscheme',
-    predicate   =>   '_has_colorscheme',
+    reader      =>    'get_colorscheme',
+    writer      =>    'set_colorscheme',
+    predicate   =>    'has_colorscheme',
     builder     => '_build_colorscheme',
     lazy        => 1
 );
 
 method _build_colorscheme {
-    # FIXME: Make it merging the colorscheme with the default values
-    return(
-        defined($self->get_configuration->{'colorscheme'}) ?
-                $self->get_configuration->{'colorscheme'}  : {
-                    NORMAL          => 'reset',
-                    ACCENTED        => 'bright_white',
-                    WARNING         => 'red',
-                    PARAMETER       => 'rgb332',
-                    LEVEL_TRACE     => 'bright_cyan',
-                    LEVEL_DEBUG     => 'cyan',
-                    LEVEL_INFO      => 'white',
-                    LEVEL_WARNING   => 'magenta',
-                    LEVEL_ERROR     => 'red',
-                    LEVEL_FATAL     => 'bright_red',
-                    CATEGORY        => 'rgb541',
-                    REF_CLASS       => 'bright_cyan',
-                    REF_ADDRESS     => 'cyan',
-                    REF_MD5SUM      => 'cyan',
-                    REF_INFO_NAME   => 'yellow',
-                    REF_INFO_VALUE  => 'bright_yellow'
-                }
-    );
+    return({});
 }
 
 method get_color(
-    Str     $class?         = 'NORMAL',
-    HashRef $colorscheme?   = $self->_get_colorscheme
+    Str     $class?         = COLOR_CLASS_DEFAULT,
+    HashRef $colorscheme?   = $self->get_colorscheme
 ) {
     return(
         (
             defined($colorscheme) &&
-            defined($colorscheme->{$class})
+                ref($colorscheme) eq 'HASH' &&
+            defined($colorscheme->{ $class })
         ) ?
-            color($colorscheme->{$class}) :
-            color('reset')
+            color($colorscheme->{ $class }) :
+            (
+                defined(COLORSCHEME_DEFAULT) &&
+                    ref(COLORSCHEME_DEFAULT) eq 'HASH' &&
+                defined(COLORSCHEME_DEFAULT->{ $class })
+            ) ?
+                color(COLORSCHEME_DEFAULT->{ $class }) :
+                color('reset')
     );
 }
 
 method colorify(
-    Str     $class!         = 'NORMAL',
+    Str     $class!         = COLOR_CLASS_DEFAULT,
     Str     $string!,
     Bool    $normalize?     = 0,
-    HashRef $colorscheme?   = $self->_get_colorscheme
+    HashRef $colorscheme?   = $self->get_colorscheme
 ) {
     return(
         sprintf('%s%s%s',   
                          $self->get_color($class, $colorscheme),
                          $string,
-            $normalize ? $self->get_color('NORMAL', $colorscheme) : ''
+            $normalize ? $self->get_color(COLOR_CLASS_DEFAULT, $colorscheme) : ''
         )
     );
 }
@@ -187,8 +186,18 @@ method find_log4perl_logger(Str $name = '') {
     }
 }
 
+has 'dump_enabled_limited' => (
+    is          => 'rw',
+    isa         => 'Int',
+    reader      =>    'get_dump_enabled_limited',
+    writer      =>    'set_dump_enabled_limited',
+    predicate   =>    'has_dump_enabled_limited',
+    default     => 0,
+    lazy        => 0
+);
+
 has 'dump_enabled' => (
-    is          => 'ro',
+    is          => 'rw',
     isa         => 'Bool',
     reader      =>    'get_dump_enabled',
     writer      =>    'set_dump_enabled',
@@ -206,7 +215,7 @@ method _build_dump_enabled {
 }
 
 has 'dump_directory' => (
-    is          => 'ro',
+    is          => 'rw',
     isa         => 'Str',
     reader      =>    'get_dump_directory',
     writer      =>    'set_dump_directory',
@@ -224,7 +233,7 @@ method _build_dump_directory {
 }
 
 has 'dump_introspect_xml' => (
-    is          => 'ro',
+    is          => 'rw',
     isa         => 'Bool',
     reader      =>    'get_dump_introspect_xml',
     writer      =>    'set_dump_introspect_xml',
@@ -242,7 +251,7 @@ method _build_dump_introspect_xml {
 }
 
 has 'show_monkeyman_info' => (
-    is          => 'ro',
+    is          => 'rw',
     isa         => 'Bool',
     reader      =>    'get_show_monkeyman_info',
     writer      =>    'set_show_monkeyman_info',
@@ -287,7 +296,7 @@ __LOG4PERL_DEFAULT_CONFIGURATION__
             stderr          => 1,
         );
         my $logger_console_layout;
-        if($self->_get_console_colored) {
+        if($self->get_console_colored) {
             Log::Log4perl::Layout::PatternLayout::add_global_cspec('U',
                 func($layout, $message, $category, $priority, $caller_level) {
                     return($self->colorify('LEVEL_' . $priority, substr($priority, 0, 1), 1));
@@ -302,7 +311,7 @@ __LOG4PERL_DEFAULT_CONFIGURATION__
             );
         }
         $logger_console_appender->layout($logger_console_layout);
-        $logger_console_appender->threshold((&CONSOLE_VERBOSITY_LEVELS)[$self->_get_console_verbosity]);
+        $logger_console_appender->threshold((&CONSOLE_VERBOSITY_LEVELS)[$self->get_console_verbosity]);
         $self->find_log4perl_logger(CONSOLE_LOGGER_NAME)->add_appender($logger_console_appender);
 
         # We wouldn't like to see the messages intended for the console in the file
@@ -429,7 +438,7 @@ func _sprintf(
 ) {
 
     my %shall_be_colored;
-    if($colored && defined($self) && $self->_get_console_colored) {
+    if($colored && defined($self) && $self->get_console_colored) {
         my $parameter_number = 0;
         while($format =~ /
             % (
@@ -539,22 +548,24 @@ func mm_showref(...) {
 
     my $result;
 
+    my $showinfo;
     my $dumping;
     my $dumpdir;
     my $dumpxml;
     my $dumpfile;
-    my $showinfo;
 
     if(defined($self)) {
-        $dumping    = $self->get_dump_enabled;
+        $showinfo   = $self->get_show_monkeyman_info;
+        $dumping    = $self->get_dump_enabled ||
+                      $self->get_dump_enabled_limited &&
+                     ($self->set_dump_enabled_limited($self->get_dump_enabled_limited - 1) || 1);
         $dumpdir    = $self->get_dump_directory;
         $dumpxml    = $self->get_dump_introspect_xml;
-        $showinfo   = $self->get_show_monkeyman_info;
     } else {
+        $showinfo   = SHOW_MONKEYMAN_INFO;
         $dumping    = DUMP_ENABLED;
         $dumpdir    = DUMP_DIRECTORY;
         $dumpxml    = DUMP_INTROSPECT_XML;
-        $showinfo   = SHOW_MONKEYMAN_INFO;
     }
 
     if($dumping && defined($dumpdir)) {
