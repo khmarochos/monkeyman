@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use constant 1.01;
-use constant DEFAULT_TIMING_REFRESH => 600;
+use constant DEFAULT_TIMING_REFRESH => 86400;
 use constant DEFAULT_TIMING_SLEEP   => 10;
 use constant SNAPSHOT_STATES        => {
     Unknown             => 0,
