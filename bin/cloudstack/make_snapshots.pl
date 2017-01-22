@@ -363,6 +363,7 @@ LOOP: while(1) {
                 $monkeyman->format_time($volume_component->{'next_time'})
             );
         } else {
+            $volume_component->{'next_time'} = -1;
             $logger->debugf("The next snapshot for the %s volume (%s) should never be created (frequency = 0)",
                 $volume_id,
                 $volume_element
@@ -380,6 +381,14 @@ LOOP: while(1) {
 
         my $volume_component    = $components->{'Volume'}->{'by-id'}->{ $volume_id };
         my $volume_element      = $volume_component->{'element'};
+
+	unless($volume_component->{ 'next_time' } >= 0) {
+            $logger->tracef("The %s volume (%s) doesn't need a snapshot to be made",
+                $volume_id,
+                $volume_element
+            );
+            next;
+        }
 
         unless($volume_component->{ 'next_time' } <= $time_now) {
             $logger->tracef("It's too early to make a snapshot for the %s volume (%s)",
