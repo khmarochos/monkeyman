@@ -395,6 +395,15 @@ THE_LOOP: while(1) {
                                 requested   => { 'success' => 'value' },
                                 wait        => 0,
                             );
+                        } catch(MonkeyMan::Exception $e) {
+                            $logger->errorf("Can't remove the %s snapshot (%s) for the %s volume (%s): %s",
+                                $snapshot_id,
+                                $snapshot_element,
+                                $volume_id,
+                                $volume_element,
+                                $e->message
+                            );
+                            next;
                         } catch($e) {
                             $logger->errorf("Can't remove the %s snapshot (%s) for the %s volume (%s): %s",
                                 $snapshot_id,
@@ -512,6 +521,13 @@ THE_LOOP: while(1) {
                     requested   => { 'element'  => 'element' },
                     wait        => 0,
                 );
+            } catch(MonkeyMan::Exception $e) {
+                $logger->errorf("Can't create a snapshot for the %s volume (%s): %s",
+                    $volume_id,
+                    $volume_element,
+                    $e->message
+                );
+                next;
             } catch($e) {
                 $logger->errorf("Can't create a snapshot for the %s volume (%s): %s",
                     $volume_id,
