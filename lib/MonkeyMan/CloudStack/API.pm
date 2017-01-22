@@ -658,6 +658,7 @@ method mimic_empty_response(
 method perform_action(
     MonkeyMan::CloudStack::Types::ElementType   :$type!,
     Str                                         :$action!,
+    Maybe[Int]                                  :$wait,
     Maybe[HashRef]                              :$parameters,
     Maybe[HashRef]                              :$macros,
     HashRef|ArrayRef[HashRef]                   :$requested,
@@ -681,7 +682,7 @@ method perform_action(
 
     my $dom = $self->run_command(
         command     => $request->get_command,
-        wait        => $request->get_async ? -1 : 0,
+        wait        => defined($wait) ? $wait : $request->get_async ? -1 : 0,
         best_before => $best_before
     );
 

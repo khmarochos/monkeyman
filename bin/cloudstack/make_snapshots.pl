@@ -89,7 +89,7 @@ __END_OF_COMPONENTS_INDICES__
 
 
 
-LOOP: while(1) {
+THE_LOOP: while(1) {
 
     my $time_now = time;
 
@@ -283,7 +283,7 @@ LOOP: while(1) {
                 
                 case 'Error' {
                     $logger->warnf(
-                        "The %s snapshot (%s) of the %s volume (%s) hasn't been made!",
+                        "The %s snapshot (%s) of the %s volume (%s) is in the error state!",
                         $snapshot_id,
                         $snapshot_element,
                         $volume_id,
@@ -374,6 +374,7 @@ LOOP: while(1) {
 
 
     # Start making the snapshots!
+
     foreach my $volume_id (sort({
               $components->{'Volume'}->{'by-id'}->{ $a }->{'next_time'}
           <=> $components->{'Volume'}->{'by-id'}->{ $a }->{'next_time'}
@@ -420,12 +421,26 @@ LOOP: while(1) {
             next;
         }
 
-        $logger->infof("Creating a new snapshot for the %s volume (%s)",
-            $volume_id,
-            $volume_element
-        );
+        if($parameters->get_dry_run) {
+            $logger->infof("Pretending like we're creating a new snapshot for the %s volume (%s)",
+                $volume_id,
+                $volume_element
+            );
+        } else {
+            $logger->infof("Creating a new snapshot for the %s volume (%s)",
+                $volume_id,
+                $volume_element
+            );
+            $api->perform_action(
+                type        => 'Snapshot',
+                action      => 'create',
+                parameters  => { 'volumeid' => $volume_id },
+                requested   => { 'element'  => 'element' },
+                wait        => 0,
+            );
+        }
 
-        # ...
+        next THE_LOOP;
 
     }
 
