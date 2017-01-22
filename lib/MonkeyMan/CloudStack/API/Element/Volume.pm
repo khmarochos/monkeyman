@@ -79,6 +79,13 @@ our %vocabulary_tree = (
                 foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
             }
         },
+        our_storage_pools_old_ACS => {
+            type    => 'StoragePool',
+            keys    => {
+                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/storage' ] },
+                foreign => { parameters => { filter_by_name => '<%OWN_KEY_VALUE%>' } },
+            }
+        },
         our_virtual_machines => {
             type    => 'VirtualMachine',
             keys    => {
