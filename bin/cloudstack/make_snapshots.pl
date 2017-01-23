@@ -258,7 +258,7 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            );
+                            )
                         );
                 }
 
@@ -281,7 +281,7 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            );
+                            )
                         );
                 }
 
@@ -303,7 +303,7 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            );
+                            )
                         );
                 }
                 
@@ -325,7 +325,7 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            );
+                            )
                         );
                 }
 
@@ -347,7 +347,7 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            );
+                            )
                         );
                 }
 
