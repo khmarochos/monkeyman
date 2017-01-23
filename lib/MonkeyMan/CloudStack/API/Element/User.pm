@@ -116,6 +116,64 @@ our %vocabulary_tree = (
                     }
                 }
             }
+        },
+        update => {
+            request => {
+                command             => 'updateUser',
+                async               => 0,
+                paged               => 0,
+                parameters          => {
+                    id => {
+                        required            => 1,
+                        command_parameters  => { 'id' => '<%VALUE%>' },
+                    },
+                    email => {
+                        required            => 0,
+                        command_parameters  => { 'email' => '<%VALUE%>' },
+                    },
+                    first_name => {
+                        required            => 0,
+                        command_parameters  => { 'firstname' => '<%VALUE%>' },
+                    },
+                    last_name => {
+                        required            => 0,
+                        command_parameters  => { 'lastname' => '<%VALUE%>' },
+                    },
+                    password => {
+                        required            => 0,
+                        command_parameters  => { 'password' => '<%VALUE%>' },
+                    },
+                    time_zone => {
+                        required            => 0,
+                        command_parameters  => { 'timezone' => '<%VALUE%>' },
+                    },
+                    user_api_key => {
+                        required            => 0,
+                        command_parameters  => { 'userapikey' => '<%VALUE%>' }
+                    },
+                    user_secret_key => {
+                        required            => 0,
+                        command_parameters  => { 'usersecretkey' => '<%VALUE%>' }
+                    }
+                }
+            },
+            response => {
+                response_node   => 'createuserresponse',
+                results         => {
+                    element         => {
+                        return_as       => [ qw( dom element id ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    }
+                }
+            }
         }
     }
 );

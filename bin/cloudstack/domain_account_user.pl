@@ -57,6 +57,7 @@ This application recognizes the following parameters:
     -l <last name>, --last-name <last name>
         [opt*]      The last name
   * If you're creating an account or a user, you should provide some data.
+ ** This options conflicts with other ones except for -u|--user-name.
 
     -p <password>, --password <password>
         [opt*,**]   The user's password
@@ -66,8 +67,10 @@ This application recognizes the following parameters:
         [opt*]      The user's password needs to be got from STDIN
     -P, --password-prompt
         [opt*]      The user's password needs to be entered twice
+    --change-password
+        [opt]       Chnges the password for the existing user
   * If you're creating an account or a user, you should provide the password.
-    You can set only 1 of these 3 parameters. You can omit them, in that case
+    You can set only 1 of these 4 parameters. You can omit them, in that case
     the password will be generated automatically.
  ** We don't recommend you to use this option, it may lead to password leak!
 __END_OF_USAGE_HELP__
@@ -126,6 +129,7 @@ a|account-name=s:
     requires_any:
       - create_account
       - create_user
+      - password_change
 U|create_user:
   create_user:
     requires_each:
@@ -141,8 +145,9 @@ U|create_user:
       - password_prompt
 u|user-name=s:
   user_name:
-    requires_each:
+    requires_any:
       - create_user
+      - password_change
 e|email-address=s:
   email_address:
     requires_any:
@@ -163,6 +168,7 @@ p|password=s:
     requires_any:
       - create_account
       - create_user
+      - password_change
     conflicts_any:
       - password_generate
       - password_stdin
@@ -172,6 +178,7 @@ G|password-generate:
     requires_any:
       - create_account
       - create_user
+      - password_change
     conflicts_any:
       - password
       - password_stdin
@@ -181,6 +188,7 @@ S|password-stdin:
     requires_any:
       - create_account
       - create_user
+      - password_change
     conflicts_any:
       - password
       - password_generate
@@ -190,10 +198,20 @@ P|password-prompt:
     requires_any:
       - create_account
       - create_user
+      - password_change
     conflicts_any:
       - password
       - password_generate
       - password_stdin
+password-change:
+  password_change:
+    requires_any:
+      - user_name
+      - password
+      - password_generate
+      - password_prompt
+    conflicts_any:
+      - create_user
 __END_OF_PARAMETERS_TO_GET_VALIDATED__
 );
 my $logger      = $monkeyman->get_logger;
@@ -310,7 +328,7 @@ if(@domains > 1) {
 my $domain_id = $domains[0]->get_id;
 $logger->debugf(
     "The domain %s, it has the following ID: %s",
-    $domain_existed ? 'has been created' : 'existed',
+    $domain_existed ? 'existed' : 'has been created',
     $domain_id
 );
 
@@ -325,7 +343,8 @@ printf(
 exit
     unless(
         defined($parameters->get_create_account) ||
-        defined($parameters->get_create_user)
+        defined($parameters->get_create_user) ||
+        defined($parameters->get_password_change)
     );
 
 #
@@ -395,7 +414,7 @@ if(@accounts > 1) {
 my $account_id = $accounts[0]->get_id;
 $logger->debugf(
     "The account %s, it has the following ID: %s",
-    $account_existed ? 'has been created' : 'existed',
+    $account_existed ? 'existed' : 'has been created',
     $account_id
 );
 
@@ -411,7 +430,10 @@ printf(
 
 # Do we need to do anything else?
 exit
-    unless(defined($parameters->get_create_user));
+    unless(
+        defined($parameters->get_create_user) ||
+        defined($parameters->get_password_change)
+    );
 
 #
 # And the last, but not ever ever ever least - the user!
@@ -458,9 +480,28 @@ if(@users > 1) {
 }
 
 my $user_id = $users[0]->get_id;
+
+if(defined($parameters->get_password_change)) {
+    unless($user_existed == 1) {
+        MonkeyMan::Exception->throwf(
+            "The user %s doesn't exist, can't change their password",
+            $parameters->get_user_name
+        );
+    }
+    $api->perform_action(
+        type        => 'User',
+        action      => 'update',
+        parameters  => {
+            id          => $user_id,
+            password    => $password
+        },
+        requested   => { 'element' => 'element' },
+    );
+}
+
 $logger->debugf(
     "The user %s, it has the following ID: %s",
-    $user_existed ? 'has been created' : 'existed',
+    $user_existed ? 'existed' : 'has been created',
     $user_id
 );
 
@@ -471,6 +512,8 @@ printf(
     $user_existed ? 'found' : 'created',
    !$user_existed && defined($parameters->get_password_generate) ?
         ', the password generated: ' . $password :
+    $user_existed && defined($parameters->get_password_generate) && defined($parameters->get_password_change) ?
+        ', the password changed: ' . $password :
         ''
 );
 
