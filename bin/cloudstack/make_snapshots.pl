@@ -128,8 +128,9 @@ THE_LOOP: while(1) {
             $monkeyman->format_time($components->{'rebuilt'})
         );
 
-        $components->{'Volume'}   = {};
-        $components->{'Snapshot'} = {};
+        foreach my $element_type (keys(%{ $components_indices })) {
+            $components->{ $element_type } = {};
+        }
 
         my $volumes_got = 0;
 
@@ -164,7 +165,7 @@ THE_LOOP: while(1) {
 
     } else {
 
-        $components->{'Snapshot'}->{'by-id'} = {};
+        %{ $components->{'Snapshot'}->{'by-id'} } = ();
 
         foreach my $snapshot ($api->perform_action(
             type        => 'Snapshot',
@@ -175,7 +176,6 @@ THE_LOOP: while(1) {
         )) {
 
             my $snapshot_id         = $snapshot->get_id;
-            my $snapshot_component  = $components->{'Snapshot'}->{'by-id'}->{ $snapshot_id };
             my $volume_id           = $snapshot->get_value('/volumeid');
             my $volume_component    = $components->{'Volume'}->{'by-id'}->{ $volume_id };
 
@@ -230,11 +230,16 @@ THE_LOOP: while(1) {
         foreach my $snapshot_id (keys(%{ $volume_component->{'related'}->{'Snapshot'}->{'by-id'} })) {
 
             my $snapshot_component_saved                = dig(1, $volume_component, 'snapshots_state', 'by-id', $snapshot_id);
-            my $snapshot_component_fresh                = $components->{'Snapshot'}->{'by-id'}->{ $snapshot_id };
+            my $snapshot_component_fresh                = dig(1, $components, 'Snapshot', 'by-id', $snapshot_id);
             my $snapshot_element                        = $snapshot_component_fresh->{'element'};
-               $snapshot_component_fresh->{'created'}   = $monkeyman->parse_time($snapshot_element->get_value('/created'));
-               $snapshot_component_fresh->{'state'}     =                        $snapshot_element->get_value('/state');
-               $volume_component->{'last_time'}         = $snapshot_component_fresh->{'created'} > $volume_component->{'last_time'} ?
+            unless(defined($snapshot_element)) {
+                delete($volume_component->{'related'}->{'Snapshot'}->{'by-id'}->{ $snapshot_id });
+                $logger->infof("The %s snapshot seems to be removed", $snapshot_id);
+            }
+
+            $snapshot_component_fresh->{'created'}      = $monkeyman->parse_time($snapshot_element->get_value('/created'));
+            $snapshot_component_fresh->{'state'}        =                        $snapshot_element->get_value('/state');
+            $volume_component->{'last_time'}            = $snapshot_component_fresh->{'created'} > $volume_component->{'last_time'} ?
                                                           $snapshot_component_fresh->{'created'} : $volume_component->{'last_time'};
 
             switch($snapshot_component_fresh->{'state'}) {
@@ -575,7 +580,7 @@ func configure_component (
         my $index_value = $element->get_value($index_value_query);
         # Start configuring the component
         # Are there any pattern-defined settings to be applied?
-        foreach my $pattern (grep(/\*/, keys(%{ $configuration->{ $element_type } }))) {
+        foreach my $pattern (sort { length($a) <=> length($b) } (grep(/\*/, keys(%{ $configuration->{ $element_type } })))) {
             if(match_glob($pattern, "$index_type:$index_value")) {
                 %{ $component_configuration } = (
                     %{ $component_configuration },
@@ -681,9 +686,11 @@ func snapshot_state_changed (
         $snapshot_state_fresh
     );
 
-    $snapshot_component_saved->{'updated'} = $time_now;
     $snapshot_component_saved->{'state'} = $snapshot_state_fresh
         if(SNAPSHOT_STATES->{ $snapshot_state_fresh } != SNAPSHOT_STATES->{ $snapshot_state_saved } && $change);
+
+    return(0)
+        if($snapshot_component_saved->{'added'} == ($snapshot_component_saved->{'updated'} = $time_now));
 
     return(SNAPSHOT_STATES->{ $snapshot_state_fresh }  - SNAPSHOT_STATES->{ $snapshot_state_saved });
 }
