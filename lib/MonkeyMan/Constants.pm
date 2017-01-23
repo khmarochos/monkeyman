@@ -12,7 +12,7 @@ use FindBin qw($Bin);
 # :miscellaneous
 
 use constant MM_DEFAULT_ACTOR   => 'PRIMARY';
-use constant MM_VERSION         => '3.0.1'; # See http://semver.org/
+use constant MM_VERSION         => '1.0.0-alpha'; # See http://semver.org/
 
 my @mm_constants_miscellaneous = qw(
     MM_DEFAULT_ACTOR
