@@ -328,7 +328,7 @@ THE_LOOP: while(1) {
 
             }
 
-            $in_progress =+
+            $in_progress +=
                 scalar(@{ $volume_component->{'snapshots_creating'} }) +
                 scalar(@{ $volume_component->{'snapshots_backing_up'} });
 
