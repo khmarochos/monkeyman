@@ -234,7 +234,11 @@ THE_LOOP: while(1) {
             my $snapshot_element                        = $snapshot_component_fresh->{'element'};
             unless(defined($snapshot_element)) {
                 delete($volume_component->{'related'}->{'Snapshot'}->{'by-id'}->{ $snapshot_id });
-                $logger->infof("The %s snapshot seems to be removed", $snapshot_id);
+                $logger->infof("The %s snapshot of the %s volume (%s) seems to be removed",
+                    $snapshot_id,
+                    $volume_id,
+                    $volume_element
+                );
                 next;
             }
 
