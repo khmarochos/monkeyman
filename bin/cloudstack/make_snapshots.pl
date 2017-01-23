@@ -249,7 +249,6 @@ THE_LOOP: while(1) {
                         $volume_element
                     )
                         if(
-                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Allocated'} &&
                             snapshot_state_changed(
                                 $snapshot_component_saved,
                                 $snapshot_component_fresh,
@@ -258,6 +257,7 @@ THE_LOOP: while(1) {
                                 $time_now,
                                 $logger
                             ) &&
+                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Allocated'} &&
                             $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
                         );
                 }
@@ -272,7 +272,6 @@ THE_LOOP: while(1) {
                         $volume_element
                     )
                         if(
-                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Copying'} &&
                             snapshot_state_changed(
                                 $snapshot_component_saved,
                                 $snapshot_component_fresh,
@@ -281,6 +280,7 @@ THE_LOOP: while(1) {
                                 $time_now,
                                 $logger
                             ) &&
+                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Copying'} &&
                             $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
                         );
                 }
@@ -294,7 +294,6 @@ THE_LOOP: while(1) {
                         $volume_element
                     )
                         if(
-                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'BackedUp'} &&
                             snapshot_state_changed(
                                 $snapshot_component_saved,
                                 $snapshot_component_fresh,
@@ -316,7 +315,6 @@ THE_LOOP: while(1) {
                         $volume_element
                     )
                         if(
-                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Error'} &&
                             snapshot_state_changed(
                                 $snapshot_component_saved,
                                 $snapshot_component_fresh,
