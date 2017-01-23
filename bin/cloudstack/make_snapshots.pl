@@ -229,8 +229,8 @@ THE_LOOP: while(1) {
 
         foreach my $snapshot_id (keys(%{ $volume_component->{'related'}->{'Snapshot'}->{'by-id'} })) {
 
-            my $snapshot_component_saved                = dig(1, $volume_component, 'snapshots_state',      'by-id', $snapshot_id);
-            my $snapshot_component_fresh                = dig(0, $volume_component, 'related', 'Snapshot',  'by-id', $snapshot_id);
+            my $snapshot_component_saved                = dig(1, $volume_component, 'snapshots_state', 'by-id', $snapshot_id);
+            my $snapshot_component_fresh                = $components->{'Snapshot'}->{'by-id'}->{ $snapshot_id };
             my $snapshot_element                        = $snapshot_component_fresh->{'element'};
                $snapshot_component_fresh->{'created'}   = $monkeyman->parse_time($snapshot_element->get_value('/created'));
                $snapshot_component_fresh->{'state'}     =                        $snapshot_element->get_value('/state');
@@ -364,8 +364,8 @@ THE_LOOP: while(1) {
             foreach my $snapshot_id (
                 sort(
                     {
-                           $snapshots_related_by_id->{ $b }->{'created'}
-                       <=> $snapshots_related_by_id->{ $a }->{'created'}
+                           $components->{'Snapshot'}->{'by-id'}->{ $b }->{'created'}
+                       <=> $components->{'Snapshot'}->{'by-id'}->{ $a }->{'created'}
                     } (keys(%{ $snapshots_related_by_id }))
                 )
             ) {
