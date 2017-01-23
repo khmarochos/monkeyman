@@ -235,6 +235,7 @@ THE_LOOP: while(1) {
             unless(defined($snapshot_element)) {
                 delete($volume_component->{'related'}->{'Snapshot'}->{'by-id'}->{ $snapshot_id });
                 $logger->infof("The %s snapshot seems to be removed", $snapshot_id);
+                next;
             }
 
             $snapshot_component_fresh->{'created'}      = $monkeyman->parse_time($snapshot_element->get_value('/created'));
