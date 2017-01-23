@@ -124,6 +124,9 @@ THE_LOOP: while(1) {
             $monkeyman->format_time($components->{'rebuilt'})
         );
 
+        $components->{'Volume'}   = {};
+        $components->{'Snapshot'} = {};
+
         my $volumes_got = 0;
 
         foreach my $volume ($api->perform_action(
@@ -156,6 +159,8 @@ THE_LOOP: while(1) {
         $logger->debugf("All the components are loaded: %s", $components);
 
     } else {
+
+        $components->{'Snapshot'}->{'by-id'} = {};
 
         foreach my $snapshot ($api->perform_action(
             type        => 'Snapshot',
@@ -267,6 +272,14 @@ THE_LOOP: while(1) {
                 }
 
                 case 'BackedUp' {
+                    my $diff = snapshot_state_changed(
+                        $snapshot_component_saved,
+                        $snapshot_component_fresh,
+                        $volume_component,
+                        1,
+                        $time_now,
+                        $logger
+                    );
                     $logger->infof(
                         "The %s snapshot (%s) of the %s volume (%s) has been made!",
                         $snapshot_id,
@@ -274,17 +287,18 @@ THE_LOOP: while(1) {
                         $volume_id,
                         $volume_element
                     )
-                        if(snapshot_state_changed(
-                            $snapshot_component_saved,
-                            $snapshot_component_fresh,
-                            $volume_component,
-                            1,
-                            $time_now,
-                            $logger
-                        ));
+                        if(($diff > 0) && ($diff < 5))
                 }
                 
                 case 'Error' {
+                    my $diff = snapshot_state_changed(
+                        $snapshot_component_saved,
+                        $snapshot_component_fresh,
+                        $volume_component,
+                        1,
+                        $time_now,
+                        $logger
+                    );
                     $logger->warnf(
                         "The %s snapshot (%s) of the %s volume (%s) is in the error state!",
                         $snapshot_id,
@@ -292,14 +306,7 @@ THE_LOOP: while(1) {
                         $volume_id,
                         $volume_element
                     )
-                        if(snapshot_state_changed(
-                            $snapshot_component_saved,
-                            $snapshot_component_fresh,
-                            $volume_component,
-                            1,
-                            $time_now,
-                            $logger
-                        ));
+                        if(($diff > 0) && ($diff < 6))
                 }
 
                 else {
@@ -698,11 +705,13 @@ func suitable (
         );
 
     # What about the related components then, are they OK?
-    foreach my $related_type (keys(%{ $component->{'related'} })) {
-        foreach my $related_id (keys(%{ $component->{'related'}->{ $related_type }->{'by-id'} })) {
-            my $related_element =       $component->{'related'}->{ $related_type }->{'by-id'}->{ $related_id }->{'element'};
-            return(@result)
-                unless((@result = suitable($related_element, $components, $time_now))[0] eq 'OK');
+    unless(defined($component_configuration->{'ignore_related'}) && $component_configuration->{'ignore_related'}) {
+        foreach my $related_type (keys(%{ $component->{'related'} })) {
+            foreach my $related_id (keys(%{ $component->{'related'}->{ $related_type }->{'by-id'} })) {
+                my $related_element =       $component->{'related'}->{ $related_type }->{'by-id'}->{ $related_id }->{'element'};
+                return(@result)
+                    unless((@result = suitable($related_element, $components, $time_now))[0] eq 'OK');
+            }
         }
     }
 
