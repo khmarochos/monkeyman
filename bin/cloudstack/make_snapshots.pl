@@ -250,7 +250,6 @@ THE_LOOP: while(1) {
                     )
                         if(
                             SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Allocated'} &&
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
                             snapshot_state_changed(
                                 $snapshot_component_saved,
                                 $snapshot_component_fresh,
@@ -258,7 +257,8 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            )
+                            ) &&
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
                         );
                 }
 
@@ -273,7 +273,6 @@ THE_LOOP: while(1) {
                     )
                         if(
                             SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Copying'} &&
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
                             snapshot_state_changed(
                                 $snapshot_component_saved,
                                 $snapshot_component_fresh,
@@ -281,7 +280,8 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            )
+                            ) &&
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
                         );
                 }
 
@@ -295,7 +295,6 @@ THE_LOOP: while(1) {
                     )
                         if(
                             SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'BackedUp'} &&
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
                             snapshot_state_changed(
                                 $snapshot_component_saved,
                                 $snapshot_component_fresh,
@@ -303,7 +302,8 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            )
+                            ) &&
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
                         );
                 }
                 
@@ -317,7 +317,6 @@ THE_LOOP: while(1) {
                     )
                         if(
                             SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Error'} &&
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
                             snapshot_state_changed(
                                 $snapshot_component_saved,
                                 $snapshot_component_fresh,
@@ -325,7 +324,8 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            )
+                            ) &&
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
                         );
                 }
 
@@ -339,7 +339,6 @@ THE_LOOP: while(1) {
                         $snapshot_component_fresh->{'state'}
                     )
                         if(
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'} &&
                             snapshot_state_changed(
                                 $snapshot_component_saved,
                                 $snapshot_component_fresh,
@@ -347,7 +346,8 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            )
+                            ) &&
+                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
                         );
                 }
 
