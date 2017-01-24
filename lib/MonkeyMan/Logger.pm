@@ -26,8 +26,8 @@ use constant COLORSCHEME_DEFAULT        => {
     REF_CLASS       => 'bright_cyan',
     REF_ADDRESS     => 'cyan',
     REF_MD5SUM      => 'cyan',
-    REF_INFO_NAME   => 'color443',
-    REF_INFO_VALUE  => 'color554'
+    REF_INFO_NAME   => 'rgb443',
+    REF_INFO_VALUE  => 'rgb554'
 };
 
 # Use Moose and be happy :)
