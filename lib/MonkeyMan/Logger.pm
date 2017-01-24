@@ -107,6 +107,7 @@ has 'colorscheme' => (
 );
 
 method _build_colorscheme {
+    # FIXME: Make it merging the colorscheme with the default values
     return(
         defined($self->get_configuration->{'colorscheme'}) ?
                 $self->get_configuration->{'colorscheme'}  : {
@@ -189,57 +190,73 @@ method find_log4perl_logger(Str $name = '') {
 has 'dump_enabled' => (
     is          => 'ro',
     isa         => 'Bool',
-    reader      =>   '_get_dump_enabled',
-    writer      =>   '_set_dump_enabled',
-    predicate   =>   '_has_dump_enabled',
+    reader      =>    'get_dump_enabled',
+    writer      =>    'set_dump_enabled',
+    predicate   =>    'has_dump_enabled',
     builder     => '_build_dump_enabled',
     lazy        => 1
 );
 
 method _build_dump_enabled {
-    return($self->get_configuration->{'dump'}->{'enabled'})
+    return(
+        defined($self->get_configuration->{'dump'}->{'enabled'}) ?
+               ($self->get_configuration->{'dump'}->{'enabled'}) :
+               DUMP_ENABLED
+    );
 }
 
 has 'dump_directory' => (
     is          => 'ro',
     isa         => 'Str',
-    reader      =>   '_get_dump_directory',
-    writer      =>   '_set_dump_directory',
-    predicate   =>   '_has_dump_directory',
+    reader      =>    'get_dump_directory',
+    writer      =>    'set_dump_directory',
+    predicate   =>    'has_dump_directory',
     builder     => '_build_dump_directory',
     lazy        => 1
 );
 
 method _build_dump_directory {
-    return($self->get_configuration->{'dump'}->{'directory'})
+    return(
+        defined($self->get_configuration->{'dump'}->{'directory'}) ?
+               ($self->get_configuration->{'dump'}->{'directory'}) :
+               DUMP_DIRECTORY
+    );
 }
 
 has 'dump_introspect_xml' => (
     is          => 'ro',
     isa         => 'Bool',
-    reader      =>   '_get_dump_introspect_xml',
-    writer      =>   '_set_dump_introspect_xml',
-    predicate   =>   '_has_dump_introspect_xml',
+    reader      =>    'get_dump_introspect_xml',
+    writer      =>    'set_dump_introspect_xml',
+    predicate   =>    'has_dump_introspect_xml',
     builder     => '_build_dump_introspect_xml',
     lazy        => 1
 );
 
 method _build_dump_introspect_xml {
-    return($self->get_configuration->{'dump'}->{'introspect_xml'});
+    return(
+        defined($self->get_configuration->{'dump'}->{'introspect_xml'}) ?
+               ($self->get_configuration->{'dump'}->{'introspect_xml'}) :
+               DUMP_INTROSPECT_XML
+    );
 }
 
 has 'show_monkeyman_info' => (
     is          => 'ro',
     isa         => 'Bool',
-    reader      =>   '_get_show_monkeyman_info',
-    writer      =>   '_set_show_monkeyman_info',
-    predicate   =>   '_has_show_monkeyman_info',
+    reader      =>    'get_show_monkeyman_info',
+    writer      =>    'set_show_monkeyman_info',
+    predicate   =>    'has_show_monkeyman_info',
     builder     => '_build_show_monkeyman_info',
     lazy        => 1
 );
 
 method _build_show_monkeyman_info {
-    return($self->get_configuration->{'monkeyman_info'});
+    return(
+        defined($self->get_configuration->{'monkeyman_info'}) ?
+               ($self->get_configuration->{'monkeyman_info'}) :
+               SHOW_MONKEYMAN_INFO
+    );
 }
 
 
@@ -281,7 +298,7 @@ __LOG4PERL_DEFAULT_CONFIGURATION__
             );
         } else {
             $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
-                '%d [%p{1}] [%c] %m%n'
+                '%d [%P] [%p{1}] [%c] %m%n'
             );
         }
         $logger_console_appender->layout($logger_console_layout);
@@ -529,10 +546,10 @@ func mm_showref(...) {
     my $showinfo;
 
     if(defined($self)) {
-        $dumping    = $self->_get_dump_enabled;
-        $dumpdir    = $self->_get_dump_directory;
-        $dumpxml    = $self->_get_dump_introspect_xml;
-        $showinfo   = $self->_get_show_monkeyman_info;
+        $dumping    = $self->get_dump_enabled;
+        $dumpdir    = $self->get_dump_directory;
+        $dumpxml    = $self->get_dump_introspect_xml;
+        $showinfo   = $self->get_show_monkeyman_info;
     } else {
         $dumping    = DUMP_ENABLED;
         $dumpdir    = DUMP_DIRECTORY;

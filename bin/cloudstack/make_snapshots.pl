@@ -25,6 +25,7 @@ use MonkeyMan;
 
 # Use 3rd-party libraries
 use Switch;
+use TryCatch;
 use Method::Signatures;
 use Config::General qw(ParseConfig);
 use Lingua::EN::Inflect qw(PL);
@@ -110,7 +111,7 @@ THE_LOOP: while(1) {
 
     # Do we need to refresh the information about all the components?
     if(
-        (! $in_progress) && (
+        # (! $in_progress) && (
             (
                 defined($components->{'rebuilt'}) ?
                         $components->{'rebuilt'} :
@@ -120,7 +121,7 @@ THE_LOOP: while(1) {
                         $configuration->{'timings'}->{'refresh'} :
                         DEFAULT_TIMING_REFRESH
             ) <= $time_now
-        )
+        # )
     ) {
 
         $logger->tracef(
@@ -128,9 +129,9 @@ THE_LOOP: while(1) {
             $monkeyman->format_time($components->{'rebuilt'})
         );
 
-        foreach my $element_type (keys(%{ $components_indices })) {
-            $components->{ $element_type } = {};
-        }
+        # foreach my $element_type (keys(%{ $components_indices })) {
+        #     $components->{ $element_type } = {};
+        # }
 
         my $volumes_got = 0;
 
@@ -231,6 +232,7 @@ THE_LOOP: while(1) {
 
             my $snapshot_component_saved                = dig(1, $volume_component, 'snapshots_state', 'by-id', $snapshot_id);
             my $snapshot_component_fresh                = dig(1, $components, 'Snapshot', 'by-id', $snapshot_id);
+
             my $snapshot_element                        = $snapshot_component_fresh->{'element'};
             unless(defined($snapshot_element)) {
                 delete($volume_component->{'related'}->{'Snapshot'}->{'by-id'}->{ $snapshot_id });
@@ -267,8 +269,7 @@ THE_LOOP: while(1) {
                                 $time_now,
                                 $logger
                             ) &&
-                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Allocated'} &&
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
+                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Allocated'}
                         );
                 }
 
@@ -290,8 +291,7 @@ THE_LOOP: while(1) {
                                 $time_now,
                                 $logger
                             ) &&
-                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Copying'} &&
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
+                            SNAPSHOT_STATES->{ $snapshot_component_saved->{'state'} } < SNAPSHOT_STATES->{'Copying'}
                         );
                 }
 
@@ -311,8 +311,7 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            ) &&
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
+                            )
                         );
                 }
                 
@@ -332,8 +331,7 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            ) &&
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
+                            )
                         );
                 }
 
@@ -354,8 +352,7 @@ THE_LOOP: while(1) {
                                 1,
                                 $time_now,
                                 $logger
-                            ) &&
-                            $snapshot_component_saved->{'added'} != $snapshot_component_saved->{'updated'}
+                            )
                         );
                 }
 
@@ -390,18 +387,29 @@ THE_LOOP: while(1) {
                             $volume_element
                         );
                     } else {
+                        try {
+                            $api->perform_action(
+                                type        => 'Snapshot',
+                                action      => 'delete',
+                                parameters  => { 'id'      => $snapshot_id },
+                                requested   => { 'success' => 'value' },
+                                wait        => 0,
+                            );
+                        } catch($e) {
+                            $logger->errorf("Can't remove the %s snapshot (%s) for the %s volume (%s): %s",
+                                $snapshot_id,
+                                $snapshot_element,
+                                $volume_id,
+                                $volume_element,
+                                $e
+                            );
+                            next;
+                        }
                         $logger->infof("Removing the %s snapshot (%s) for the %s volume (%s)",
                             $snapshot_id,
                             $snapshot_element,
                             $volume_id,
                             $volume_element
-                        );
-                        $api->perform_action(
-                            type        => 'Snapshot',
-                            action      => 'delete',
-                            parameters  => { 'id'      => $snapshot_id },
-                            requested   => { 'success' => 'value' },
-                            wait        => 0,
                         );
                     }
 
@@ -496,20 +504,28 @@ THE_LOOP: while(1) {
                 $volume_element
             );
         } else {
+            try {
+                $api->perform_action(
+                    type        => 'Snapshot',
+                    action      => 'create',
+                    parameters  => { 'volumeid' => $volume_id },
+                    requested   => { 'element'  => 'element' },
+                    wait        => 0,
+                );
+            } catch($e) {
+                $logger->errorf("Can't create a snapshot for the %s volume (%s): %s",
+                    $volume_id,
+                    $volume_element,
+                    $e
+                );
+                next;
+            }
             $logger->infof("Creating a new snapshot for the %s volume (%s)",
                 $volume_id,
                 $volume_element
             );
-            $api->perform_action(
-                type        => 'Snapshot',
-                action      => 'create',
-                parameters  => { 'volumeid' => $volume_id },
-                requested   => { 'element'  => 'element' },
-                wait        => 0,
-            );
+            next THE_LOOP;
         }
-
-        next THE_LOOP;
 
     }
 
@@ -687,15 +703,16 @@ func snapshot_state_changed (
         "it's previous state is %s",
         $snapshot_id,
         $snapshot_element,
-        $snapshot_state_saved,
-        $snapshot_state_fresh
+        $snapshot_state_fresh,
+        $snapshot_state_saved
     );
 
-    $snapshot_component_saved->{'state'} = $snapshot_state_fresh
+    $snapshot_component_saved->{'updated'} = $time_now;
+    $snapshot_component_saved->{'state'}   = $snapshot_state_fresh
         if(SNAPSHOT_STATES->{ $snapshot_state_fresh } != SNAPSHOT_STATES->{ $snapshot_state_saved } && $change);
 
     return(0)
-        if($snapshot_component_saved->{'added'} == ($snapshot_component_saved->{'updated'} = $time_now));
+        if($snapshot_component_saved->{'added'} == $time_now);
 
     return(SNAPSHOT_STATES->{ $snapshot_state_fresh }  - SNAPSHOT_STATES->{ $snapshot_state_saved });
 }
@@ -751,11 +768,14 @@ func suitable (
 
     # What about the related components then, are they OK?
     unless(defined($component_configuration->{'ignore_related'}) && $component_configuration->{'ignore_related'}) {
-        foreach my $related_type (keys(%{ $component->{'related'} })) {
-            foreach my $related_id (keys(%{ $component->{'related'}->{ $related_type }->{'by-id'} })) {
-                my $related_element =       $component->{'related'}->{ $related_type }->{'by-id'}->{ $related_id }->{'element'};
+        foreach my $related_type (keys(%{ $component_related })) {
+            foreach my $related_id (keys(%{ $component_related->{ $related_type }->{'by-id'} })) {
                 return(@result)
-                    unless((@result = suitable($related_element, $components, $time_now))[0] eq 'OK');
+                    unless((@result = suitable(
+                        $components->{ $related_type }->{'by-id'}->{ $related_id }->{'element'},
+                        $components,
+                        $time_now
+                    ))[0] eq 'OK');
             }
         }
     }
@@ -787,8 +807,8 @@ func count_snapshots (
             backing_up  => 0
         };
         foreach my $volume_id (keys(%{ $components->{'Volume'}->{'by-id'} })) {
-            my $volume_component    = $components->{'Volume'}->{'by-id'}->{ $volume_id };
-            my $volume_element      = $volume_component->{'element'};
+            my $volume_component     = $components->{'Volume'}->{'by-id'}->{ $volume_id };
+            my $volume_element       = $volume_component->{'element'};
             if(defined($volume_component->{'related'}->{ $element_type }->{'by-id'}->{ $element_id })) {
                 my $volume_stats = count_snapshots($volume_element, $components);
                 $element_stats->{'creating'}    = $element_stats->{'creating'}      + $volume_stats->{'creating'};
