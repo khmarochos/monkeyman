@@ -20,8 +20,8 @@
 
     #
     # This is a dirty hack, but sometimes we have to ignore the HTTP-431 reply
-    # due to the bug of ACS which makes its replying with this code when it
-    # can't find the object requested. :(
+    # due to the odd feature of ACS which makes it replying with this code when
+    # it can't find the object requested. :(
     #
     ignore_431_code = 1
 
