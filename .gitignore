@@ -1,4 +1,4 @@
 .*.swp
+.*.swo
 etc/*.conf
-var/*
-log/*
+etc/*/*.conf

@@ -1,1 +1,1 @@
-doc/README.md
+doc/lib/MonkeyMan.pm.md

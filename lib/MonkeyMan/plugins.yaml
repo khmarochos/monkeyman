@@ -1,0 +1,48 @@
+---
+logger:
+    plugin_name:                  logger
+    actor_class:                  MonkeyMan::Logger
+    actor_default_parameter:      get_mm_default_logger
+    actor_default_actor:          PRIMARY
+    actor_handle:                 logger
+    plug_handle:                  logger_plug
+    configuration_index_branch:   logger
+    parameter_key:                default-logger
+    parameter_name:               mm_default_logger
+    parameter_help:               The default Logger actor to be used
+
+cloudstack:
+    plugin_name:                  cloudstack
+    actor_class:                  MonkeyMan::CloudStack
+    actor_default_parameter:      get_mm_default_cloudstack
+    actor_default_actor:          PRIMARY
+    actor_handle:                 cloudstack
+    plug_handle:                  cloudstack_plug
+    configuration_index_branch:   cloudstack
+    parameter_key:                default-cloudstack
+    parameter_name:               mm_default_cloudstack
+    parameter_help:               The default Apache CloudStack actor to be used
+
+zendesk:
+    plugin_name:                  zendesk
+    actor_class:                  MonkeyMan::Zendesk
+    actor_default_parameter:      get_mm_default_zendesk
+    actor_default_actor:          PRIMARY
+    actor_handle:                 zendesk
+    plug_handle:                  zendesk_plug
+    configuration_index_branch:   zendesk
+    parameter_key:                default-zendesk
+    parameter_name:               mm_default_zendesk
+    parameter_help:               The default Zendesk actor to be used
+
+password_generator:
+    plugin_name:                  password_generator
+    actor_class:                  MonkeyMan::PasswordGenerator
+    actor_default_parameter:      get_mm_default_password_generator
+    actor_default_actor:          PRIMARY
+    actor_handle:                 password_generator
+    plug_handle:                  password_generator_plug
+    configuration_index_branch:   password_generator
+    parameter_key:                default-password-generator
+    parameter_name:               mm_default_password_generator
+    parameter_help:               The default Password Generator actor to be used
