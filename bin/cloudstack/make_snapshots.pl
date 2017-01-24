@@ -562,7 +562,10 @@ func refresh_component (
     );
 
     foreach my $related_type (keys(%{ $components_relations->{ $element_type } })) {
-        my $what_to_find = 'our_' . PL(decamelize($related_type));
+        my $what_to_find =
+            'our_' .
+            PL(decamelize($related_type)) .
+            (($related_type eq 'storage_pool') ? '_old_ACS' : ''); # FIXME: remove this dirty hack!
         foreach my $related_element ($element->get_related(related => $what_to_find, fatal => 0)) {
             refresh_component(
                 $master_element,
