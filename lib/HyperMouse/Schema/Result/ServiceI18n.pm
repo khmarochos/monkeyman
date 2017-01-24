@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::Service;
+package HyperMouse::Schema::Result::ServiceI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::Service
+HyperMouse::Schema::Result::ServiceI18n
 
 =cut
 
@@ -15,11 +15,11 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<service>
+=head1 TABLE: C<service_i18n>
 
 =cut
 
-__PACKAGE__->table("service");
+__PACKAGE__->table("service_i18n");
 
 =head1 ACCESSORS
 
@@ -48,12 +48,25 @@ __PACKAGE__->table("service");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 service_group_id
+=head2 service_type_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 0
+
+=head2 language_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 0
+
+=head2 name
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 127
 
 =cut
 
@@ -83,13 +96,22 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "service_group_id",
+  "service_type_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
     is_nullable => 0,
   },
+  "language_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
+  "name",
+  { data_type => "varchar", is_nullable => 0, size => 127 },
 );
 
 =head1 PRIMARY KEY
@@ -106,69 +128,39 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 service_group
+=head2 language
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::ServiceGroup>
+Related object: L<HyperMouse::Schema::Result::Language>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "service_group",
-  "HyperMouse::Schema::Result::ServiceGroup",
-  { id => "service_group_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  "language",
+  "HyperMouse::Schema::Result::Language",
+  { id => "language_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
-=head2 service_names
+=head2 service_type
 
-Type: has_many
+Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::ServiceName>
+Related object: L<HyperMouse::Schema::Result::ServiceType>
 
 =cut
 
-__PACKAGE__->has_many(
-  "service_names",
-  "HyperMouse::Schema::Result::ServiceName",
-  { "foreign.service_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 service_obligations
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ServiceObligation>
-
-=cut
-
-__PACKAGE__->has_many(
-  "service_obligations",
-  "HyperMouse::Schema::Result::ServiceObligation",
-  { "foreign.service_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 service_prices
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ServicePrice>
-
-=cut
-
-__PACKAGE__->has_many(
-  "service_prices",
-  "HyperMouse::Schema::Result::ServicePrice",
-  { "foreign.service_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
+__PACKAGE__->belongs_to(
+  "service_type",
+  "HyperMouse::Schema::Result::ServiceType",
+  { id => "service_type_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:b2JqbPTUaQDlTswY5p9zgg
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/CL8CMGIHejRRv/ylmTOoA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

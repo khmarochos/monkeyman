@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::Resource;
+package HyperMouse::Schema::Result::CountryI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::Resource
+HyperMouse::Schema::Result::CountryI18n
 
 =cut
 
@@ -15,11 +15,11 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<resource>
+=head1 TABLE: C<country_i18n>
 
 =cut
 
-__PACKAGE__->table("resource");
+__PACKAGE__->table("country_i18n");
 
 =head1 ACCESSORS
 
@@ -47,6 +47,24 @@ __PACKAGE__->table("resource");
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
   is_nullable: 1
+
+=head2 country_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 language_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 name
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 127
 
 =cut
 
@@ -76,6 +94,12 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "country_id",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  "language_id",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  "name",
+  { data_type => "varchar", is_nullable => 0, size => 127 },
 );
 
 =head1 PRIMARY KEY
@@ -90,41 +114,9 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("id");
 
-=head1 RELATIONS
 
-=head2 resource_names
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ResourceName>
-
-=cut
-
-__PACKAGE__->has_many(
-  "resource_names",
-  "HyperMouse::Schema::Result::ResourceName",
-  { "foreign.resource_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 resource_pieces
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ResourcePiece>
-
-=cut
-
-__PACKAGE__->has_many(
-  "resource_pieces",
-  "HyperMouse::Schema::Result::ResourcePiece",
-  { "foreign.resource_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yIIKETjOpj5wCW2tNTeZxA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IxshUmU1sXova7gQWgwhMw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

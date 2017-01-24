@@ -92,17 +92,17 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 contractor_type_names
+=head2 contractor_type_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ContractorTypeName>
+Related object: L<HyperMouse::Schema::Result::ContractorTypeI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "contractor_type_names",
-  "HyperMouse::Schema::Result::ContractorTypeName",
+  "contractor_type_i18ns",
+  "HyperMouse::Schema::Result::ContractorTypeI18n",
   { "foreign.contrator_type_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -138,8 +138,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:055X9Nb5heRLAKkgJJCZcw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:R76yxFVOlTt4Wkh2GKo24w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

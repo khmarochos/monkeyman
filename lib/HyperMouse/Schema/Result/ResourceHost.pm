@@ -48,7 +48,7 @@ __PACKAGE__->table("resource_host");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 resource_id
+=head2 resource_type_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -82,7 +82,7 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "resource_id",
+  "resource_type_id",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
 );
 
@@ -116,8 +116,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NOvy/3m39cIcw5Qop0Ugug
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:F3I/KE+y2yrtgEHPRY5Hkg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

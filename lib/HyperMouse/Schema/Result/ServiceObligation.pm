@@ -55,7 +55,7 @@ __PACKAGE__->table("service_obligation");
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 service_id
+=head2 service_type_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -110,7 +110,7 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "service_id",
+  "service_type_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -155,21 +155,6 @@ __PACKAGE__->has_many(
   "HyperMouse::Schema::Result::PartnerObligation",
   { "foreign.service_obligation_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 service
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::Service>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "service",
-  "HyperMouse::Schema::Result::Service",
-  { id => "service_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 =head2 service_agreement
@@ -217,6 +202,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 service_type
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::ServiceType>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "service_type",
+  "HyperMouse::Schema::Result::ServiceType",
+  { id => "service_type_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
+);
+
 =head2 writeoffs
 
 Type: has_many
@@ -233,8 +233,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:GDvcghk3sHmGiIhoqm3hCQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tpgUw/sdAywOGPAYHAfK3w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

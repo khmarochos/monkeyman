@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::CountryName;
+package HyperMouse::Schema::Result::ServiceGroupI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::CountryName
+HyperMouse::Schema::Result::ServiceGroupI18n
 
 =cut
 
@@ -15,11 +15,11 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<country_name>
+=head1 TABLE: C<service_group_i18n>
 
 =cut
 
-__PACKAGE__->table("country_name");
+__PACKAGE__->table("service_group_i18n");
 
 =head1 ACCESSORS
 
@@ -48,16 +48,18 @@ __PACKAGE__->table("country_name");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 country_id
+=head2 service_group_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 language_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 name
@@ -94,10 +96,20 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "country_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  "service_group_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "language_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "name",
   { data_type => "varchar", is_nullable => 0, size => 127 },
 );
@@ -114,9 +126,41 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("id");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aSihbDdOH51LUD5hQNiokg
+=head2 language
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::Language>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "language",
+  "HyperMouse::Schema::Result::Language",
+  { id => "language_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+=head2 service_group
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::ServiceGroup>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "service_group",
+  "HyperMouse::Schema::Result::ServiceGroup",
+  { id => "service_group_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ydrdELKlpRLmneW8pmaSrQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

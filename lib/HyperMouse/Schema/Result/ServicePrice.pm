@@ -48,7 +48,7 @@ __PACKAGE__->table("service_price");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 service_id
+=head2 service_type_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -103,7 +103,7 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "service_id",
+  "service_type_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -157,21 +157,6 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 service
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::Service>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "service",
-  "HyperMouse::Schema::Result::Service",
-  { id => "service_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
-);
-
 =head2 service_level
 
 Type: belongs_to
@@ -187,9 +172,24 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
+=head2 service_type
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9EQuCunOPxdtoSRd0qTz4A
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::ServiceType>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "service_type",
+  "HyperMouse::Schema::Result::ServiceType",
+  { id => "service_type_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jc7FLpyq2n3v+Ih94QRxGA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

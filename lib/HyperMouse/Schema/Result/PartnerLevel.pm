@@ -92,24 +92,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 partner_level_names
+=head2 partner_level_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::PartnerLevelName>
+Related object: L<HyperMouse::Schema::Result::PartnerLevelI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "partner_level_names",
-  "HyperMouse::Schema::Result::PartnerLevelName",
+  "partner_level_i18ns",
+  "HyperMouse::Schema::Result::PartnerLevelI18n",
   { "foreign.partner_level_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rnGKzPCmsKexMp6yVBCSkQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:meAQXJJUZU5GDetJW2xBFg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

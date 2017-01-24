@@ -116,17 +116,17 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 contractor_type_names
+=head2 contractor_type_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ContractorTypeName>
+Related object: L<HyperMouse::Schema::Result::ContractorTypeI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "contractor_type_names",
-  "HyperMouse::Schema::Result::ContractorTypeName",
+  "contractor_type_i18ns",
+  "HyperMouse::Schema::Result::ContractorTypeI18n",
   { "foreign.language_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -146,17 +146,17 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 currency_names
+=head2 currency_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::CurrencyName>
+Related object: L<HyperMouse::Schema::Result::CurrencyI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "currency_names",
-  "HyperMouse::Schema::Result::CurrencyName",
+  "currency_i18ns",
+  "HyperMouse::Schema::Result::CurrencyI18n",
   { "foreign.language_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -176,84 +176,84 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 resource_names
+=head2 resource_type_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ResourceName>
+Related object: L<HyperMouse::Schema::Result::ResourceTypeI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "resource_names",
-  "HyperMouse::Schema::Result::ResourceName",
+  "resource_type_i18ns",
+  "HyperMouse::Schema::Result::ResourceTypeI18n",
   { "foreign.language_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 service_family_names
+=head2 service_family_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ServiceFamilyName>
+Related object: L<HyperMouse::Schema::Result::ServiceFamilyI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "service_family_names",
-  "HyperMouse::Schema::Result::ServiceFamilyName",
+  "service_family_i18ns",
+  "HyperMouse::Schema::Result::ServiceFamilyI18n",
   { "foreign.language_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 service_group_names
+=head2 service_group_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ServiceGroupName>
+Related object: L<HyperMouse::Schema::Result::ServiceGroupI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "service_group_names",
-  "HyperMouse::Schema::Result::ServiceGroupName",
+  "service_group_i18ns",
+  "HyperMouse::Schema::Result::ServiceGroupI18n",
   { "foreign.language_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 service_level_names
+=head2 service_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ServiceLevelName>
+Related object: L<HyperMouse::Schema::Result::ServiceI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "service_level_names",
-  "HyperMouse::Schema::Result::ServiceLevelName",
+  "service_i18ns",
+  "HyperMouse::Schema::Result::ServiceI18n",
+  { "foreign.language_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 service_level_i18ns
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::ServiceLevelI18n>
+
+=cut
+
+__PACKAGE__->has_many(
+  "service_level_i18ns",
+  "HyperMouse::Schema::Result::ServiceLevelI18n",
   { "foreign.lanuage_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 service_names
 
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ServiceName>
-
-=cut
-
-__PACKAGE__->has_many(
-  "service_names",
-  "HyperMouse::Schema::Result::ServiceName",
-  { "foreign.language_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:b1E72BwgvqKLtY/gR92mmA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aT1GLSHy5naJa/6Z5zBPGg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

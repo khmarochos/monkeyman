@@ -107,17 +107,17 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 service_family_names
+=head2 service_family_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ServiceFamilyName>
+Related object: L<HyperMouse::Schema::Result::ServiceFamilyI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "service_family_names",
-  "HyperMouse::Schema::Result::ServiceFamilyName",
+  "service_family_i18ns",
+  "HyperMouse::Schema::Result::ServiceFamilyI18n",
   { "foreign.service_family_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -138,8 +138,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:vEXMVOWR6w4X3+D7F3Y5Sw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:eb0V+sCtOxfxJt1uwjTZPQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

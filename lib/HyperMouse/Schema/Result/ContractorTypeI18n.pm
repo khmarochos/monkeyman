@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::PartnerLevelName;
+package HyperMouse::Schema::Result::ContractorTypeI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::PartnerLevelName
+HyperMouse::Schema::Result::ContractorTypeI18n
 
 =cut
 
@@ -15,11 +15,11 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<partner_level_name>
+=head1 TABLE: C<contractor_type_i18n>
 
 =cut
 
-__PACKAGE__->table("partner_level_name");
+__PACKAGE__->table("contractor_type_i18n");
 
 =head1 ACCESSORS
 
@@ -48,17 +48,18 @@ __PACKAGE__->table("partner_level_name");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 partner_level_id
+=head2 contrator_type_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 lanuage_id
+=head2 language_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 name
@@ -66,6 +67,12 @@ __PACKAGE__->table("partner_level_name");
   data_type: 'varchar'
   is_nullable: 0
   size: 127
+
+=head2 name_short
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 63
 
 =cut
 
@@ -95,17 +102,24 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "partner_level_id",
+  "contrator_type_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "lanuage_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  "language_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "name",
   { data_type => "varchar", is_nullable => 0, size => 127 },
+  "name_short",
+  { data_type => "varchar", is_nullable => 0, size => 63 },
 );
 
 =head1 PRIMARY KEY
@@ -122,24 +136,39 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 partner_level
+=head2 contrator_type
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::PartnerLevel>
+Related object: L<HyperMouse::Schema::Result::ContractorType>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "partner_level",
-  "HyperMouse::Schema::Result::PartnerLevel",
-  { id => "partner_level_id" },
+  "contrator_type",
+  "HyperMouse::Schema::Result::ContractorType",
+  { id => "contrator_type_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
+);
+
+=head2 language
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::Language>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "language",
+  "HyperMouse::Schema::Result::Language",
+  { id => "language_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:p03ZGhVdqz8VR/sLQYUs6A
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JuYwpHsY2BiqyfF/6y2Esw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

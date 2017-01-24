@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::CurrencyName;
+package HyperMouse::Schema::Result::ResourceTypeI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::CurrencyName
+HyperMouse::Schema::Result::ResourceTypeI18n
 
 =cut
 
@@ -15,11 +15,11 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<currency_name>
+=head1 TABLE: C<resource_type_i18n>
 
 =cut
 
-__PACKAGE__->table("currency_name");
+__PACKAGE__->table("resource_type_i18n");
 
 =head1 ACCESSORS
 
@@ -48,7 +48,7 @@ __PACKAGE__->table("currency_name");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 currency_id
+=head2 resource_type_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -96,7 +96,7 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "currency_id",
+  "resource_type_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -128,21 +128,6 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 currency
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::Currency>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "currency",
-  "HyperMouse::Schema::Result::Currency",
-  { id => "currency_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
-);
-
 =head2 language
 
 Type: belongs_to
@@ -158,9 +143,24 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
+=head2 resource_type
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1EPt0mnJYFlDaWoT0dqcAw
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::ResourceType>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "resource_type",
+  "HyperMouse::Schema::Result::ResourceType",
+  { id => "resource_type_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ni3rEDlptdQv/COrPfsrWQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

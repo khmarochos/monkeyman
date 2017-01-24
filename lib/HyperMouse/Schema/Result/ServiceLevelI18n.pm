@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ResourceName;
+package HyperMouse::Schema::Result::ServiceLevelI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ResourceName
+HyperMouse::Schema::Result::ServiceLevelI18n
 
 =cut
 
@@ -15,11 +15,11 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<resource_name>
+=head1 TABLE: C<service_level_i18n>
 
 =cut
 
-__PACKAGE__->table("resource_name");
+__PACKAGE__->table("service_level_i18n");
 
 =head1 ACCESSORS
 
@@ -48,14 +48,14 @@ __PACKAGE__->table("resource_name");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 resource_id
+=head2 service_level_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 language_id
+=head2 lanuage_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -96,14 +96,14 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "resource_id",
+  "service_level_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "language_id",
+  "lanuage_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -128,7 +128,7 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 language
+=head2 lanuage
 
 Type: belongs_to
 
@@ -137,30 +137,30 @@ Related object: L<HyperMouse::Schema::Result::Language>
 =cut
 
 __PACKAGE__->belongs_to(
-  "language",
+  "lanuage",
   "HyperMouse::Schema::Result::Language",
-  { id => "language_id" },
+  { id => "lanuage_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
-=head2 resource
+=head2 service_level
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::Resource>
+Related object: L<HyperMouse::Schema::Result::ServiceLevel>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "resource",
-  "HyperMouse::Schema::Result::Resource",
-  { id => "resource_id" },
+  "service_level",
+  "HyperMouse::Schema::Result::ServiceLevel",
+  { id => "service_level_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RFCLJmnvhlPicxihFIg1NA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Isni6zQIagmJfOsYLjXCfg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

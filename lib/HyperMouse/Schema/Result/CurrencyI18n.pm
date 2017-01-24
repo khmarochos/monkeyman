@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ServiceFamilyName;
+package HyperMouse::Schema::Result::CurrencyI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ServiceFamilyName
+HyperMouse::Schema::Result::CurrencyI18n
 
 =cut
 
@@ -15,11 +15,11 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<service_family_name>
+=head1 TABLE: C<currency_i18n>
 
 =cut
 
-__PACKAGE__->table("service_family_name");
+__PACKAGE__->table("currency_i18n");
 
 =head1 ACCESSORS
 
@@ -48,7 +48,7 @@ __PACKAGE__->table("service_family_name");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 service_family_id
+=head2 currency_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -63,12 +63,6 @@ __PACKAGE__->table("service_family_name");
   is_nullable: 0
 
 =head2 name
-
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 127
-
-=head2 description
 
   data_type: 'varchar'
   is_nullable: 0
@@ -102,7 +96,7 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "service_family_id",
+  "currency_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -117,8 +111,6 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "name",
-  { data_type => "varchar", is_nullable => 0, size => 127 },
-  "description",
   { data_type => "varchar", is_nullable => 0, size => 127 },
 );
 
@@ -136,6 +128,21 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
+=head2 currency
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::Currency>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "currency",
+  "HyperMouse::Schema::Result::Currency",
+  { id => "currency_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
+);
+
 =head2 language
 
 Type: belongs_to
@@ -148,27 +155,12 @@ __PACKAGE__->belongs_to(
   "language",
   "HyperMouse::Schema::Result::Language",
   { id => "language_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
-);
-
-=head2 service_family
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::ServiceFamily>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "service_family",
-  "HyperMouse::Schema::Result::ServiceFamily",
-  { id => "service_family_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BVhxu1GgERsF8IekW+n5NA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zm8oL8CRDfkemYkqMTx85Q
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

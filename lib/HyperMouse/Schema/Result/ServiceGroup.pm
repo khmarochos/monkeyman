@@ -121,39 +121,39 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 service_group_names
+=head2 service_group_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ServiceGroupName>
+Related object: L<HyperMouse::Schema::Result::ServiceGroupI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "service_group_names",
-  "HyperMouse::Schema::Result::ServiceGroupName",
+  "service_group_i18ns",
+  "HyperMouse::Schema::Result::ServiceGroupI18n",
   { "foreign.service_group_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 services
+=head2 service_types
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::Service>
+Related object: L<HyperMouse::Schema::Result::ServiceType>
 
 =cut
 
 __PACKAGE__->has_many(
-  "services",
-  "HyperMouse::Schema::Result::Service",
+  "service_types",
+  "HyperMouse::Schema::Result::ServiceType",
   { "foreign.service_group_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:62fytIPQNFJ+XRCXSf6GRQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Dk+HT96GFIwPzNdNUI9ONw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

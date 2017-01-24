@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ServiceName;
+package HyperMouse::Schema::Result::PartnerLevelI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ServiceName
+HyperMouse::Schema::Result::PartnerLevelI18n
 
 =cut
 
@@ -15,11 +15,11 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<service_name>
+=head1 TABLE: C<partner_level_i18n>
 
 =cut
 
-__PACKAGE__->table("service_name");
+__PACKAGE__->table("partner_level_i18n");
 
 =head1 ACCESSORS
 
@@ -48,21 +48,20 @@ __PACKAGE__->table("service_name");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 service_id
+=head2 partner_level_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 language_id
+=head2 lanuage_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
-  is_foreign_key: 1
   is_nullable: 0
 
-=head2 value
+=head2 name
 
   data_type: 'varchar'
   is_nullable: 0
@@ -96,21 +95,16 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "service_id",
+  "partner_level_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "language_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "value",
+  "lanuage_id",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  "name",
   { data_type => "varchar", is_nullable => 0, size => 127 },
 );
 
@@ -128,39 +122,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 language
+=head2 partner_level
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::Language>
+Related object: L<HyperMouse::Schema::Result::PartnerLevel>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "language",
-  "HyperMouse::Schema::Result::Language",
-  { id => "language_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
-);
-
-=head2 service
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::Service>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "service",
-  "HyperMouse::Schema::Result::Service",
-  { id => "service_id" },
+  "partner_level",
+  "HyperMouse::Schema::Result::PartnerLevel",
+  { id => "partner_level_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DmT0NMrS9gbhWSWJcGSu+w
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:KTRyXn9ORGL19EjSV6VHEg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

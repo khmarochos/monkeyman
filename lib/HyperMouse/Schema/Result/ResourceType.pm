@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::Currency;
+package HyperMouse::Schema::Result::ResourceType;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::Currency
+HyperMouse::Schema::Result::ResourceType
 
 =cut
 
@@ -15,11 +15,11 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<currency>
+=head1 TABLE: C<resource_type>
 
 =cut
 
-__PACKAGE__->table("currency");
+__PACKAGE__->table("resource_type");
 
 =head1 ACCESSORS
 
@@ -47,18 +47,6 @@ __PACKAGE__->table("currency");
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
   is_nullable: 1
-
-=head2 code
-
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 3
-
-=head2 sign
-
-  data_type: 'char'
-  is_nullable: 0
-  size: 1
 
 =cut
 
@@ -88,10 +76,6 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "code",
-  { data_type => "varchar", is_nullable => 0, size => 3 },
-  "sign",
-  { data_type => "char", is_nullable => 0, size => 1 },
 );
 
 =head1 PRIMARY KEY
@@ -108,54 +92,39 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 currency_i18ns
+=head2 resource_pieces
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::CurrencyI18n>
+Related object: L<HyperMouse::Schema::Result::ResourcePiece>
 
 =cut
 
 __PACKAGE__->has_many(
-  "currency_i18ns",
-  "HyperMouse::Schema::Result::CurrencyI18n",
-  { "foreign.currency_id" => "self.id" },
+  "resource_pieces",
+  "HyperMouse::Schema::Result::ResourcePiece",
+  { "foreign.resource_type_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 currency_rates
+=head2 resource_type_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::CurrencyRate>
+Related object: L<HyperMouse::Schema::Result::ResourceTypeI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "currency_rates",
-  "HyperMouse::Schema::Result::CurrencyRate",
-  { "foreign.currency_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 payments
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::Payment>
-
-=cut
-
-__PACKAGE__->has_many(
-  "payments",
-  "HyperMouse::Schema::Result::Payment",
-  { "foreign.currency_id" => "self.id" },
+  "resource_type_i18ns",
+  "HyperMouse::Schema::Result::ResourceTypeI18n",
+  { "foreign.resource_type_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:t6ofyO8QHwiC9QTfqmUPoA
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:x7WgFxHG7g3uF2HBnWDcpw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

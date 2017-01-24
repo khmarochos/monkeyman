@@ -92,17 +92,17 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 service_level_names
+=head2 service_level_i18ns
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ServiceLevelName>
+Related object: L<HyperMouse::Schema::Result::ServiceLevelI18n>
 
 =cut
 
 __PACKAGE__->has_many(
-  "service_level_names",
-  "HyperMouse::Schema::Result::ServiceLevelName",
+  "service_level_i18ns",
+  "HyperMouse::Schema::Result::ServiceLevelI18n",
   { "foreign.service_level_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -138,8 +138,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 12:14:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:eSjGyTvwPbtCUZb65VmXKQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3RB9f8ld62xl+T0Up3sKOA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
