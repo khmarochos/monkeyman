@@ -303,7 +303,7 @@ __LOG4PERL_DEFAULT_CONFIGURATION__
                 }
             );
             $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
-                '%d [%U] [' . $self->colorify('CATEGORY', '%c', 1) . '] %m%n'
+                '%d [%P] [%U] [' . $self->colorify('CATEGORY', '%c', 1) . '] %m%n'
             );
         } else {
             $logger_console_layout = Log::Log4perl::Layout::PatternLayout->new(
@@ -377,6 +377,7 @@ method log(Str $level!, Str $module!, Bool $formatted!, @message_chunks) {
     my $message_primary;
     my $message_console;
     if($formatted) {
+        $self->set_dump_enabled_limited($self->get_dump_enabled_limited + 1) if($self->get_dump_enabled_limited);
         $message_primary = $self->mm_sprintf        (@message_chunks);
         $message_console = $self->mm_sprintf_colored(@message_chunks);
     } else {
@@ -556,9 +557,9 @@ func mm_showref(...) {
 
     if(defined($self)) {
         $showinfo   = $self->get_show_monkeyman_info;
-        $dumping    = $self->get_dump_enabled ||
-                      $self->get_dump_enabled_limited &&
-                     ($self->set_dump_enabled_limited($self->get_dump_enabled_limited - 1) || 1);
+        $dumping    = $self->get_dump_enabled_limited &&
+                     ($self->set_dump_enabled_limited($self->get_dump_enabled_limited - 1) || 1) ||
+                      $self->get_dump_enabled;
         $dumpdir    = $self->get_dump_directory;
         $dumpxml    = $self->get_dump_introspect_xml;
     } else {

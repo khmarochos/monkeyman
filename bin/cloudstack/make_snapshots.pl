@@ -106,6 +106,7 @@ THE_LOOP: while(1) {
             -ConfigFile         => $parameters->get_schedule,
             -UseApacheInclude   => 1
         );
+        $logger->set_dump_enabled_limited(2);
         $logger->tracef("The configuration is loaded: %s", $configuration);
     }
 
@@ -162,6 +163,7 @@ THE_LOOP: while(1) {
 
         $components->{'rebuilt'} = $time_now;
 
+        $logger->set_dump_enabled_limited(2);
         $logger->debugf("All the components are loaded: %s", $components);
 
     } else {
@@ -581,7 +583,7 @@ func refresh_component (
         my $what_to_find =
             'our_' .
             PL(decamelize($related_type)) .
-            (($related_type eq 'storage_pool') ? '_old_ACS' : ''); # FIXME: remove this dirty hack!
+            (($related_type eq 'StoragePool') ? '_old_ACS' : ''); # FIXME: remove this dirty hack!
         foreach my $related_element ($element->get_related(related => $what_to_find, fatal => 0)) {
             refresh_component(
                 $master_element,
