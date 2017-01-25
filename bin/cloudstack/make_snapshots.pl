@@ -92,6 +92,11 @@ __END_OF_COMPONENTS_INDICES__
 
 my $in_progress = 0;
 
+$SIG{'HUP'} = sub {
+    $logger->infof("Got SIGHUP, the configuration will be reloaded");
+    $configuration = undef;
+};
+
 THE_LOOP: while(1) {
 
     my $time_now = time;
@@ -106,6 +111,7 @@ THE_LOOP: while(1) {
             -ConfigFile         => $parameters->get_schedule,
             -UseApacheInclude   => 1
         );
+        $components->{'rebuilt'} = 0;
         $logger->set_dump_enabled_limited(2);
         $logger->tracef("The configuration is loaded: %s", $configuration);
     }
