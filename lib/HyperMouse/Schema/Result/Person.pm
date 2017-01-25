@@ -160,6 +160,21 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
+=head2 person_passwords
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::PersonPassword>
+
+=cut
+
+__PACKAGE__->has_many(
+  "person_passwords",
+  "HyperMouse::Schema::Result::PersonPassword",
+  { "foreign.person_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 person_x_contractors
 
 Type: has_many
@@ -206,8 +221,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TizlG7Kdd0l3oSsloezPfg
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-25 07:25:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RyI0Ix7o0WvZ31RD2arLEg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
