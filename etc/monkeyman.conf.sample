@@ -1,6 +1,6 @@
 <security>
-  desired_euid = 500
-  desired_egid = 500
+  desired_euid = 313
+  desired_egid = 313
 </security>
 
 
@@ -9,36 +9,16 @@
 
 <logger>
     <PRIMARY>
-        log4perl = /home/mmkeeper/monkeyman/etc/logger/PRIMARY.conf
+        log4perl = /opt/monkeyman/etc/logger/PRIMARY/log4perl.conf
         <dump>
-            enabled         = 1
+            enabled         = 0
             introspect_xml  = 1
             directory       = /home/mmkeeper/monkeyman/var/dump
         </dump>
         <colorscheme>
-            NORMAL          = reset
-            ACCENTED        = bright_white
-            PARAMETER       = rgb332
-            WARNING         = red
-            LEVEL_TRACE     = bright_cyan
-            LEVEL_DEBUG     = cyan
-            LEVEL_INFO      = white
-            LEVEL_WARNING   = magenta
-            LEVEL_ERROR     = red
-            LEVEL_FATAL     = bright_red
-            CATEGORY        = rgb541
-            REF_CLASS       = bright_cyan
-            REF_ADDRESS     = cyan
-            REF_MD5SUM      = cyan
-        </colorscheme>
+	    include /opt/monkeyman/etc/logger/PRIMARY/colorscheme.conf
+        <colorscheme>
     </PRIMARY>
-    <ALT>
-        log4perl = /home/mmkeeper/monkeyman/etc/logger/ALT/log4perl.conf
-        <dump>
-            enabled         = 0
-            introspect_xml  = 0
-        </dump>
-    </ALT>
 </logger>
 
 
@@ -48,23 +28,8 @@
 <cloudstack>
     <PRIMARY>
         include /home/mmkeeper/monkeyman/etc/cloudstack/PRIMARY/api.conf
-        <cache>
-            enabled     = 1
-            ttl         = 300
-            never       = volume,virtualmachine,snapshot
-        </cache>
     </PRIMARY>
 </cloudstack>
-
-
-
-# Zendesk connectors
-
-<zendesk>
-    <PRIMARY>
-        include /home/mmkeeper/monkeyman/etc/zendesk/PRIMARY.conf
-    </PRIMARY>
-</zendesk>
 
 
 

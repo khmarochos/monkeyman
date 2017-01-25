@@ -1,4 +1,4 @@
-logdir                                                                  = /home/mmkeeper/monkeyman/var/log
+logdir                                                                  = /opt/monkeyman/var/log
 max_size                                                                = 104857600
 max_archives                                                            = 10
 
@@ -32,6 +32,7 @@ log4perl.appender.monkeyman.autoflush                                   = 1
 log4perl.appender.monkeyman.size                                        = ${max_size}
 log4perl.appender.monkeyman.max                                         = ${max_archives}
 
+log4perl.logger.console.MonkeyMan.CloudStack.API                        = DEBUG
 log4perl.logger.MonkeyMan.CloudStack.API                                = ALL, cloudstack_api
 log4perl.appender.cloudstack_api                                        = Log::Dispatch::FileRotate
 log4perl.appender.cloudstack_api.layout                                 = Log::Log4perl::Layout::PatternLayout
