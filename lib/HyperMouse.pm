@@ -37,6 +37,24 @@ method _build_schema {
 
 
 
+has 'configuration' => (
+    is          => 'ro',
+    isa         => 'HashRef',
+    predicate   =>    'has_configuration',
+    reader      =>    'get_configuration',
+    writer      =>   '_set_configuration',
+    builder     => '_build_configuration',
+    lazy        => 1
+);
+
+method _build_configuration {
+    {
+        password_encryption_key => 'My Amazingly Cool Encryption Key'
+    };
+}
+
+
+
 has 'monkeyman' => (
     is          => 'ro',
     isa         => 'MonkeyMan',

@@ -133,6 +133,17 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-25 07:25:22
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:e5xz4oQN5PqdHgmcQH5Ubw
 
+__PACKAGE__->load_components(qw/EncodedColumn/);
+
+__PACKAGE__->add_columns(
+    'password'  =>  {
+        data_type       => 'CHAR',
+        size            => 40,
+        encode_column   => 1,
+        encode_class    => 'Digest',
+        encode_args     => { algorithm => 'SHA-1', format => 'hex' }
+    }
+);
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

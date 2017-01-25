@@ -13,9 +13,10 @@ use Method::Signatures;
 
 
 method authenticate (
-    Str     :$username,
-    Str     :$password
+    Str :$username,
+    Str :$password,
 ) {
+    my
 }
 
 
