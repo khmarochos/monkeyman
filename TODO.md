@@ -11,6 +11,8 @@ Bugs
 Code
 ----
 
+ - [ ] Translate the vocabularies to YAML.
+        - suggested on `2017.01.30` by `melnik13`
  - [ ] Get rid of the `is_dom_expired()` method and the `dom_updated` and
        `dom_best_before` attributes of the
        `MonkeyMan::CloudStack::API::Roles::Element` class.
@@ -28,9 +30,9 @@ Code
         - suggested on `2016.02.09` by `melnik13`
  - [ ] Make some helper to find the framework's library directory
         - on `2016.01.17` by `melnik13`
- - [ ] Build a proper `Makefile`
+ - [ ] Build a proper distribution.
         - suggested on `2016.01.17` by `melnik13`
- - [ ] Use the `MonkeyMan::CloudStack::Types::*` types everywhere
+ - [ ] Use the `MonkeyMan::CloudStack::Types::*` types everywhere.
         - on `2016.01.18` by `melnik13`
  - [x] Let other applications use `MonkeyMan` as a module, not as a framework
         - suggested on `2016.11.04` by `melnik13`
