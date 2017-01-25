@@ -72,7 +72,7 @@ has 'configuration' => (
 );
 
 method _build_configuration {
-    {}
+    return({});
 }
 
 has 'log4perl_configuration_string' => (
