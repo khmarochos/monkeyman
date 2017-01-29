@@ -458,6 +458,7 @@ method run_command(
     try {
         $result  = $command_to_run->run(
             fatal_fail  => 1,
+            fatal_431   => $fatal_431,
             best_before => $best_before
         );
     } catch (MonkeyMan::Exception $failure_api) {

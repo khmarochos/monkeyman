@@ -201,7 +201,7 @@ method run(
         # Is everything fine?
         if(! $self->get_http_response->is_success) {
             if($fatal_fail) {
-                if($self->get_http_response->code eq 431 && ! $fatal_431) {
+                if($self->get_http_response->code eq 431 && $self->get_parameters->{'command'} =~ /^list.+/ && ! $fatal_431) {
                     $logger->warnf(
                         "Have got the 431 reply from the API server " . 
                         "in reply to the %s command",
