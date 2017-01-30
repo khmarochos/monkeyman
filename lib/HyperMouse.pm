@@ -4,6 +4,10 @@ use 5.20.1;
 use strict;
 use warnings;
 
+use utf8;
+binmode(STDERR, ':encoding(utf8)');
+binmode(STDOUT, ':encoding(utf8)');
+
 use Moose 2.1604;
 use namespace::autoclean;
 
@@ -16,17 +20,17 @@ our $VERSION = '0.0.1';
 
 
 
-has 'schema' => (
+has 'db_schema' => (
     is          => 'ro',
     isa         => 'HyperMouse::Schema',
-    reader      =>   '_get_schema',
-    writer      =>   '_set_schema',
-    builder     => '_build_schema',
+    reader      =>   '_get_db_schema',
+    writer      =>   '_set_db_schema',
+    builder     => '_build_db_schema',
     lazy        => 1,
     required    => 0
 );
 
-method _build_schema {
+method _build_db_schema {
     HyperMouse::Schema->connect(
         'dbi:mysql:hypermouse',
         'hypermouse',
@@ -86,7 +90,7 @@ has 'logger' => (
 );
 
 method _build_logger {
-    $self->get_monkeyman->get_logger;
+    $self->_get_monkeyman->get_logger;
 }
 
 

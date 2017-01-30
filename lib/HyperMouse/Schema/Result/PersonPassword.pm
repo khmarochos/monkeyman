@@ -137,11 +137,12 @@ __PACKAGE__->load_components(qw/EncodedColumn/);
 
 __PACKAGE__->add_columns(
     'password'  =>  {
-        data_type       => 'CHAR',
-        size            => 40,
-        encode_column   => 1,
-        encode_class    => 'Digest',
-        encode_args     => { algorithm => 'SHA-1', format => 'hex' }
+        data_type           => 'CHAR',
+        size                => 40,
+        encode_column       => 1,
+        encode_class        => 'Digest',
+        encode_args         => { algorithm => 'SHA-1', format => 'hex' },
+        encode_check_method => 'check_password'
     }
 );
 
