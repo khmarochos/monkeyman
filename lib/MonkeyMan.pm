@@ -63,8 +63,6 @@ method BUILD(...) {
         $self->_app_finish;
     }
 
-    END { MonkeyMan->instance->_mm_shutdown; };
-
 }
 
 
@@ -512,6 +510,9 @@ method _mm_shutdown {
     }
 
 }
+
+END { try { MonkeyMan->instance->_mm_shutdown; } };
+
 
 
 
