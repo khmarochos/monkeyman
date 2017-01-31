@@ -15,6 +15,20 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
+=head1 COMPONENTS LOADED
+
+=over 4
+
+=item * L<DBIx::Class::InflateColumn::DateTime>
+
+=item * L<DBIx::Class::EncodedColumn>
+
+=back
+
+=cut
+
+__PACKAGE__->load_components("InflateColumn::DateTime", "EncodedColumn");
+
 =head1 TABLE: C<language>
 
 =cut
@@ -252,8 +266,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aT1GLSHy5naJa/6Z5zBPGg
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-31 15:54:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cmL7fOhqiqgxKlKl4Fw6Hg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

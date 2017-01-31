@@ -20,6 +20,42 @@ our $VERSION = '0.0.1';
 
 
 
+has 'monkeyman' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan',
+    reader      =>   '_get_monkeyman',
+    writer      =>   '_set_monkeyman',
+    builder     => '_build_monkeyman',
+    lazy        => 1,
+    required    => 0
+);
+
+method _build_monkeyman {
+    MonkeyMan->new(
+        app_name        => 'HyperMouse',
+        app_description => 'No description is available yet',
+        app_version     => $VERSION
+    );
+}
+
+
+
+has 'logger' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Logger',
+    reader      =>   '_get_logger',
+    writer      =>   '_set_logger',
+    builder     => '_build_logger',
+    lazy        => 1,
+    required    => 0
+);
+
+method _build_logger {
+    $self->_get_monkeyman->get_logger;
+}
+
+
+
 has 'db_schema' => (
     is          => 'ro',
     isa         => 'HyperMouse::Schema',
@@ -55,42 +91,6 @@ method _build_configuration {
     {
         password_encryption_key => 'My Amazingly Cool Encryption Key'
     };
-}
-
-
-
-has 'monkeyman' => (
-    is          => 'ro',
-    isa         => 'MonkeyMan',
-    reader      =>   '_get_monkeyman',
-    writer      =>   '_set_monkeyman',
-    builder     => '_build_monkeyman',
-    lazy        => 1,
-    required    => 0
-);
-
-method _build_monkeyman {
-    MonkeyMan->new(
-        app_name        => 'HyperMouse',
-        app_description => 'No description is available yet',
-        app_version     => $VERSION
-    );
-}
-
-
-
-has 'logger' => (
-    is          => 'ro',
-    isa         => 'MonkeyMan::Logger',
-    reader      =>   '_get_logger',
-    writer      =>   '_set_logger',
-    builder     => '_build_logger',
-    lazy        => 1,
-    required    => 0
-);
-
-method _build_logger {
-    $self->_get_monkeyman->get_logger;
 }
 
 

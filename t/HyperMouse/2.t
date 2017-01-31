@@ -4,13 +4,33 @@ use strict;
 use warnings;
 
 use HyperMouse;
-use HyperMouse::Element::Person;
 
-use Test::More (tests => 1);
+use Test::More (tests => 3);
+use TryCatch;
 
 
 
 my $hypermouse  = HyperMouse->new;
-my $logger      = $hypermouse->_get_logger;
-my $person      = HyperMouse::Element::Person->new(hypermouse => $hypermouse, db_id => 1);
-ok($person->authenticate(12345678));
+
+my $ok;
+
+try {
+    $ok = $hypermouse->_get_db_schema->resultset("Person")->authenticate(
+        email       => 'v.melnik@tucha.ua',
+        password    => '12345678'
+    );
+}
+ok($ok);
+
+try {
+    $ok = $hypermouse->_get_db_schema->resultset("Person")->authenticate(
+        email       => 'v.melnik@tucha.ua',
+        password    => '87654321'
+    );
+} catch(HyperMouse::Schema::ResultSet::Person::Exception::PasswordIncorrect $e) {
+    ok($e);
+} catch {
+    ok(0);
+}
+ok($ok);
+

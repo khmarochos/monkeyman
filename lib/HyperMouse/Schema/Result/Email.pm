@@ -15,6 +15,20 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
+=head1 COMPONENTS LOADED
+
+=over 4
+
+=item * L<DBIx::Class::InflateColumn::DateTime>
+
+=item * L<DBIx::Class::EncodedColumn>
+
+=back
+
+=cut
+
+__PACKAGE__->load_components("InflateColumn::DateTime", "EncodedColumn");
+
 =head1 TABLE: C<email>
 
 =cut
@@ -27,6 +41,7 @@ __PACKAGE__->table("email");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_auto_increment: 1
   is_nullable: 0
 
 =head2 valid_since
@@ -70,7 +85,12 @@ __PACKAGE__->table("email");
 
 __PACKAGE__->add_columns(
   "id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_auto_increment => 1,
+    is_nullable => 0,
+  },
   "valid_since",
   {
     data_type => "datetime",
@@ -136,8 +156,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-24 14:37:10
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PRc98sptpl7E9q8i2sl8KA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-31 15:54:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MgNMm8jVT8Yc7WGw2PcLeA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

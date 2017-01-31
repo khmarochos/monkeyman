@@ -15,6 +15,20 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
+=head1 COMPONENTS LOADED
+
+=over 4
+
+=item * L<DBIx::Class::InflateColumn::DateTime>
+
+=item * L<DBIx::Class::EncodedColumn>
+
+=back
+
+=cut
+
+__PACKAGE__->load_components("InflateColumn::DateTime", "EncodedColumn");
+
 =head1 TABLE: C<person_password>
 
 =cut
@@ -57,9 +71,9 @@ __PACKAGE__->table("person_password");
 
 =head2 password
 
-  data_type: 'varchar'
+  data_type: 'char'
   is_nullable: 0
-  size: 127
+  size: 40
 
 =cut
 
@@ -97,7 +111,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "password",
-  { data_type => "varchar", is_nullable => 0, size => 127 },
+  { data_type => "char", is_nullable => 0, size => 40 },
 );
 
 =head1 PRIMARY KEY
@@ -130,8 +144,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-25 07:25:22
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:e5xz4oQN5PqdHgmcQH5Ubw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-31 15:54:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+z2h0NglDc5y2+FzOcbaRw
 
 __PACKAGE__->load_components(qw/EncodedColumn/);
 

@@ -25,22 +25,6 @@ has 'hypermouse' => (
 
 
 
-has 'db_schema' => (
-    is          => 'ro',
-    isa         => 'HyperMouse::Schema',
-    reader      =>   '_get_db_schema',
-    writer      =>   '_set_db_schema',
-    builder     => '_build_db_schema',
-    lazy        => 1,
-    required    => 0
-);
-
-method _build_db_schema {
-    $self->_get_hypermouse->_get_db_schema;
-}
-
-
-
 has 'logger' => (
     is          => 'ro',
     isa         => 'MonkeyMan::Logger',
@@ -53,6 +37,22 @@ has 'logger' => (
 
 method _build_logger {
     $self->_get_hypermouse->_get_logger;
+}
+
+
+
+has 'db_schema' => (
+    is          => 'ro',
+    isa         => 'HyperMouse::Schema',
+    reader      =>   '_get_db_schema',
+    writer      =>   '_set_db_schema',
+    builder     => '_build_db_schema',
+    lazy        => 1,
+    required    => 0
+);
+
+method _build_db_schema {
+    $self->_get_hypermouse->_get_db_schema;
 }
 
 
@@ -70,22 +70,6 @@ method valid_only {
             }
         ]
     }
-}
-
-
-
-has 'type' => (
-    is          => 'ro',
-    isa         => 'Str',
-    reader      =>    'get_type',
-    writer      =>   '_set_type',
-    builder     => '_build_type',
-    lazy        => 1,
-    required    => 0
-);
-
-method _build_type {
-    if((my $type = blessed($self)) =~ s/^HyperMouse::Element::(.+)$/$1/) { $type; };
 }
 
 
@@ -133,6 +117,22 @@ has 'db_id' => (
 
 method _build_db_id {
     undef;
+}
+
+
+
+has 'type' => (
+    is          => 'ro',
+    isa         => 'Str',
+    reader      =>    'get_type',
+    writer      =>   '_set_type',
+    builder     => '_build_type',
+    lazy        => 1,
+    required    => 0
+);
+
+method _build_type {
+    if((my $type = blessed($self)) =~ s/^HyperMouse::Element::(.+)$/$1/) { $type; };
 }
 
 
