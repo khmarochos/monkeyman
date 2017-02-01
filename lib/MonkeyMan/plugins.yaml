@@ -23,18 +23,6 @@ cloudstack:
     parameter_name:               mm_default_cloudstack
     parameter_help:               The default Apache CloudStack actor to be used
 
-zendesk:
-    plugin_name:                  zendesk
-    actor_class:                  MonkeyMan::Zendesk
-    actor_default_parameter:      get_mm_default_zendesk
-    actor_default_actor:          PRIMARY
-    actor_handle:                 zendesk
-    plug_handle:                  zendesk_plug
-    configuration_index_branch:   zendesk
-    parameter_key:                default-zendesk
-    parameter_name:               mm_default_zendesk
-    parameter_help:               The default Zendesk actor to be used
-
 password_generator:
     plugin_name:                  password_generator
     actor_class:                  MonkeyMan::PasswordGenerator
