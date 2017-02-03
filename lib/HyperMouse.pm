@@ -43,7 +43,7 @@ method _build_monkeyman {
 has 'logger' => (
     is          => 'ro',
     isa         => 'MonkeyMan::Logger',
-    reader      =>   '_get_logger',
+    reader      =>    'get_logger',
     writer      =>   '_set_logger',
     builder     => '_build_logger',
     lazy        => 1,
@@ -56,17 +56,17 @@ method _build_logger {
 
 
 
-has 'db_schema' => (
+has 'schema' => (
     is          => 'ro',
     isa         => 'HyperMouse::Schema',
-    reader      =>   '_get_db_schema',
-    writer      =>   '_set_db_schema',
-    builder     => '_build_db_schema',
+    reader      =>    'get_schema',
+    writer      =>   '_set_schema',
+    builder     => '_build_schema',
     lazy        => 1,
     required    => 0
 );
 
-method _build_db_schema {
+method _build_schema {
     HyperMouse::Schema->connect(
         'dbi:mysql:hypermouse',
         'hypermouse',

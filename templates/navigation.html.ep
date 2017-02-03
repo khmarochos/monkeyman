@@ -1,0 +1,13 @@
+<%  my @menu = qw(Dashboard Contractors Agrements Persons Services Payments); %>
+<%  foreach my $menu_item (@menu) { %>
+<%      if($menu_item eq 'Dashboard') { %>
+<li class="active">
+<%      } else { %>
+<li>
+<%      } %>
+    <a href="/zaloopa">
+        <i class="fa fa-th-large"></i>
+        <span class="nav-label"><%= $menu_item %></span>
+    </a>
+</li>
+<%  } %>

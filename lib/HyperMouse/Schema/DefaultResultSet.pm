@@ -10,6 +10,12 @@ use DateTime;
 
 
 
+method get_schema {
+    $self->result_source->schema;
+}
+
+
+
 method datetime_parser {
     $self->result_source->storage->datetime_parser;
 }
@@ -18,10 +24,6 @@ method format_datetime(
     DateTime $datetime!
 ) {
     $self->datetime_parser->format_datetime($datetime);
-}
-
-method get_schema {
-    $self->result_source->schema;
 }
 
 
