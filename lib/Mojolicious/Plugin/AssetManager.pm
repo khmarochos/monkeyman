@@ -9,6 +9,7 @@ use namespace::autoclean;
 extends 'Mojolicious::Plugin';
 
 use Mojo::Util 'xml_escape';
+use Text::Glob 'match_glob';
 use Method::Signatures;
 
 
@@ -57,8 +58,8 @@ method register(
             }
         }
     }
-    $app->helper(asset_needed => sub { $self->asset_needed(@_); });
-    $app->helper(asset_render => sub { $self->asset_render(@_); });
+    $app->helper(asset_required => sub { $self->asset_required(@_); });
+    $app->helper(asset_compiled => sub { $self->asset_compiled(@_); });
 }
 
 
@@ -72,56 +73,37 @@ method asset_register(
     $self->_get_assets_library->{ $asset_type }->{ $asset_alias } = $asset_items;
 }
 
-method asset_needed(
+method asset_required(
     Object          $controller!,
     Str             $asset_type!,
-    Maybe[Str]      $asset_alias?,
-    Maybe[Bool]     $needed?
+    Str             $asset_alias?,
+    Maybe[Bool]     $required?
 ) {
-    my $assets_of_this_type = $self->_dig(1, $controller->stash, 'assets_needed', $asset_type);
-    if(defined($asset_alias)) {
-        if(defined($needed)) {
-            return($assets_of_this_type->{ $asset_alias } = $needed);
-        } elsif(defined($assets_of_this_type->{ $asset_alias })) {
-            return($assets_of_this_type->{ $asset_alias });
-        } else {
-            return(0);
-        }
-    } else {
-        my @assets_needed;
-        if(
-            defined($assets_of_this_type) &&
-                ref($assets_of_this_type) eq 'HASH'
-        ) {
-            foreach my $asset_alias (keys(%{ $assets_of_this_type })) {
-                push(@assets_needed, $asset_alias)
-                    if($self->asset_needed($controller, $asset_type, $asset_alias));
-            }
-        }
-        return(@assets_needed);
+    my @assets_required;
+    my $assets_of_this_type_required    = $self->_dig(1, $controller->stash, 'assets_required', $asset_type);
+    my $assets_of_this_type_registered  = $self->_dig(0, $self->_get_assets_library, $asset_type);
+    foreach my $asset_found (
+        grep { $_ if(match_glob($asset_alias, $_)) }
+            defined($required) ?
+                (keys(%{ $assets_of_this_type_registered })) :
+                (keys(%{ $assets_of_this_type_required }))
+    ) {
+        $assets_of_this_type_required->{ $asset_found } = $required
+            if(defined($required));
+        push(@assets_required, $asset_found)
+            if($assets_of_this_type_required->{ $asset_found });
     }
+    @assets_required;
 }
 
-method asset_items(
+method asset_compiled(
+    Object          $controller!,
     Str             $asset_type!,
     Str             $asset_alias!
 ) {
     if(defined(my $asset_items = $self->_get_assets_library->{ $asset_type }->{ $asset_alias })) {
         return(@{ $asset_items });
     }
-}
-
-method asset_render(
-    Object          $controller!,
-    Str             $asset_type!
-) {
-    my @result;
-    foreach my $asset_needed ($self->asset_needed($controller, $asset_type)) {
-        foreach my $asset ($self->asset_items($asset_type, $asset_needed)) {
-            push(@result, '<link href="' . xml_escape($asset) . '" rel="stylesheet">');
-        }
-    }
-    return(join("\n", @result));
 }
 
 # FIXME: Move it to a separate package

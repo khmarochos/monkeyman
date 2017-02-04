@@ -1,6 +1,5 @@
-% asset_needed(qw/css summernote 1/);
-% asset_needed(qw/css datepicker 1/);
-
+% asset_required(qw/css summernote 1/);
+% asset_required(qw/css datepicker 1/);
 % layout('authorized', title_message => 'Welcome!');
 
         <div class="wrapper wrapper-content animated fadeInRight ecommerce">

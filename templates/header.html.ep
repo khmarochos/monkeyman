@@ -7,8 +7,10 @@
 
 <link href="css/bootstrap.min.css" rel="stylesheet">
 <link href="font-awesome/css/font-awesome.css" rel="stylesheet">
-
-<%== asset_render('css'); %>
-
+%   foreach     my $asset_alias (asset_required('css', '*')) {
+%       foreach my $asset_href  (asset_compiled('css', $asset_alias)) {
+<link href="<%= $asset_href %>" rel="stylesheet">
+%       }
+%   }
 <link href="css/animate.css" rel="stylesheet">
 <link href="css/style.css" rel="stylesheet">
