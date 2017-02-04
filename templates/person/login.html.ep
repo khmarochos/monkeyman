@@ -1,3 +1,4 @@
+% assets_needed(qw/css toastr 1/);
 % layout('unauthorized', title_message => 'Hello!');
 
     <div class="middle-box text-center loginscreen animated fadeInDown">
