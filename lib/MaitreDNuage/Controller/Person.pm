@@ -3,7 +3,11 @@ package MaitreDNuage::Controller::Person;
 use strict;
 use warnings;
 
-use Mojo::Base 'Mojolicious::Controller';
+use Moose;
+use namespace::autoclean;
+
+extends 'Mojolicious::Controller';
+
 use Method::Signatures;
 use TryCatch;
 
@@ -12,10 +16,11 @@ use TryCatch;
 method is_authenticated {
 
     if(defined(my $email = $self->session('authorized_person_email'))) {
-        return(1);
+        $self->stash->{'authorized_person_data'} = $self->hm_schema->resultset("Person")->person_info(email => $email);
+        $self->stash->{'authorized_person_data'}->{'id'}; # It'll be returned by the method
     } else {
         $self->redirect_to('/person/login');
-        return(0);
+        0;
     }
 
 }
@@ -41,6 +46,7 @@ method authenticate (Str $email!, Str $password!) {
         return(0);
     }
 
+    $self->session  (authorized_person_email => $email);
     return(1);
 
 }
@@ -55,7 +61,6 @@ method login {
     if(defined($self->session('authorized_person_email'))) {
         $self->redirect_to('/');
     } elsif(defined($person_email) && $self->authenticate($person_email, $person_password)) {
-        $self->session(authorized_person_email => $person_email);
         $self->redirect_to('/');
     } elsif(defined($person_email)) {
         $self->render(variant => 'unsuccessful');
@@ -74,5 +79,9 @@ method logout {
     $self->redirect_to('/');
 
 }
+
+
+
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;

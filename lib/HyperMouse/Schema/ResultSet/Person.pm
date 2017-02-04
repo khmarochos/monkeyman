@@ -13,6 +13,35 @@ use TryCatch;
 
 
 
+method person_info (
+    Str :$email
+) {
+    my $db_schema   = $self->get_schema;
+
+    my $db_email    = $db_schema->resultset("Email")->search({ email => $email })->filter_valid->single;
+    (__PACKAGE__ . '::Exception::EmailNotFound')->throwf(
+        "The %s email address isn't present",
+        $email
+    )
+        unless(defined($db_email));
+
+    my $db_person   = $db_email->search_related("person")->filter_valid->single;
+    (__PACKAGE__ . '::Exception::PersonNotFound')->throwf(
+        "The person with the %s email isn't present",
+        $email
+    )
+        unless(defined($db_person));
+
+    return({
+        id          => $db_person->id,
+        first_name  => $db_person->first_name,
+        last_name   => $db_person->last_name
+    });
+
+}
+
+
+
 method authenticate (
     Str :$email,
     Str :$password

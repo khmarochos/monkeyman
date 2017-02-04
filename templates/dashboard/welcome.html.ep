@@ -1,5 +1,5 @@
-% assets_needed(qw/css summernote 1/);
-% assets_needed(qw/css datepicker 1/);
+% asset_needed(qw/css summernote 1/);
+% asset_needed(qw/css datepicker 1/);
 
 % layout('authorized', title_message => 'Welcome!');
 

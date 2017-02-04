@@ -746,6 +746,7 @@ func snapshot_state_changed (
 
 
 
+# FIXME: Move it to a separate package
 func dig (Bool $create!, HashRef $hashref!, @keys?) {
     if(my $key = shift(@keys)) {
         return(defined($hashref->{ $key }) ?
