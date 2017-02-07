@@ -73,6 +73,8 @@ method asset_register(
     $self->_get_assets_library->{ $asset_type }->{ $asset_alias } = $asset_items;
 }
 
+
+
 method asset_required(
     Object          $controller!,
     Str             $asset_type!,
@@ -96,6 +98,8 @@ method asset_required(
     @assets_required;
 }
 
+
+
 method asset_compiled(
     Object          $controller!,
     Str             $asset_type!,
@@ -105,6 +109,8 @@ method asset_compiled(
         return(@{ $asset_items });
     }
 }
+
+
 
 # FIXME: Move it to a separate package
 method _dig (Bool $create!, HashRef $hashref!, @keys?) {
@@ -117,7 +123,6 @@ method _dig (Bool $create!, HashRef $hashref!, @keys?) {
         return($hashref);
     }
 }
-
 
 
 

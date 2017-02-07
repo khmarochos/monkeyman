@@ -1,13 +1,47 @@
-<%  my @menu = qw(Dashboard Contractors Agrements Persons Services Payments); %>
-<%  foreach my $menu_item (@menu) { %>
-<%      if($menu_item eq 'Dashboard') { %>
-<li class="active">
-<%      } else { %>
+<%
+
+    use Mojo::Util 'xml_escape';
+    use Method::Signatures;
+
+    func render_menu(HashRef $menu_root!, Int $menu_level!) {
+        return('')
+            if($menu_level > 3);
+        my $result = my $ul = {
+            1 => "",
+            2 => "<ul class=\"nav nav-second-level collapse\">\n",
+            3 => "<ul class=\"nav nav-third-level collapse\">\n"
+        }->{ $menu_level };
+        foreach my $menu_item (sort {
+            $menu_root->{ $a }->{'order'} <=>
+            $menu_root->{ $b }->{'order'}
+        } ( keys(%{ $menu_root }) )
+        ) {
+            my $menu_description = xml_escape($menu_item);
+            if(ref($menu_root->{ $menu_item }->{'destination'}) eq 'HASH') {
+                $result .= <<__END_OF_RESULT__;
 <li>
-<%      } %>
-    <a href="/zaloopa">
-        <i class="fa fa-th-large"></i>
-        <span class="nav-label"><%= $menu_item %></span>
-    </a>
+  <a href="#">
+    <i class="fa fa-th-large"></i>
+    <span class="nav-label">${menu_description}</span>
+    <span class="fa arrow"></span>
+  </a>
+__END_OF_RESULT__
+                $result .= render_menu($menu_root->{ $menu_item }->{'destination'}, $menu_level + 1);
+                $result .= "</li>";
+            } else {
+                my $menu_destination = xml_escape($menu_root->{ $menu_item }->{'destination'});
+                $result .= <<__END_OF_RESULT__;
+<li>
+  <a href="${menu_destination}">
+    <i class="fa fa-th-large"></i>
+    <span class="nav-label">${menu_description}</span>
+  </a>
 </li>
-<%  } %>
+__END_OF_RESULT__
+            } 
+        }
+        $result .= "</ul>" if($ul);
+        return($result);
+    }
+%>
+%== render_menu(stash->{'navigation_menu'}, 1);

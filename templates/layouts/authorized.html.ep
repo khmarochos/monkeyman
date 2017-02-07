@@ -18,10 +18,14 @@
                         <%= stash->{'authorized_person_data'}->{'last_name'} %>
                       </strong>
                     </span>
-                    <span class="text-muted text-xs block"><%= session->{'authorized_person_email'} %> <b class="caret"></b></span>
+                    <span class="text-muted text-xs block">
+                       <small><%= session->{'authorized_person_email'} %></small>
+                       <b class="caret"></b>
+                     </span>
                   </span>
                 </a>
                 <ul class="dropdown-menu animated fadeInRight m-t-xs">
+                  <li><a href="/person/profile">Profile</a></li>
                   <li><a href="/person/logout">Logout</a></li>
                 </ul>
               </div>

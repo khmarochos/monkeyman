@@ -42,7 +42,7 @@ method startup {
     my $routes = $self->routes;
        $routes->any('/person/login')->to('person#login');
 
-    my $routes_authenticated = $routes->under('/')->to('person#is_authenticated');
+    my $routes_authenticated = $routes->under->to('person#is_authenticated')->under->to('navigation#build_menu');
        $routes_authenticated->get('/')->to('dashboard#welcome');
        $routes_authenticated->get('/person/logout')->to('person#logout');
 
