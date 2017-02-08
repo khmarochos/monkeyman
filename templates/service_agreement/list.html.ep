@@ -1,0 +1,36 @@
+% asset_required(qw/css summernote 1/);
+% asset_required(qw/css datepicker 1/);
+% layout('authorized', title_message => 'Welcome!');
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered table-hover dataTables-example" >
+                    <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Valid Since</th>
+                        <th>Valid Till</th>
+                        <th>Client</th>
+                        <th>Provider</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+% foreach my $service_agreement (@{ stash('service_agreements') }) {
+                    <tr>
+                        <td><%= $service_agreement->name                    %></td>
+                        <td><%= $service_agreement->valid_since             %></td>
+                        <td><%= $service_agreement->valid_till              %></td>
+                        <td><%= $service_agreement->client_contractor_id    %></td>
+                        <td><%= $service_agreement->provider_contractor_id  %></td>
+                    </tr>
+% }
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th>Number</th>
+                        <th>Valid Since</th>
+                        <th>Valid Till</th>
+                        <th>Client</th>
+                        <th>Provider</th>
+                    </tr>
+                    </tfoot>
+                    </table>
+                </div>
