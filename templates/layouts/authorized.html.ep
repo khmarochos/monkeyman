@@ -7,7 +7,7 @@
     <div id="wrapper">
       <nav class="navbar-default navbar-static-side" role="navigation">
         <div class="sidebar-collapse">
-          <ul class="nav metismenu" id="side-menu">
+          <ul class="nav metismenu">
             <li class="nav-header">
               <div class="dropdown profile-element">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">
@@ -33,8 +33,8 @@
                 Hi!
               </div>
             </li>
-%= include('navigation');
           </ul>
+%= include('navigation');
         </div>
       </nav>
       <div id="page-wrapper" class="gray-bg">

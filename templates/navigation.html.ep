@@ -1,6 +1,8 @@
 %   use v5.20;
+%
 %   use Mojo::Util 'xml_escape';
 %   use Method::Signatures;
+%
 %   my $render_menu = begin
 %       my $render_menu = __SUB__;
 %       my $parameter   = shift;
@@ -13,7 +15,7 @@
 %           2 => 'nav nav-second-level collapse',
 %           3 => 'nav nav-third-level collapse'
 %       }->{ $menu_level };
-%==     tag(ul => ( class => $ul_class ) => begin
+%==     tag(ul => ( 'class' => $ul_class, ($menu_level == 1 ? ('id' => 'side-menu') : ()) ) => begin
 %           foreach my $menu_item (sort {
 %               $menu_root->{ $a }->{'order'} <=>
 %               $menu_root->{ $b }->{'order'}
@@ -23,12 +25,10 @@
 %               my $menu_destination  = $menu_root->{ $menu_item }->{'destination'}   || next;
 %               my $menu_icon         = $menu_root->{ $menu_item }->{'icon'};
 %==             tag(li => begin
-%==                 link_to($menu_destination => begin
-%==                     tag('i', class => $menu_icon);
-%==                     tag(class => 'nav-label', span => begin
-%=                          $menu_description
-%                       end);
-%==                     tag('span', class => 'fa arrow') if(ref($menu_destination) eq 'HASH');
+%==                 link_to(ref($menu_destination) eq 'HASH' ? '#' : $menu_destination => begin
+%==                     tag('i', 'class' => $menu_icon);
+%==                     tag('span' => ('class' => 'nav-label') => $menu_description);
+%==                     tag('span', 'class' => 'fa arrow') if(ref($menu_destination) eq 'HASH');
 %                   end);
 %==                 $render_menu->([ $menu_destination, $menu_level + 1 ]) if(ref($menu_destination) eq 'HASH');
 %               end);
