@@ -27,14 +27,14 @@ method _build_menu_full {
         'Dashboard'     => { order => 1, destination => '/' },
         'Agreements'    => { order => 2, destination => {
             'Create New'    => { order => 1, destination => '/service_agreement/new' },
-            'List Active'   => { order => 2, destination => '/service_agreement/list_active' },
-            'List Archived' => { order => 3, destination => '/service_agreement/list_archived' },
+            'List Active'   => { order => 2, destination => '/service_agreement/list/active' },
+            'List Archived' => { order => 3, destination => '/service_agreement/list/archived' },
             'List All'      => { order => 4, destination => '/service_agreement/list' }
         } },
         'Services'      => { order => 3, destination => {
             'Order New'     => { order => 1, destination => '/service/new' },
-            'List Active'   => { order => 2, destination => '/service/list_active' },
-            'List Archived' => { order => 3, destination => '/service/list_archived' },
+            'List Active'   => { order => 2, destination => '/service/list/active' },
+            'List Archived' => { order => 3, destination => '/service/list/archived' },
             'List All'      => { order => 4, destination => '/service/list' }
         } }
     }

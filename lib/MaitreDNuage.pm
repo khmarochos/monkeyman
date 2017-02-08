@@ -44,6 +44,7 @@ method startup {
 
     my $routes_authenticated = $routes->under->to('person#is_authenticated')->under->to('navigation#build_menu');
        $routes_authenticated->get('/')->to('dashboard#welcome');
+       $routes_authenticated->get('/service_agreement/list')->to('service_agreement#list');
        $routes_authenticated->get('/person/logout')->to('person#logout');
 
 }

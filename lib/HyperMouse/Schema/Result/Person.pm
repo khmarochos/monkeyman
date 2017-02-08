@@ -238,6 +238,13 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-31 15:54:48
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:H1kgCi5rjlfpTDsVPVp5fA
 
+__PACKAGE__->many_to_many(
+  "contractors" => "person_x_contractors", "contractor",
+);
+
+__PACKAGE__->many_to_many(
+  "service_agreements" => "service_agreement_x_contractors", "service_agreement"
+);
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

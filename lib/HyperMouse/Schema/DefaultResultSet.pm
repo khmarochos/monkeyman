@@ -29,17 +29,18 @@ method format_datetime(
 
 
 method filter_valid (
-    DateTime $now? = DateTime->now
+    DateTime :$now?           = DateTime->now,
+    Str      :$source_alias?  = $self->current_source_alias
 ) {
     $self->search(
         {
             -and => [
-                { removed       => { '='    => undef } },
-                { valid_since   => { '<='   => $self->format_datetime($now) } },
+                { "$source_alias.removed"       => { '='    => undef } },
+                { "$source_alias.valid_since"   => { '<='   => $self->format_datetime($now) } },
                 {
                     -or => [
-                        { valid_till    => { '=' => undef } },
-                        { valid_till    => { '>' => $self->format_datetime($now) } }
+                        { "$source_alias.valid_till"    => { '=' => undef } },
+                        { "$source_alias.valid_till"    => { '>' => $self->format_datetime($now) } }
                     ]
                 }
             ]

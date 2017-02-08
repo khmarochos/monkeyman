@@ -32,11 +32,7 @@ method person_info (
     )
         unless(defined($db_person));
 
-    return({
-        id          => $db_person->id,
-        first_name  => $db_person->first_name,
-        last_name   => $db_person->last_name
-    });
+    return($db_person);
 
 }
 

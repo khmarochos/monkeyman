@@ -16,8 +16,8 @@ use TryCatch;
 method is_authenticated {
 
     if(defined(my $email = $self->session('authorized_person_email'))) {
-        $self->stash->{'authorized_person_data'} = $self->hm_schema->resultset("Person")->person_info(email => $email);
-        $self->stash->{'authorized_person_data'}->{'id'}; # It'll be returned by the method
+        $self->stash->{'authorized_person_result'} = $self->hm_schema->resultset("Person")->person_info(email => $email);
+        $self->stash->{'authorized_person_result'}->id; # It'll be returned by the method
     } else {
         $self->redirect_to('/person/login');
         0;

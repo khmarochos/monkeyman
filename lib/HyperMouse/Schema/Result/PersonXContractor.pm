@@ -41,21 +41,25 @@ __PACKAGE__->table("person_x_contractor");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_auto_increment: 1
   is_nullable: 0
 
 =head2 valid_since
 
-  data_type: 'integer'
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
   is_nullable: 0
 
 =head2 valid_till
 
-  data_type: 'integer'
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
   is_nullable: 1
 
 =head2 removed
 
-  data_type: 'integer'
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
   is_nullable: 1
 
 =head2 person_id
@@ -91,13 +95,30 @@ __PACKAGE__->table("person_x_contractor");
 
 __PACKAGE__->add_columns(
   "id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_auto_increment => 1,
+    is_nullable => 0,
+  },
   "valid_since",
-  { data_type => "integer", is_nullable => 0 },
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 0,
+  },
   "valid_till",
-  { data_type => "integer", is_nullable => 1 },
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
   "removed",
-  { data_type => "integer", is_nullable => 1 },
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
   "person_id",
   {
     data_type => "integer",
@@ -165,8 +186,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-31 15:54:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cBLiwVyogn7lB+VPqBFQPg
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-08 13:07:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:d3gJYVnjgzR/l1U2lB24Lg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
