@@ -25,9 +25,12 @@ method startup {
 
     $self->plugin('AssetManager', {
         assets_library => {
-            js  => {},
+            js  => {
+                datatables  => [ qw# js/plugins/dataTables/datatables.min.js # ]
+            },
             css => {
                 toastr      => [ qw# css/plugins/toastr/toastr.min.css # ],
+                datatables  => [ qw# css/plugins/dataTables/datatables.min.css # ],
                 datepicker  => [ qw# css/plugins/datapicker/datepicker3.css # ],
                 summernote  => [ qw# css/plugins/summernote/summernote.css
                                      css/plugins/summernote/summernote-bs3.css # ]
