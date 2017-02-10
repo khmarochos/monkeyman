@@ -25,6 +25,11 @@ method is_authenticated {
 
 }
 
+method load_settings {
+    $self->stash->{'language'} = $self->stash->{'authorized_person_result'}->language->code;
+    $self->stash->{'timezone'} = $self->stash->{'authorized_person_result'}->timezone;
+}
+
 method authenticate (Str $email!, Str $password!) {
 
     try {

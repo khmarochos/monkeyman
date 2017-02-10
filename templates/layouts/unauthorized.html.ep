@@ -14,6 +14,44 @@
     <!-- Mainly scripts -->
     <script src="js/jquery-3.1.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/plugins/i18next/i18next.min.js"></script>
+
+<script>
+
+    $(document).ready(function() {
+
+        $.i18n.init({
+            resGetPath: 'i18n/__lng__.json',
+            load: 'unspecific',
+            fallbackLng: false,
+            lng: 'en_US'
+        }, function (t){
+            $('.loginscreen').i18n();
+        });
+
+        $('.set_en_US').on('click', function (){
+            i18n.setLng('en_US', function(){
+                $('.loginscreen').i18n();
+
+                $('.set_en_US').addClass('active');
+                $('.set_uk_UA').removeClass('active');
+            });
+        });
+
+        $('.set_uk_UA').on('click', function (){
+            i18n.setLng('uk_UA', function(){
+                $('.loginscreen').i18n();
+
+                $('.set_en_US').removeClass('active');
+                $('.set_uk_UA').addClass('active');
+            });
+        })
+
+    });
+
+</script>
+
+<script>$(document).ready(function() { $('[data-toggle="tooltip"]').tooltip() })</script>
 
 % if(defined(stash('error_message'))) {
     <script src="js/plugins/toastr/toastr.min.js"></script>
@@ -34,7 +72,7 @@
           "showMethod": "fadeIn",
           "hideMethod": "fadeOut"
         }
-        $( document ).ready(
+        $(document).ready(
             function() {
                 toastr.error("<%= stash('error_message') %>", "Authentication error")
             }

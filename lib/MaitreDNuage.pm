@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Mojo::Base qw(Mojolicious);
+use Mojolicious::Plugin::DateTimeDisplay;
 use Mojolicious::Plugin::AssetManager;
 use HyperMouse;
 use MonkeyMan::Exception qw(InvalidParameterSet);
@@ -23,6 +24,7 @@ has _hypermouse => method() {
 
 method startup {
 
+    $self->plugin('DateTimeDisplay');
     $self->plugin('AssetManager', {
         assets_library => {
             js  => {
@@ -45,7 +47,9 @@ method startup {
     my $routes = $self->routes;
        $routes->any('/person/login')->to('person#login');
 
-    my $routes_authenticated = $routes->under->to('person#is_authenticated')->under->to('navigation#build_menu');
+    my $routes_authenticated = $routes->under->to('person#is_authenticated')
+                                      ->under->to('person#load_settings')
+                                      ->under->to('navigation#build_menu');
        $routes_authenticated->get('/')->to('dashboard#welcome');
        $routes_authenticated->get('/service_agreement/list/:filter')->to('service_agreement#list');
        $routes_authenticated->get('/person/logout')->to('person#logout');

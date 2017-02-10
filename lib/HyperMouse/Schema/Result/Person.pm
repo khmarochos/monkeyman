@@ -87,6 +87,12 @@ __PACKAGE__->table("person");
   is_foreign_key: 1
   is_nullable: 0
 
+=head2 timezone
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 32
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -128,6 +134,8 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
+  "timezone",
+  { data_type => "varchar", is_nullable => 0, size => 32 },
 );
 
 =head1 PRIMARY KEY
@@ -235,8 +243,12 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-08 21:00:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IFzJ7IJ+sUa1r1XEYoBiUA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 06:04:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NtLsK3lcSJyeotSW4E3m2Q
+
+use Method::Signatures;
+
+
 
 __PACKAGE__->many_to_many(
   "contractors" => "person_x_contractors", "contractor",
@@ -245,6 +257,52 @@ __PACKAGE__->many_to_many(
 __PACKAGE__->many_to_many(
   "service_agreements" => "person_x_service_agreements", "service_agreement"
 );
+
+
+
+method find_service_agreements (
+    Int :$mask_permitted?   = 0b000111,
+    Int :$mask_valid?       = 0b000111
+) {
+    my @result;
+
+    foreach my $contractor (
+        $self
+            ->contractors
+                ->filter_valid(source_alias => 'me')
+                    ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
+                        ->filter_valid(source_alias => 'contractor')
+    ) {
+        if($contractor->provider) {
+            push(@result,
+                $contractor
+                    ->service_agreement_provider_contractors
+                        ->filter_valid(mask => $mask_valid)
+            );
+        } else {
+            push(@result,
+                $contractor
+                    ->service_agreement_client_contractors
+                        ->filter_valid(mask => $mask_valid)
+            );
+        }
+    }
+
+    foreach my $service_agreement (
+        $self
+            ->service_agreements
+                ->filter_valid(source_alias => 'me')
+                    ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
+                        ->filter_valid(source_alias => 'service_agreement', mask => $mask_valid)
+        ) {
+            push(@result, $service_agreement);
+    }
+
+    @result;
+
+}
+
+
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

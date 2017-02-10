@@ -43,8 +43,8 @@
 % foreach my $service_agreement (@{ stash('service_agreements') }) {
                     <tr>
                         <td><%= $service_agreement->name                        %></td>
-                        <td><%= $service_agreement->valid_since                 %></td>
-                        <td><%= $service_agreement->valid_till || '∞'           %></td>
+                        <td><%= datetime_display($service_agreement->valid_since)                 %></td>
+                        <td><%= datetime_display($service_agreement->valid_till) || '∞'           %></td>
                         <td><%= $service_agreement->client_contractor->name     %></td>
                         <td><%= $service_agreement->provider_contractor->name   %></td>
                     </tr>

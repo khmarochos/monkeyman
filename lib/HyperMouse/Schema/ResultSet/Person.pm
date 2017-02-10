@@ -13,31 +13,6 @@ use TryCatch;
 
 
 
-method person_info (
-    Str :$email
-) {
-    my $db_schema   = $self->get_schema;
-
-    my $db_email    = $db_schema->resultset("PersonEmail")->search({ email => $email })->filter_valid->single;
-    (__PACKAGE__ . '::Exception::EmailNotFound')->throwf(
-        "The %s email address isn't present",
-        $email
-    )
-        unless(defined($db_email));
-
-    my $db_person   = $db_email->search_related("person")->filter_valid->single;
-    (__PACKAGE__ . '::Exception::PersonNotFound')->throwf(
-        "The person with the %s email isn't present",
-        $email
-    )
-        unless(defined($db_person));
-
-    return($db_person);
-
-}
-
-
-
 method authenticate (
     Str :$email,
     Str :$password
@@ -72,6 +47,31 @@ method authenticate (
         unless($db_password->check_password($password));
 
     return($db_person->id);
+}
+
+
+
+method person_info (
+    Str :$email
+) {
+    my $db_schema   = $self->get_schema;
+
+    my $db_email    = $db_schema->resultset("PersonEmail")->search({ email => $email })->filter_valid->single;
+    (__PACKAGE__ . '::Exception::EmailNotFound')->throwf(
+        "The %s email address isn't present",
+        $email
+    )
+        unless(defined($db_email));
+
+    my $db_person   = $db_email->search_related("person")->filter_valid->single;
+    (__PACKAGE__ . '::Exception::PersonNotFound')->throwf(
+        "The person with the %s email isn't present",
+        $email
+    )
+        unless(defined($db_person));
+
+    return($db_person);
+
 }
 
 

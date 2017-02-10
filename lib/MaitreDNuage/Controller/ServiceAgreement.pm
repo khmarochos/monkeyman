@@ -18,39 +18,19 @@ use TryCatch;
 
 method list {
     my @service_agreements;
-    my $person  = $self->stash->{'authorized_person_result'};
-    my $valid   = 7;
+    my $person          = $self->stash->{'authorized_person_result'};
+    my $mask_permitted  = 0b000111;
+    my $mask_valid      = 0b000111;
     switch($self->stash->{'filter'}) {
-        case('all')         { $valid = 5 }
-        case('active')      { $valid = 7 }
-        case('archived')    { $valid = 12 }
+        case('all')         { $mask_valid = 0b000101 }
+        case('active')      { $mask_valid = 0b000111 }
+        case('archived')    { $mask_valid = 0b001100 }
     }
 
-    foreach my $contractor (
-        $person
-            ->contractors
-                ->filter_valid(source_alias => 'me')
-                    ->filter_permitted(source_alias => 'me')
-                        ->filter_valid(source_alias => 'contractor', mask => 6)
-    ) {
-        if($contractor->provider) {
-            push(@service_agreements, $contractor->service_agreement_provider_contractors->filter_valid(mask => $valid));
-        } else {
-            push(@service_agreements, $contractor->service_agreement_client_contractors->filter_valid(mask => $valid));
-        }
-    }
-
-    foreach my $service_agreement (
-        $person
-            ->service_agreements
-                ->filter_valid(source_alias => 'me')
-                    ->filter_permitted(source_alias => 'me')
-                        ->filter_valid(source_alias => 'service_agreement', mask => $valid)
-        ) {
-            push(@service_agreements, $service_agreement);
-    }
-
-    $self->stash('service_agreements' => \@service_agreements);
+    $self->stash('service_agreements' => [ $person->find_service_agreements(
+        mask_permitted  => $mask_permitted,
+        mask_valid      => $mask_valid
+    ) ]);
 }
 
 
