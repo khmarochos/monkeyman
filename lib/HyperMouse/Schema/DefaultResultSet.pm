@@ -7,6 +7,9 @@ use base 'DBIx::Class::ResultSet';
 
 use Method::Signatures;
 use DateTime;
+use DateTime::TimeZone;
+
+our $LocalTZ = DateTime::TimeZone->new(name => 'local');
 
 
 
@@ -29,7 +32,7 @@ method format_datetime(
 
 
 method filter_valid (
-    DateTime :$now?           = DateTime->now,
+    DateTime :$now?           = DateTime->now(time_zone => $LocalTZ),
     Str      :$source_alias?  = $self->current_source_alias
 ) {
     $self->search(

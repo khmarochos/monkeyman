@@ -144,21 +144,6 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 emails
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::Email>
-
-=cut
-
-__PACKAGE__->has_many(
-  "emails",
-  "HyperMouse::Schema::Result::Email",
-  { "foreign.person_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 language
 
 Type: belongs_to
@@ -174,6 +159,21 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
+=head2 person_emails
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::PersonEmail>
+
+=cut
+
+__PACKAGE__->has_many(
+  "person_emails",
+  "HyperMouse::Schema::Result::PersonEmail",
+  { "foreign.person_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 person_passwords
 
 Type: has_many
@@ -185,6 +185,21 @@ Related object: L<HyperMouse::Schema::Result::PersonPassword>
 __PACKAGE__->has_many(
   "person_passwords",
   "HyperMouse::Schema::Result::PersonPassword",
+  { "foreign.person_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 person_phones
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::PersonPhone>
+
+=cut
+
+__PACKAGE__->has_many(
+  "person_phones",
+  "HyperMouse::Schema::Result::PersonPhone",
   { "foreign.person_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -219,31 +234,16 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 phones
 
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::Phone>
-
-=cut
-
-__PACKAGE__->has_many(
-  "phones",
-  "HyperMouse::Schema::Result::Phone",
-  { "foreign.person_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-31 15:54:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:H1kgCi5rjlfpTDsVPVp5fA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-08 21:00:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IFzJ7IJ+sUa1r1XEYoBiUA
 
 __PACKAGE__->many_to_many(
   "contractors" => "person_x_contractors", "contractor",
 );
 
 __PACKAGE__->many_to_many(
-  "service_agreements" => "service_agreement_x_contractors", "service_agreement"
+  "service_agreements" => "person_x_service_agreements", "service_agreement"
 );
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

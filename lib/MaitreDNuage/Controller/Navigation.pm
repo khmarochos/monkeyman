@@ -29,13 +29,13 @@ method _build_menu_full {
             'Create New'    => { order => 1, destination => '/service_agreement/new' },
             'List Active'   => { order => 2, destination => '/service_agreement/list/active' },
             'List Archived' => { order => 3, destination => '/service_agreement/list/archived' },
-            'List All'      => { order => 4, destination => '/service_agreement/list' }
+            'List All'      => { order => 4, destination => '/service_agreement/list/all' }
         } },
         'Services'      => { order => 3, destination => {
             'Order New'     => { order => 1, destination => '/service/new' },
             'List Active'   => { order => 2, destination => '/service/list/active' },
             'List Archived' => { order => 3, destination => '/service/list/archived' },
-            'List All'      => { order => 4, destination => '/service/list' }
+            'List All'      => { order => 4, destination => '/service/list/all' }
         } }
     }
 }

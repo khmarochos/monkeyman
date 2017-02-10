@@ -18,7 +18,7 @@ method person_info (
 ) {
     my $db_schema   = $self->get_schema;
 
-    my $db_email    = $db_schema->resultset("Email")->search({ email => $email })->filter_valid->single;
+    my $db_email    = $db_schema->resultset("PersonEmail")->search({ email => $email })->filter_valid->single;
     (__PACKAGE__ . '::Exception::EmailNotFound')->throwf(
         "The %s email address isn't present",
         $email
@@ -44,7 +44,7 @@ method authenticate (
 ) {
     my $db_schema   = $self->get_schema;
 
-    my $db_email    = $db_schema->resultset("Email")->search({ email => $email })->filter_valid->single;
+    my $db_email    = $db_schema->resultset("PersonEmail")->search({ email => $email })->filter_valid->single;
     (__PACKAGE__ . '::Exception::EmailNotFound')->throwf(
         "The %s email address isn't present",
         $email
