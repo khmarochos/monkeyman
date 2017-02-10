@@ -10,26 +10,33 @@ extends 'Mojolicious::Controller';
 
 use MonkeyMan::Exception qw(PersonNotFound);
 
+use Switch;
 use Method::Signatures;
 use TryCatch;
 
 
 
 method list {
-    my $person = $self->stash->{'authorized_person_result'};
-
     my @service_agreements;
+    my $person  = $self->stash->{'authorized_person_result'};
+    my $valid   = 7;
+    switch($self->stash->{'filter'}) {
+        case('all')         { $valid = 5 }
+        case('active')      { $valid = 7 }
+        case('archived')    { $valid = 12 }
+    }
 
     foreach my $contractor (
         $person
             ->contractors
                 ->filter_valid(source_alias => 'me')
-                    ->filter_valid(source_alias => 'contractor')
+                    ->filter_permitted(source_alias => 'me')
+                        ->filter_valid(source_alias => 'contractor', mask => 6)
     ) {
         if($contractor->provider) {
-            push(@service_agreements, $contractor->service_agreement_provider_contractors->filter_valid);
+            push(@service_agreements, $contractor->service_agreement_provider_contractors->filter_valid(mask => $valid));
         } else {
-            push(@service_agreements, $contractor->service_agreement_client_contractors->filter_valid);
+            push(@service_agreements, $contractor->service_agreement_client_contractors->filter_valid(mask => $valid));
         }
     }
 
@@ -37,14 +44,8 @@ method list {
         $person
             ->service_agreements
                 ->filter_valid(source_alias => 'me')
-                    ->search(
-                        -or => [
-                            -not => { 'me.admin'    => 0 },
-                            -not => { 'me.billing'  => 0 },
-                            -not => { 'me.tech' => 0 }
-                        ]
-                    )
-                        ->filter_valid(source_alias => 'service_agreement')
+                    ->filter_permitted(source_alias => 'me')
+                        ->filter_valid(source_alias => 'service_agreement', mask => $valid)
         ) {
             push(@service_agreements, $service_agreement);
     }

@@ -32,20 +32,55 @@ method format_datetime(
 
 
 method filter_valid (
-    DateTime :$now?           = DateTime->now(time_zone => $LocalTZ),
-    Str      :$source_alias?  = $self->current_source_alias
+    Str         :$source_alias? = $self->current_source_alias,
+       DateTime :$now?          = DateTime->now(time_zone => $LocalTZ),
+    Bool        :$removed       = 0,
+    Bool        :$premature     = 0,
+    Bool        :$expired       = 0,
+    Bool        :$not_removed   = 1,
+    Bool        :$not_premature = 1,
+    Bool        :$not_expired   = 1,
+    Maybe[Int]  :$mask?         = undef
 ) {
+    $mask =
+        (    $removed << 5) + (    $premature << 4) + (    $expired << 3) +
+        ($not_removed << 2) + ($not_premature << 1) + ($not_expired << 0)
+       unless(defined($mask));
     $self->search(
         {
             -and => [
-                { "$source_alias.removed"       => { '='    => undef } },
-                { "$source_alias.valid_since"   => { '<='   => $self->format_datetime($now) } },
-                {
+                $mask & 32 ? ( "$source_alias.removed"       => { -not => { '=' => undef } } ) : (),
+                $mask & 16 ? ( "$source_alias.valid_since"   => { '>'  => $self->format_datetime($now) } ) : (),
+                $mask & 8  ? ( "$source_alias.valid_till"    => { '<=' => $self->format_datetime($now) } ) : (),
+                $mask & 4  ? ( "$source_alias.removed"       => { '='  => undef } ) : (),
+                $mask & 2  ? ( "$source_alias.valid_since"   => { '<=' => $self->format_datetime($now) } ) : (),
+                $mask & 1  ? (
                     -or => [
-                        { "$source_alias.valid_till"    => { '=' => undef } },
-                        { "$source_alias.valid_till"    => { '>' => $self->format_datetime($now) } }
+                             { "$source_alias.valid_till"    => { '='  => undef } },
+                             { "$source_alias.valid_till"    => { '>'  => $self->format_datetime($now) } }
                     ]
-                }
+                ) : ()
+            ]
+        }
+    );
+}
+
+method filter_permitted (
+    Str         :$source_alias? = $self->current_source_alias,
+    Bool        :$and?          = 0,
+    Bool        :$admin?        = 1,
+    Bool        :$billing?      = 1,
+    Bool        :$tech?         = 1,
+    Maybe[Int]  :$mask?         = undef
+) {
+    $mask = ($admin << 2) + ($billing << 1) + ($tech << 0)
+       unless(defined($mask));
+    $self->search(
+        {
+            ($and ? '-and' : '-or') => [
+                $mask & 4 ? (-not => { "$source_alias.admin"    => 0 }) : (),
+                $mask & 2 ? (-not => { "$source_alias.billing"  => 0 }) : (),
+                $mask & 1 ? (-not => { "$source_alias.tech"     => 0 }) : ()
             ]
         }
     );
