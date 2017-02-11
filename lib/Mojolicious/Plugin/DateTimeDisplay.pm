@@ -39,7 +39,7 @@ method datetime_display (
         $format = join(' ', @what_to_display);
     }
     $format   = 'dd-MM-YYYY HH:mm:ss'                   unless defined($format);
-    $language = $controller->stash->{'language'}        unless defined($language);
+    $language = $controller->stash->{'language_code'}   unless defined($language);
     $timezone = $controller->stash->{'timezone'}        unless defined($timezone);
     $datetime->set_locale($language)->set_time_zone('local')->set_time_zone($timezone)->format_cldr($format);
 }
