@@ -15,9 +15,12 @@ use TryCatch;
 method is_authenticated {
 
     if(defined(my $email = $self->session('authorized_person_email'))) {
+        delete($self->session->{'was_heading_to'}) if(exists($self->session->{'was_heading_to'}));
         $self->stash->{'authorized_person_result'} = $self->hm_schema->resultset("Person")->person_info(email => $email);
-        $self->stash->{'authorized_person_result'}->id; # It'll be returned by the method
+        $self->stash->{'authorized_person_result'}->id;     # It'll be returned by the method
     } else {
+        warn($self->req->url->path);
+        $self->session->{'was_heading_to'} = $self->req->url->path;
         $self->redirect_to('/person/login');
         0;
     }
@@ -68,7 +71,11 @@ method login {
     if(defined($self->session('authorized_person_email'))) {
         $self->redirect_to('/');
     } elsif(defined($person_email) && $self->authenticate($person_email, $person_password)) {
-        $self->redirect_to('/');
+        $self->redirect_to(
+            defined($self->session->{'was_heading_to'}) ?
+                    $self->session->{'was_heading_to'}  :
+                    '/'
+        );
     } elsif(defined($person_email)) {
         $self->render(variant => 'unsuccessful');
     } else {
