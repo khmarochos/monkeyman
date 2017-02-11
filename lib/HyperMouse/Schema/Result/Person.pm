@@ -13,11 +13,16 @@ HyperMouse::Schema::Result::Person
 use strict;
 use warnings;
 
-use base 'DBIx::Class::Core';
+use Moose;
+use MooseX::NonMoose;
+use MooseX::MarkAsMethods autoclean => 1;
+extends 'DBIx::Class::Core';
 
 =head1 COMPONENTS LOADED
 
 =over 4
+
+=item * L<DBIx::Class::I18nRelationships>
 
 =item * L<DBIx::Class::InflateColumn::DateTime>
 
@@ -27,7 +32,11 @@ use base 'DBIx::Class::Core';
 
 =cut
 
-__PACKAGE__->load_components("InflateColumn::DateTime", "EncodedColumn");
+__PACKAGE__->load_components(
+  "I18nRelationships",
+  "InflateColumn::DateTime",
+  "EncodedColumn",
+);
 
 =head1 TABLE: C<person>
 
@@ -93,6 +102,13 @@ __PACKAGE__->table("person");
   is_nullable: 0
   size: 32
 
+=head2 datetime_format_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -136,6 +152,13 @@ __PACKAGE__->add_columns(
   },
   "timezone",
   { data_type => "varchar", is_nullable => 0, size => 32 },
+  "datetime_format_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -151,6 +174,21 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
+
+=head2 datetime_format
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::DatetimeFormat>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "datetime_format",
+  "HyperMouse::Schema::Result::DatetimeFormat",
+  { id => "datetime_format_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
 
 =head2 language
 
@@ -243,8 +281,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 06:04:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NtLsK3lcSJyeotSW4E3m2Q
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6Wa6ZNYYQcc1bZ/ZQHEgiA
 
 use Method::Signatures;
 
@@ -305,4 +343,9 @@ method find_service_agreements (
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+1;
+
+
+# You can replace this text with custom code or comments, and it will be preserved on regeneration
+__PACKAGE__->meta->make_immutable;
 1;

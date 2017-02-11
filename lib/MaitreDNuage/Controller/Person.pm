@@ -5,7 +5,6 @@ use warnings;
 
 use Moose;
 use namespace::autoclean;
-
 extends 'Mojolicious::Controller';
 
 use Method::Signatures;
@@ -26,8 +25,11 @@ method is_authenticated {
 }
 
 method load_settings {
-    $self->stash->{'language'} = $self->stash->{'authorized_person_result'}->language->code;
-    $self->stash->{'timezone'} = $self->stash->{'authorized_person_result'}->timezone;
+    $self->stash->{'language_id'}           = $self->stash->{'authorized_person_result'}->language->id;
+    $self->stash->{'language_code'}         = $self->stash->{'authorized_person_result'}->language->code;
+    $self->stash->{'timezone'}              = $self->stash->{'authorized_person_result'}->timezone;
+    $self->stash->{'datetime_format_date'}  = $self->stash->{'authorized_person_result'}->datetime_format->format_date;
+    $self->stash->{'datetime_format_time'}  = $self->stash->{'authorized_person_result'}->datetime_format->format_time;
 }
 
 method authenticate (Str $email!, Str $password!) {

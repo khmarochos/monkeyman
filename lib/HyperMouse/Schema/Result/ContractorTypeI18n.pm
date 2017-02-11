@@ -13,11 +13,16 @@ HyperMouse::Schema::Result::ContractorTypeI18n
 use strict;
 use warnings;
 
-use base 'DBIx::Class::Core';
+use Moose;
+use MooseX::NonMoose;
+use MooseX::MarkAsMethods autoclean => 1;
+extends 'DBIx::Class::Core';
 
 =head1 COMPONENTS LOADED
 
 =over 4
+
+=item * L<DBIx::Class::I18nRelationships>
 
 =item * L<DBIx::Class::InflateColumn::DateTime>
 
@@ -27,7 +32,11 @@ use base 'DBIx::Class::Core';
 
 =cut
 
-__PACKAGE__->load_components("InflateColumn::DateTime", "EncodedColumn");
+__PACKAGE__->load_components(
+  "I18nRelationships",
+  "InflateColumn::DateTime",
+  "EncodedColumn",
+);
 
 =head1 TABLE: C<contractor_type_i18n>
 
@@ -181,9 +190,10 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-01-31 15:54:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ZFhEzlfRc437oEKRia3lcg
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ssVp6+zsQkbC2bBHKrkMtQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+__PACKAGE__->meta->make_immutable;
 1;

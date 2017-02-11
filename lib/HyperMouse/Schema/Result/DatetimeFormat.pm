@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ResourceType;
+package HyperMouse::Schema::Result::DatetimeFormat;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ResourceType
+HyperMouse::Schema::Result::DatetimeFormat
 
 =cut
 
@@ -38,11 +38,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<resource_type>
+=head1 TABLE: C<datetime_format>
 
 =cut
 
-__PACKAGE__->table("resource_type");
+__PACKAGE__->table("datetime_format");
 
 =head1 ACCESSORS
 
@@ -70,6 +70,18 @@ __PACKAGE__->table("resource_type");
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
   is_nullable: 1
+
+=head2 format_date
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 127
+
+=head2 format_time
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 127
 
 =cut
 
@@ -99,6 +111,10 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "format_date",
+  { data_type => "varchar", is_nullable => 0, size => 127 },
+  "format_time",
+  { data_type => "varchar", is_nullable => 0, size => 127 },
 );
 
 =head1 PRIMARY KEY
@@ -115,39 +131,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 resource_pieces
+=head2 people
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ResourcePiece>
+Related object: L<HyperMouse::Schema::Result::Person>
 
 =cut
 
 __PACKAGE__->has_many(
-  "resource_pieces",
-  "HyperMouse::Schema::Result::ResourcePiece",
-  { "foreign.resource_type_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 resource_type_i18ns
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ResourceTypeI18n>
-
-=cut
-
-__PACKAGE__->has_many(
-  "resource_type_i18ns",
-  "HyperMouse::Schema::Result::ResourceTypeI18n",
-  { "foreign.resource_type_id" => "self.id" },
+  "people",
+  "HyperMouse::Schema::Result::Person",
+  { "foreign.datetime_format_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ebZfh5blCHuO2UBpiVLFPQ
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:o7u1rs/sO/V1blIyBm424g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

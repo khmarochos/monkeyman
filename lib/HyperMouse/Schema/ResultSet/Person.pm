@@ -3,8 +3,9 @@ package HyperMouse::Schema::ResultSet::Person;
 use strict;
 use warnings;
 
-use base 'DBIx::Class::ResultSet';
-use base 'HyperMouse::Schema::DefaultResultSet';
+use Moose;
+use MooseX::MarkAsMethods autoclean => 1;
+extends 'HyperMouse::Schema::DefaultResultSet';
 
 use MonkeyMan::Exception qw(EmailNotFound PersonNotFound PasswordNotFound PasswordIncorrect);
 
@@ -75,5 +76,7 @@ method person_info (
 }
 
 
+
+__PACKAGE__->meta->make_immutable;
 
 1;

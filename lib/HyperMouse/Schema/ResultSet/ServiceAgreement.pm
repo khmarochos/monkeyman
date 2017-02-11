@@ -3,13 +3,16 @@ package HyperMouse::Schema::ResultSet::ServiceAgreement;
 use strict;
 use warnings;
 
-use base 'DBIx::Class::ResultSet';
-use base 'HyperMouse::Schema::DefaultResultSet';
+use Moose;
+use MooseX::MarkAsMethods autoclean => 1;
+extends 'HyperMouse::Schema::DefaultResultSet';
 
 use Method::Signatures;
 use TryCatch;
 
 
 
+
+__PACKAGE__->meta->make_immutable;
 
 1;

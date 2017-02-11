@@ -27,7 +27,7 @@
         });
     </script>
 % end ];
-% layout('authorized', title_message => 'Welcome!');
+% my $language = stash->{'language_id'};
                 <div class="table-responsive">
                     <table class="table table-striped table-bordered table-hover dataTables-example" >
                     <thead>
@@ -42,11 +42,17 @@
                     <tbody>
 % foreach my $service_agreement (@{ stash('service_agreements') }) {
                     <tr>
-                        <td><%= $service_agreement->name                        %></td>
-                        <td><%= datetime_display($service_agreement->valid_since)                 %></td>
-                        <td><%= datetime_display($service_agreement->valid_till) || '∞'           %></td>
-                        <td><%= $service_agreement->client_contractor->name     %></td>
-                        <td><%= $service_agreement->provider_contractor->name   %></td>
+                        <td><%= $service_agreement->name                                                                              %></td>
+                        <td><%= datetime_display($service_agreement->valid_since, 2)                                                  %></td>
+                        <td><%= datetime_display($service_agreement->valid_till,  2) || '∞'                                           %></td>
+                        <td>
+                            <%= $service_agreement->client_contractor->name                                                           %>,
+                            <%= $service_agreement->client_contractor->contractor_type->contractor_type_i18n($language)->name_short   %>
+                        </td>
+                        <td>
+                            <%= $service_agreement->provider_contractor->name                                                         %>,
+                            <%= $service_agreement->provider_contractor->contractor_type->contractor_type_i18n($language)->name_short %>
+                        </td>
                     </tr>
 % }
                     </tbody>
@@ -61,3 +67,4 @@
                     </tfoot>
                     </table>
                 </div>
+% layout('authorized', title_message => 'Welcome!');

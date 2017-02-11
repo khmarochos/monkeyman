@@ -3,7 +3,10 @@ package HyperMouse::Schema::DefaultResultSet;
 use strict;
 use warnings;
 
-use base 'DBIx::Class::ResultSet';
+use Moose;
+use MooseX::NonMoose;
+use MooseX::MarkAsMethods autoclean => 1;
+extends 'DBIx::Class::ResultSet';
 
 use Method::Signatures;
 use DateTime;
@@ -27,6 +30,14 @@ method format_datetime(
     DateTime $datetime!
 ) {
     $self->datetime_parser->format_datetime($datetime);
+}
+
+
+
+method i18n_translate(
+    Str|Int $language?
+) {
+    $self;
 }
 
 
@@ -94,5 +105,7 @@ method filter_permitted (
 }
 
 
+
+__PACKAGE__->meta->make_immutable;
 
 1;

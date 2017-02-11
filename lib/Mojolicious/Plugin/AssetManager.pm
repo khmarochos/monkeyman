@@ -5,7 +5,6 @@ use warnings;
 
 use Moose;
 use namespace::autoclean;
-
 extends 'Mojolicious::Plugin';
 
 use Mojo::Util 'xml_escape';

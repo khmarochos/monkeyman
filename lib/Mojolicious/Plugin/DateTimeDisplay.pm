@@ -10,6 +10,7 @@ extends 'Mojolicious::Plugin';
 
 use Method::Signatures;
 use DateTime;
+use Switch;
 
 
 
@@ -25,12 +26,18 @@ method register (
 method datetime_display (
     Object          $controller!,
     Maybe[DateTime] $datetime?,
-    Str             $format?,
-    Str             $language?,
-    Str             $timezone?
+    Maybe[Int]      $mask?,
+    Maybe[Str]      $format?,
+    Maybe[Str]      $language?,
+    Maybe[Str]      $timezone?
 ) {
     return unless defined($datetime);
-    $format   = $controller->stash->{'datetime_format'} unless defined($format);
+    if(defined($mask)) {
+        my @what_to_display;
+        if($mask & 0b10) { push(@what_to_display, $controller->stash->{'datetime_format_date'}); }
+        if($mask & 0b01) { push(@what_to_display, $controller->stash->{'datetime_format_time'}); }
+        $format = join(' ', @what_to_display);
+    }
     $format   = 'dd-MM-YYYY HH:mm:ss'                   unless defined($format);
     $language = $controller->stash->{'language'}        unless defined($language);
     $timezone = $controller->stash->{'timezone'}        unless defined($timezone);
