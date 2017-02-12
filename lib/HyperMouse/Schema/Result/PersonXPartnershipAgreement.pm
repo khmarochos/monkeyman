@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ResourcePiece;
+package HyperMouse::Schema::Result::PersonXPartnershipAgreement;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ResourcePiece
+HyperMouse::Schema::Result::PersonXPartnershipAgreement
 
 =cut
 
@@ -38,11 +38,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<resource_piece>
+=head1 TABLE: C<person_x_partnership_agreement>
 
 =cut
 
-__PACKAGE__->table("resource_piece");
+__PACKAGE__->table("person_x_partnership_agreement");
 
 =head1 ACCESSORS
 
@@ -71,25 +71,33 @@ __PACKAGE__->table("resource_piece");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 resource_type_id
+=head2 person_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 partnership_agreement_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 resource_host_id
+=head2 admin
 
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
+  data_type: 'tinyint'
   is_nullable: 0
 
-=head2 resource_handle
+=head2 billing
 
-  data_type: 'varchar'
+  data_type: 'tinyint'
   is_nullable: 0
-  size: 127
+
+=head2 tech
+
+  data_type: 'tinyint'
+  is_nullable: 0
 
 =cut
 
@@ -119,22 +127,21 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "resource_type_id",
+  "person_id",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  "partnership_agreement_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "resource_host_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "resource_handle",
-  { data_type => "varchar", is_nullable => 0, size => 127 },
+  "admin",
+  { data_type => "tinyint", is_nullable => 0 },
+  "billing",
+  { data_type => "tinyint", is_nullable => 0 },
+  "tech",
+  { data_type => "tinyint", is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -151,54 +158,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 provisioning_obligation_x_resource_pieces
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ProvisioningObligationXResourcePiece>
-
-=cut
-
-__PACKAGE__->has_many(
-  "provisioning_obligation_x_resource_pieces",
-  "HyperMouse::Schema::Result::ProvisioningObligationXResourcePiece",
-  { "foreign.resource_piece_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 resource_host
+=head2 partnership_agreement
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::ResourceHost>
+Related object: L<HyperMouse::Schema::Result::PartnershipAgreement>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "resource_host",
-  "HyperMouse::Schema::Result::ResourceHost",
-  { id => "resource_host_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
-);
-
-=head2 resource_type
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::ResourceType>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "resource_type",
-  "HyperMouse::Schema::Result::ResourceType",
-  { id => "resource_type_id" },
+  "partnership_agreement",
+  "HyperMouse::Schema::Result::PartnershipAgreement",
+  { id => "partnership_agreement_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aLVzatUkMUB4RkrE0LkX8g
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 03:05:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YZQIvybPOYxTSWivB0yekA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

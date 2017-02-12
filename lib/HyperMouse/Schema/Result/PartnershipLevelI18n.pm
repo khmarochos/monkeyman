@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::PartnerLevelI18n;
+package HyperMouse::Schema::Result::PartnershipLevelI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::PartnerLevelI18n
+HyperMouse::Schema::Result::PartnershipLevelI18n
 
 =cut
 
@@ -38,11 +38,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<partner_level_i18n>
+=head1 TABLE: C<partnership_level_i18n>
 
 =cut
 
-__PACKAGE__->table("partner_level_i18n");
+__PACKAGE__->table("partnership_level_i18n");
 
 =head1 ACCESSORS
 
@@ -71,7 +71,7 @@ __PACKAGE__->table("partner_level_i18n");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 partner_level_id
+=head2 partnership_level_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -118,7 +118,7 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "partner_level_id",
+  "partnership_level_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -145,24 +145,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 partner_level
+=head2 partnership_level
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::PartnerLevel>
+Related object: L<HyperMouse::Schema::Result::PartnershipLevel>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "partner_level",
-  "HyperMouse::Schema::Result::PartnerLevel",
-  { id => "partner_level_id" },
+  "partnership_level",
+  "HyperMouse::Schema::Result::PartnershipLevel",
+  { id => "partnership_level_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:T+IgiucLBM3aK6tniaaZoQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 03:05:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8UsinNbnDelbriukQ5jMDQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -97,7 +97,7 @@ __PACKAGE__->table("writeoff");
   data_type: 'double precision'
   is_nullable: 0
 
-=head2 service_obligation_id
+=head2 provisioning_obligation_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -155,7 +155,7 @@ __PACKAGE__->add_columns(
   },
   "sum",
   { data_type => "double precision", is_nullable => 0 },
-  "service_obligation_id",
+  "provisioning_obligation_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -223,24 +223,24 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
-=head2 service_obligation
+=head2 provisioning_obligation
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::ServiceObligation>
+Related object: L<HyperMouse::Schema::Result::ProvisioningObligation>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "service_obligation",
-  "HyperMouse::Schema::Result::ServiceObligation",
-  { id => "service_obligation_id" },
+  "provisioning_obligation",
+  "HyperMouse::Schema::Result::ProvisioningObligation",
+  { id => "provisioning_obligation_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PMtczck+zq2B1o+DVl5FLQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sGoacjI1TXFTkNnPbUC7IQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -1,4 +1,4 @@
-package HyperMouse::Schema::ResultSet::ServiceAgreement;
+package HyperMouse::Schema::ResultSet::ProvisioningAgreement;
 
 use strict;
 use warnings;

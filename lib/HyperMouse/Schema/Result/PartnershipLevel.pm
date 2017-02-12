@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::PartnerObligation;
+package HyperMouse::Schema::Result::PartnershipLevel;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::PartnerObligation
+HyperMouse::Schema::Result::PartnershipLevel
 
 =cut
 
@@ -38,11 +38,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<partner_obligation>
+=head1 TABLE: C<partnership_level>
 
 =cut
 
-__PACKAGE__->table("partner_obligation");
+__PACKAGE__->table("partnership_level");
 
 =head1 ACCESSORS
 
@@ -70,20 +70,6 @@ __PACKAGE__->table("partner_obligation");
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
   is_nullable: 1
-
-=head2 partner_agreement_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
-
-=head2 service_obligation_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
 
 =cut
 
@@ -113,20 +99,6 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "partner_agreement_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "service_obligation_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
 );
 
 =head1 PRIMARY KEY
@@ -143,39 +115,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 partner_agreement
+=head2 partnership_level_i18ns
 
-Type: belongs_to
+Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::PartnerAgreement>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "partner_agreement",
-  "HyperMouse::Schema::Result::PartnerAgreement",
-  { id => "partner_agreement_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
-);
-
-=head2 service_obligation
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::ServiceObligation>
+Related object: L<HyperMouse::Schema::Result::PartnershipLevelI18n>
 
 =cut
 
-__PACKAGE__->belongs_to(
-  "service_obligation",
-  "HyperMouse::Schema::Result::ServiceObligation",
-  { id => "service_obligation_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
+__PACKAGE__->has_many(
+  "partnership_level_i18ns",
+  "HyperMouse::Schema::Result::PartnershipLevelI18n",
+  { "foreign.partnership_level_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:p6oKnJNGiV2KJe1vZNy+TA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 03:05:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:F86+MHHqZHJGXrlFJT04EA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

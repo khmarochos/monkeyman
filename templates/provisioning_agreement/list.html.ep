@@ -40,19 +40,33 @@
                     </tr>
                     </thead>
                     <tbody>
-% foreach my $service_agreement (@{ stash('service_agreements') }) {
+% foreach my $provisioning_agreement (@{ stash('provisioning_agreements') }) {
                     <tr>
-                        <td><%= $service_agreement->name                                                                              %></td>
-                        <td><%= datetime_display($service_agreement->valid_since, 2)                                                  %></td>
-                        <td><%= datetime_display($service_agreement->valid_till,  2) || '∞'                                           %></td>
-                        <td>
-                            <%= $service_agreement->client_contractor->name                                                           %>,
-                            <%= $service_agreement->client_contractor->contractor_type->contractor_type_i18n($language)->name_short   %>
-                        </td>
-                        <td>
-                            <%= $service_agreement->provider_contractor->name                                                         %>,
-                            <%= $service_agreement->provider_contractor->contractor_type->contractor_type_i18n($language)->name_short %>
-                        </td>
+                        <td><%= $provisioning_agreement->name                                     %></td>
+                        <td><%= datetime_display($provisioning_agreement->valid_since, 2)         %></td>
+                        <td><%= datetime_display($provisioning_agreement->valid_till,  2) || '∞'  %></td>
+                        <td><%=
+                                $provisioning_agreement
+                                    ->client_contractor
+                                        ->name
+                            %>, <%=
+                                $provisioning_agreement
+                                    ->client_contractor
+                                        ->contractor_type
+                                            ->contractor_type_i18n($language)
+                                                ->name_short
+                            %></td>
+                        <td><%=
+                                $provisioning_agreement
+                                    ->provider_contractor
+                                        ->name
+                            %>, <%=
+                                $provisioning_agreement
+                                    ->provider_contractor
+                                        ->contractor_type
+                                            ->contractor_type_i18n($language)
+                                                ->name_short
+                            %></td>
                         <td>
                             <div class="btn-group">
                                 <button data-toggle="dropdown" class="btn btn-xs dropdown-toggle" aria-expanded="false"><i class="fa fa-file-text-o"></i> Agreement <span class="caret"></span></button>

@@ -129,6 +129,21 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
+=head2 provisioning_obligations
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::ProvisioningObligation>
+
+=cut
+
+__PACKAGE__->has_many(
+  "provisioning_obligations",
+  "HyperMouse::Schema::Result::ProvisioningObligation",
+  { "foreign.service_type_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 service_group
 
 Type: belongs_to
@@ -159,21 +174,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 service_obligations
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ServiceObligation>
-
-=cut
-
-__PACKAGE__->has_many(
-  "service_obligations",
-  "HyperMouse::Schema::Result::ServiceObligation",
-  { "foreign.service_type_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 service_prices
 
 Type: has_many
@@ -190,8 +190,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iR7sWqG98xLy3DrYHvwYAA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:hIS18dIMJAkJfcrSCcL7Qw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

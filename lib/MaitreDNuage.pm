@@ -51,7 +51,7 @@ method startup {
                                       ->under->to('person#load_settings')
                                       ->under->to('navigation#build_menu');
        $routes_authenticated->get('/')->to('dashboard#welcome');
-       $routes_authenticated->get('/service_agreement/list/:filter')->to('service_agreement#list');
+       $routes_authenticated->get('/provisioning_agreement/list/:filter')->to('provisioning_agreement#list');
        $routes_authenticated->get('/person/logout')->to('person#logout');
 
 }

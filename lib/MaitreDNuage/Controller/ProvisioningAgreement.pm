@@ -1,4 +1,4 @@
-package MaitreDNuage::Controller::ServiceAgreement;
+package MaitreDNuage::Controller::ProvisioningAgreement;
 
 use strict;
 use warnings;
@@ -17,7 +17,7 @@ use TryCatch;
 
 
 method list {
-    my @service_agreements;
+    my @provisioning_agreements;
     my $person          = $self->stash->{'authorized_person_result'};
     my $mask_permitted  = 0b000111;
     my $mask_valid      = 0b000111;
@@ -27,7 +27,7 @@ method list {
         case('archived')    { $mask_valid = 0b001100 }
     }
 
-    $self->stash('service_agreements' => [ $person->find_service_agreements(
+    $self->stash('provisioning_agreements' => [ $person->find_provisioning_agreements(
         mask_permitted  => $mask_permitted,
         mask_valid      => $mask_valid
     ) ]);

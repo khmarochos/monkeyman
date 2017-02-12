@@ -115,6 +115,21 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
+=head2 provisioning_obligations
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::ProvisioningObligation>
+
+=cut
+
+__PACKAGE__->has_many(
+  "provisioning_obligations",
+  "HyperMouse::Schema::Result::ProvisioningObligation",
+  { "foreign.service_level_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 service_level_i18ns
 
 Type: has_many
@@ -126,21 +141,6 @@ Related object: L<HyperMouse::Schema::Result::ServiceLevelI18n>
 __PACKAGE__->has_many(
   "service_level_i18ns",
   "HyperMouse::Schema::Result::ServiceLevelI18n",
-  { "foreign.service_level_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 service_obligations
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ServiceObligation>
-
-=cut
-
-__PACKAGE__->has_many(
-  "service_obligations",
-  "HyperMouse::Schema::Result::ServiceObligation",
   { "foreign.service_level_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -161,8 +161,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Jsxr+JuiAE/fd9z/NlPRXA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HTzqJdyvx5e054cY0iReDQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

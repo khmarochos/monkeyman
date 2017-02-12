@@ -265,24 +265,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 person_x_service_agreements
+=head2 person_x_provisioning_agreements
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::PersonXServiceAgreement>
+Related object: L<HyperMouse::Schema::Result::PersonXProvisioningAgreement>
 
 =cut
 
 __PACKAGE__->has_many(
-  "person_x_service_agreements",
-  "HyperMouse::Schema::Result::PersonXServiceAgreement",
+  "person_x_provisioning_agreements",
+  "HyperMouse::Schema::Result::PersonXProvisioningAgreement",
   { "foreign.person_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6Wa6ZNYYQcc1bZ/ZQHEgiA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cqYMBIjMGtjFZ5n/CywXhA
 
 use Method::Signatures;
 
@@ -293,12 +293,12 @@ __PACKAGE__->many_to_many(
 );
 
 __PACKAGE__->many_to_many(
-  "service_agreements" => "person_x_service_agreements", "service_agreement"
+  "provisioning_agreements" => "person_x_provisioning_agreements", "provisioning_agreement"
 );
 
 
 
-method find_service_agreements (
+method find_provisioning_agreements (
     Int :$mask_permitted?   = 0b000111,
     Int :$mask_valid?       = 0b000111
 ) {
@@ -314,26 +314,26 @@ method find_service_agreements (
         if($contractor->provider) {
             push(@result,
                 $contractor
-                    ->service_agreement_provider_contractors
+                    ->provisioning_agreement_provider_contractors
                         ->filter_valid(mask => $mask_valid)
             );
         } else {
             push(@result,
                 $contractor
-                    ->service_agreement_client_contractors
+                    ->provisioning_agreement_client_contractors
                         ->filter_valid(mask => $mask_valid)
             );
         }
     }
 
-    foreach my $service_agreement (
+    foreach my $provisioning_agreement (
         $self
-            ->service_agreements
+            ->provisioning_agreements
                 ->filter_valid(source_alias => 'me')
                     ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
-                        ->filter_valid(source_alias => 'service_agreement', mask => $mask_valid)
+                        ->filter_valid(source_alias => 'provisioning_agreement', mask => $mask_valid)
         ) {
-            push(@result, $service_agreement);
+            push(@result, $provisioning_agreement);
     }
 
     @result;

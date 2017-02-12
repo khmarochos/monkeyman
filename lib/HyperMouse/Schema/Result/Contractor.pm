@@ -234,32 +234,32 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 service_agreement_client_contractors
+=head2 provisioning_agreement_client_contractors
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ServiceAgreement>
+Related object: L<HyperMouse::Schema::Result::ProvisioningAgreement>
 
 =cut
 
 __PACKAGE__->has_many(
-  "service_agreement_client_contractors",
-  "HyperMouse::Schema::Result::ServiceAgreement",
+  "provisioning_agreement_client_contractors",
+  "HyperMouse::Schema::Result::ProvisioningAgreement",
   { "foreign.client_contractor_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 service_agreement_provider_contractors
+=head2 provisioning_agreement_provider_contractors
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ServiceAgreement>
+Related object: L<HyperMouse::Schema::Result::ProvisioningAgreement>
 
 =cut
 
 __PACKAGE__->has_many(
-  "service_agreement_provider_contractors",
-  "HyperMouse::Schema::Result::ServiceAgreement",
+  "provisioning_agreement_provider_contractors",
+  "HyperMouse::Schema::Result::ProvisioningAgreement",
   { "foreign.provider_contractor_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -295,9 +295,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 03:05:07
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lTl+L8E8J+Gno+cpWKPDWg
-
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:INnWm72g0lbIj04VmB8PSw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

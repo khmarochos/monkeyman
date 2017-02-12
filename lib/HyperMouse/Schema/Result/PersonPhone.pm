@@ -70,7 +70,7 @@ __PACKAGE__->table("person_phone");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 email
+=head2 phone
 
   data_type: 'varchar'
   is_nullable: 0
@@ -112,7 +112,7 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "email",
+  "phone",
   { data_type => "varchar", is_nullable => 0, size => 64 },
   "validated",
   {
@@ -159,8 +159,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:j3mqgX88x00+Rs8SjtQ3fA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yJYSbdpMJMdRjnds11mbzg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

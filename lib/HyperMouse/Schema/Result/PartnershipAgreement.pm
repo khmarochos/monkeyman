@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::PartnerAgreement;
+package HyperMouse::Schema::Result::PartnershipAgreement;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::PartnerAgreement
+HyperMouse::Schema::Result::PartnershipAgreement
 
 =cut
 
@@ -38,11 +38,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<partner_agreement>
+=head1 TABLE: C<partnership_agreement>
 
 =cut
 
-__PACKAGE__->table("partner_agreement");
+__PACKAGE__->table("partnership_agreement");
 
 =head1 ACCESSORS
 
@@ -166,33 +166,33 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
-=head2 partner_obligations
+=head2 partnership_obligations
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::PartnerObligation>
+Related object: L<HyperMouse::Schema::Result::PartnershipObligation>
 
 =cut
 
 __PACKAGE__->has_many(
-  "partner_obligations",
-  "HyperMouse::Schema::Result::PartnerObligation",
-  { "foreign.partner_agreement_id" => "self.id" },
+  "partnership_obligations",
+  "HyperMouse::Schema::Result::PartnershipObligation",
+  { "foreign.partnership_agreement_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 person_x_partner_agreements
+=head2 person_x_partnership_agreements
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::PersonXPartnerAgreement>
+Related object: L<HyperMouse::Schema::Result::PersonXPartnershipAgreement>
 
 =cut
 
 __PACKAGE__->has_many(
-  "person_x_partner_agreements",
-  "HyperMouse::Schema::Result::PersonXPartnerAgreement",
-  { "foreign.partner_agreement_id" => "self.id" },
+  "person_x_partnership_agreements",
+  "HyperMouse::Schema::Result::PersonXPartnershipAgreement",
+  { "foreign.partnership_agreement_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
@@ -212,8 +212,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:u4nq1CcFHv8x191AaroPYg
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 03:05:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Mrg1GZrrwov2SeNsvMd8/A
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
