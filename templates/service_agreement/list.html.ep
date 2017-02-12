@@ -9,20 +9,19 @@
                 dom: '<"html5buttons"B>lTfgitp',
                 buttons: [
                     { extend: 'copy'},
-                    {extend: 'csv'},
-                    {extend: 'excel', title: 'ExampleFile'},
-                    {extend: 'pdf', title: 'ExampleFile'},
-                    {extend: 'print',
-                     customize: function (win){
+                    { extend: 'csv'},
+                    { extend: 'excel', title: 'ExampleFile' },
+                    { extend: 'pdf', title: 'ExampleFile' },
+                    { extend: 'print',
+                        customize: function (win){
                             $(win.document.body).addClass('white-bg');
                             $(win.document.body).css('font-size', '10px');
-
                             $(win.document.body).find('table')
                                     .addClass('compact')
                                     .css('font-size', 'inherit');
-                    }
-                    }
-                ]
+                        }
+                    },
+                ],
             });
         });
     </script>
@@ -65,13 +64,13 @@
                                 </ul>
                             </div>
                             <div class="btn-group">
-                                <button class="btn btn-xs"><i class="fa fa-user-circle"></i></button>
+                                <button class="btn btn-xs" title="Persons"><i class="fa fa-user-circle"></i></button>
                             </div>
                             <div class="btn-group">
-                                <button class="btn btn-xs"><i class="fa fa-briefcase"></i></button>
+                                <button class="btn btn-xs" title="Services"><i class="fa fa-briefcase"></i></button>
                             </div>
                             <div class="btn-group">
-                                <button class="btn btn-xs"><i class="fa fa-server"></i></button>
+                                <button class="btn btn-xs" title="Resources"><i class="fa fa-server"></i></button>
                             </div>
                         </td>
                     </tr>

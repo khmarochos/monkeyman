@@ -165,17 +165,17 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 partner_obligations
+=head2 partnership_obligations
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::PartnerObligation>
+Related object: L<HyperMouse::Schema::Result::PartnershipObligation>
 
 =cut
 
 __PACKAGE__->has_many(
-  "partner_obligations",
-  "HyperMouse::Schema::Result::PartnerObligation",
+  "partnership_obligations",
+  "HyperMouse::Schema::Result::PartnershipObligation",
   { "foreign.service_obligation_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -256,8 +256,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sKbTLul/Go55ZoBbZXG57w
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 03:05:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:FVb0ubQNfGPcPaNmU6VXJQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -159,32 +159,32 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 partner_agreement_client_contractors
+=head2 partnership_agreement_client_contractors
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::PartnerAgreement>
+Related object: L<HyperMouse::Schema::Result::PartnershipAgreement>
 
 =cut
 
 __PACKAGE__->has_many(
-  "partner_agreement_client_contractors",
-  "HyperMouse::Schema::Result::PartnerAgreement",
+  "partnership_agreement_client_contractors",
+  "HyperMouse::Schema::Result::PartnershipAgreement",
   { "foreign.client_contractor_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 partner_agreement_provider_contractors
+=head2 partnership_agreement_provider_contractors
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::PartnerAgreement>
+Related object: L<HyperMouse::Schema::Result::PartnershipAgreement>
 
 =cut
 
 __PACKAGE__->has_many(
-  "partner_agreement_provider_contractors",
-  "HyperMouse::Schema::Result::PartnerAgreement",
+  "partnership_agreement_provider_contractors",
+  "HyperMouse::Schema::Result::PartnershipAgreement",
   { "foreign.provider_contractor_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -295,8 +295,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TsOtB12OMmXk3ZwxoobfmQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 03:05:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lTl+L8E8J+Gno+cpWKPDWg
 
 
 
