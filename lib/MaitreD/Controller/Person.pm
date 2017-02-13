@@ -1,4 +1,4 @@
-package MaitreDNuage::Controller::Person;
+package MaitreD::Controller::Person;
 
 use strict;
 use warnings;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-%=  include('header', title => "Maitre d'Nuage | Internal Server Error (500)")
+%=  include('header', title => "Maitre d'Tucha | Internal Server Error (500)")
   </head>
   <body class="gray-bg">
     <div class="middle-box text-center animated fadeInDown">

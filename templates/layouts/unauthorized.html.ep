@@ -3,7 +3,7 @@
 
 <head>
 
-    <%= include('header', title => "Maitre d'Nuage | $title_message") %>
+    <%= include('header', title => "Maitre d'Tucha | $title_message") %>
 
 </head>
 

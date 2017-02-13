@@ -1,4 +1,4 @@
-package MaitreDNuage;
+package MaitreD;
 
 use strict;
 use warnings;

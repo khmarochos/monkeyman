@@ -1,4 +1,4 @@
-package MaitreDNuage::Controller::Navigation;
+package MaitreD::Controller::Navigation;
 
 use strict;
 use warnings;

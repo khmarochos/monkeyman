@@ -1,4 +1,4 @@
-package MaitreDNuage::Controller::ProvisioningAgreement;
+package MaitreD::Controller::ProvisioningAgreement;
 
 use strict;
 use warnings;

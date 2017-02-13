@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-%= include('header', title => "Maitre d'Nuage | $title_message")
+%= include('header', title => "Maitre d'Tucha | $title_message")
   </head>
   <body>
     <div id="wrapper">
