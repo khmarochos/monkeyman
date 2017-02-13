@@ -46,25 +46,17 @@
 <script src="js/bootstrap.min.js"></script>
 <script src="js/plugins/metisMenu/jquery.metisMenu.js"></script>
 <script src="js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
-%   foreach     my $asset_alias (asset_required('js', '*')) {
-%       foreach my $asset_src   (asset_compiled('js', $asset_alias)) {
+%   foreach     my $asset_alias   (asset_required('js', '*')) {
+%       foreach my $asset_src     (asset_compiled('js', $asset_alias)) {
 <script src="<%= $asset_src %>"></script>
 %       }
 %   }
 <script src="js/inspinia.js"></script>
 <script src="js/plugins/pace/pace.min.js"></script>
-<%
-    my $snippets = stash->{'deferred_snippets'};
-    if(
-        defined($snippets) &&
-            ref($snippets) eq 'ARRAY'
-    ) {
-        foreach my $snippet (@{ $snippets }) {
-%>
-<%== $snippet->(); %>
-<%
-        }
-    }
-%>
+%   foreach     my $snippet_alias (snippet_required('script', '*')) {
+%       foreach my $snippet_src   (snippet_compiled('script', $snippet_alias)) {
+<%== $snippet_src->(); %>
+%       }
+%   }
 </body>
 </html>
