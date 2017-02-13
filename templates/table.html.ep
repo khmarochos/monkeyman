@@ -1,0 +1,105 @@
+%  snippet_register(qw/script datatables/, begin
+        <script>
+            $(document).ready(function(){
+                $('.<%= $name %>').DataTable({
+                    pageLength: 25,
+                    responsive: true,
+                    dom: '<"html5buttons"B>lTfgitp',
+                    buttons: [
+                        { extend: 'copy'},
+                        { extend: 'csv'},
+                        { extend: 'excel', title: '<%= $name %>' },
+                        { extend: 'pdf', title: '<%= $name %>' },
+                        { extend: 'print',
+                            customize: function (win){
+                                $(win.document.body).addClass('white-bg');
+                                $(win.document.body).css('font-size', '10px');
+                                $(win.document.body).find('table')
+                                        .addClass('compact')
+                                        .css('font-size', 'inherit');
+                            }
+                        },
+                    ],
+                });
+            });
+        </script>
+%   end, 1);
+<%
+    my @columns_names_sorted = sort { $columns->{ $a }->{'order'} <=> $columns->{ $b }->{'order'} } (keys(%{ $columns }));
+    my @related_names_sorted = sort { $related->{ $a }->{'order'} <=> $related->{ $b }->{'order'} } (keys(%{ $related }));
+%>
+<div class="table-responsive">
+  <table class="table table-striped table-bordered table-hover <%= $name %>" >
+    <thead>
+      <tr>
+%   foreach my $column_name (@columns_names_sorted) {
+        <th><%= $column_name %></th>
+%   }
+      </tr>
+    </thead>
+    <tbody>
+%   foreach my $row (@{ $rows }) {
+      <tr>
+%       foreach my $column_name (@columns_names_sorted) {
+        <td>
+<%
+            if(
+                defined($columns->{ $column_name }->{'actions'}) &&
+                        $columns->{ $column_name }->{'actions'}
+            ) {
+%>
+        <div class="btn-group">
+          <button data-toggle="dropdown" class="btn btn-xs dropdown-toggle" aria-expanded="false">
+            <i class="fa fa-file-text-o"></i>
+            Actions
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a href="#"><i class="fa fa-eye"></i> View</a></li>
+            <li><a href="#"><i class="fa fa-edit"></i> Edit</a></li>
+            <li><a href="#"><i class="fa fa-pause"></i> Suspend</a></li>
+            <li><a href="#"><i class="fa fa-trash-o"></i> Remove</a></li>
+          </ul>
+        </div>
+%           }
+<%
+            if(
+                defined($columns->{ $column_name }->{'related'}) &&
+                @related_names_sorted
+            ) {
+                foreach my $related_name (@related_names_sorted) {
+                    if(
+                        defined($related->{ $related_name }->{'value'}) &&
+                            ref($related->{ $related_name }->{'value'}) eq 'CODE'
+                    ) {
+%>
+        <a href="<%= &{ $related->{ $related_name }->{'value'} }($row) %>">
+          <button class="btn btn-xs" title="<%= $related_name %>">
+            <i class="<%= $related->{ $related_name }->{ 'icon' } %>"></i>
+          </button>
+        </a>
+%                   }
+%               }
+%           }
+<%
+            if(
+                defined($columns->{ $column_name }->{'value'}) &&
+                    ref($columns->{ $column_name }->{'value'}) eq 'CODE'
+           ) {
+%>
+%=              &{ $columns->{ $column_name }->{'value'} }($row);
+%           }
+        </td>
+%       }
+      </tr>
+%   }
+    </tbody>
+    <tfoot>
+      <tr>
+%   foreach my $column_name (@columns_names_sorted) {
+        <th><%= $column_name %></th>
+%   }
+      </tr>
+    </tfoot>
+  </table>
+</div>

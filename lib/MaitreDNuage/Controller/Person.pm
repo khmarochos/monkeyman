@@ -9,6 +9,7 @@ extends 'Mojolicious::Controller';
 
 use Method::Signatures;
 use TryCatch;
+use Switch;
 
 
 
@@ -91,6 +92,32 @@ method logout {
 
     $self->redirect_to('/');
 
+}
+
+
+
+method list {
+    my @provisioning_agreements;
+    my $person          = $self->stash->{'authorized_person_result'};
+    my $mask_permitted  = 0b000111;
+    my $mask_valid      = 0b000111;
+    switch($self->stash->{'filter'}) {
+        case('all')         { $mask_valid = 0b000101 }
+        case('active')      { $mask_valid = 0b000111 }
+        case('archived')    { $mask_valid = 0b001100 }
+    }
+    switch($self->stash->{'related_element'}) {
+        case('provisioning_agreement') {
+            $self->stash('rows' => [
+                $self
+                    ->hm_schema
+                        ->resultset("ProvisioningAgreement")
+                            ->search({ id => $self->stash->{'related_id'} })        # FIXME: PERMITTED & VALID!
+                                ->single
+                                    ->persons                                       # FIXME: PERMITTED & VALID!
+            ]);
+        }
+    }
 }
 
 

@@ -10,9 +10,9 @@ extends 'Mojolicious::Controller';
 
 use MonkeyMan::Exception qw(PersonNotFound);
 
-use Switch;
 use Method::Signatures;
 use TryCatch;
+use Switch;
 
 
 
@@ -25,12 +25,15 @@ method list {
         case('all')         { $mask_valid = 0b000101 }
         case('active')      { $mask_valid = 0b000111 }
         case('archived')    { $mask_valid = 0b001100 }
+    };
+    switch($self->stash->{'related_element'}) {
+        case('person') {
+            $self->stash('rows' => [ $person->find_provisioning_agreements(
+                mask_permitted  => $mask_permitted,
+                mask_valid      => $mask_valid
+            ) ]);
+        }
     }
-
-    $self->stash('provisioning_agreements' => [ $person->find_provisioning_agreements(
-        mask_permitted  => $mask_permitted,
-        mask_valid      => $mask_valid
-    ) ]);
 }
 
 

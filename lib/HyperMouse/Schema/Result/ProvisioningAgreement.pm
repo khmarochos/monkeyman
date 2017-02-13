@@ -215,6 +215,11 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XwcFp3Lab7ux/ecFLLSY4A
 
+__PACKAGE__->many_to_many(
+  "persons" => "person_x_provisioning_agreements", "person"
+);
+
+
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

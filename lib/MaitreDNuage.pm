@@ -43,6 +43,7 @@ method startup {
     $self->helper(hypermouse    => sub { shift->app->_hypermouse });
     $self->helper(hm_schema     => sub { shift->app->_hypermouse->get_schema });
     $self->helper(hm_logger     => sub { shift->app->_hypermouse->get_logger });
+    
 
     my $routes = $self->routes;
        $routes->any('/person/login')->to('person#login');
@@ -51,8 +52,32 @@ method startup {
                                       ->under->to('person#load_settings')
                                       ->under->to('navigation#build_menu');
        $routes_authenticated->get('/')->to('dashboard#welcome');
-       $routes_authenticated->get('/provisioning_agreement/list/:filter')->to('provisioning_agreement#list');
-       $routes_authenticated->get('/person/logout')->to('person#logout');
+    my $routes_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
+       $routes_provisioning_agreement
+            ->get('/list/:filter/:related_element/:related_id')
+                ->to(
+                    controller      => 'provisioning_agreement',
+                    action          => 'list',
+                    filter          => 'active',
+                    related_element => 'person',
+                    related_id      => '@'
+                );
+    my $routes_person = $routes_authenticated->under('/person');
+       $routes_person
+            ->get('/list/:filter/:related_element/:related_id')
+                ->to(
+                    controller      => 'person',
+                    action          => 'list',
+                    filter          => 'active',
+                    related_element => 'person',
+                    related_id      => '@'
+                );
+       $routes_authenticated
+            ->get('/logout')
+                ->to(
+                    controller  => 'person',
+                    action      => 'logout'
+                );
 
 }
 

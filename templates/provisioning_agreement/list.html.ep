@@ -1,107 +1,73 @@
-% asset_required(qw/css datatables 1/);
-% asset_required(qw/js  datatables 1/);
-% snippet_register(qw/script datatables/, begin
-    <script>
-        $(document).ready(function(){
-            $('.dataTables-example').DataTable({
-                pageLength: 25,
-                responsive: true,
-                dom: '<"html5buttons"B>lTfgitp',
-                buttons: [
-                    { extend: 'copy'},
-                    { extend: 'csv'},
-                    { extend: 'excel', title: 'ExampleFile' },
-                    { extend: 'pdf', title: 'ExampleFile' },
-                    { extend: 'print',
-                        customize: function (win){
-                            $(win.document.body).addClass('white-bg');
-                            $(win.document.body).css('font-size', '10px');
-                            $(win.document.body).find('table')
-                                    .addClass('compact')
-                                    .css('font-size', 'inherit');
-                        }
-                    },
-                ],
-            });
-        });
-    </script>
-% end, 1);
-% my $language = stash->{'language_id'};
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered table-hover dataTables-example" >
-                    <thead>
-                    <tr>
-                        <th>Number</th>
-                        <th>Valid Since</th>
-                        <th>Valid Till</th>
-                        <th>Client</th>
-                        <th>Provider</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-% foreach my $provisioning_agreement (@{ stash('provisioning_agreements') }) {
-                    <tr>
-                        <td><%= $provisioning_agreement->name                                     %></td>
-                        <td><%= datetime_display($provisioning_agreement->valid_since, 2)         %></td>
-                        <td><%= datetime_display($provisioning_agreement->valid_till,  2) || '∞'  %></td>
-                        <td><%=
-                                $provisioning_agreement
-                                    ->client_contractor
-                                        ->name
-                            %>, <%=
-                                $provisioning_agreement
-                                    ->client_contractor
-                                        ->contractor_type
-                                            ->contractor_type_i18n($language)
-                                                ->name_short
-                            %></td>
-                        <td><%=
-                                $provisioning_agreement
-                                    ->provider_contractor
-                                        ->name
-                            %>, <%=
-                                $provisioning_agreement
-                                    ->provider_contractor
-                                        ->contractor_type
-                                            ->contractor_type_i18n($language)
-                                                ->name_short
-                            %></td>
-                        <td>
-                            <div class="btn-group">
-                                <button data-toggle="dropdown" class="btn btn-xs dropdown-toggle" aria-expanded="false"><i class="fa fa-file-text-o"></i> Agreement <span class="caret"></span></button>
-                                <ul class="dropdown-menu">
-                                    <li><a href="#"><i class="fa fa-eye"></i> View</a></li>
-                                    <li><a href="#"><i class="fa fa-edit"></i> Edit</a></li>
-                                    <li><a href="#"><i class="fa fa-pause"></i> Suspend</a></li>
-                                    <li><a href="#"><i class="fa fa-trash-o"></i> Remove</a></li>
-                                </ul>
-                            </div>
-                            <div class="btn-group">
-                                <button class="btn btn-xs" title="Persons"><i class="fa fa fa-user-o"></i></button>
-                            </div>
-                            <div class="btn-group">
-                                <a href="/provisioning_obligation/list/provisioning_agreement/<%= $provisioning_agreement->id %>">
-                                    <button class="btn btn-xs" title="Provisioning Obligations"><i class="fa fa-shopping-cart"></i></button>
-                                </a>
-                            </div>
-                            <div class="btn-group">
-                                <button class="btn btn-xs" title="Resources"><i class="fa fa-server"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-% }
-                    </tbody>
-                    <tfoot>
-                    <tr>
-                        <th>Number</th>
-                        <th>Valid Since</th>
-                        <th>Valid Till</th>
-                        <th>Client</th>
-                        <th>Provider</th>
-                        <th>Actions</th>
-                    </tr>
-                    </tfoot>
-                    </table>
-                </div>
-% layout('authorized', title_message => 'Welcome!');
+<%
+    asset_required(qw/css datatables 1/);
+    asset_required(qw/js  datatables 1/);
+    my $language = stash->{'language_id'};
+%>
+<%=
+    include('table',
+        name      => 'provisioning_agreement',
+        columns   => {
+            'Number' => {
+                order => 1,
+                value => sub { shift->client_contractor->name; }
+            },
+            'Valid Since' => {
+                order => 2,
+                value => sub { datetime_display(shift->valid_since, 2); }
+            },
+            'Valid Till' => {
+                order => 3,
+                value => sub { datetime_display(shift->valid_till, 2) || '∞'; }
+            },
+            'Client' => {
+                order => 4,
+                value => sub {
+                    my $row = shift;
+                    sprintf(
+                        "%s, %s",
+                        $row->client_contractor->name,
+                        $row->client_contractor->contractor_type->contractor_type_i18n($language)->name_short
+                    );
+                }
+            },
+            'Provider' => {
+                order => 5,
+                value => sub {
+                    my $row = shift;
+                    sprintf(
+                        "%s, %s",
+                        $row->provider_contractor->name,
+                        $row->provider_contractor->contractor_type->contractor_type_i18n($language)->name_short
+                    );
+                }
+            },
+            'Actions' => {
+                order   => 6,
+                actions => 1,
+                related => 1
+            }
+        },
+        related   => {
+            'Persons'                   => {
+                order => 1,
+                icon  => 'fa fa-user-o',
+                value => sub { sprintf("/person/list/related_to/provisioning_agreement/%s", shift->id); }
+            },
+            'Provisioning Obligations'  => {
+                order => 2,
+                icon  => 'fa fa-shopping-cart',
+                value => sub { sprintf("/provisioning_obligation/list/related_to/provisioning_agreement/%s", shift->id); }
+            },
+            'Resources'  => {
+                order => 3,
+                icon  => 'fa fa-server',
+                value => sub { sprintf("/resource_piece/list/related_to/provisioning_agreement/%s", shift->id); }
+            }
+        },
+        rows      => stash->{'rows'},
+        language  => $language
+    );
+%>
+<%
+    layout('authorized', title_message => 'Welcome!');
+%>
