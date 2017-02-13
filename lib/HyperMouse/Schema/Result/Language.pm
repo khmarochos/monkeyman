@@ -184,6 +184,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 partnership_level_i18ns
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::PartnershipLevelI18n>
+
+=cut
+
+__PACKAGE__->has_many(
+  "partnership_level_i18ns",
+  "HyperMouse::Schema::Result::PartnershipLevelI18n",
+  { "foreign.language_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 people
 
 Type: has_many
@@ -270,13 +285,13 @@ Related object: L<HyperMouse::Schema::Result::ServiceLevelI18n>
 __PACKAGE__->has_many(
   "service_level_i18ns",
   "HyperMouse::Schema::Result::ServiceLevelI18n",
-  { "foreign.lanuage_id" => "self.id" },
+  { "foreign.language_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ohLPfZsB2vR0H+i1hT8YTQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-14 01:31:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+1yKMRgICLqyiememYyEZQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -78,7 +78,7 @@ __PACKAGE__->table("service_level_i18n");
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 lanuage_id
+=head2 language_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -126,7 +126,7 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "lanuage_id",
+  "language_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -151,7 +151,7 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 lanuage
+=head2 language
 
 Type: belongs_to
 
@@ -160,10 +160,10 @@ Related object: L<HyperMouse::Schema::Result::Language>
 =cut
 
 __PACKAGE__->belongs_to(
-  "lanuage",
+  "language",
   "HyperMouse::Schema::Result::Language",
-  { id => "lanuage_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
+  { id => "language_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 =head2 service_level
@@ -182,8 +182,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LxTVMtvmWvpQ8w+5XsUsMw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-14 01:31:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HrjCbEfQ3rE6zZqnZ5otqg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

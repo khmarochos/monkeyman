@@ -78,10 +78,11 @@ __PACKAGE__->table("partnership_level_i18n");
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 lanuage_id
+=head2 language_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 name
@@ -125,8 +126,13 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "lanuage_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  "language_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "name",
   { data_type => "varchar", is_nullable => 0, size => 127 },
 );
@@ -145,6 +151,21 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
+=head2 language
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::Language>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "language",
+  "HyperMouse::Schema::Result::Language",
+  { id => "language_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
 =head2 partnership_level
 
 Type: belongs_to
@@ -161,8 +182,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 03:05:07
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8UsinNbnDelbriukQ5jMDQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-14 01:31:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TA4c24OEID0mvFetZvf3Tg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
