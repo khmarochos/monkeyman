@@ -1,16 +1,29 @@
 {
   "loginscreen": {
     "hi":           "Hi!",
-    "welcome":      "Maitre d'Nuage welcomes you",
+    "welcome":      "Maitre d'Tucha welcomes you",
     "please":       "Please, log in with your credentials",
     "no-password":  "Forgot your password?",
     "no-account":   "Do not have an account?",
-    "register":     "Create an account",
+    "signup":       "Create an account",
     "powered-by":   "Powered by"
   },
   "loginform": {
-    "email":      "E-Mail Address",
-    "password":   "Password",
-    "login":      "Login"
+    "email":        "E-Mail Address",
+    "password":     "Password",
+    "login":        "Log In!"
+  },
+  "signupscreen": {
+    "hi":           "Hi!",
+    "welcome":      "Maitre d'Tucha is glad to meet you",
+    "please":       "Please, register an account",
+    "have-account": "Already have an account?",
+    "login":        "Log In",
+    "powered-by":   "Powered by"
+  },
+  "signupform": {
+    "full-name":    "Full name",
+    "email":        "E-Mail Address",
+    "signup":       "Sign Up!"
   }
 }

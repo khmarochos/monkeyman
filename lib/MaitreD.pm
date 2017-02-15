@@ -44,16 +44,25 @@ method startup {
     $self->helper(hm_schema     => sub { shift->app->_hypermouse->get_schema });
     $self->helper(hm_logger     => sub { shift->app->_hypermouse->get_logger });
 
-    $self->routes->any('/person/login')->to('person#login');
+    my $routes_unauthenticated = $self->routes;
+       $routes_unauthenticated->any('/person/login')->to('person#login');
+       $routes_unauthenticated->any('/person/signup')->to('person#signup');
 
     my $routes_authenticated = $self->routes->under->to('person#is_authenticated')
                                             ->under->to('person#load_settings')
                                             ->under->to('navigation#build_menu');
+       $routes_authenticated
+            ->get('/person/logout')
+                ->to(
+                    controller  => 'person',
+                    action      => 'logout'
+                );
+       $routes_authenticated
+            ->get('/')
+                ->to('dashboard#welcome');
 
-       $routes_authenticated->get('/')->to('dashboard#welcome');
-
-    my $routes_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
-       $routes_provisioning_agreement
+    my $routes_authenticated_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
+       $routes_authenticated_provisioning_agreement
             ->get('/list/:filter/:related_element/:related_id')
                 ->to(
                     controller      => 'provisioning_agreement',
@@ -63,8 +72,8 @@ method startup {
                     related_id      => '@'
                 );
 
-    my $routes_person = $routes_authenticated->under('/person');
-       $routes_person
+    my $routes_authenticated_person = $routes_authenticated->under('/person');
+       $routes_authenticated_person
             ->get('/list/:filter/:related_element/:related_id')
                 ->to(
                     controller      => 'person',
@@ -72,12 +81,6 @@ method startup {
                     filter          => 'active',
                     related_element => 'person',
                     related_id      => '@'
-                );
-       $routes_authenticated
-            ->get('/logout')
-                ->to(
-                    controller  => 'person',
-                    action      => 'logout'
                 );
 
 }

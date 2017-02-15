@@ -1,16 +1,29 @@
 {
   "loginscreen": {
     "hi":           "Хі!",
-    "welcome":      "Вас вітає Maitre d'Nuage",
+    "welcome":      "Вас вітає Maitre d'Tucha",
     "please":       "Будь-ласка, введіть реквізити доступу",
     "no-password":  "Забули свій пароль?",
     "no-account":   "Немає облікового запису?",
-    "register":     "Створіть обліковий запис",
+    "signup":       "Створіть обліковий запис",
     "powered-by":   "Працює завдяки"
   },
   "loginform": {
     "email":        "Адреса електроної пошти",
     "password":     "Пароль",
-    "login":        "Увійти"
+    "login":        "Увійти!"
+  },
+  "signupscreen": {
+    "hi":           "Хі!",
+    "welcome":      "Maitre d'Tucha радий знайомству",
+    "please":       "Будь-ласка, зареєструйтесь",
+    "have-account": "Вже маєте обліковий запис?",
+    "login":        "Увійти",
+    "powered-by":   "Працює завдяки"
+  },
+  "signupform": {
+    "full-name":    "Прізвищє та ім'я",
+    "email":        "Адреса електроної пошти",
+    "signup":       "Зареєструватися!"
   }
 }
