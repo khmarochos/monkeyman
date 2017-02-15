@@ -159,6 +159,21 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 corporation_x_contractors
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::CorporationXContractor>
+
+=cut
+
+__PACKAGE__->has_many(
+  "corporation_x_contractors",
+  "HyperMouse::Schema::Result::CorporationXContractor",
+  { "foreign.contractor_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 partnership_agreement_client_contractors
 
 Type: has_many
@@ -295,8 +310,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:INnWm72g0lbIj04VmB8PSw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-15 05:44:08
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:czwYdQQHEevvPihAmqUchA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

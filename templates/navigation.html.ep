@@ -16,7 +16,7 @@
 %           2 => 'nav nav-second-level collapse',
 %           3 => 'nav nav-third-level collapse'
 %       }->{ $menu_level };
-      %==     tag(ul => ( 'class' => $ul_class, ($menu_level == 1 ? ('id' => 'side-menu') : ()) ) => begin
+%==     tag(ul => ( 'class' => $ul_class, ($menu_level == 1 ? ('id' => 'side-menu') : ()) ) => begin
 %           if($menu_level == 1) {
   <li class="nav-header">
     <div class="dropdown profile-element">

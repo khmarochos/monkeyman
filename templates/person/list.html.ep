@@ -28,7 +28,28 @@
                 related => 1
             }
         },
-        related   => {},
+        related   => {
+            'Provisioning Agreements' => {
+                order => 1,
+                icon  => 'fa fa-file-text-o',
+                value => sub { sprintf("/provisioning_agreement/list/related_to/person/%s", shift->id); }
+            },
+            'Partnership Agreements' => {
+                order => 2,
+                icon  => 'fa fa-file-text',
+                value => sub { sprintf("/partnership_agreement/list/related_to/person/%s", shift->id); }
+            },
+            'Contractors' => {
+                order => 3,
+                icon  => 'fa fa-briefcase',
+                value => sub { sprintf("/contractor/list/related_to/person/%s", shift->id); }
+            },
+            'Corporations' => {
+                order => 4,
+                icon  => 'fa fa-building-o',
+                value => sub { sprintf("/corporation/list/related_to/person/%s", shift->id); }
+            }
+        },
         rows      => stash->{'rows'},
         language  => $language
     );

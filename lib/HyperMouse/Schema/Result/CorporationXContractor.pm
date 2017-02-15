@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ProvisioningAgreement;
+package HyperMouse::Schema::Result::CorporationXContractor;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ProvisioningAgreement
+HyperMouse::Schema::Result::CorporationXContractor
 
 =cut
 
@@ -38,11 +38,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<provisioning_agreement>
+=head1 TABLE: C<corporation_x_contractor>
 
 =cut
 
-__PACKAGE__->table("provisioning_agreement");
+__PACKAGE__->table("corporation_x_contractor");
 
 =head1 ACCESSORS
 
@@ -71,20 +71,14 @@ __PACKAGE__->table("provisioning_agreement");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 name
-
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 32
-
-=head2 provider_contractor_id
+=head2 corporation_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 client_contractor_id
+=head2 contractor_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -119,16 +113,14 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "name",
-  { data_type => "varchar", is_nullable => 0, size => 32 },
-  "provider_contractor_id",
+  "corporation_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "client_contractor_id",
+  "contractor_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -151,7 +143,7 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 client_contractor
+=head2 contractor
 
 Type: belongs_to
 
@@ -160,81 +152,30 @@ Related object: L<HyperMouse::Schema::Result::Contractor>
 =cut
 
 __PACKAGE__->belongs_to(
-  "client_contractor",
+  "contractor",
   "HyperMouse::Schema::Result::Contractor",
-  { id => "client_contractor_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
+  { id => "contractor_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 person_x_provisioning_agreements
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::PersonXProvisioningAgreement>
-
-=cut
-
-__PACKAGE__->has_many(
-  "person_x_provisioning_agreements",
-  "HyperMouse::Schema::Result::PersonXProvisioningAgreement",
-  { "foreign.provisioning_agreement_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 provider_contractor
+=head2 corporation
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::Contractor>
+Related object: L<HyperMouse::Schema::Result::Corporation>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "provider_contractor",
-  "HyperMouse::Schema::Result::Contractor",
-  { id => "provider_contractor_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
-);
-
-=head2 provisioning_obligations
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ProvisioningObligation>
-
-=cut
-
-__PACKAGE__->has_many(
-  "provisioning_obligations",
-  "HyperMouse::Schema::Result::ProvisioningObligation",
-  { "foreign.provisioning_agreement_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
+  "corporation",
+  "HyperMouse::Schema::Result::Corporation",
+  { id => "corporation_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XwcFp3Lab7ux/ecFLLSY4A
-
-use Method::Signatures;
-
-
-
-__PACKAGE__->many_to_many(
-  "persons" => "person_x_provisioning_agreements", "person"
-);
-
-
-
-method find_related_persons (
-    Int :$mask_permitted?   = 0b000111,
-    Int :$mask_valid?       = 0b000111
-) {
-    $self
-        ->persons
-            ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
-                ->filter_valid(source_alias => 'person', mask => $mask_valid);
-}
-
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-15 05:44:08
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9AnMs90tKcmcy/ALV8RPnw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

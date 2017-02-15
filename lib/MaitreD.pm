@@ -43,15 +43,15 @@ method startup {
     $self->helper(hypermouse    => sub { shift->app->_hypermouse });
     $self->helper(hm_schema     => sub { shift->app->_hypermouse->get_schema });
     $self->helper(hm_logger     => sub { shift->app->_hypermouse->get_logger });
-    
 
-    my $routes = $self->routes;
-       $routes->any('/person/login')->to('person#login');
+    $self->routes->any('/person/login')->to('person#login');
 
-    my $routes_authenticated = $routes->under->to('person#is_authenticated')
-                                      ->under->to('person#load_settings')
-                                      ->under->to('navigation#build_menu');
+    my $routes_authenticated = $self->routes->under->to('person#is_authenticated')
+                                            ->under->to('person#load_settings')
+                                            ->under->to('navigation#build_menu');
+
        $routes_authenticated->get('/')->to('dashboard#welcome');
+
     my $routes_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
        $routes_provisioning_agreement
             ->get('/list/:filter/:related_element/:related_id')
@@ -62,6 +62,7 @@ method startup {
                     related_element => 'person',
                     related_id      => '@'
                 );
+
     my $routes_person = $routes_authenticated->under('/person');
        $routes_person
             ->get('/list/:filter/:related_element/:related_id')

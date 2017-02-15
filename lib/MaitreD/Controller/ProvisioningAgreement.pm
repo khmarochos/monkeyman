@@ -18,7 +18,6 @@ use Switch;
 
 method list {
     my @provisioning_agreements;
-    my $person          = $self->stash->{'authorized_person_result'};
     my $mask_permitted  = 0b000111;
     my $mask_valid      = 0b000111;
     switch($self->stash->{'filter'}) {
@@ -28,10 +27,22 @@ method list {
     };
     switch($self->stash->{'related_element'}) {
         case('person') {
-            $self->stash('rows' => [ $person->find_provisioning_agreements(
-                mask_permitted  => $mask_permitted,
-                mask_valid      => $mask_valid
-            ) ]);
+            my $person_id =
+                ($self->stash->{'related_id'} ne '@') ?
+                 $self->stash->{'related_id'} :
+                 $self->stash->{'authorized_person_result'}->id;
+            $self->stash('rows' => [
+                $self
+                    ->hm_schema
+                        ->resultset("Person")
+                            ->search({ id => $person_id })
+                                ->filter_valid
+                                    ->single
+                                        ->find_related_provisioning_agreements(
+                                            mask_permitted  => $mask_permitted,
+                                            mask_valid      => $mask_valid
+                                        )
+            ]);
         }
     }
 }

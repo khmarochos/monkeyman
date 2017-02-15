@@ -56,20 +56,28 @@
 %                                       end);
 %=                                      tag('ul' => ('class' => 'dropdown-menu') => begin
 %=                                          tag('li' => begin
-%=                                              tag('i' => ('class' => 'fa fa-eye'));
-                                                View
+%=                                              link_to('#' => begin
+%=                                                  tag('i' => ('class' => 'fa fa-eye'));
+                                                    View
+%                                               end);
 %                                           end);
 %=                                          tag('li' => begin
-%=                                              tag('i' => ('class' => 'fa fa-edit'));
-                                                Edit
+%=                                              link_to('#' => begin
+%=                                                  tag('i' => ('class' => 'fa fa-edit'));
+                                                    Edit
+%                                               end);
 %                                           end);
 %=                                          tag('li' => begin
-%=                                              tag('i' => ('class' => 'fa fa-pause'));
-                                                Suspend
+%=                                              link_to('#' => begin
+%=                                                  tag('i' => ('class' => 'fa fa-pause'));
+                                                    Suspend
+%                                               end);
 %                                           end);
 %=                                          tag('li' => begin
-%=                                              tag('i' => ('class' => 'fa fa-remove'));
-                                                Remove
+%=                                              link_to('#' => begin
+%=                                                  tag('i' => ('class' => 'fa fa-remove'));
+                                                    Remove
+%                                               end);
 %                                           end);
 %                                       end);
 %                                   end);

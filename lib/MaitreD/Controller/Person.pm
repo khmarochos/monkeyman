@@ -98,7 +98,6 @@ method logout {
 
 method list {
     my @provisioning_agreements;
-    my $person          = $self->stash->{'authorized_person_result'};
     my $mask_permitted  = 0b000111;
     my $mask_valid      = 0b000111;
     switch($self->stash->{'filter'}) {
@@ -112,9 +111,13 @@ method list {
                 $self
                     ->hm_schema
                         ->resultset("ProvisioningAgreement")
-                            ->search({ id => $self->stash->{'related_id'} })        # FIXME: PERMITTED & VALID!
-                                ->single
-                                    ->persons                                       # FIXME: PERMITTED & VALID!
+                            ->search({ id => $self->stash->{'related_id'} })
+                                ->filter_valid
+                                    ->single
+                                        ->find_related_persons(
+                                            mask_permitted  => $mask_permitted,
+                                            mask_valid      => $mask_valid
+                                        )
             ]);
         }
     }

@@ -265,6 +265,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 person_x_corporations
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::PersonXCorporation>
+
+=cut
+
+__PACKAGE__->has_many(
+  "person_x_corporations",
+  "HyperMouse::Schema::Result::PersonXCorporation",
+  { "foreign.person_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 person_x_provisioning_agreements
 
 Type: has_many
@@ -281,12 +296,16 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cqYMBIjMGtjFZ5n/CywXhA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-15 05:46:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:M0WugRNnAz2hj8Hsc98K7A
 
 use Method::Signatures;
 
 
+
+__PACKAGE__->many_to_many(
+  "corporations" => "person_x_corporations", "corporation",
+);
 
 __PACKAGE__->many_to_many(
   "contractors" => "person_x_contractors", "contractor",
@@ -298,11 +317,33 @@ __PACKAGE__->many_to_many(
 
 
 
-method find_provisioning_agreements (
+method find_related_provisioning_agreements (
     Int :$mask_permitted?   = 0b000111,
     Int :$mask_valid?       = 0b000111
 ) {
     my @result;
+
+    foreach my $corporation (
+        $self
+            ->corporations
+                ->filter_valid(source_alias => 'me')
+                    ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
+                        ->filter_valid(source_alias => 'corporation')
+    ) {
+        if($corporation->provider) {
+            push(@result,
+                $corporation
+                    ->provisioning_agreement_provider_corporations
+                        ->filter_valid(mask => $mask_valid)
+            );
+        } else {
+            push(@result,
+                $corporation
+                    ->provisioning_agreement_client_corporations
+                        ->filter_valid(mask => $mask_valid)
+            );
+        }
+    }
 
     foreach my $contractor (
         $self
