@@ -1,0 +1,31 @@
+%   snippet_register(qw/ snippet i18n /, begin
+<script>
+    $(document).ready(function() {
+        $.i18n.init({
+            resGetPath:   '/i18n/__lng__.json',
+            load:         'unspecific',
+            fallbackLng:  'en_US',
+            lng:          '<%= $language_selected %>'
+        }, function (t) {
+%       foreach my $i18n_class (@{ $i18n_classes }) {
+            $('.<%= $i18n_class %>').i18n();
+%       }
+        });
+%       my @languages = qw/en_US uk_UA/;
+%       foreach my $language (@languages) {
+        $('#button_<%= $language %>').on('click', function () {
+            i18n.setLng('<%= $language %>', function() {
+%           foreach my $i18n_class (@{ $i18n_classes }) {
+                $('.<%= $i18n_class %>').i18n();
+%           }
+%           foreach my $language_ (@languages) {
+                $('#button_<%= $language_ %>').<%= ($language eq $language_) ? 'add' : 'remove' %>Class('active');
+%           }
+                $.post('/ajax/i18n', { language_code: "<%= $language %>" });
+            });
+        });
+        document.getElementById("button_<%= $language_selected %>").classList.add("active");
+%       }
+    });
+</script>
+%   end);

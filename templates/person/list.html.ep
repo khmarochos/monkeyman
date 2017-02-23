@@ -1,10 +1,10 @@
 <%
-    asset_required(qw/css datatables 1/);
-    asset_required(qw/js  datatables 1/);
+    asset_required(qw/css datatables 100/);
+    asset_required(qw/js  datatables 100/);
     my $language = stash->{'language_id'};
 %>
 <%=
-    include('table',
+    include('snippets/table',
         name      => 'person',
         columns   => {
             'Name' => {

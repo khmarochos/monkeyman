@@ -27,15 +27,37 @@ method startup {
     $self->plugin('DateTimeDisplay');
     $self->plugin('AssetManager', {
         assets_library => {
-            js  => {
-                datatables  => [ qw# js/plugins/dataTables/datatables.min.js # ]
+            js_pre      => {
+                jquery          => [ qw! /js/jquery-3.1.1.min.js                            ! ],
+                bootstrap       => [ qw! /js/bootstrap.min.js                               ! ],
+                i18next         => [ qw! /js/plugins/i18next/i18next.min.js                 ! ],
+                metismenu       => [ qw! /js/plugins/metisMenu/jquery.metisMenu.js          ! ],
+                slimscroll      => [ qw! /js/plugins/slimscroll/jquery.slimscroll.min.js    ! ]
             },
-            css => {
-                toastr      => [ qw# css/plugins/toastr/toastr.min.css # ],
-                datatables  => [ qw# css/plugins/dataTables/datatables.min.css # ],
-                datepicker  => [ qw# css/plugins/datapicker/datepicker3.css # ],
-                summernote  => [ qw# css/plugins/summernote/summernote.css
-                                     css/plugins/summernote/summernote-bs3.css # ]
+            js          => {
+                steps           => [ qw! /js/plugins/steps/jquery.steps.min.js              ! ],
+                datatables      => [ qw! /js/plugins/dataTables/datatables.min.js           ! ],
+                toastr          => [ qw! /js/plugins/toastr/toastr.min.js                   ! ]
+            },
+            js_post     => {
+                inspinia        => [ qw! /js/inspinia.js                                    ! ],
+                pace            => [ qw! /js/plugins/pace/pace.min.js                       ! ]
+            },
+            css_pre     => {
+                bootstrap       => [ qw! /css/bootstrap.min.css                             ! ],
+                fontawesome     => [ qw! /font-awesome/css/font-awesome.css                 ! ]
+            },
+            css         => {
+                toastr          => [ qw! /css/plugins/toastr/toastr.min.css                 ! ],
+                steps           => [ qw! /css/plugins/steps/jquery.steps.css                ! ],
+                datatables      => [ qw! /css/plugins/dataTables/datatables.min.css         ! ],
+                datepicker      => [ qw! /css/plugins/datapicker/datepicker3.css            ! ],
+                summernote      => [ qw! /css/plugins/summernote/summernote.css
+                                         /css/plugins/summernote/summernote-bs3.css         ! ]
+            },
+            css_post    => {
+                animate         => [ qw! /css/animate.css                                   ! ],
+                style           => [ qw! /css/style.css                                     ! ]
             }
         }
     });
@@ -45,8 +67,15 @@ method startup {
     $self->helper(hm_logger     => sub { shift->app->_hypermouse->get_logger });
 
     my $routes_unauthenticated = $self->routes;
+       $routes_unauthenticated->any('/ajax/i18n')->to('ajax#i18n');
        $routes_unauthenticated->any('/person/login')->to('person#login');
-       $routes_unauthenticated->any('/person/signup')->to('person#signup');
+       $routes_unauthenticated
+            ->any('/person/signup/:token')
+                ->to(
+                    controller      => 'person',
+                    action          => 'signup',
+                    token           => undef
+                );
 
     my $routes_authenticated = $self->routes->under->to('person#is_authenticated')
                                             ->under->to('person#load_settings')

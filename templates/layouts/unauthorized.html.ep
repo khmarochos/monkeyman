@@ -1,82 +1,31 @@
+%   asset_required  (qw/ js_pre   jquery    100 /);
+%   asset_required  (qw/ js_pre   bootstrap 110 /);
+%   asset_required  (qw/ js_pre   i18next   120 /);
+%
+%   include('snippets/i18n', language_selected => exists(session->{'language_code'}) ? session->{'language_code'} : 'en_US');
+%   include('snippets/error');
+%   include('snippets/tooltip');
+%
 <!DOCTYPE html>
 <html>
-
-<head>
-
-    <%= include('header', title => "Maitre d'Tucha | $title_message") %>
-
-</head>
-
-<body class="gray-bg">
-
-    <%= content %>
-
-    <!-- Mainly scripts -->
-    <script src="js/jquery-3.1.1.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/plugins/i18next/i18next.min.js"></script>
-
-<script>
-    $(document).ready(function() {
-        $.i18n.init({
-            resGetPath: 'i18n/__lng__.json',
-            load: 'unspecific',
-            fallbackLng: false,
-            lng: '<%= exists(stash->{'i18n_default'}) ? stash->{'i18n_default'} : 'en_US' %>'
-        }, function (t){
-%   foreach my $i18n_class (@{ $i18n_classes }) {
-            $('.<%= $i18n_class %>').i18n();
-%   }
-        });
-%   my @languages = qw/en_US uk_UA/;
-%   foreach my $language (@languages) {
-        $('.set_<%= $language %>').on('click', function (){
-            i18n.setLng('<%= $language %>', function(){
-%       foreach my $i18n_class (@{ $i18n_classes }) {
-                $('.<%= $i18n_class %>').i18n();
+  <head>
+<%= include('snippets/header', title => "Maitre d'Tucha | $title_message") %>
+  </head>
+  <body class="gray-bg">
+<%= content %>
+%   foreach         my $asset_group   (qw/js_pre js js_post/) {
+%       foreach     my $asset_alias   (asset_required($asset_group, '*')) {
+%           foreach my $asset_src     (asset_compiled($asset_group, $asset_alias)) {
+    <script src="<%= $asset_src %>"></script>
+%           }
 %       }
-%       foreach my $language_ (@languages) {
-                $('.set_<%= $language_ %>').<%= ($language eq $language_) ? 'add' : 'remove' %>Class('active');
+%   }
+%   foreach         my $snippet_group (qw/snippet_pre snippet snippet_post/) {
+%       foreach     my $snippet_alias (snippet_required($snippet_group, '*')) {
+%           foreach my $snippet_src   (snippet_compiled($snippet_group, $snippet_alias)) {
+<%== $snippet_src->(); %>
+%           }
 %       }
-            });
-        });
 %   }
-    });
-</script>
-
-<script>
-    $(document).ready(function() {
-        $('[data-toggle="tooltip"]').tooltip()
-    })
-</script>
-
-%   if(defined(stash('error_message'))) {
-<script src="js/plugins/toastr/toastr.min.js"></script>
-<script>
-    toastr.options = {
-      "closeButton": true,
-      "debug": false,
-      "progressBar": true,
-      "preventDuplicates": true,
-      "positionClass": "toast-top-right",
-      "onclick": null,
-      "showDuration": "400",
-      "hideDuration": "1000",
-      "timeOut": "7000",
-      "extendedTimeOut": "1000",
-      "showEasing": "swing",
-      "hideEasing": "linear",
-      "showMethod": "fadeIn",
-      "hideMethod": "fadeOut"
-    }
-    $(document).ready(
-        function() {
-            toastr.error("<%= stash('error_message') %>", "Authentication error")
-        }
-    )
-</script>
-%   }
-
-</body>
-
+  </body>
 </html>

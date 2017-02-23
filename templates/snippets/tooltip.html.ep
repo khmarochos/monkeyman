@@ -1,0 +1,7 @@
+%   snippet_register(qw/ snippet tooltip /, begin
+<script>
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+%   end);

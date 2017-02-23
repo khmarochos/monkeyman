@@ -86,11 +86,11 @@ method asset_register(
     Str             $asset_type!,
     Str             $asset_alias!,
     ArrayRef        $asset_items!,
-    Maybe[Bool]     $required?
+    Maybe[Int]      $order?
 ) {
     $self->_get_assets_library->{ $asset_type }->{ $asset_alias } = $asset_items;
-    $self->asset_required($controller, $asset_type, $asset_alias, $required)
-        if(defined($required));
+    $self->asset_required($controller, $asset_type, $asset_alias, $order)
+        if(defined($order));
 }
 
 
@@ -99,14 +99,14 @@ method asset_required(
     Object          $controller!,
     Str             $asset_type!,
     Str             $asset_alias?,
-    Maybe[Bool]     $required?
+    Maybe[Int]      $order?
 ) {
     $self->_required(
         library         => $self->_get_assets_library,
         stashed         => $self->_dig(1, $controller->stash, 'assets_required'),
         element_type    => $asset_type,
         element_alias   => $asset_alias,
-        required        => $required
+        order           => $order
     );
 }
 
@@ -129,11 +129,11 @@ method snippet_register(
     Str             $snippet_type!,
     Str             $snippet_alias!,
     CodeRef         $snippet_text!,
-    Maybe[Bool]     $required? = 1
+    Maybe[Int]      $order? = 1
 ) {
     $self->_get_snippets_library->{ $snippet_type }->{ $snippet_alias } = $snippet_text;
-    $self->snippet_required($controller, $snippet_type, $snippet_alias, $required)
-        if(defined($required));
+    $self->snippet_required($controller, $snippet_type, $snippet_alias, $order)
+        if(defined($order));
 }
 
 
@@ -142,14 +142,14 @@ method snippet_required(
     Object          $controller!,
     Str             $snippet_type!,
     Str             $snippet_alias?,
-    Maybe[Bool]     $required?
+    Maybe[Bool]     $order?
 ) {
     $self->_required(
         library         => $self->_get_snippets_library,
         stashed         => $self->_dig(1, $controller->stash, 'snippets_required'),
         element_type    => $snippet_type,
         element_alias   => $snippet_alias,
-        required        => $required
+        order           => $order
     );
 }
 
@@ -170,21 +170,30 @@ method _required(
     HashRef         :$library,
     Str             :$element_type!,
     Str             :$element_alias?,
-    Maybe[Bool]     :$required?
+    Maybe[Int]      :$order?
 ) {
     my @elements_required;
-    my $elements_of_this_type_required    = $self->_dig(1, $stashed, $element_type);
+    my $elements_of_this_type_order       = $self->_dig(1, $stashed, $element_type);
     my $elements_of_this_type_registered  = $self->_dig(0, $library, $element_type);
     foreach my $element_found (
         grep { $_ if(match_glob($element_alias, $_)) }
-            defined($required) ?
-                (keys(%{ $elements_of_this_type_registered })) :
-                (keys(%{ $elements_of_this_type_required }))
+            defined($order) ?
+                (
+                    keys(%{ $elements_of_this_type_registered })
+                ) : (
+                    sort(
+                        {
+                            $elements_of_this_type_order->{ $a } <=>
+                            $elements_of_this_type_order->{ $b }
+                        }
+                            keys(%{ $elements_of_this_type_order })
+                    )
+                )
     ) {
-        $elements_of_this_type_required->{ $element_found } = $required
-            if(defined($required));
+        $elements_of_this_type_order->{ $element_found } = $order
+            if(defined($order));
         push(@elements_required, $element_found)
-            if($elements_of_this_type_required->{ $element_found });
+            if($elements_of_this_type_order->{ $element_found });
     }
     @elements_required;
 }
