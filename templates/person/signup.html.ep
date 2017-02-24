@@ -1,120 +1,140 @@
 %   if(defined(my $token = param('token'))) {
 %       asset_required(qw/ js   steps 100 /);
 %       asset_required(qw/ css  steps 100 /);
-    <div class="wrapper wrapper-content animated fadeInRight signupscreen">
-        <div>
-        <div class="ibox col-md-6 col-md-offset-3">
-            <div class="text-center">
-                <h1 class="logo-name"><span data-i18n="signupscreen.hi">Hi!</span></h1>
-            </div>
-            <div class="ibox-content">
-                <h2 data-i18n="signupscreen.form-header">Account Confirmation Form</h2>
-                <p data-i18n="signupscreen.please">
-                    Please, confirm your account by filling the form below.
-                </p>
-                <form id="personal_data" action="#" class="wizard-big wizard clearfix" role="application" novalidate="novalidate"><div class="steps clearfix"><ul role="tablist"><li role="tab" class="first current" aria-disabled="false" aria-selected="true"><a id="form-t-0" href="#form-h-0" aria-controls="form-p-0"><span class="current-info audible">current step: </span><span class="number">1.</span> Account</a></li><li role="tab" class="disabled" aria-disabled="true"><a id="form-t-1" href="#form-h-1" aria-controls="form-p-1"><span class="number">2.</span> Profile</a></li><li role="tab" class="disabled" aria-disabled="true"><a id="form-t-2" href="#form-h-2" aria-controls="form-p-2"><span class="number">3.</span> Warning</a></li><li role="tab" class="disabled last" aria-disabled="true"><a id="form-t-3" href="#form-h-3" aria-controls="form-p-3"><span class="number">4.</span> Finish</a></li></ul></div><div class="content clearfix">
-                                <h1 id="form-h-0" tabindex="-1" class="title current">Account</h1>
-                                <fieldset id="form-p-0" role="tabpanel" aria-labelledby="form-h-0" class="body current" aria-hidden="false">
-                                    <h2>Account Information</h2>
-                                    <div class="row">
-                                        <div class="col-lg-8">
-                                            <div class="form-group">
-                                                <label>Username *</label>
-                                                <input id="userName" name="userName" type="text" class="form-control required" aria-required="true">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Password *</label>
-                                                <input id="password" name="password" type="text" class="form-control required" aria-required="true">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Confirm Password *</label>
-                                                <input id="confirm" name="confirm" type="text" class="form-control required" aria-required="true">
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-4">
-                                            <div class="text-center">
-                                                <div style="margin-top: 20px">
-                                                    <i class="fa fa-sign-in" style="font-size: 180px;color: #e5e5e5 "></i>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </fieldset>
-                                <h1 id="form-h-1" tabindex="-1" class="title">Profile</h1>
-                                <fieldset id="form-p-1" role="tabpanel" aria-labelledby="form-h-1" class="body" aria-hidden="true" style="display: none;">
-                                    <h2>Profile Information</h2>
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label>First name *</label>
-                                                <input id="name" name="name" type="text" class="form-control required" aria-required="true">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Last name *</label>
-                                                <input id="surname" name="surname" type="text" class="form-control required" aria-required="true">
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label>Email *</label>
-                                                <input id="email" name="email" type="text" class="form-control required email" aria-required="true">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Address *</label>
-                                                <input id="address" name="address" type="text" class="form-control">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </fieldset>
-
-                                <h1 id="form-h-2" tabindex="-1" class="title">Warning</h1>
-                                <fieldset id="form-p-2" role="tabpanel" aria-labelledby="form-h-2" class="body" aria-hidden="true" style="display: none;">
-                                    <div class="text-center" style="margin-top: 120px">
-                                        <h2>You did it Man :-)</h2>
-                                    </div>
-                                </fieldset>
-
-                                <h1 id="form-h-3" tabindex="-1" class="title">Finish</h1>
-                                <fieldset id="form-p-3" role="tabpanel" aria-labelledby="form-h-3" class="body" aria-hidden="true" style="display: none;">
-                                    <h2>Terms and Conditions</h2>
-                                    <input id="acceptTerms" name="acceptTerms" type="checkbox" class="required" aria-required="true"> <label for="acceptTerms">I agree with the Terms and Conditions.</label>
-                                </fieldset>
-                            </div><div class="actions clearfix"><ul role="menu" aria-label="Pagination"><li class="disabled" aria-disabled="true"><a href="#previous" role="menuitem">Previous</a></li><li aria-hidden="false" aria-disabled="false"><a href="#next" role="menuitem">Next</a></li><li aria-hidden="true" style="display: none;"><a href="#finish" role="menuitem">Finish</a></li></ul></div></form>
-                        </div>
-            <hr />
-            <a class="btn btn-white set_en_US" id="button_en_US"><img src="/img/flags/32/United-States.png"></a>
-            <a class="btn btn-white set_uk_UA" id="button_uk_UA"><img src="/img/flags/32/Ukraine.png"></a>
-            <p class="m-t"><small><span data-i18n="signupscreen.powered-by">Powered by</span> MonkeyMan &amp; HyperMouse</small> </p>
+<div class="wrapper wrapper-content animated fadeInRight signupscreen">
+  <div>
+    <div class="ibox col-md-6 col-md-offset-3">
+      <div class="text-center">
+        <h1 class="logo-name"><span data-i18n="signupscreen.hi">Hi!</span></h1>
+      </div>
+      <div class="ibox-content">
+        <h2 data-i18n="signupscreen.form-header">Account Confirmation Form</h2>
+        <p>
+          Please, confirm your account by filling the form below.
+          Some fields are required, some are not, so you could provide us with the information later.
+        </p>
+        <form id="personal_data" action="#" class="wizard-big wizard clearfix" role="application" novalidate="novalidate">
+          <div class="steps clearfix">
+            <ul role="tablist">
+              <li role="tab" class="first current" aria-disabled="false" aria-selected="true">
+                <a id="form-t-1" href="#form-h-1" aria-controls="form-p-1">
+                  <span class="number">1.</span> Name
+                </a>
+              </li>
+              <li role="tab" class="disabled" aria-disabled="true">
+                <a id="form-t-2" href="#form-h-2" aria-controls="form-p-2">
+                  <span class="number">2.</span> E-Mail
+                </a>
+              </li>
+              <li role="tab" class="disabled" aria-disabled="true">
+                <a id="form-t-3" href="#form-h-3" aria-controls="form-p-3">
+                  <span class="number">3.</span> Phone
+                </a>
+              </li>
+              <li role="tab" class="disabled" aria-disabled="true">
+                <a id="form-t-4" href="#form-h-4" aria-controls="form-p-4">
+                  <span class="number">4.</span> Documents
+                </a>
+              </li>
+              <li role="tab" class="disabled" aria-disabled="true">
+                <a id="form-t-5" href="#form-h-5" aria-controls="form-p-5">
+                  <span class="number">5.</span> Extra Info
+                </a>
+              </li>
+              <li role="tab" class="disabled last" aria-disabled="true">
+                <a id="form-t-6" href="#form-h-6" aria-controls="form-p-6">
+                  <span class="number">6.</span> Preferences
+                </a>
+              </li>
+              <li role="tab" class="disabled last" aria-disabled="true">
+                <a id="form-t-7" href="#form-h-7" aria-controls="form-p-7">
+                  <span class="number">7.</span> Password
+                </a>
+              </li>
+              <li role="tab" class="disabled last" aria-disabled="true">
+                <a id="form-t-8" href="#form-h-8" aria-controls="form-p-8">
+                  <span class="number">8.</span> Finish
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div class="content clearfix">
+            <h1 id="form-h-1" tabindex="-1" class="title current">Name</h1>
+            <fieldset id="form-p-1" role="tabpanel" aria-labelledby="form-h-1" class="body current" aria-hidden="false">
+              <h2>Full Name</h2>
+              <div class="row">
+                <div class="col-lg-8">
+                  <div class="form-group">
+                    <label>First (Given) Name *</label>
+                    <input id="first_name" name="first_name" type="text" class="form-control required" aria-required="true">
+                  </div>
+                  <div class="form-group">
+                    <label>Middle Name</label>
+                    <input id="middle_name" name="middle_name" class="form-control" type="text">
+                  </div>
+                  <div class="form-group">
+                    <label>Last (Family) Name *</label>
+                    <input id="last_name" name="last_name" type="text" class="form-control required" aria-required="true">
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="text-center">
+                    <div style="margin-top: 20px">
+                      <i class="fa fa-sign-in" style="font-size: 180px;color: #e5e5e5 "></i>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        <div class="actions clearfix">
+          <ul role="menu" aria-label="Pagination">
+            <li class="disabled" aria-disabled="true">
+              <a href="#previous" role="menuitem">Previous</a>
+            </li>
+            <li aria-hidden="false" aria-disabled="false">
+              <a href="#next" role="menuitem">Next</a>
+            </li>
+            <li aria-hidden="true" style="display: none;">
+              <a href="#finish" role="menuitem">Finish</a>
+            </li>
+          </ul>
         </div>
+      </form>
+      </div>
+      <hr />
+      <a class="btn btn-white set_en_US" id="button_en_US"><img src="/img/flags/32/United-States.png"></a>
+      <a class="btn btn-white set_uk_UA" id="button_uk_UA"><img src="/img/flags/32/Ukraine.png"></a>
+      <p class="m-t"><small><span data-i18n="signupscreen.powered-by">Powered by</span> MonkeyMan &amp; HyperMouse</small> </p>
     </div>
+  </div>
+</div>
 %   } else {
-    <div class="middle-box text-center signupscreen animated fadeInDown">
-        <div>
-            <div>
-                <h1 class="logo-name"><span data-i18n="signupscreen.hi">Hi!</span></h1>
-            </div>
-            <h3><span data-i18n="signupscreen.welcome">Maitre d'Tucha is glad to meet you</span></h3>
-            <p><span data-i18n="signupscreen.please">Please, register an account</span></p>
-            <form class="m-t" role="form" action="/person/signup" method="POST">
-                <div class="form-group">
-                    <input type="text" class="form-control" data-i18n="[placeholder]signupform.full-name"
-                        placeholder="Full Name" required="" name="person_email">
-                </div>
-                <div class="form-group">
-                    <input type="email" class="form-control" data-i18n="[placeholder]signupform.email"
-                        placeholder="E-Mail Address" required="" name="person_password">
-                </div>
-                <button type="submit" class="btn btn-primary block full-width m-b"><span data-i18n="signupform.signup">Sign Up!</span></button>
-                <p class="text-muted text-center"><small><span data-i18n="signupscreen.have-account">Already have an account?</span></small></p>
-                <a class="btn btn-sm btn-white btn-block" href="/person/login"><span data-i18n="signupscreen.login">Log In</span></a>
-            </form>
-            <hr />
-            <a class="btn btn-white set_en_US" id="button_en_US"><img src="/img/flags/32/United-States.png"></a>
-            <a class="btn btn-white set_uk_UA" id="button_uk_UA"><img src="/img/flags/32/Ukraine.png"></a>
-            <p class="m-t"><small><span data-i18n="signupscreen.powered-by">Powered by</span> MonkeyMan &amp; HyperMouse</small> </p>
-        </div>
+<div class="middle-box text-center signupscreen animated fadeInDown">
+  <div>
+    <div>
+      <h1 class="logo-name"><span data-i18n="signupscreen.hi">Hi!</span></h1>
     </div>
+    <h3><span data-i18n="signupscreen.welcome">Maitre d'Tucha is glad to meet you</span></h3>
+    <p><span data-i18n="signupscreen.please">Please, register an account</span></p>
+    <form class="m-t" role="form" action="/person/signup" method="POST">
+      <div class="form-group">
+        <input type="text" class="form-control" data-i18n="[placeholder]signupform.full-name"
+          placeholder="Full Name" required="" name="person_email">
+      </div>
+      <div class="form-group">
+        <input type="email" class="form-control" data-i18n="[placeholder]signupform.email"
+          placeholder="E-Mail Address" required="" name="person_password">
+      </div>
+      <button type="submit" class="btn btn-primary block full-width m-b"><span data-i18n="signupform.signup">Sign Up!</span></button>
+      <p class="text-muted text-center"><small><span data-i18n="signupscreen.have-account">Already have an account?</span></small></p>
+      <a class="btn btn-sm btn-white btn-block" href="/person/login"><span data-i18n="signupscreen.login">Log In</span></a>
+    </form>
+    <hr />
+    <a class="btn btn-white set_en_US" id="button_en_US"><img src="/img/flags/32/United-States.png"></a>
+    <a class="btn btn-white set_uk_UA" id="button_uk_UA"><img src="/img/flags/32/Ukraine.png"></a>
+    <p class="m-t"><small><span data-i18n="signupscreen.powered-by">Powered by</span> MonkeyMan &amp; HyperMouse</small> </p>
+  </div>
+</div>
 %   }
 %   layout('unauthorized', title_message => 'Hello!', i18n_classes => [ qw/ signupscreen / ]);

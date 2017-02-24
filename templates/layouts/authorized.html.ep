@@ -1,6 +1,6 @@
 %   asset_required(qw/ js_pre jquery     100 /);
 %   asset_required(qw/ js_pre bootstrap  110 /);
-%   asset_required(qw/ js_pre i18next    120 /);
+%  #asset_required(qw/ js_pre i18next    120 /);
 %   asset_required(qw/ js_pre metismenu  200 /);
 %   asset_required(qw/ js_pre slimscroll 210 /);
 <!DOCTYPE html>

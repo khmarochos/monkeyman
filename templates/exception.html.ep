@@ -9,13 +9,13 @@
       <h3 class="font-bold">Internal Server Error</h3>
       <div class="error-desc">
         An internal error occuried during processing your request:
-        <p class="text-danger">
+        <pre class="text-danger">
 %       if($exception->message->isa('MonkeyMan::Exception')) {
 %=         $exception->message->get_message
 %       } else {
 %=         $exception
 %       }
-        </p>
+        </pre>
         <p class="text-muted">
           You don't need to perform any actions, as the maintainence team has already received the detailed report about the issue.
           We apologize and ask you to kindly return to the main page.
