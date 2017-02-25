@@ -57,7 +57,8 @@ method startup {
             },
             css_post    => {
                 animate         => [ qw! /css/animate.css                                   ! ],
-                style           => [ qw! /css/style.css                                     ! ]
+                style           => [ qw! /css/style.css                                     ! ],
+                maitre_d        => [ qw! /css/maitre-d.css                                  ! ]
             }
         }
     });

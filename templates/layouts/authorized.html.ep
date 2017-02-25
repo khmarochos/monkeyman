@@ -1,8 +1,15 @@
-%   asset_required(qw/ js_pre jquery     100 /);
-%   asset_required(qw/ js_pre bootstrap  110 /);
-%  #asset_required(qw/ js_pre i18next    120 /);
-%   asset_required(qw/ js_pre metismenu  200 /);
-%   asset_required(qw/ js_pre slimscroll 210 /);
+%   asset_required(qw/ css_pre  bootstrap   100 /);
+%   asset_required(qw/ css_pre  fontawesome 110 /);
+%   asset_required(qw/ css_post animate     100 /);
+%   asset_required(qw/ css_post style       110 /);
+%   asset_required(qw/ css_post maitre_d    666 /);
+%   asset_required(qw/ js_pre   jquery      100 /);
+%   asset_required(qw/ js_pre   bootstrap   110 /);
+%  #asset_required(qw/ js_pre   i18next     120 /);
+%   asset_required(qw/ js_pre   metismenu   200 /);
+%   asset_required(qw/ js_pre   slimscroll  210 /);
+%   asset_required(qw/ js_post  inspinia    100 /);
+%   asset_required(qw/ js_post  pace        110 /);
 <!DOCTYPE html>
 <html>
   <head>

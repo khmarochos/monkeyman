@@ -1,7 +1,3 @@
-%   asset_required(qw/ css_pre  bootstrap   100 /);
-%   asset_required(qw/ css_pre  fontawesome 110 /);
-%   asset_required(qw/ css_post animate     100 /);
-%   asset_required(qw/ css_post style       110 /);
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><%= title %></title>

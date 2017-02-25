@@ -1,6 +1,98 @@
 %   if(defined(my $token = param('token'))) {
-%       asset_required(qw/ js   steps 100 /);
-%       asset_required(qw/ css  steps 100 /);
+%       asset_required  (qw/ js       steps 100 /);
+%       asset_required  (qw/ css      steps 100 /);
+%       snippet_register(qw/ snippet  steps /, begin
+<script>
+    $(document).ready(function() {
+        $("#personal_data_wizard").steps({
+            bodyTag: "fieldset",
+            headerTag: "h1",
+            transitionEffect: "slideLeft"
+        });
+    });
+</script>
+%       end);
+%       snippet_register(qw/ snippet  emails /, begin
+<script>
+    function createGuid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random()*16|0;
+            var v = (c === 'x') ? r : (r&0x3|0x8);
+            return v.toString(16);
+        });
+    }
+    function email_field_create(field_value) {
+        var guid = createGuid();
+        var div = document.createElement("div");
+            div.setAttribute("id", "email_field_" + guid);
+            div.setAttribute("class", "form-group");
+        var div_input_group = document.createElement("div");
+            div_input_group.setAttribute("class", "input-group");
+            div.appendChild(div_input_group);
+        var input = document.createElement("input");
+            input.setAttribute("name", "email_" + guid);
+            input.setAttribute("type", "text");
+            input.setAttribute("class", "form-control required");
+            div_input_group.appendChild(input);
+        var div_input_group_btn = document.createElement("div");
+            div_input_group_btn.setAttribute("class", "input-group-btn");
+            div_input_group.appendChild(div_input_group_btn);
+        var button_append = document.createElement("button");
+            button_append.setAttribute("id", "button_append_" + guid);
+            button_append.setAttribute("type", "button");
+            button_append.setAttribute("class", "btn btn-primary");
+            button_append.setAttribute("onclick", "email_field_append(\"" + guid + "\")");
+            div_input_group_btn.appendChild(button_append);
+        var i_plus = document.createElement("i");
+            i_plus.setAttribute("class", "fa fa-plus");
+            button_append.appendChild(i_plus);
+        var button_remove = document.createElement("button");
+            button_remove.setAttribute("id", "button_remove_" + guid);
+            button_remove.setAttribute("type", "button");
+            button_remove.setAttribute("class", "btn btn-primary");
+            button_remove.setAttribute("onclick", "email_field_remove(\"" + guid + "\")");
+            div_input_group_btn.appendChild(button_remove);
+        var i_minus = document.createElement("i");
+            i_minus.setAttribute("class", "fa fa-minus");
+            button_remove.appendChild(i_minus);
+        return(div);
+    }
+    function email_field_append(element_id, field_value) {
+        var email_field_sibling = document.getElementById("email_field_" + element_id);
+        var email_field_created = email_field_create(field_value);
+        if(typeof(email_field_sibling) !== 'undefined' && email_field_sibling !== null) {
+            document.getElementById("emails").insertBefore(email_field_created, email_field_sibling.nextSibling);
+        } else {
+            document.getElementById("emails").appendChild(email_field_created);
+        }
+        buttons_enable_disable();
+    }
+    function email_field_remove(element_id) {
+        $("#email_field_" + element_id).remove();
+        buttons_enable_disable();
+    }
+    function buttons_enable_disable() {
+        var buttons = Array.from($("button[id^=button_remove_]"));
+        var buttons_length = buttons.length;
+        if(buttons_length > 1) {
+            buttons.forEach(function(button) {
+                button = jQuery(button);
+                button.removeClass("disabled");
+                button.attr("onclick", "email_field_remove(\"" + button.attr("id").substr(14, 36) + "\")");
+            });
+        } else if(buttons_length === 1) {
+            var button = jQuery(buttons[0]);
+            button.addClass("disabled");
+            button.removeAttr("onclick");
+        } else {
+            console.error("How on earth have they managed to remove the last button? :-)");
+        }
+    }
+    $(document).ready(function() {
+        email_field_append();
+    });
+</script>
+%       end);
 <div class="wrapper wrapper-content animated fadeInRight signupscreen">
   <div>
     <div class="ibox col-md-6 col-md-offset-3">
@@ -13,94 +105,51 @@
           Please, confirm your account by filling the form below.
           Some fields are required, some are not, so you could provide us with the information later.
         </p>
-        <form id="personal_data" action="#" class="wizard-big wizard clearfix" role="application" novalidate="novalidate">
-          <div class="steps clearfix">
-            <ul role="tablist">
-              <li role="tab" class="first current" aria-disabled="false" aria-selected="true">
-                <a id="form-t-1" href="#form-h-1" aria-controls="form-p-1">
-                  <span class="number">1.</span> Name
-                </a>
-              </li>
-              <li role="tab" class="disabled" aria-disabled="true">
-                <a id="form-t-2" href="#form-h-2" aria-controls="form-p-2">
-                  <span class="number">2.</span> E-Mail
-                </a>
-              </li>
-              <li role="tab" class="disabled" aria-disabled="true">
-                <a id="form-t-3" href="#form-h-3" aria-controls="form-p-3">
-                  <span class="number">3.</span> Phone
-                </a>
-              </li>
-              <li role="tab" class="disabled" aria-disabled="true">
-                <a id="form-t-4" href="#form-h-4" aria-controls="form-p-4">
-                  <span class="number">4.</span> Documents
-                </a>
-              </li>
-              <li role="tab" class="disabled" aria-disabled="true">
-                <a id="form-t-5" href="#form-h-5" aria-controls="form-p-5">
-                  <span class="number">5.</span> Extra Info
-                </a>
-              </li>
-              <li role="tab" class="disabled last" aria-disabled="true">
-                <a id="form-t-6" href="#form-h-6" aria-controls="form-p-6">
-                  <span class="number">6.</span> Preferences
-                </a>
-              </li>
-              <li role="tab" class="disabled last" aria-disabled="true">
-                <a id="form-t-7" href="#form-h-7" aria-controls="form-p-7">
-                  <span class="number">7.</span> Password
-                </a>
-              </li>
-              <li role="tab" class="disabled last" aria-disabled="true">
-                <a id="form-t-8" href="#form-h-8" aria-controls="form-p-8">
-                  <span class="number">8.</span> Finish
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div class="content clearfix">
-            <h1 id="form-h-1" tabindex="-1" class="title current">Name</h1>
-            <fieldset id="form-p-1" role="tabpanel" aria-labelledby="form-h-1" class="body current" aria-hidden="false">
-              <h2>Full Name</h2>
-              <div class="row">
-                <div class="col-lg-8">
-                  <div class="form-group">
-                    <label>First (Given) Name *</label>
-                    <input id="first_name" name="first_name" type="text" class="form-control required" aria-required="true">
-                  </div>
-                  <div class="form-group">
-                    <label>Middle Name</label>
-                    <input id="middle_name" name="middle_name" class="form-control" type="text">
-                  </div>
-                  <div class="form-group">
-                    <label>Last (Family) Name *</label>
-                    <input id="last_name" name="last_name" type="text" class="form-control required" aria-required="true">
-                  </div>
+        <form id="personal_data_wizard" action="#" class="wizard">
+          <h1>Full Name</h1>
+          <fieldset>
+            <div class="row">
+              <div class="col-lg-8">
+                <div class="form-group">
+                  <label>First (Given) Name *</label>
+                  <input id="first_name" name="first_name" type="text" class="form-control required" aria-required="true">
                 </div>
-                <div class="col-lg-4">
-                  <div class="text-center">
-                    <div style="margin-top: 20px">
-                      <i class="fa fa-sign-in" style="font-size: 180px;color: #e5e5e5 "></i>
-                    </div>
+                <div class="form-group">
+                  <label>Middle Name</label>
+                  <input id="middle_name" name="middle_name" class="form-control" type="text">
+                </div>
+                <div class="form-group">
+                  <label>Last (Family) Name *</label>
+                  <input id="last_name" name="last_name" type="text" class="form-control required">
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="text-center">
+                  <div style="margin-top: 20px">
+                    <i class="fa fa-sign-in" style="font-size: 180px;color: #e5e5e5 "></i>
                   </div>
                 </div>
               </div>
-            </fieldset>
-          </div>
-        <div class="actions clearfix">
-          <ul role="menu" aria-label="Pagination">
-            <li class="disabled" aria-disabled="true">
-              <a href="#previous" role="menuitem">Previous</a>
-            </li>
-            <li aria-hidden="false" aria-disabled="false">
-              <a href="#next" role="menuitem">Next</a>
-            </li>
-            <li aria-hidden="true" style="display: none;">
-              <a href="#finish" role="menuitem">Finish</a>
-            </li>
-          </ul>
-        </div>
-      </form>
+            </div>
+          </fieldset>
+          <h1>E-Mail</h1>
+          <fieldset>
+            <div class="row">
+              <div class="col-lg-8">
+                <label>E-Mail Addresses:</label>
+                <div class="form-group" id="emails">
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="text-center">
+                  <div style="margin-top: 20px">
+                    <i class="fa fa-sign-in" style="font-size: 180px;color: #e5e5e5 "></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        </form>
       </div>
       <hr />
       <a class="btn btn-white set_en_US" id="button_en_US"><img src="/img/flags/32/United-States.png"></a>
