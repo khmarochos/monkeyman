@@ -35,6 +35,7 @@ method startup {
                 slimscroll      => [ qw! /js/plugins/slimscroll/jquery.slimscroll.min.js    ! ]
             },
             js          => {
+                multifields     => [ qw! /js/plugins/multiFields/multiFields.js             ! ],
                 steps           => [ qw! /js/plugins/steps/jquery.steps.min.js              ! ],
                 datatables      => [ qw! /js/plugins/dataTables/datatables.min.js           ! ],
                 toastr          => [ qw! /js/plugins/toastr/toastr.min.js                   ! ]

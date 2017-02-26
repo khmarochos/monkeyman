@@ -6,6 +6,7 @@
 %   asset_required(qw/ js_pre   jquery      100 /);
 %   asset_required(qw/ js_pre   bootstrap   110 /);
 %   asset_required(qw/ js_pre   i18next     120 /);
+%   asset_required(qw/ js       multifields 100 /);
 %   asset_required(qw/ js_post  pace        110 /);
 %
 %   include('snippets/i18n', language_selected => exists(session->{'language_code'}) ? session->{'language_code'} : 'en_US');

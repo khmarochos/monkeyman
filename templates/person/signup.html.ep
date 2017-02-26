@@ -14,6 +14,7 @@
 %       end);
 %       snippet_register(qw/ snippet  emails /, begin
 <script>
+    /*
     function createGuid() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
             var r = Math.random()*16|0;
@@ -30,6 +31,7 @@
             div_input_group.setAttribute("class", "input-group");
             div.appendChild(div_input_group);
         var input = document.createElement("input");
+            input.setAttribute("id", "input_" + guid);
             input.setAttribute("name", "email_" + guid);
             input.setAttribute("type", "text");
             input.setAttribute("class", "form-control required");
@@ -65,31 +67,37 @@
         } else {
             document.getElementById("emails").appendChild(email_field_created);
         }
+        email_field_created.querySelectorAll('input[type="text"]')[0].focus();
         buttons_enable_disable();
     }
     function email_field_remove(element_id) {
-        $("#email_field_" + element_id).remove();
+        var element = document.getElementById("email_field_" + element_id);
+        element.parentNode.removeChild(element);
         buttons_enable_disable();
     }
     function buttons_enable_disable() {
-        var buttons = Array.from($("button[id^=button_remove_]"));
+        var buttons = Array.from(document.querySelectorAll('button[id^="button_remove_"]'));
         var buttons_length = buttons.length;
         if(buttons_length > 1) {
             buttons.forEach(function(button) {
-                button = jQuery(button);
-                button.removeClass("disabled");
-                button.attr("onclick", "email_field_remove(\"" + button.attr("id").substr(14, 36) + "\")");
+                button.classList.remove("disabled");
+                button.setAttribute("onclick", "email_field_remove(\"" + button.id.substr(14, 36) + "\")");
             });
         } else if(buttons_length === 1) {
-            var button = jQuery(buttons[0]);
-            button.addClass("disabled");
-            button.removeAttr("onclick");
+            button = buttons[0];
+            button.className += " disabled"
+            button.removeAttribute("onclick");
         } else {
             console.error("How on earth have they managed to remove the last button? :-)");
         }
     }
+    */
     $(document).ready(function() {
-        email_field_append();
+        // email_field_append();
+        var mf = new MultiFields();
+        mf.field_prefix = "email";
+        mf.id_container = "emails";
+        mf.fieldAppend();
     });
 </script>
 %       end);
@@ -112,7 +120,7 @@
               <div class="col-lg-8">
                 <div class="form-group">
                   <label>First (Given) Name *</label>
-                  <input id="first_name" name="first_name" type="text" class="form-control required" aria-required="true">
+                  <input id="first_name" name="first_name" type="text" class="form-control required">
                 </div>
                 <div class="form-group">
                   <label>Middle Name</label>
