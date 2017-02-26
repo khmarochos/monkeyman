@@ -1,28 +1,32 @@
 (function() {
 
-    this.MultiFields = function() {
+    this.MultiFields = function(init) {
 
-        this.field_prefix = null;
-        this.id_container = null;
+        this.id_container = init.id_container;
+        this.field_prefix = init.field_prefix;
+        this.field_type   = init.field_type;
 
         var that = this;
 
-        MultiFields.prototype.fieldAppend = function(element_id, field_value) {
-            var field_sibling = document.getElementById("multiform_" + this.field_prefix + "_div_" + element_id);
+        MultiFields.prototype.fieldAppend = function(append_after, field_value) {
+            var field_sibling = document.getElementById(composeId("div", append_after));
             var field_created = fieldCreate(field_value);
             if(typeof(field_sibling) !== 'undefined' && field_sibling !== null) {
                 document.getElementById(this.id_container).insertBefore(field_created, field_sibling.nextSibling);
             } else {
                 document.getElementById(this.id_container).appendChild(field_created);
             }
-            field_created.querySelectorAll('input[type="text"]')[0].focus();
-            // this.buttonsEnableDisable();
+            field_created.querySelectorAll('input[type="' + this.field_type + '"]')[0].focus();
+            buttonsEnableDisable();
         }
 
         MultiFields.prototype.fieldRemove = function(element_id) {
-            var element = document.getElementById("multiform_" + this.field_prefix + "_div_" + element_id);
-            element.parentNode.removeChild(element);
-            // this.buttonsEnableDisable();
+            var element_div     = document.getElementById(composeId("div", element_id));
+            var element_button  = document.getElementById(composeId("button_remove", element_id));
+            if(element_button.classList.contains("disabled") !== true) {
+                element_div.parentNode.removeChild(element_div);
+                buttonsEnableDisable();
+            }
         }
 
         function createGuid() {
@@ -34,11 +38,11 @@
         }
 
         function fieldCreate(field_value) {
-            var guid = createGuid();
-            var id_div            = "multifield_" + that.field_prefix + "_div_" + guid;
-            var id_input          = "multifield_" + that.field_prefix + "_input_" + guid;
-            var id_button_append  = "multifield_" + that.field_prefix + "_button_append_" + guid;
-            var id_button_remove  = "multifield_" + that.field_prefix + "_button_remove_" + guid;
+            var guid              = createGuid();
+            var id_div            = composeId("div", guid);
+            var id_input          = composeId("input", guid);
+            var id_button_append  = composeId("button_append", guid);
+            var id_button_remove  = composeId("button_remove", guid);
             var div = document.createElement("div");
                 div.setAttribute("id", id_div);
                 div.setAttribute("class", "form-group");
@@ -48,7 +52,7 @@
             var input = document.createElement("input");
                 input.setAttribute("id", id_input);
                 input.setAttribute("name", that.field_prefix + "_" + guid);
-                input.setAttribute("type", "text");
+                input.setAttribute("type", that.field_type);
                 input.setAttribute("class", "form-control required");
                 div_input_group.appendChild(input);
             var div_input_group_btn = document.createElement("div");
@@ -58,7 +62,7 @@
                 button_append.setAttribute("id", id_button_append);
                 button_append.setAttribute("type", "button");
                 button_append.setAttribute("class", "btn btn-primary");
-                button_append.addEventListener("click", that.fieldAppend);
+                button_append.addEventListener("click", function() { that.fieldAppend(guid) });
                 div_input_group_btn.appendChild(button_append);
             var i_plus = document.createElement("i");
                 i_plus.setAttribute("class", "fa fa-plus");
@@ -67,7 +71,7 @@
                 button_remove.setAttribute("id", id_button_remove);
                 button_remove.setAttribute("type", "button");
                 button_remove.setAttribute("class", "btn btn-primary");
-                //button_remove.onclick = that.fieldRemove(guid);
+                button_remove.addEventListener("click", function() { that.fieldRemove(guid) });
                 div_input_group_btn.appendChild(button_remove);
             var i_minus = document.createElement("i");
                 i_minus.setAttribute("class", "fa fa-minus");
@@ -75,24 +79,22 @@
             return(div);
         }
 
-        /*
         function buttonsEnableDisable() {
-            var buttons = Array.from(document.querySelectorAll('button[id^="button_remove_"]'));
+            var buttons = Array.from(document.querySelectorAll("button[id^=" + composeId("button_remove", "") + "]"));
             var buttons_length = buttons.length;
             if(buttons_length > 1) {
-                buttons.forEach(function(button) {
-                    button.classList.remove("disabled");
-                    button.setAttribute("onclick", "email_field_remove(\"" + button.id.substr(14, 36) + "\")");
-                });
+                buttons.forEach(function(button) { button.classList.remove("disabled"); });
             } else if(buttons_length === 1) {
                 button = buttons[0];
-                button.className += " disabled"
-                button.removeAttribute("onclick");
+                button.className += " disabled";
             } else {
                 console.error("How on earth have they managed to remove the last button? :-)");
             }
         }
-        */
+
+        function composeId(type, guid) {
+            return("multifield_" + that.field_prefix + "_" + type + "_" + guid);
+        }
 
     }
 

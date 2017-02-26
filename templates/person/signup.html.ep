@@ -14,90 +14,12 @@
 %       end);
 %       snippet_register(qw/ snippet  emails /, begin
 <script>
-    /*
-    function createGuid() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random()*16|0;
-            var v = (c === 'x') ? r : (r&0x3|0x8);
-            return v.toString(16);
-        });
-    }
-    function email_field_create(field_value) {
-        var guid = createGuid();
-        var div = document.createElement("div");
-            div.setAttribute("id", "email_field_" + guid);
-            div.setAttribute("class", "form-group");
-        var div_input_group = document.createElement("div");
-            div_input_group.setAttribute("class", "input-group");
-            div.appendChild(div_input_group);
-        var input = document.createElement("input");
-            input.setAttribute("id", "input_" + guid);
-            input.setAttribute("name", "email_" + guid);
-            input.setAttribute("type", "text");
-            input.setAttribute("class", "form-control required");
-            div_input_group.appendChild(input);
-        var div_input_group_btn = document.createElement("div");
-            div_input_group_btn.setAttribute("class", "input-group-btn");
-            div_input_group.appendChild(div_input_group_btn);
-        var button_append = document.createElement("button");
-            button_append.setAttribute("id", "button_append_" + guid);
-            button_append.setAttribute("type", "button");
-            button_append.setAttribute("class", "btn btn-primary");
-            button_append.setAttribute("onclick", "email_field_append(\"" + guid + "\")");
-            div_input_group_btn.appendChild(button_append);
-        var i_plus = document.createElement("i");
-            i_plus.setAttribute("class", "fa fa-plus");
-            button_append.appendChild(i_plus);
-        var button_remove = document.createElement("button");
-            button_remove.setAttribute("id", "button_remove_" + guid);
-            button_remove.setAttribute("type", "button");
-            button_remove.setAttribute("class", "btn btn-primary");
-            button_remove.setAttribute("onclick", "email_field_remove(\"" + guid + "\")");
-            div_input_group_btn.appendChild(button_remove);
-        var i_minus = document.createElement("i");
-            i_minus.setAttribute("class", "fa fa-minus");
-            button_remove.appendChild(i_minus);
-        return(div);
-    }
-    function email_field_append(element_id, field_value) {
-        var email_field_sibling = document.getElementById("email_field_" + element_id);
-        var email_field_created = email_field_create(field_value);
-        if(typeof(email_field_sibling) !== 'undefined' && email_field_sibling !== null) {
-            document.getElementById("emails").insertBefore(email_field_created, email_field_sibling.nextSibling);
-        } else {
-            document.getElementById("emails").appendChild(email_field_created);
-        }
-        email_field_created.querySelectorAll('input[type="text"]')[0].focus();
-        buttons_enable_disable();
-    }
-    function email_field_remove(element_id) {
-        var element = document.getElementById("email_field_" + element_id);
-        element.parentNode.removeChild(element);
-        buttons_enable_disable();
-    }
-    function buttons_enable_disable() {
-        var buttons = Array.from(document.querySelectorAll('button[id^="button_remove_"]'));
-        var buttons_length = buttons.length;
-        if(buttons_length > 1) {
-            buttons.forEach(function(button) {
-                button.classList.remove("disabled");
-                button.setAttribute("onclick", "email_field_remove(\"" + button.id.substr(14, 36) + "\")");
-            });
-        } else if(buttons_length === 1) {
-            button = buttons[0];
-            button.className += " disabled"
-            button.removeAttribute("onclick");
-        } else {
-            console.error("How on earth have they managed to remove the last button? :-)");
-        }
-    }
-    */
     $(document).ready(function() {
         // email_field_append();
-        var mf = new MultiFields();
-        mf.field_prefix = "email";
-        mf.id_container = "emails";
-        mf.fieldAppend();
+        var mf_emails = new MultiFields({ id_container: "emails", field_prefix: "email", field_type: "email" });
+        mf_emails.fieldAppend();                                                        
+        var mf_phones = new MultiFields({ id_container: "phones", field_prefix: "phone", field_type: "phone" });
+        mf_phones.fieldAppend();
     });
 </script>
 %       end);
@@ -146,6 +68,23 @@
               <div class="col-lg-8">
                 <label>E-Mail Addresses:</label>
                 <div class="form-group" id="emails">
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="text-center">
+                  <div style="margin-top: 20px">
+                    <i class="fa fa-sign-in" style="font-size: 180px;color: #e5e5e5 "></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+          <h1>Phone</h1>
+          <fieldset>
+            <div class="row">
+              <div class="col-lg-8">
+                <label>Phone Numbers:</label>
+                <div class="form-group" id="phones">
                 </div>
               </div>
               <div class="col-lg-4">
