@@ -142,7 +142,7 @@ method snippet_required(
     Object          $controller!,
     Str             $snippet_type!,
     Str             $snippet_alias?,
-    Maybe[Bool]     $order?
+    Maybe[Int]      $order?
 ) {
     $self->_required(
         library         => $self->_get_snippets_library,

@@ -11,7 +11,7 @@
         });
     });
 </script>
-%       end);
+%       end, 200);
 %       snippet_register(qw/ snippet  emails /, begin
 <script>
     $(document).ready(function() {
@@ -22,7 +22,7 @@
         mf_phones.fieldAppend();
     });
 </script>
-%       end);
+%       end, 210);
 <div class="wrapper wrapper-content animated fadeInRight signupscreen">
   <div>
     <div class="ibox col-md-6 col-md-offset-3">

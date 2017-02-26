@@ -1,6 +1,6 @@
-(function() {
+(function(window) {
 
-    this.MultiFields = function(init) {
+    window.MultiFields = function(init) {
 
         this.id_container = init.id_container;
         this.field_prefix = init.field_prefix;
@@ -8,7 +8,7 @@
 
         var that = this;
 
-        MultiFields.prototype.fieldAppend = function(append_after, field_value) {
+        this.fieldAppend = function(append_after, field_value) {
             var field_sibling = document.getElementById(composeId("div", append_after));
             var field_created = fieldCreate(field_value);
             if(typeof(field_sibling) !== 'undefined' && field_sibling !== null) {
@@ -20,7 +20,7 @@
             buttonsEnableDisable();
         }
 
-        MultiFields.prototype.fieldRemove = function(element_id) {
+        this.fieldRemove = function(element_id) {
             var element_div     = document.getElementById(composeId("div", element_id));
             var element_button  = document.getElementById(composeId("button_remove", element_id));
             if(element_button.classList.contains("disabled") !== true) {
@@ -98,4 +98,4 @@
 
     }
 
-})();
+})(window);
