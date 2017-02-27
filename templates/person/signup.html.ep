@@ -1,17 +1,19 @@
 %   if(defined(my $token = param('token'))) {
-%       asset_required  (qw/ js       steps 100 /);
-%       asset_required  (qw/ css      steps 100 /);
-%       snippet_register(qw/ snippet  steps /, begin
+%       asset_required  (qw/ css      steps   100 /);
+%       asset_required  (qw/ css      chosen  100 /);
+%       asset_required  (qw/ js       steps   100 /);
+%       asset_required  (qw/ js       chosen  100 /);
+%       snippet_register(qw/ snippet  steps       /, begin
 <script>
     $(document).ready(function() {
         $("#personal_data_wizard").steps({
             bodyTag: "fieldset",
             headerTag: "h1",
-            transitionEffect: "slideLeft"
+            transitionEffect: "fade"
         });
     });
 </script>
-%       end, 200);
+%       end, -100);
 %       snippet_register(qw/ snippet  emails /, begin
 <script>
     $(document).ready(function() {
@@ -22,7 +24,14 @@
         mf_phones.fieldAppend();
     });
 </script>
-%       end, 210);
+%       end);
+%       snippet_register(qw/ snippet  chosen /, begin
+<script>
+    $(document).ready(function() {
+        $(".chosen-select").chosen()
+    });
+</script>
+%       end);
 <div class="wrapper wrapper-content animated fadeInRight signupscreen">
   <div>
     <div class="ibox col-md-6 col-md-offset-3">
@@ -38,7 +47,7 @@
         <form id="personal_data_wizard" action="#" class="wizard">
           <h1>Full Name</h1>
           <fieldset>
-            <div class="row">
+            <div class="row h-300">
               <div class="col-lg-8">
                 <div class="form-group">
                   <label>First (Given) Name *</label>
@@ -56,7 +65,7 @@
               <div class="col-lg-4">
                 <div class="text-center">
                   <div style="margin-top: 20px">
-                    <i class="fa fa-sign-in" style="font-size: 180px;color: #e5e5e5 "></i>
+                    <i class="fa fa-id-card" style="font-size: 180px;color: #e5e5e5 "></i>
                   </div>
                 </div>
               </div>
@@ -64,7 +73,7 @@
           </fieldset>
           <h1>E-Mail</h1>
           <fieldset>
-            <div class="row">
+            <div class="row h-300">
               <div class="col-lg-8">
                 <label>E-Mail Addresses:</label>
                 <div class="form-group" id="emails">
@@ -73,7 +82,7 @@
               <div class="col-lg-4">
                 <div class="text-center">
                   <div style="margin-top: 20px">
-                    <i class="fa fa-sign-in" style="font-size: 180px;color: #e5e5e5 "></i>
+                    <i class="fa fa-envelope" style="font-size: 180px;color: #e5e5e5 "></i>
                   </div>
                 </div>
               </div>
@@ -81,7 +90,7 @@
           </fieldset>
           <h1>Phone</h1>
           <fieldset>
-            <div class="row">
+            <div class="row h-300">
               <div class="col-lg-8">
                 <label>Phone Numbers:</label>
                 <div class="form-group" id="phones">
@@ -90,7 +99,59 @@
               <div class="col-lg-4">
                 <div class="text-center">
                   <div style="margin-top: 20px">
-                    <i class="fa fa-sign-in" style="font-size: 180px;color: #e5e5e5 "></i>
+                    <i class="fa fa-phone" style="font-size: 180px;color: #e5e5e5 "></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+          <h1>Password</h1>
+          <fieldset>
+            <div class="row h-300">
+              <div class="col-lg-8">
+                <div class="form-group">
+                  <label>Enter your password *</label>
+                  <input id="password_1" name="password_1" type="password" class="form-control required">
+                </div>
+                <div class="form-group">
+                  <label>Repeat your password *</label>
+                  <input id="password_2" name="password_2" type="password" class="form-control required">
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="text-center">
+                  <div style="margin-top: 20px">
+                    <i class="fa fa-lock" style="font-size: 180px;color: #e5e5e5 "></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+          <h1>Preferences</h1>
+          <fieldset>
+            <div class="row h-300">
+              <div class="col-lg-8">
+                <div class="form-group">
+                  <label>Language</label>
+                  <select data-placeholder="Choose Your Preferred Language" class="chosen-select">
+                    <option value="">Please, select</option>
+                    <option value="en_US">English (US)</option>
+                    <option value="uk_UA">Ukrainian</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Timezone</label>
+                  <input id="first_name" name="password_1" type="password" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label>How did you get to know about us?</label>
+                  <input id="first_name" name="password_1" type="password" class="form-control required">
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="text-center">
+                  <div style="margin-top: 20px">
+                    <i class="fa fa-lock" style="font-size: 180px;color: #e5e5e5 "></i>
                   </div>
                 </div>
               </div>

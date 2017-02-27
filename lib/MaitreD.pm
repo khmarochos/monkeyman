@@ -37,6 +37,7 @@ method startup {
             js          => {
                 multifields     => [ qw! /js/plugins/multiFields/multiFields.js             ! ],
                 steps           => [ qw! /js/plugins/steps/jquery.steps.min.js              ! ],
+                chosen          => [ qw! /js/plugins/chosen/chosen.jquery.js                ! ],
                 datatables      => [ qw! /js/plugins/dataTables/datatables.min.js           ! ],
                 toastr          => [ qw! /js/plugins/toastr/toastr.min.js                   ! ]
             },
@@ -51,6 +52,7 @@ method startup {
             css         => {
                 toastr          => [ qw! /css/plugins/toastr/toastr.min.css                 ! ],
                 steps           => [ qw! /css/plugins/steps/jquery.steps.css                ! ],
+                chosen          => [ qw! /css/plugins/chosen/bootstrap-chosen.css           ! ],
                 datatables      => [ qw! /css/plugins/dataTables/datatables.min.css         ! ],
                 datepicker      => [ qw! /css/plugins/datapicker/datepicker3.css            ! ],
                 summernote      => [ qw! /css/plugins/summernote/summernote.css
