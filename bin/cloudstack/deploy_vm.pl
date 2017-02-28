@@ -542,10 +542,14 @@ if($parameters->get_dry_run) {
         parameters  => \%deployment_parameters,
         requested   => { 'element' => 'element' }
     );
-    my $vm_id       =  $vm->get_id;
-    my $vm_password = ($vm->qxp(query => '/password', return_as => 'value'))[0];
+    my $vm_id       	=  $vm->get_id;
+    my $vm_password 	= ($vm->qxp(query => '/password',      return_as => 'value'))[0];
+    my @vm_ipaddresses	=  $vm->qxp(query => '/nic/ipaddress', return_as => 'value');
     printf(
-        "The virtual machine's ID is %s%s\n",
-        $vm_id, defined($vm_password) ? sprintf(', the password is %s', $vm_password) : ''
+        "The virtual machine's ID is %s, its %s %s%s\n",
+        $vm_id,
+        @vm_ipaddresses > 1 ? 'IP-addresses are' : 'IP-address is',
+        join(', ', @vm_ipaddresses),
+        defined($vm_password) ? sprintf(', the password is %s', $vm_password) : ''
     );
 }
