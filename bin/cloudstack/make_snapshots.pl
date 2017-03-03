@@ -254,6 +254,10 @@ THE_LOOP: while(1) {
 
             $snapshot_component_fresh->{'created'}      = $monkeyman->parse_time($snapshot_element->get_value('/created'));
             $snapshot_component_fresh->{'state'}        =                        $snapshot_element->get_value('/state');
+            $snapshot_component_fresh->{'noremove'}     =                        $snapshot_element->get_value('/tags[key="noremove"]/value');
+            $snapshot_component_fresh->{'noremove'}     = defined($snapshot_component_fresh->{'noremove'}) &&
+                                                                  $snapshot_component_fresh->{'noremove'} ?
+                                                                  1 : 0;
             $volume_component->{'last_time'}            = $snapshot_component_fresh->{'created'} > $volume_component->{'last_time'} ?
                                                           $snapshot_component_fresh->{'created'} : $volume_component->{'last_time'};
 
@@ -379,6 +383,8 @@ THE_LOOP: while(1) {
             foreach my $snapshot_id (
                 sort(
                     {
+                           $components->{'Snapshot'}->{'by-id'}->{ $b }->{'noremove'}
+                       <=> $components->{'Snapshot'}->{'by-id'}->{ $a }->{'noremove'} ||
                            $components->{'Snapshot'}->{'by-id'}->{ $b }->{'created'}
                        <=> $components->{'Snapshot'}->{'by-id'}->{ $a }->{'created'}
                     } (keys(%{ $snapshots_related_by_id }))
@@ -387,8 +393,16 @@ THE_LOOP: while(1) {
                 my $snapshot_component = $components->{'Snapshot'}->{'by-id'}->{ $snapshot_id };
                 if($snapshot_component->{'state'} eq 'BackedUp' && ++$snapshots_completed > $keep) {
                     my $snapshot_element = $snapshot_component->{'element'};
+                    my $noremove         = $snapshot_component->{'noremove'};
                     if($parameters->get_dry_run) {
                         $logger->infof("Pretending like we're removing the %s snapshot (%s) for the %s volume (%s)",
+                            $snapshot_id,
+                            $snapshot_element,
+                            $volume_id,
+                            $volume_element
+                        );
+                    } elsif($noremove) {
+                        $logger->infof("Skipping removal of the %s snapshot (%s) for the %s volume (%s), as it's tagged",
                             $snapshot_id,
                             $snapshot_element,
                             $volume_id,
