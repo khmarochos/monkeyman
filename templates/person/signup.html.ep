@@ -1,8 +1,8 @@
 %   if(defined(my $token = param('token'))) {
 %       asset_required  (qw/ css      steps   100 /);
-%       asset_required  (qw/ css      chosen  100 /);
+%       asset_required  (qw/ css      select2 100 /);
 %       asset_required  (qw/ js       steps   100 /);
-%       asset_required  (qw/ js       chosen  100 /);
+%       asset_required  (qw/ js       select2 100 /);
 %       snippet_register(qw/ snippet  steps       /, begin
 <script>
     $(document).ready(function() {
@@ -25,54 +25,49 @@
     });
 </script>
 %       end);
-%       snippet_register(qw/ snippet  chosen /, begin
-<script>
-    $(document).ready(function() {
-        $('.chosen-select').chosen()
-    });
-</script>
-%       end);
 %       snippet_register(qw/ snippet  timezone /, begin
 <script>
     $(document).ready(function() {
 
-        var timezones;
+        select2_area = $('#timezone_area').select2({ width: '100%' });
+        select2_city = $('#timezone_city').select2({ width: '100%' });
 
-        function update_timezones(timezones_loaded, category_selected) {
+        var timezones;
+        var timezone_detected = Intl.DateTimeFormat().resolvedOptions().timeZone.split('/');
+
+        function update_timezones(timezones_loaded, area_selected) {
             if(timezones === undefined) {
+                $('#timezone_city').attr('disabled', true);
                 $.get('/ajax/timezone/*/*', function(data) { timezones = data.timezones; update_timezones(1, 0); }, 'json');
             }
 
             if(timezones_loaded) {
-                $('#timezone_category option').remove();
-                $('#timezone_category').append($('<option>', { value: '', text: 'Please, select' }));
-                Object.keys(timezones).forEach(function(category) {
-                    $('#timezone_category').append($('<option>', { value: category, text: category }));
+                $('#timezone_area option').remove();
+                $('#timezone_city').attr('disabled', false);
+                Object.keys(timezones).forEach(function(area) {
+                    $('#timezone_area').append($('<option>', { value: area, text: area }));
                 });
-                $('#timezone_category').trigger('chosen:updated');
-                category_selected = 1;
+                area_selected = 1;
             }
 
-            if(category_selected) {
-                var category_selected = $('#timezone_category option:selected').val();
-                $('#timezone_zone option').remove();
-                if(category_selected == '') {
-                    $('#timezone_zone').attr('disabled', true).trigger('chosen:updated');
-                    $('#timezone_zone').append($('<option>', { value: '', text: 'Not yet!' }));
-                } else {
-                    $('#timezone_zone').attr('disabled', false).trigger('chosen:updated');
-                    $('#timezone_zone').append($('<option>', { value: '', text: 'Please, select' }));
-                    Object.keys(timezones[category_selected]).forEach(function(zone) {
-                        $('#timezone_zone').append($('<option>', { value: zone, text: zone }));
-                    });
-                }
-                $('#timezone_zone').trigger('chosen:updated');
+            if(area_selected) {
+                var area = $('#timezone_area option:selected').val();
+                $('#timezone_city option').remove();
+                $('#timezone_city').attr('disabled', false);
+                Object.keys(timezones[area]).forEach(function(city) {
+                    $('#timezone_city').append($('<option>', { value: city, text: city }));
+                });
+            }
+
+            if(timezones_loaded) {
+                select2_area.val(timezone_detected[0]).trigger('change');
+                select2_city.val(timezone_detected[1]).trigger('change');
             }
         }
 
         update_timezones(0, 0);
 
-        $('#timezone_category').change(function() { update_timezones(0, 1); });
+        $('#timezone_area').change(function() { update_timezones(0, 1); });
 
     });
 </script>
@@ -178,7 +173,7 @@
               <div class="col-lg-8">
                 <div class="form-group">
                   <label>Language</label>
-                  <select data-placeholder="Choose Your Preferred Language" class="chosen-select">
+                  <select data-placeholder="Choose Your Preferred Language" class="select2-select">
                     <option value="">Please, select</option>
                     <option value="en_US">English (US)</option>
                     <option value="uk_UA">Ukrainian</option>
@@ -188,14 +183,10 @@
                   <label>Timezone</label>
                   <div class="row">
                     <div class="col-md-6">
-                      <select data-placeholder="Choose Your Time Zone" class="chosen-select" id="timezone_category">
-                        <option value="">Please, select</option>
-                      </select>
+                      <select data-placeholder="Choose Your Time Zone" class="select2-select" id="timezone_area"></select>
                     </div>
                     <div class="col-md-6">
-                      <select data-placeholder="Choose Your Time Zone" class="chosen-select" id="timezone_zone">
-                        <option value="">Not yet...</option>
-                      </select>
+                      <select data-placeholder="Choose Your Time Zone" class="select2-select" id="timezone_city"></select>
                     </div>
                   </div>
                 </div>

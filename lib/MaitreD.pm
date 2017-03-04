@@ -37,7 +37,8 @@ method startup {
             js          => {
                 multifields     => [ qw! /js/plugins/multiFields/multiFields.js             ! ],
                 steps           => [ qw! /js/plugins/steps/jquery.steps.min.js              ! ],
-                chosen          => [ qw! /js/plugins/chosen/chosen.jquery.js                ! ],
+                chosen          => [ qw! /js/plugins/chosen/chosen.jquery.js                ! ], #FIXME: to be removed
+                select2         => [ qw! /js/plugins/select2/select2.min.js                 ! ],
                 datatables      => [ qw! /js/plugins/dataTables/datatables.min.js           ! ],
                 toastr          => [ qw! /js/plugins/toastr/toastr.min.js                   ! ]
             },
@@ -52,7 +53,8 @@ method startup {
             css         => {
                 toastr          => [ qw! /css/plugins/toastr/toastr.min.css                 ! ],
                 steps           => [ qw! /css/plugins/steps/jquery.steps.css                ! ],
-                chosen          => [ qw! /css/plugins/chosen/bootstrap-chosen.css           ! ],
+                chosen          => [ qw! /css/plugins/chosen/bootstrap-chosen.css           ! ], #FIXME: to be removed
+                select2         => [ qw! /css/plugins/select2/select2.min.css               ! ],
                 datatables      => [ qw! /css/plugins/dataTables/datatables.min.css         ! ],
                 datepicker      => [ qw! /css/plugins/datapicker/datepicker3.css            ! ],
                 summernote      => [ qw! /css/plugins/summernote/summernote.css
@@ -75,12 +77,12 @@ method startup {
             ->post('/ajax/i18n')
                 ->to('ajax#i18n');
        $routes
-            ->get('/ajax/timezone/:category/:zone')
+            ->get('/ajax/timezone/:area/:city')
                 ->to(
                     controller  => 'ajax',
                     action      => 'list_timezones',
-                    category    => '*',
-                    zone        => '*'
+                    area        => '*',
+                    city        => '*'
                 );
        $routes
             ->any('/person/login')

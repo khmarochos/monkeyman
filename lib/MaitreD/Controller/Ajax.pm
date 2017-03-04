@@ -25,12 +25,12 @@ method i18n {
 
 
 method list_timezones {
-    my $m_category  = $self->stash('category');
-    my $m_zone      = $self->stash('zone');
+    my $m_area      = $self->stash('area');
+    my $m_city      = $self->stash('city');
     my $timezones   = {};
-    foreach my $category (match_glob($m_category,    @DateTime::TimeZone::Catalog::CATEGORY_NAMES)) {
-        foreach my $zone (match_glob($m_zone,     @{ $DateTime::TimeZone::Catalog::CATEGORIES{ $category } })) {
-            $timezones->{ $category }->{ $zone } = 1;
+    foreach     my $area (match_glob($m_area,    @DateTime::TimeZone::Catalog::CATEGORY_NAMES)) {
+        foreach my $city (match_glob($m_city, @{ $DateTime::TimeZone::Catalog::CATEGORIES{ $area } })) {
+            $timezones->{ $area }->{ $city } = 1;
         }
     }
     $self->render(json => { timezones => $timezones });
