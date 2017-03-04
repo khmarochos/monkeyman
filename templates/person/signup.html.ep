@@ -32,6 +32,44 @@
     });
 </script>
 %       end);
+%       snippet_register(qw/ snippet  timezone /, begin
+<script>
+    $(document).ready(function() {
+        var timezones;
+        function update_timezones(timezones_loaded, category_selected) {
+            if(timezones === undefined) {
+                $.get('/ajax/timezone/*/*', function(data) { timezones = data.timezones; update_timezones(1, 0); }, 'json');
+            }
+
+            if(timezones_loaded) {
+                $("#timezone_category option").remove();
+                $("#timezone_category").append($('<option>', { value: "", text: "Please, select" }));
+                Object.keys(timezones).forEach(function(category) {
+                    $("#timezone_category").append($('<option>', { value: category, text: category }));
+                });
+                $("#timezone_category").trigger("chosen:updated");
+                category_selected = 1;
+            }
+
+            if(category_selected) {
+                var category_selected = $("#timezone_category option:selected").val();
+                $("#timezone_zone option").remove();
+                if(category_selected == "") {
+                    $("#timezone_zone").append($('<option>', { value: "", text: "Not yet!" }));
+                } else {
+                    $("#timezone_zone").append($('<option>', { value: "", text: "Please, select" }));
+                    Object.keys(timezones[category_selected]).forEach(function(zone) {
+                        $("#timezone_zone").append($('<option>', { value: zone, text: zone }));
+                    });
+                }
+                $("#timezone_zone").trigger("chosen:updated");
+            }
+        }
+        update_timezones(0, 0);
+        $("#timezone_category").change(function() { update_timezones(0, 1); });
+    });
+</script>
+%       end);
 <div class="wrapper wrapper-content animated fadeInRight signupscreen">
   <div>
     <div class="ibox col-md-6 col-md-offset-3">
@@ -141,7 +179,18 @@
                 </div>
                 <div class="form-group">
                   <label>Timezone</label>
-                  <input id="first_name" name="password_1" type="password" class="form-control">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <select data-placeholder="Choose Your Time Zone" class="chosen-select" id="timezone_category">
+                        <option value="">Please, select</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <select data-placeholder="Choose Your Time Zone" class="chosen-select" id="timezone_zone">
+                        <option value="">Not yet...</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label>How did you get to know about us?</label>

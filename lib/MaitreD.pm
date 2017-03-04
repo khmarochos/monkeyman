@@ -70,10 +70,22 @@ method startup {
     $self->helper(hm_schema     => sub { shift->app->_hypermouse->get_schema });
     $self->helper(hm_logger     => sub { shift->app->_hypermouse->get_logger });
 
-    my $routes_unauthenticated = $self->routes;
-       $routes_unauthenticated->any('/ajax/i18n')->to('ajax#i18n');
-       $routes_unauthenticated->any('/person/login')->to('person#login');
-       $routes_unauthenticated
+    my $routes = $self->routes;
+       $routes
+            ->post('/ajax/i18n')
+                ->to('ajax#i18n');
+       $routes
+            ->get('/ajax/timezone/:category/:zone')
+                ->to(
+                    controller  => 'ajax',
+                    action      => 'list_timezones',
+                    category    => '*',
+                    zone        => '*'
+                );
+       $routes
+            ->any('/person/login')
+                ->to('person#login');
+       $routes
             ->any('/person/signup/:token')
                 ->to(
                     controller      => 'person',
@@ -81,9 +93,9 @@ method startup {
                     token           => undef
                 );
 
-    my $routes_authenticated = $self->routes->under->to('person#is_authenticated')
-                                            ->under->to('person#load_settings')
-                                            ->under->to('navigation#build_menu');
+    my $routes_authenticated = $routes->under->to('person#is_authenticated')
+                                      ->under->to('person#load_settings')
+                                      ->under->to('navigation#build_menu');
        $routes_authenticated
             ->get('/person/logout')
                 ->to(
