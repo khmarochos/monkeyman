@@ -81,8 +81,12 @@
 %       snippet_register(qw/ snippet  location /, begin
 <script>
     $(document).ready(function() {
+        $.get('http://ip-api.com/json/', function(data) {
+                  $('#latitude').val(data.lat);
+                $('#longtitude').val(data.lon);
+        }, 'json');
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function() {
+            navigator.geolocation.getCurrentPosition(function(position) {
                   $('#latitude').val(position.coords.latitude);
                 $('#longtitude').val(position.coords.longtitude);
             });
