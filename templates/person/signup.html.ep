@@ -87,6 +87,7 @@
         }, 'json');
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
+                console.debug(position.coords);
                   $('#latitude').val(position.coords.latitude);
                 $('#longtitude').val(position.coords.longtitude);
             });
