@@ -23,7 +23,7 @@
 %   foreach         my $asset_group   (qw/ js_pre js js_post /) {
 %       foreach     my $asset_alias   (asset_required($asset_group, '*')) {
 %           foreach my $asset_src     (asset_compiled($asset_group, $asset_alias)) {
-    <script src="<%= $asset_src %>"></script>
+    <script type="text/javascript" src="<%= $asset_src %>"></script>
 %           }
 %       }
 %   }

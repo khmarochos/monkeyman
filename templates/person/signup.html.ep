@@ -1,9 +1,11 @@
 %   if(defined(my $token = param('token'))) {
-%       asset_required  (qw/ css      steps   100 /);
-%       asset_required  (qw/ css      select2 100 /);
-%       asset_required  (qw/ js       steps   100 /);
-%       asset_required  (qw/ js       select2 100 /);
-%       snippet_register(qw/ snippet  steps       /, begin
+%       asset_required  (qw/ css      steps           100 /);
+%       asset_required  (qw/ css      select2         100 /);
+%       asset_required  (qw/ js       steps           100 /);
+%       asset_required  (qw/ js       select2         100 /);
+%       asset_required  (qw/ js       googleMaps      100 /);
+%       asset_required  (qw/ js       locationPicker  110 /);
+%       snippet_register(qw/ snippet  steps               /, begin
 <script>
     $(document).ready(function() {
         $('#personal_data_wizard').steps({
@@ -14,7 +16,7 @@
     });
 </script>
 %       end, -100);
-%       snippet_register(qw/ snippet  emails /, begin
+%       snippet_register(qw/ snippet  emails              /, begin
 <script>
     $(document).ready(function() {
         var mf_emails = new MultiFields({ id_container: 'emails', field_prefix: 'email', field_type: 'email' });
@@ -24,14 +26,14 @@
     });
 </script>
 %       end);
-%       snippet_register(qw/ snippet  select2 /, begin
+%       snippet_register(qw/ snippet  select2             /, begin
 <script>
     $(document).ready(function() {
         $('.select2-select').select2({ width: '100%' });
     });
 </script>
 %       end);
-%       snippet_register(qw/ snippet  timezone /, begin
+%       snippet_register(qw/ snippet  timezone            /, begin
 <script>
     $(document).ready(function() {
 
@@ -78,20 +80,43 @@
     });
 </script>
 %       end);
-%       snippet_register(qw/ snippet  location /, begin
+%       snippet_register(qw/ snippet  location            /, begin
 <script>
     $(document).ready(function() {
+
+        var radius = 3000;
+        function showGeoPicker() {
+            $('#modalGeoPickerPlugin').locationpicker({
+                location: {
+                    latitude:       $('#latitude').val(),
+                    longitude:      $('#longitude').val()
+                },
+                radius: radius,
+                inputBinding: {
+                    latitudeInput:  $('#latitude'),
+                    longitudeInput: $('#longitude')
+                },
+            });
+            $('#modalGeoPickerDialog').on('shown.bs.modal', function () {
+                $('#modalGeoPickerPlugin').locationpicker('autosize');
+            });
+            $('#modalGeoPickerDialog').modal({ keyboard: true, show: true })
+        }
+
         $.get('http://ip-api.com/json/', function(data) {
-                  $('#latitude').val(data.lat);
-                $('#longtitude').val(data.lon);
+                 $('#latitude').val(data.lat);
+                $('#longitude').val(data.lon);
         }, 'json');
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 console.debug(position.coords);
-                  $('#latitude').val(position.coords.latitude);
-                $('#longtitude').val(position.coords.longtitude);
+                 $('#latitude').val(position.coords.latitude);
+                $('#longitude').val(position.coords.longitude);
+                radius = 100;
             });
         }
+         $('#latitude').click(showGeoPicker);
+        $('#longitude').click(showGeoPicker);
     });
 </script>
 %       end);
@@ -212,6 +237,23 @@
                       <select data-placeholder="Choose Your Time Zone" class="select2-select" id="timezone_city"></select>
                     </div>
                   </div>
+                  <div id="modalGeoPickerDialog" class="modal inmodal">
+                    <div class="modal-dialog modal-lg">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h4 class="modal-title">Please, clarify your location</h4>
+                        </div>
+                        <div class="modal-body">
+                          <div id="modalGeoPickerPlugin" style="width: 100%; height: 400px;">
+                            Here Be GoogleMaps
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label>Location</label>
@@ -220,7 +262,7 @@
                       <input data-placeholder="Your Latitude" id="latitude" name="latitude" type="text" class="form-control">
                     </div>
                     <div class="col-md-6">
-                      <input data-placeholder="Your Longtitude" id="longtitude" name="longtitude" type="text" class="form-control">
+                      <input data-placeholder="Your Longtitude" id="longitude" name="longitude" type="text" class="form-control">
                     </div>
                   </div>
                 </div>
