@@ -37,11 +37,15 @@ method startup {
             js          => {
                 multifields     => [ qw! /js/plugins/multiFields/multiFields.js                 ! ],
                 steps           => [ qw! /js/plugins/steps/jquery.steps.min.js                  ! ],
+              # validate        => [ qw! /js/plugins/validate/jquery.validate.min.js            ! ],
+                formValidation  => [ qw! /js/plugins/formValidation/formValidation.min.js
+                                         /js/plugins/formValidation/framework/bootstrap.min.js  ! ],
                 select2         => [ qw! /js/plugins/select2/select2.min.js                     ! ],
                 datatables      => [ qw! /js/plugins/dataTables/datatables.min.js               ! ],
                 toastr          => [ qw! /js/plugins/toastr/toastr.min.js                       ! ],
                 googleMaps      => [ qw! https://maps.google.com/maps/api/js?key=AIzaSyC8eacjB7FIw6OH4OMCloaWeoRxiDdfJak&libraries=places ! ],
-                locationPicker  => [ qw! /js/plugins/locationPicker/locationpicker.jquery.js    ! ]
+                locationPicker  => [ qw! /js/plugins/locationPicker/locationpicker.jquery.js    ! ],
+                iCheck          => [ qw! /js/plugins/iCheck/icheck.min.js                       ! ]
             },
             js_post     => {
                 inspinia        => [ qw! /js/inspinia.js                                        ! ],
@@ -57,6 +61,7 @@ method startup {
                 select2         => [ qw! /css/plugins/select2/select2.min.css                   ! ],
                 datatables      => [ qw! /css/plugins/dataTables/datatables.min.css             ! ],
                 datepicker      => [ qw! /css/plugins/datapicker/datepicker3.css                ! ],
+                iCheck          => [ qw! /css/plugins/iCheck/custom.css                         ! ],
                 summernote      => [ qw! /css/plugins/summernote/summernote.css
                                          /css/plugins/summernote/summernote-bs3.css             ! ]
             },

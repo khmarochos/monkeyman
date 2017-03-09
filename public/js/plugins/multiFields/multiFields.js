@@ -2,22 +2,25 @@
 
     window.MultiFields = function(init) {
 
-        this.id_container = init.id_container;
-        this.field_prefix = init.field_prefix;
-        this.field_type   = init.field_type;
+        this.id_container   = init.id_container;
+        this.field_prefix   = init.field_prefix;
+        this.field_type     = init.field_type;
+        this.addClasses     = typeof(init.addClasses) == 'Array' ? init.addClasses : [ init.addClasses ];
+        this.afterAppend    = init.afterAppend;
 
         var that = this;
 
         this.fieldAppend = function(append_after, field_value) {
             var field_sibling = document.getElementById(composeId("div", append_after));
             var field_created = fieldCreate(field_value);
-            if(typeof(field_sibling) !== 'undefined' && field_sibling !== null) {
+            if(field_sibling != null) {
                 document.getElementById(this.id_container).insertBefore(field_created, field_sibling.nextSibling);
             } else {
                 document.getElementById(this.id_container).appendChild(field_created);
             }
             field_created.querySelectorAll('input[type="' + this.field_type + '"]')[0].focus();
             buttonsEnableDisable();
+            if(this.afterAppend != null) this.afterAppend(field_sibling, field_created);
         }
 
         this.fieldRemove = function(element_id) {
@@ -45,7 +48,7 @@
             var id_button_remove  = composeId("button_remove", guid);
             var div = document.createElement("div");
                 div.setAttribute("id", id_div);
-                div.setAttribute("class", "form-group");
+                div.setAttribute("class", [ "form-group", that.addClasses ].join(" "));
             var div_input_group = document.createElement("div");
                 div_input_group.setAttribute("class", "input-group");
                 div.appendChild(div_input_group);

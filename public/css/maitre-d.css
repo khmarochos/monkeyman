@@ -1,8 +1,75 @@
+.form-illustration {
+  font-size: 202px;
+  color: #e5e5e5;
+}
+
 .wizard > .content > .body ul.dropdown-menu {
   list-style: none !important;
 }
 
-.chosen-container {
-  width: 100% !important;
+div.multifield > i.form-control-feedback {
+  top: 0;
+  right: -30px;
+}
+
+.has-feedback .form-control-feedback {
+    position: absolute;
+    top: 3px;
+    right: 15px;
+    display: block;
+    width: 34px;
+    height: 34px;
+    line-height: 34px;
+    text-align: center;
+}
+
+span.select2-container + i.form-control-feedback {
+  top: 0;
+  right: -30px;
+}
+
+form#personal_data_wizard > div.content.clearfix {
+  position: relative;
+  min-height: 252px;
+}
+
+form#personal_data_wizard > div.content.clearfix:before {
+  font-family: FontAwesome;
+  font-style: normal;
+  font-weight: normal;
+  text-decoration: inherit;
+  position: absolute;
+  font-size: 250px;
+  color: #e5e5e5;
+  top: -50px;
+  right: 50px;
+}
+
+form#personal_data_wizard > div.content.clearfix.fa-id-card:before {
+  content: "\f2c2";
+}
+
+form#personal_data_wizard > div.content.clearfix.fa-envelope:before {
+  content: "\f0e0";
+}
+
+form#personal_data_wizard > div.content.clearfix.fa-phone:before {
+  content: "\f095";
+}
+
+form#personal_data_wizard > div.content.clearfix.fa-globe:before {
+  content: "\f0ac";
+}
+
+form#personal_data_wizard > div.content.clearfix.fa-lock:before {
+  content: "\f023";
+}
+
+form#personal_data_wizard > div.content.clearfix.fa-check-square-o:before {
+  content: "\f046";
+}
+
+.wizard > .steps > ul > li {
+  width: 33.33%;
 }
 
