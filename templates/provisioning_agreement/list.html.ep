@@ -1,0 +1,73 @@
+<%
+    asset_required(qw/css datatables 100/);
+    asset_required(qw/js  datatables 100/);
+    my $language = stash->{'language_id'};
+%>
+<%=
+    include('snippets/table',
+        name      => 'provisioning_agreement',
+        columns   => {
+            'Number' => {
+                order => 1,
+                value => sub { shift->client_contractor->name; }
+            },
+            'Valid Since' => {
+                order => 2,
+                value => sub { datetime_display(shift->valid_since, 2); }
+            },
+            'Valid Till' => {
+                order => 3,
+                value => sub { datetime_display(shift->valid_till, 2) || '∞'; }
+            },
+            'Client' => {
+                order => 4,
+                value => sub {
+                    my $row = shift;
+                    sprintf(
+                        "%s, %s",
+                        $row->client_contractor->name,
+                        $row->client_contractor->contractor_type->contractor_type_i18n($language)->name_short
+                    );
+                }
+            },
+            'Provider' => {
+                order => 5,
+                value => sub {
+                    my $row = shift;
+                    sprintf(
+                        "%s, %s",
+                        $row->provider_contractor->name,
+                        $row->provider_contractor->contractor_type->contractor_type_i18n($language)->name_short
+                    );
+                }
+            },
+            'Actions' => {
+                order   => 6,
+                actions => 1,
+                related => 1
+            }
+        },
+        related   => {
+            'Persons'                   => {
+                order => 1,
+                icon  => 'fa fa-user-o',
+                value => sub { sprintf("/person/list/related_to/provisioning_agreement/%s", shift->id); }
+            },
+            'Provisioning Obligations'  => {
+                order => 2,
+                icon  => 'fa fa-shopping-cart',
+                value => sub { sprintf("/provisioning_obligation/list/related_to/provisioning_agreement/%s", shift->id); }
+            },
+            'Resources'  => {
+                order => 3,
+                icon  => 'fa fa-server',
+                value => sub { sprintf("/resource_piece/list/related_to/provisioning_agreement/%s", shift->id); }
+            }
+        },
+        rows      => stash->{'rows'},
+        language  => $language
+    );
+%>
+<%
+    layout('authorized', title_message => 'Welcome!');
+%>

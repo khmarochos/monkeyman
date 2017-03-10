@@ -1,0 +1,4 @@
+% asset_required(qw/css summernote 1/);
+% asset_required(qw/css datepicker 1/);
+<a class="btn" href="/provisioning_agreement/list/all">zaloopa</a>
+% layout('authorized', title_message => 'Welcome!');

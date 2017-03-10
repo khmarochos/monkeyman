@@ -1,0 +1,72 @@
+%   asset_required(qw/ css_pre  bootstrap   100 /);
+%   asset_required(qw/ css_pre  fontawesome 110 /);
+%   asset_required(qw/ css_post animate     100 /);
+%   asset_required(qw/ css_post style       110 /);
+%   asset_required(qw/ css_post maitre_d    666 /);
+%   asset_required(qw/ js_pre   jquery      100 /);
+%   asset_required(qw/ js_pre   bootstrap   110 /);
+%  #asset_required(qw/ js_pre   i18next     120 /);
+%   asset_required(qw/ js_pre   metismenu   200 /);
+%   asset_required(qw/ js_pre   slimscroll  210 /);
+%   asset_required(qw/ js_post  inspinia    100 /);
+%   asset_required(qw/ js_post  pace        110 /);
+<!DOCTYPE html>
+<html>
+  <head>
+%= include('snippets/header', title => "Maitre d'Tucha | $title_message")
+  </head>
+  <body>
+    <div id="wrapper">
+      <nav class="navbar-default navbar-static-side" role="navigation">
+        <div class="sidebar-collapse">
+%= include('snippets/navigation')
+        </div>
+      </nav>
+      <div id="page-wrapper" class="gray-bg">
+        <div class="row border-bottom">
+          <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+              <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+              <form role="search" class="navbar-form-custom" method="post" action="#">
+                <div class="form-group">
+                  <input type="text" placeholder="Search for something..." class="form-control" name="top-search" id="top-search">
+                </div>
+              </form>
+            </div>
+            <ul class="nav navbar-top-links navbar-right">
+              <li>
+                <a href="/person/logout">
+                  <i class="fa fa-sign-out"></i> Log out
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+%= content
+        <div class="footer">
+          <div class="pull-right">
+            10GB of <strong>250GB</strong> Free.
+          </div>
+        <div>
+          <strong>Copyright</strong> Tucha &copy; 2017
+        </div>
+      </div>
+    </div>
+  </div>
+
+%   foreach         my $asset_group   (qw/js_pre js js_post/) {
+%       foreach     my $asset_alias   (asset_required($asset_group, '*')) {
+%           foreach my $asset_src     (asset_compiled($asset_group, $asset_alias)) {
+    <script src="<%= $asset_src %>"></script>
+%           }
+%       }
+%   }
+%   foreach         my $snippet_group (qw/snippet_pre snippet snippet_post/) {
+%       foreach     my $snippet_alias (snippet_required($snippet_group, '*')) {
+%           foreach my $snippet_src   (snippet_compiled($snippet_group, $snippet_alias)) {
+<%== $snippet_src->(); %>
+%           }
+%       }
+%   }
+</body>
+</html>

@@ -1,0 +1,499 @@
+%   if(defined(my $token = param('token'))) {
+%       asset_required  (qw/ css      steps           100 /);
+%       asset_required  (qw/ css      formValidation  110 /);
+%       asset_required  (qw/ css      select2         100 /);
+%       asset_required  (qw/ css      iCheck          100 /);
+%       asset_required  (qw/ js       steps           100 /);
+%       asset_required  (qw/ js       formValidation  110 /);
+%       asset_required  (qw/ js       select2         100 /);
+%       asset_required  (qw/ js       iCheck          100 /);
+%       asset_required  (qw/ js       googleMaps      100 /);
+%       asset_required  (qw/ js       locationPicker  110 /);
+%       snippet_register(qw/ snippet  steps               /, begin
+<script>
+    $(document).ready(function() {
+
+        function stepChangePage(eventHappened, currentIndex, priorIndex) {
+            var formElement = $(eventHappened.currentTarget);
+            if(formElement != null)
+                stepChangeIcon(formElement, currentIndex, priorIndex);
+        }
+
+        function stepChangeIcon(formElement, currentIndex, priorIndex) {
+            var currentTarget = formElement.find('div.content.clearfix');
+            if(currentTarget == null)
+                return;
+            currentTarget.attr('class').split(/\s+/).forEach(function(currentValue, index, arr) {
+                if(currentValue.startsWith('fa-'))
+                    currentTarget.removeClass(currentValue);
+            });
+            switch(currentIndex) {
+                case 0:
+                    currentTarget.addClass('fa-id-card');
+                    break;
+                case 1:
+                    currentTarget.addClass('fa-envelope');
+                    break;
+                case 2:
+                    currentTarget.addClass('fa-phone');
+                    break;
+                case 3:
+                    currentTarget.addClass('fa-globe');
+                    break;
+                case 4:
+                    currentTarget.addClass('fa-lock');
+                    break;
+                case 5:
+                    currentTarget.addClass('fa-check-square-o');
+                    break;
+            }
+        }
+
+        function stepValidation(eventHappened, currentIndex, newIndex) {
+            if(newIndex < currentIndex)
+                return(true);
+            var form        = eventHappened.currentTarget;
+            var fv          = $(form).data('formValidation');
+            var $container  = $(form).find('fieldset[data-step="' + currentIndex + '"]');
+            fv.validateContainer($container);
+            var isValidStep = fv.isValidContainer($container);
+            if (isValidStep === false || isValidStep === null) {
+                return(false);
+            } else {
+                return(true);
+            }
+        }
+
+        // var unicode_letters_regexp = '\u0000-\u007F\u0080-\u00FF\u0100-\u017F\u0180-\u024F\u0400-\u04FF\u0500-\u052F';
+
+        $('#personal_data_wizard').steps({
+            bodyTag: 'fieldset',
+            headerTag: 'h1',
+            transitionEffect: 'fade',
+            onStepChanged: stepChangePage,
+            onStepChanging: stepValidation,
+            onStepFinishing: stepValidation
+        }).formValidation({
+            framework: 'bootstrap',
+            icon: {
+                valid: 'glyphicon glyphicon-ok',
+                invalid: 'glyphicon glyphicon-remove',
+                validating: 'glyphicon glyphicon-refresh'
+            },
+            excluded: ':disabled',
+            fields: {
+                first_name: {
+                    validators: {
+                        notEmpty: {},
+                        stringLength: {
+                            min: 1,
+                            max: 64,
+                        }
+                    }
+                },
+                middle_name: {
+                    validators: {
+                        stringLength: {
+                            min: 1,
+                            max: 64,
+                        }
+                    }
+                },
+                last_name: {
+                    validators: {
+                        notEmpty: {},
+                        stringLength: {
+                            min: 1,
+                            max: 64,
+                        }
+                    }
+                },
+                language: {
+                    validators: {
+                        notEmpty: {}
+                    }
+                },
+                timezone_area: {
+                    validators: {
+                        notEmpty: {}
+                    }
+                },
+                timezone_city: {
+                    validators: {
+                        notEmpty: {}
+                    }
+                },
+                latitude: {
+                    validators: {
+                        notEmpty: {},
+                        numeric: {}
+                    }
+                },
+                longitude: {
+                    validators: {
+                        notEmpty: {},
+                        numeric: {}
+                    }
+                },
+                secret_question: {
+                    validators: {
+                        notEmpty: {}
+                    }
+                },
+                secret_answer_1: {
+                    validators: {
+                        notEmpty: {},
+                    }
+                },
+                secret_answer_2: {
+                    validators: {
+                        notEmpty: {},
+                        identical: {
+                            field: 'secret_answer_1'
+                        }
+                    }
+                },
+                password_1: {
+                    validators: {
+                        notEmpty: {},
+                    }
+                },
+                password_2: {
+                    validators: {
+                        notEmpty: {},
+                        identical: {
+                            field: 'password_1'
+                        }
+                    }
+                },
+                agree: {
+                    validators: {
+                        notEmpty: {}
+                    }
+                }
+            }
+        });
+        stepChangeIcon($('#personal_data_wizard'), 0, null);
+    });
+</script>
+%       end, -100);
+%       snippet_register(qw/ snippet  emails              /, begin
+<script>
+    $(document).ready(function() {
+        var mf_emails = new MultiFields({
+            id_container: 'emails',
+            field_prefix: 'email',
+            field_type: 'email',
+            addClasses: 'multifield',
+            afterAppend: function(elementCurrent, elementNew) {
+                if(elementNew != null) 
+                    $('#personal_data_wizard').formValidation('addField', $(elementNew).find('input'), {
+                        validators: {
+                            notEmpty: {}
+                        }
+                    });
+            }
+        }); mf_emails.fieldAppend();                                                        
+        var mf_phones = new MultiFields({
+            id_container: 'phones',
+            field_prefix: 'phone',
+            field_type: 'phone',
+            addClasses: 'multifield',
+            afterAppend: function(elementCurrent, elementNew) {
+                if(elementNew != null) 
+                    $('#personal_data_wizard').formValidation('addField', $(elementNew).find('input'), {
+                        validators: {
+                            notEmpty: {}
+                        }
+                    });
+            }
+        }); mf_phones.fieldAppend();                                                        
+    });
+</script>
+%       end);
+%       snippet_register(qw/ snippet  select2             /, begin
+<script>
+    $(document).ready(function() {
+        $('.select2-select').select2({ width: '100%' });
+        $('select[name="secret_question"].select2-select').select2({ width: '100%', minimumResultsForSearch: -1 });
+    });
+</script>
+%       end);
+%       snippet_register(qw/ snippet  timezone            /, begin
+<script>
+    $(document).ready(function() {
+
+        select2_area = $('#timezone_area').select2({ width: '100%' });
+        select2_city = $('#timezone_city').select2({ width: '100%' });
+
+        var timezones;
+        var timezone_detected = Intl.DateTimeFormat().resolvedOptions().timeZone.split('/');
+
+        function update_timezones(timezones_loaded, area_selected) {
+            if(timezones === undefined) {
+                $('#timezone_city').attr('disabled', true);
+                $.get('/ajax/timezone/*/*', function(data) { timezones = data.timezones; update_timezones(1, 0); }, 'json');
+            }
+
+            if(timezones_loaded) {
+                $('#timezone_area option').remove();
+                $('#timezone_city').attr('disabled', false);
+                Object.keys(timezones).forEach(function(area) {
+                    $('#timezone_area').append($('<option>', { value: area, text: area }));
+                });
+                area_selected = 1;
+            }
+
+            if(area_selected) {
+                var area = $('#timezone_area option:selected').val();
+                $('#timezone_city option').remove();
+                $('#timezone_city').attr('disabled', false);
+                Object.keys(timezones[area]).forEach(function(city) {
+                    $('#timezone_city').append($('<option>', { value: city, text: city }));
+                });
+            }
+
+            if(timezones_loaded && timezone_detected) {
+                select2_area.val(timezone_detected[0]).trigger('change');
+                select2_city.val(timezone_detected[1]).trigger('change');
+            }
+        }
+
+        update_timezones(0, 0);
+
+        $('#timezone_area').change(function() { update_timezones(0, 1); });
+
+    });
+</script>
+%       end);
+%       snippet_register(qw/ snippet  location            /, begin
+<script>
+    $(document).ready(function() {
+
+        var radius = 3000;
+        function showGeoPicker() {
+            $('#modalGeoPickerPlugin').locationpicker({
+                location: {
+                    latitude:       $('#latitude').val(),
+                    longitude:      $('#longitude').val()
+                },
+                radius: radius,
+                inputBinding: {
+                    latitudeInput:  $('#latitude'),
+                    longitudeInput: $('#longitude')
+                },
+            });
+            $('#modalGeoPickerDialog').on('shown.bs.modal', function () {
+                $('#modalGeoPickerPlugin').locationpicker('autosize');
+            });
+            $('#modalGeoPickerDialog').modal({ keyboard: true, show: true })
+        }
+
+        $.get('http://ip-api.com/json/', function(data) {
+                 $('#latitude').val(data.lat);
+                $('#longitude').val(data.lon);
+        }, 'json');
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                 $('#latitude').val(position.coords.latitude);
+                $('#longitude').val(position.coords.longitude);
+                radius = 100;
+            });
+        }
+         $('#latitude').click(showGeoPicker);
+        $('#longitude').click(showGeoPicker);
+    });
+</script>
+%       end);
+%       snippet_register(qw/ snippet  iChecks             /, begin
+<script>
+    $(document).ready(function () {
+        $('.i-checks').iCheck({
+            checkboxClass: 'icheckbox_square-green',
+            radioClass: 'iradio_square-green',
+        });
+    });
+</script>
+%       end);
+<div class="wrapper wrapper-content animated fadeInRight signupscreen">
+  <div>
+    <div class="ibox col-md-6 col-md-offset-3">
+      <div class="text-center">
+        <h1 class="logo-name"><span data-i18n="signupscreen.hi">Hi!</span></h1>
+      </div>
+      <div class="ibox-content">
+        <h2 data-i18n="signupscreen.form-header">Account Confirmation Form</h2>
+        <p>
+          Please, confirm your account by filling the form below.
+          Some fields are required, some are not, so you could provide us with the information later.
+        </p>
+        <form id="personal_data_wizard" action="#" class="wizard">
+          <h1>Full Name</h1>
+          <fieldset data-step="0">
+            <div class="form-group">
+              <label>First (Given) Name *</label>
+              <input id="first_name" name="first_name" type="text" class="form-control required">
+            </div>
+            <div class="form-group">
+              <label>Middle Name</label>
+              <input id="middle_name" name="middle_name" class="form-control" type="text">
+            </div>
+            <div class="form-group">
+              <label>Last (Family) Name *</label>
+              <input id="last_name" name="last_name" type="text" class="form-control required">
+            </div>
+          </fieldset>
+          <h1>E-Mail</h1>
+          <fieldset data-step="1">
+            <label>E-Mail Addresses:</label>
+            <div class="form-group" id="emails"></div>
+          </fieldset>
+          <h1>Phone</h1>
+          <fieldset data-step="2">
+            <label>Phone Numbers:</label>
+            <div class="form-group" id="phones"></div>
+          </fieldset>
+          <h1>Region</h1>
+          <fieldset data-step="3">
+            <div class="form-group">
+              <label>Language</label>
+              <select data-placeholder="Choose Your Preferred Language" class="select2-select" name="language">
+                <option value>Please, select</option>
+                <option value="en_US">English (US)</option>
+                <option value="uk_UA">Ukrainian</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Timezone</label>
+              <div class="row">
+                <div class="col-md-6">
+                  <select data-placeholder="Choose Your Time Zone" class="select2-select" name="timezone_area" id="timezone_area"></select>
+                </div>
+                <div class="col-md-6">
+                  <select data-placeholder="Choose Your Time Zone" class="select2-select" name="timezone_city" id="timezone_city"></select>
+                </div>
+              </div>
+              <div id="modalGeoPickerDialog" class="modal inmodal">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h4 class="modal-title">Please, clarify your location</h4>
+                    </div>
+                    <div class="modal-body">
+                      <div id="modalGeoPickerPlugin" style="width: 100%; height: 400px;">
+                        Here Be GoogleMaps
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Location</label>
+              <div class="row">
+                <div class="col-md-6">
+                  <input data-placeholder="Your Latitude" id="latitude" name="latitude" type="text" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <input data-placeholder="Your Longtitude" id="longitude" name="longitude" type="text" class="form-control">
+                </div>
+              </div>
+            </div>
+          </fieldset>
+          <h1>Password</h1>
+          <fieldset data-step="4">
+            <div class="form-group">
+              <label>Secret Question *</label>
+              <select data-placeholder="Choose The Secret Question" class="form-control required select2-select" name="secret_question">
+                <option value>Please, select</option>
+                <option value="mothers_maiden_name">Mother's Maiden Name</option>
+                <option value="fathers_year_of_birth">Father's Year of Birth</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>The Answer *</label>
+              <div class="row">
+                <div class="col-md-6">
+                  <input data-placeholder="Your Answer" id="secret_answer_1" name="secret_answer_1" type="password" class="form-control required">
+                </div>
+                <div class="col-md-6">
+                  <input data-placeholder="Your Answer" id="secret_answer_2" name="secret_answer_2" type="password" class="form-control required">
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Enter Your Password *</label>
+              <div class="row">
+                <div class="col-md-6">
+                  <input data-placeholder="Your Password" id="password_1" name="password_1" type="password" class="form-control required">
+                </div>
+                <div class="col-md-6">
+                  <input data-placeholder="Your Password" id="password_2" name="password_2" type="password" class="form-control required">
+                </div>
+              </div>
+            </div>
+          </fieldset>
+          <h1>Finish</h1>
+          <fieldset data-step="5">
+            <div class="form-group">
+              <label>How Did You Find Us?</label>
+              <select id="reference" data-placeholder="Please, refer the source" class="form-control select2-select" name="reference">
+                <option value>Please, select</option>
+                <option value="invitation">I've got an invitation from you</option>
+                <option value="friend">A friend of mine recommended you</option>
+                <option value="search">I searched for a service provided</option>
+                <option value="ads_online">I saw your ads on the Internet</option>
+                <option value="ads_offline">I saw your ads offline</option>
+                <option value="other">Other options</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Should We Know Anything Else?</label>
+              <input data-placeholder="Additional information" name="notes" type="text" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Please, Accept the Agreement *</label>
+              <div class="i-checks">Yes, I have read and accepted it: <input type="checkbox" class="form-control required" name="agree"></div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+      <hr />
+      <a class="btn btn-white set_en_US" id="button_en_US"><img src="/img/flags/32/United-States.png"></a>
+      <a class="btn btn-white set_uk_UA" id="button_uk_UA"><img src="/img/flags/32/Ukraine.png"></a>
+      <p class="m-t"><small><span data-i18n="signupscreen.powered-by">Powered by</span> MonkeyMan &amp; HyperMouse</small> </p>
+    </div>
+  </div>
+</div>
+%   } else {
+<div class="middle-box text-center signupscreen animated fadeInDown">
+  <div>
+    <div>
+      <h1 class="logo-name"><span data-i18n="signupscreen.hi">Hi!</span></h1>
+    </div>
+    <h3><span data-i18n="signupscreen.welcome">Maitre d'Tucha is glad to meet you</span></h3>
+    <p><span data-i18n="signupscreen.please">Please, register an account</span></p>
+    <form class="m-t" role="form" action="/person/signup" method="POST">
+      <div class="form-group">
+        <input type="text" class="form-control" data-i18n="[placeholder]signupform.full-name"
+          placeholder="Full Name" required="" name="person_email">
+      </div>
+      <div class="form-group">
+        <input type="email" class="form-control" data-i18n="[placeholder]signupform.email"
+          placeholder="E-Mail Address" required="" name="person_password">
+      </div>
+      <button type="submit" class="btn btn-primary block full-width m-b"><span data-i18n="signupform.signup">Sign Up!</span></button>
+      <p class="text-muted text-center"><small><span data-i18n="signupscreen.have-account">Already have an account?</span></small></p>
+      <a class="btn btn-sm btn-white btn-block" href="/person/login"><span data-i18n="signupscreen.login">Log In</span></a>
+    </form>
+    <hr />
+    <a class="btn btn-white set_en_US" id="button_en_US"><img src="/img/flags/32/United-States.png"></a>
+    <a class="btn btn-white set_uk_UA" id="button_uk_UA"><img src="/img/flags/32/Ukraine.png"></a>
+    <p class="m-t"><small><span data-i18n="signupscreen.powered-by">Powered by</span> MonkeyMan &amp; HyperMouse</small> </p>
+  </div>
+</div>
+%   }
+%   layout('unauthorized', title_message => 'Hello!', i18n_classes => [ qw/ signupscreen / ]);

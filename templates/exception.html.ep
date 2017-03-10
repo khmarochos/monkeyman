@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+%=  include('header', title => "Maitre d'Tucha | Internal Server Error (500)")
+  </head>
+  <body class="gray-bg">
+    <div class="middle-box text-center animated fadeInDown">
+      <h1>500</h1>
+      <h3 class="font-bold">Internal Server Error</h3>
+      <div class="error-desc">
+        An internal error occuried during processing your request:
+        <pre class="text-danger">
+%       if($exception->message->isa('MonkeyMan::Exception')) {
+%=         $exception->message->get_message
+%       } else {
+%=         $exception
+%       }
+        </pre>
+        <p class="text-muted">
+          You don't need to perform any actions, as the maintainence team has already received the detailed report about the issue.
+          We apologize and ask you to kindly return to the main page.
+        </p>
+        <a href="/" class="btn btn-primary m-t">Dashboard</a>
+      </div>
+    </div>
+    <!-- Mainly scripts -->
+    <script src="js/jquery-3.1.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>

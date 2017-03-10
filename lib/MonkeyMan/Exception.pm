@@ -166,11 +166,22 @@ method as_string(...) {
     return(
         MonkeyMan::Logger::mm_sprintf(
             "[!] %s\n" .
-            "^^^ The exception had been thrown at %s\n" .
+            "^^^ The %s exception had been thrown at %s\n" .
             "^^^ %s",
                 $self->get_message,
+                blessed($self),
                 $self->get_timestamp_formatted,
                 $self->get_stack_trace->as_string
+        )
+     );
+}
+
+method as_string_short(...) {
+    return(
+        MonkeyMan::Logger::mm_sprintf(
+            "%s [%s]",
+                $self->get_message,
+                blessed($self)
         )
      );
 }

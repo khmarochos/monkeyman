@@ -1,0 +1,118 @@
+%  snippet_register(qw/script datatables/, begin
+        <script>
+            $(document).ready(function(){
+                $('.<%= $name %>').DataTable({
+                    pageLength: 25,
+                    responsive: true,
+                    dom: '<"html5buttons"B>lTfgitp',
+                    buttons: [
+                        { extend: 'copy'},
+                        { extend: 'csv'},
+                        { extend: 'excel', title: '<%= $name %>' },
+                        { extend: 'pdf', title: '<%= $name %>' },
+                        { extend: 'print',
+                            customize: function (win){
+                                $(win.document.body).addClass('white-bg');
+                                $(win.document.body).css('font-size', '10px');
+                                $(win.document.body).find('table')
+                                        .addClass('compact')
+                                        .css('font-size', 'inherit');
+                            }
+                        },
+                    ],
+                });
+            });
+        </script>
+%   end, 1);
+%   my @columns_names_sorted = sort { $columns->{ $a }->{'order'} <=> $columns->{ $b }->{'order'} } (keys(%{ $columns }));
+%   my @related_names_sorted = sort { $related->{ $a }->{'order'} <=> $related->{ $b }->{'order'} } (keys(%{ $related }));
+%=  tag('div' => ('class' => 'table-responsive') => begin
+%=      tag('table' => ('class' => "table table-striped table-bordered table-hover $name") => begin
+%=          tag('thead' => begin
+%=              tag('tr' => begin
+%                   foreach my $column_name (@columns_names_sorted) {
+%=                      tag('th' => $column_name);
+%                   }
+%               end);               # </tr>
+%           end);                   # </thead>
+%=          tag('tbody' => begin
+%               foreach my $row (@{ $rows }) {
+%=                  tag('tr' => begin
+%                       foreach my $column_name (@columns_names_sorted) {
+%=                          tag('td' => begin
+<%                              if(
+                                    defined($columns->{ $column_name }->{'actions'}) &&
+                                            $columns->{ $column_name }->{'actions'}
+                                ) { %>
+%=                                  tag('div' => ('class' => 'btn-group') => begin
+<%=                                     tag('button' => (
+                                            'data-toggle'   => 'dropdown',
+                                            'class'         => 'btn btn-xs dropdown-toggle',
+                                            'aria-expanded' => 'false'
+                                        ) => begin %>
+%=                                          tag('i' => ('class' => 'fa fa-file-text-o'));
+                                            Actions
+%=                                          tag('span' => ('class' => 'caret'));
+%                                       end);
+%=                                      tag('ul' => ('class' => 'dropdown-menu') => begin
+%=                                          tag('li' => begin
+%=                                              link_to('#' => begin
+%=                                                  tag('i' => ('class' => 'fa fa-eye'));
+                                                    View
+%                                               end);
+%                                           end);
+%=                                          tag('li' => begin
+%=                                              link_to('#' => begin
+%=                                                  tag('i' => ('class' => 'fa fa-edit'));
+                                                    Edit
+%                                               end);
+%                                           end);
+%=                                          tag('li' => begin
+%=                                              link_to('#' => begin
+%=                                                  tag('i' => ('class' => 'fa fa-pause'));
+                                                    Suspend
+%                                               end);
+%                                           end);
+%=                                          tag('li' => begin
+%=                                              link_to('#' => begin
+%=                                                  tag('i' => ('class' => 'fa fa-remove'));
+                                                    Remove
+%                                               end);
+%                                           end);
+%                                       end);
+%                                   end);
+%                               }
+%                               if(defined($columns->{ $column_name }->{'related'}) && @related_names_sorted) {
+%                                   foreach my $related_name (@related_names_sorted) {
+<%                                      if(
+                                            defined($related->{ $related_name }->{'value'}) &&
+                                                ref($related->{ $related_name }->{'value'}) eq 'CODE'
+                                        ) { %>
+%=                                          link_to(&{ $related->{ $related_name }->{'value'} }($row) => begin
+%=                                              tag('button' => ('class' => 'btn btn-xs', title => $related_name) => begin
+%=                                                  tag('i' => ('class' =>$related->{ $related_name }->{ 'icon' }));
+%                                               end);
+%                                           end);
+%                                       }
+%                                   }
+%                               }
+<%                              if(
+                                    defined($columns->{ $column_name }->{'value'}) &&
+                                        ref($columns->{ $column_name }->{'value'}) eq 'CODE'
+                                ) { %>
+%=                                  &{ $columns->{ $column_name }->{'value'} }($row);
+%                               }
+%                           end);   # </td>
+%                       }
+%                   end);           # </tr>
+%               }
+%           end);                   # </tbody>
+%=          tag('thead' => begin
+%=              tag('tr' => begin
+%                   foreach my $column_name (@columns_names_sorted) {
+%=                      tag('th' => $column_name);
+%                   }
+%               end);               # </thead>
+%           end);                   # </tr>
+%       end);                       # </table>
+%   end);                           # </div>
