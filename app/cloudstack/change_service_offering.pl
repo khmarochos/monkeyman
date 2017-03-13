@@ -23,16 +23,16 @@ This application recognizes the following parameters:
         [req*]      The zone's ID
   * It's required to define at least one of them (but only one).
 
-    -v, --virtual-machine-id <id>
+    -i, --virtual-machine-id <id>
         [req]       The virtual machine's ID
 
-    -S, --service-offering-name <name>
+    -O, --service-offering-name <name>
         [req*]      The service offering's name
-    -s, --service-offering-id <id>
+    -o, --service-offering-id <id>
         [req*]      The service offering's ID
     -c, --cpu-cores <number>
         [opt**]     The number of CPUs (in MHz)
-    -C, --cpu-speed <number>
+    -s, --cpu-speed <number>
         [opt**]     The CPUs' speed
     -m, --ram-size <number>
         [opt**]     The quantity of RAM (in MB)
