@@ -1,4 +1,4 @@
-%  snippet_register(qw/script datatables/, begin
+%  snippet_register('js_snipppet', 'datatables', { }, begin
         <script>
             $(document).ready(function(){
                 $('.<%= $name %>').DataTable({
@@ -23,7 +23,7 @@
                 });
             });
         </script>
-%   end, 1);
+%   end);
 %   my @columns_names_sorted = sort { $columns->{ $a }->{'order'} <=> $columns->{ $b }->{'order'} } (keys(%{ $columns }));
 %   my @related_names_sorted = sort { $related->{ $a }->{'order'} <=> $related->{ $b }->{'order'} } (keys(%{ $related }));
 %=  tag('div' => ('class' => 'table-responsive') => begin

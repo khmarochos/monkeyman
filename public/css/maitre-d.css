@@ -9,23 +9,7 @@
 
 div.multifield > i.form-control-feedback {
   top: 0;
-  right: -30px;
-}
-
-.has-feedback .form-control-feedback {
-    position: absolute;
-    top: 3px;
-    right: 15px;
-    display: block;
-    width: 34px;
-    height: 34px;
-    line-height: 34px;
-    text-align: center;
-}
-
-span.select2-container + i.form-control-feedback {
-  top: 0;
-  right: -30px;
+  right: 5.5em;
 }
 
 form#personal_data_wizard > div.content.clearfix {
@@ -45,28 +29,8 @@ form#personal_data_wizard > div.content.clearfix:before {
   right: 50px;
 }
 
-form#personal_data_wizard > div.content.clearfix.fa-id-card:before {
-  content: "\f2c2";
-}
-
-form#personal_data_wizard > div.content.clearfix.fa-envelope:before {
-  content: "\f0e0";
-}
-
-form#personal_data_wizard > div.content.clearfix.fa-phone:before {
-  content: "\f095";
-}
-
-form#personal_data_wizard > div.content.clearfix.fa-globe:before {
-  content: "\f0ac";
-}
-
-form#personal_data_wizard > div.content.clearfix.fa-lock:before {
-  content: "\f023";
-}
-
-form#personal_data_wizard > div.content.clearfix.fa-check-square-o:before {
-  content: "\f046";
+form#personal_data_wizard .form-inline {
+  margin-bottom: 15px;
 }
 
 .wizard > .steps > ul > li {

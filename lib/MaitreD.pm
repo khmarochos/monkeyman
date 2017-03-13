@@ -37,7 +37,6 @@ method startup {
             js          => {
                 multifields     => [ qw! /js/plugins/multiFields/multiFields.js                 ! ],
                 steps           => [ qw! /js/plugins/steps/jquery.steps.min.js                  ! ],
-              # validate        => [ qw! /js/plugins/validate/jquery.validate.min.js            ! ],
                 formValidation  => [ qw! /js/plugins/formValidation/formValidation.min.js
                                          /js/plugins/formValidation/framework/bootstrap.min.js  ! ],
                 select2         => [ qw! /js/plugins/select2/select2.min.js                     ! ],

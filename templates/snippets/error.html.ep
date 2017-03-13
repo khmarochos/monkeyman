@@ -1,6 +1,6 @@
 %   if(defined(stash('error_message'))) {
-%       asset_required  (qw/ js toastr 100 /);
-%       snippet_register(qw/ snippet toastr /, begin
+%       asset_required  ('js',          'toastr', { });
+%       snippet_register('js_snippet',  'toastr', { }, begin
 <script>
     toastr.options = {
       "closeButton": true,

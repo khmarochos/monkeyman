@@ -1,23 +1,19 @@
 %   if(defined(my $token = param('token'))) {
-%       asset_required  (qw/ css      steps           100 /);
-%       asset_required  (qw/ css      formValidation  110 /);
-%       asset_required  (qw/ css      select2         100 /);
-%       asset_required  (qw/ css      iCheck          100 /);
-%       asset_required  (qw/ js       steps           100 /);
-%       asset_required  (qw/ js       formValidation  110 /);
-%       asset_required  (qw/ js       select2         100 /);
-%       asset_required  (qw/ js       iCheck          100 /);
-%       asset_required  (qw/ js       googleMaps      100 /);
-%       asset_required  (qw/ js       locationPicker  110 /);
-%       snippet_register(qw/ snippet  steps               /, begin
+%
+%       asset_required  ('css',        'steps',           {                           });
+%       asset_required  ('css',        'formValidation',  { after => [ 'steps'      ] });
+%       asset_required  ('css',        'select2',         {                           });
+%       asset_required  ('css',        'iCheck',          {                           });
+%       asset_required  ('js',         'steps',           {                           });
+%       asset_required  ('js',         'formValidation',  { after => [ 'steps'      ] });
+%       asset_required  ('js',         'select2',         {                           });
+%       asset_required  ('js',         'iCheck',          {                           });
+%       asset_required  ('js',         'googleMaps',      {                           });
+%       asset_required  ('js',         'locationPicker',  { after => [ 'googleMaps' ] });
+%
+%       snippet_register('js_snippet', 'steps', { }, begin
 <script>
     $(document).ready(function() {
-
-        function stepChangePage(eventHappened, currentIndex, priorIndex) {
-            var formElement = $(eventHappened.currentTarget);
-            if(formElement != null)
-                stepChangeIcon(formElement, currentIndex, priorIndex);
-        }
 
         function stepChangeIcon(formElement, currentIndex, priorIndex) {
             var currentTarget = formElement.find('div.content.clearfix');
@@ -44,7 +40,7 @@
                     currentTarget.addClass('fa-lock');
                     break;
                 case 5:
-                    currentTarget.addClass('fa-check-square-o');
+                    currentTarget.addClass('fa-check');
                     break;
             }
         }
@@ -67,22 +63,30 @@
         // var unicode_letters_regexp = '\u0000-\u007F\u0080-\u00FF\u0100-\u017F\u0180-\u024F\u0400-\u04FF\u0500-\u052F';
 
         $('#personal_data_wizard').steps({
-            bodyTag: 'fieldset',
-            headerTag: 'h1',
+            bodyTag:          'fieldset',
+            headerTag:        'h1',
             transitionEffect: 'fade',
-            onStepChanged: stepChangePage,
-            onStepChanging: stepValidation,
-            onStepFinishing: stepValidation
+            onStepChanging:   stepValidation,
+            onFinishing:      stepValidation,
+            onStepChanged:    function(eventHappened, currentIndex, priorIndex) {
+                var formElement = $(eventHappened.currentTarget);
+                if(formElement != null)
+                    stepChangeIcon(formElement, currentIndex, priorIndex);
+            },
+            onFinished:       function(eventHappened, currentIndex) {
+                $(eventHappened.currentTarget).formValidation('defaultSubmit');
+            }
         }).formValidation({
-            framework: 'bootstrap',
+            framework:        'bootstrap',
             icon: {
-                valid: 'glyphicon glyphicon-ok',
-                invalid: 'glyphicon glyphicon-remove',
-                validating: 'glyphicon glyphicon-refresh'
+                valid:        'glyphicon glyphicon-ok',
+                invalid:      'glyphicon glyphicon-remove',
+                validating:   'glyphicon glyphicon-refresh'
             },
             excluded: ':disabled',
             fields: {
                 first_name: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {},
                         stringLength: {
@@ -92,6 +96,7 @@
                     }
                 },
                 middle_name: {
+                    err: 'tooltip',
                     validators: {
                         stringLength: {
                             min: 1,
@@ -100,6 +105,7 @@
                     }
                 },
                 last_name: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {},
                         stringLength: {
@@ -109,66 +115,79 @@
                     }
                 },
                 language: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {}
                     }
                 },
                 timezone_area: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {}
                     }
                 },
                 timezone_city: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {}
                     }
                 },
                 latitude: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {},
                         numeric: {}
                     }
                 },
                 longitude: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {},
                         numeric: {}
                     }
                 },
                 secret_question: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {}
                     }
                 },
-                secret_answer_1: {
+                secret_answer: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {},
                     }
                 },
-                secret_answer_2: {
+                secret_answer_repeat: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {},
                         identical: {
-                            field: 'secret_answer_1'
+                            field: 'secret_answer'
                         }
                     }
                 },
-                password_1: {
+                password: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {},
                     }
                 },
-                password_2: {
+                password_repeat: {
+                    err: 'tooltip',
                     validators: {
                         notEmpty: {},
                         identical: {
-                            field: 'password_1'
+                            field: 'password'
                         }
                     }
                 },
                 agree: {
+                    err: 'tooltip',
                     validators: {
-                        notEmpty: {}
+                        choice: {
+                            min: 1
+                        }
                     }
                 }
             }
@@ -176,8 +195,8 @@
         stepChangeIcon($('#personal_data_wizard'), 0, null);
     });
 </script>
-%       end, -100);
-%       snippet_register(qw/ snippet  emails              /, begin
+%       end);
+%       snippet_register('js_snippet', 'multiFields', { after => [ 'steps' ] }, begin
 <script>
     $(document).ready(function() {
         var mf_emails = new MultiFields({
@@ -188,6 +207,7 @@
             afterAppend: function(elementCurrent, elementNew) {
                 if(elementNew != null) 
                     $('#personal_data_wizard').formValidation('addField', $(elementNew).find('input'), {
+                        err: 'tooltip',
                         validators: {
                             notEmpty: {}
                         }
@@ -202,6 +222,7 @@
             afterAppend: function(elementCurrent, elementNew) {
                 if(elementNew != null) 
                     $('#personal_data_wizard').formValidation('addField', $(elementNew).find('input'), {
+                        err: 'tooltip',
                         validators: {
                             notEmpty: {}
                         }
@@ -211,7 +232,7 @@
     });
 </script>
 %       end);
-%       snippet_register(qw/ snippet  select2             /, begin
+%       snippet_register('js_snippet', 'select2', { after => [ 'steps' ] }, begin
 <script>
     $(document).ready(function() {
         $('.select2-select').select2({ width: '100%' });
@@ -219,12 +240,19 @@
     });
 </script>
 %       end);
-%       snippet_register(qw/ snippet  timezone            /, begin
+%       snippet_register('js_snippet', 'language', { after => [ 'steps', 'i18n' ] }, begin
 <script>
     $(document).ready(function() {
-
-        select2_area = $('#timezone_area').select2({ width: '100%' });
-        select2_city = $('#timezone_city').select2({ width: '100%' });
+        var language_selected = $.i18n.lng();
+        if(language_selected != null) {
+            $('#language').val(language_selected).trigger('change');
+        }
+    });
+</script>
+%       end);
+%       snippet_register('js_snippet', 'timezone', { after => [ 'steps' ] }, begin
+<script>
+    $(document).ready(function() {
 
         var timezones;
         var timezone_detected = Intl.DateTimeFormat().resolvedOptions().timeZone.split('/');
@@ -254,8 +282,8 @@
             }
 
             if(timezones_loaded && timezone_detected) {
-                select2_area.val(timezone_detected[0]).trigger('change');
-                select2_city.val(timezone_detected[1]).trigger('change');
+                $('#timezone_area').val(timezone_detected[0]).trigger('change');
+                $('#timezone_city').val(timezone_detected[1]).trigger('change');
             }
         }
 
@@ -266,7 +294,7 @@
     });
 </script>
 %       end);
-%       snippet_register(qw/ snippet  location            /, begin
+%       snippet_register('js_snippet', 'location', { after => [ 'steps' ] }, begin
 <script>
     $(document).ready(function() {
 
@@ -292,11 +320,17 @@
         $.get('http://ip-api.com/json/', function(data) {
                  $('#latitude').val(data.lat);
                 $('#longitude').val(data.lon);
+                $('#personal_data_wizard').
+                    formValidation('validateField', 'latitude').
+                    formValidation('validateField', 'longitude');
         }, 'json');
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
                  $('#latitude').val(position.coords.latitude);
                 $('#longitude').val(position.coords.longitude);
+                $('#personal_data_wizard').
+                    formValidation('validateField', 'latitude').
+                    formValidation('validateField', 'longitude');
                 radius = 100;
             });
         }
@@ -305,13 +339,17 @@
     });
 </script>
 %       end);
-%       snippet_register(qw/ snippet  iChecks             /, begin
+%       snippet_register('js_snippet', 'iChecks', { after => [ 'steps' ] }, begin
 <script>
     $(document).ready(function () {
         $('.i-checks').iCheck({
             checkboxClass: 'icheckbox_square-green',
             radioClass: 'iradio_square-green',
-        });
+            tap: true
+        }).on('ifChanged', function(eventHappened) {
+            var field = $(this).attr('name');
+            $('#personal_data_wizard').formValidation('revalidateField', field);
+        }).end();
     });
 </script>
 %       end);
@@ -327,7 +365,7 @@
           Please, confirm your account by filling the form below.
           Some fields are required, some are not, so you could provide us with the information later.
         </p>
-        <form id="personal_data_wizard" action="#" class="wizard">
+        <form id="personal_data_wizard" method="POST" class="wizard">
           <h1>Full Name</h1>
           <fieldset data-step="0">
             <div class="form-group">
@@ -357,48 +395,56 @@
           <fieldset data-step="3">
             <div class="form-group">
               <label>Language</label>
-              <select data-placeholder="Choose Your Preferred Language" class="select2-select" name="language">
+              <select id="language" data-placeholder="Choose Your Preferred Language" class="select2-select form-control" name="language">
                 <option value>Please, select</option>
                 <option value="en_US">English (US)</option>
                 <option value="uk_UA">Ukrainian</option>
               </select>
             </div>
-            <div class="form-group">
+            <div>
               <label>Timezone</label>
               <div class="row">
                 <div class="col-md-6">
-                  <select data-placeholder="Choose Your Time Zone" class="select2-select" name="timezone_area" id="timezone_area"></select>
+                  <div class="form-group">
+                    <select data-placeholder="Choose Your Time Zone" class="select2-select form-control" name="timezone_area" id="timezone_area"></select>
+                  </div>
                 </div>
                 <div class="col-md-6">
-                  <select data-placeholder="Choose Your Time Zone" class="select2-select" name="timezone_city" id="timezone_city"></select>
-                </div>
-              </div>
-              <div id="modalGeoPickerDialog" class="modal inmodal">
-                <div class="modal-dialog modal-lg">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h4 class="modal-title">Please, clarify your location</h4>
-                    </div>
-                    <div class="modal-body">
-                      <div id="modalGeoPickerPlugin" style="width: 100%; height: 400px;">
-                        Here Be GoogleMaps
-                      </div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
-                    </div>
+                  <div class="form-group">
+                    <select data-placeholder="Choose Your Time Zone" class="select2-select form-control" name="timezone_city" id="timezone_city"></select>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="form-group">
+            <div>
               <label>Location</label>
               <div class="row">
                 <div class="col-md-6">
-                  <input data-placeholder="Your Latitude" id="latitude" name="latitude" type="text" class="form-control">
+                  <div class="form-group">
+                    <input data-placeholder="Your Latitude" id="latitude" name="latitude" type="text" class="form-control" readonly>
+                  </div>
                 </div>
                 <div class="col-md-6">
-                  <input data-placeholder="Your Longtitude" id="longitude" name="longitude" type="text" class="form-control">
+                  <div class="form-group">
+                    <input data-placeholder="Your Longtitude" id="longitude" name="longitude" type="text" class="form-control" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="modalGeoPickerDialog" class="modal inmodal">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title">Please, clarify your location</h4>
+                  </div>
+                  <div class="modal-body">
+                    <div id="modalGeoPickerPlugin" style="width: 100%; height: 400px;">
+                      Here Be GoogleMaps
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -413,25 +459,33 @@
                 <option value="fathers_year_of_birth">Father's Year of Birth</option>
               </select>
             </div>
-            <div class="form-group">
+            <div>
               <label>The Answer *</label>
               <div class="row">
                 <div class="col-md-6">
-                  <input data-placeholder="Your Answer" id="secret_answer_1" name="secret_answer_1" type="password" class="form-control required">
+                  <div class="form-group">
+                    <input data-placeholder="Your Answer" id="secret_answer" name="secret_answer" type="password" class="form-control required">
+                  </div>
                 </div>
                 <div class="col-md-6">
-                  <input data-placeholder="Your Answer" id="secret_answer_2" name="secret_answer_2" type="password" class="form-control required">
+                  <div class="form-group">
+                    <input data-placeholder="Your Answer" id="secret_answer_repeat" name="secret_answer_repeat" type="password" class="form-control required">
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="form-group">
+            <div>
               <label>Enter Your Password *</label>
               <div class="row">
                 <div class="col-md-6">
-                  <input data-placeholder="Your Password" id="password_1" name="password_1" type="password" class="form-control required">
+                  <div class="form-group">
+                    <input data-placeholder="Your Password" id="password" name="password" type="password" class="form-control required">
+                  </div>
                 </div>
                 <div class="col-md-6">
-                  <input data-placeholder="Your Password" id="password_2" name="password_2" type="password" class="form-control required">
+                  <div class="form-group">
+                    <input data-placeholder="Your Password" id="password_repeat" name="password_repeat" type="password" class="form-control required">
+                  </div>
                 </div>
               </div>
             </div>
@@ -447,7 +501,7 @@
                 <option value="search">I searched for a service provided</option>
                 <option value="ads_online">I saw your ads on the Internet</option>
                 <option value="ads_offline">I saw your ads offline</option>
-                <option value="other">Other options</option>
+                <option value="other">Other option</option>
               </select>
             </div>
             <div class="form-group">
@@ -479,11 +533,11 @@
     <form class="m-t" role="form" action="/person/signup" method="POST">
       <div class="form-group">
         <input type="text" class="form-control" data-i18n="[placeholder]signupform.full-name"
-          placeholder="Full Name" required="" name="person_email">
+          placeholder="Full Name" required="" name="full_name">
       </div>
       <div class="form-group">
         <input type="email" class="form-control" data-i18n="[placeholder]signupform.email"
-          placeholder="E-Mail Address" required="" name="person_password">
+          placeholder="E-Mail Address" required="" name="email">
       </div>
       <button type="submit" class="btn btn-primary block full-width m-b"><span data-i18n="signupform.signup">Sign Up!</span></button>
       <p class="text-muted text-center"><small><span data-i18n="signupscreen.have-account">Already have an account?</span></small></p>

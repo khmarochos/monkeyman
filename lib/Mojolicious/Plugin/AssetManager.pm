@@ -9,6 +9,7 @@ extends 'Mojolicious::Plugin';
 
 use Mojo::Util 'xml_escape';
 use Text::Glob 'match_glob';
+use Sort::Conditional 'sort_conditional';
 use Method::Signatures;
 
 
@@ -66,6 +67,7 @@ method register(
                     undef,
                     $asset_type,
                     $asset_alias,
+                    undef,
                     $assets_library->{ $asset_type }->{ $asset_alias }
                 );
             }
@@ -85,12 +87,12 @@ method asset_register(
     Maybe[Object]   $controller!,
     Str             $asset_type!,
     Str             $asset_alias!,
-    ArrayRef        $asset_items!,
-    Maybe[Int]      $order?
+    Maybe[HashRef]  $asset_order!,
+    ArrayRef        $asset_items!
 ) {
     $self->_get_assets_library->{ $asset_type }->{ $asset_alias } = $asset_items;
-    $self->asset_required($controller, $asset_type, $asset_alias, $order)
-        if(defined($order));
+    $self->asset_required($controller, $asset_type, $asset_alias, $asset_order)
+        if(defined($asset_order));
 }
 
 
@@ -99,7 +101,7 @@ method asset_required(
     Object          $controller!,
     Str             $asset_type!,
     Str             $asset_alias?,
-    Maybe[Int]      $order?
+    Maybe[HashRef]  $order?
 ) {
     $self->_required(
         library         => $self->_get_assets_library,
@@ -128,12 +130,12 @@ method snippet_register(
     Maybe[Object]   $controller!,
     Str             $snippet_type!,
     Str             $snippet_alias!,
-    CodeRef         $snippet_text!,
-    Maybe[Int]      $order? = 1
+    Maybe[HashRef]  $snippet_order!,
+    CodeRef         $snippet_text!
 ) {
     $self->_get_snippets_library->{ $snippet_type }->{ $snippet_alias } = $snippet_text;
-    $self->snippet_required($controller, $snippet_type, $snippet_alias, $order)
-        if(defined($order));
+    $self->snippet_required($controller, $snippet_type, $snippet_alias, $snippet_order)
+        if(defined($snippet_order));
 }
 
 
@@ -142,7 +144,7 @@ method snippet_required(
     Object          $controller!,
     Str             $snippet_type!,
     Str             $snippet_alias?,
-    Maybe[Int]      $order?
+    Maybe[HashRef]  $order?
 ) {
     $self->_required(
         library         => $self->_get_snippets_library,
@@ -170,25 +172,17 @@ method _required(
     HashRef         :$library,
     Str             :$element_type!,
     Str             :$element_alias?,
-    Maybe[Int]      :$order?
+    Maybe[HashRef]  :$order?
 ) {
     my @elements_required;
     my $elements_of_this_type_order       = $self->_dig(1, $stashed, $element_type);
     my $elements_of_this_type_registered  = $self->_dig(0, $library, $element_type);
     foreach my $element_found (
-        grep { $_ if(match_glob($element_alias, $_)) }
+        grep({ $_ if(match_glob($element_alias, $_)) }
             defined($order) ?
-                (
-                    keys(%{ $elements_of_this_type_registered })
-                ) : (
-                    sort(
-                        {
-                            $elements_of_this_type_order->{ $a } <=>
-                            $elements_of_this_type_order->{ $b }
-                        }
-                            keys(%{ $elements_of_this_type_order })
-                    )
-                )
+                         keys(%{ $elements_of_this_type_registered }) :
+                sort_conditional($elements_of_this_type_order)
+        )
     ) {
         $elements_of_this_type_order->{ $element_found } = $order
             if(defined($order));

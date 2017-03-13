@@ -518,7 +518,7 @@ END { try { MonkeyMan->instance->_mm_shutdown; } };
 
 method _configure_logger_parameters(Str $actor_name) {
 
-my %parameters;
+    my %parameters;
     $parameters{'log4perl_configuration_file'} =
         defined($self->get_configuration->{'logger'}->{$actor_name}->{'log4perl'}) ?
                 $self->get_configuration->{'logger'}->{$actor_name}->{'log4perl'} :
