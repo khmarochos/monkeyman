@@ -1,4 +1,4 @@
-%   snippet_register('snippet', 'i18n', { }, begin
+%   snippet_register('js_snippet', 'i18n', { }, begin
 <script>
     $(document).ready(function() {
         $.i18n.init({

@@ -1,4 +1,4 @@
-%  snippet_register('js_snipppet', 'datatables', { }, begin
+%  snippet_register('js_snipppet', 'dataTables', { }, begin
         <script>
             $(document).ready(function(){
                 $('.<%= $name %>').DataTable({

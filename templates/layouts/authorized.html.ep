@@ -3,11 +3,11 @@
 %   asset_required('css_post',  'animate',      {                           });
 %   asset_required('css_post',  'style',        { after => [ 'animate'    ] });
 %   asset_required('css_post',  'maitre_d',     { after => [ 'style'      ] });
-%   asset_required('js_pre',    'jquery',       {                           });
+%   asset_required('js_pre',    'jQuery',       {                           });
 %   asset_required('js_pre',    'bootstrap',    { after => [ 'jquery'     ] });
 %  #asset_required('js_pre',    'i18next',      { after => [ 'bootstrap'  ] });
-%   asset_required('js_pre',    'metismenu',    { after => [ 'bootstrap'  ] });
-%   asset_required('js_pre',    'slimscroll',   { after => [ 'bootstrap'  ] });
+%   asset_required('js_pre',    'metisMenu',    { after => [ 'bootstrap'  ] });
+%   asset_required('js_pre',    'slimScroll',   { after => [ 'bootstrap'  ] });
 %   asset_required('js_post',   'inspinia',     {                           });
 %   asset_required('js_post',   'pace',         { after => [ 'inspinia'   ] });
 <!DOCTYPE html>

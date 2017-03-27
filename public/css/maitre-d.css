@@ -12,12 +12,12 @@ div.multifield > i.form-control-feedback {
   right: 5.5em;
 }
 
-form#personal_data_wizard > div.content.clearfix {
+form#wizard > div.content.clearfix {
   position: relative;
   min-height: 252px;
 }
 
-form#personal_data_wizard > div.content.clearfix:before {
+form#wizard > div.content.clearfix:before {
   font-family: FontAwesome;
   font-style: normal;
   font-weight: normal;
@@ -29,7 +29,7 @@ form#personal_data_wizard > div.content.clearfix:before {
   right: 50px;
 }
 
-form#personal_data_wizard .form-inline {
+form#wizard .form-inline {
   margin-bottom: 15px;
 }
 

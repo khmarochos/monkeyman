@@ -3,15 +3,43 @@
 %   asset_required('css_post',  'animate',      {                           });
 %   asset_required('css_post',  'style',        { after => [ 'animate'    ] });
 %   asset_required('css_post',  'maitre_d',     { after => [ 'style'      ] });
-%   asset_required('js_pre',    'jquery',       {                           });
-%   asset_required('js_pre',    'bootstrap',    { after => [ 'jquery'     ] });
+%   asset_required('js_pre',    'jQuery',       {                           });
+%   asset_required('js_pre',    'bootstrap',    { after => [ 'jQuery'     ] });
 %   asset_required('js_pre',    'i18next',      { after => [ 'bootstrap'  ] });
-%   asset_required('js',        'multifields',  {                           });
 %   asset_required('js_post',   'pace',         {                           });
 %
 %   include('snippets/i18n', language_selected => exists(session->{'language_code'}) ? session->{'language_code'} : 'en_US');
-%   include('snippets/error');
 %   include('snippets/tooltip');
+%
+%   if(defined(stash('error_message'))) {
+%       asset_required  ('css',         'toastr', { });
+%       asset_required  ('js',          'toastr', { });
+%       snippet_register('js_snippet',  'toastr', { }, begin
+<script>
+    $(document).ready(
+        function() {
+            toastr.options = {
+              "closeButton": true,
+              "debug": false,
+              "progressBar": true,
+              "preventDuplicates": true,
+              "positionClass": "toast-top-right",
+              "onclick": null,
+              "showDuration": "400",
+              "hideDuration": "1000",
+              "timeOut": "7000",
+              "extendedTimeOut": "1000",
+              "showEasing": "swing",
+              "hideEasing": "linear",
+              "showMethod": "fadeIn",
+              "hideMethod": "fadeOut"
+            };
+            toastr.error("<%= stash('error_message') %>", "<%= stash('error_title') %>")
+        }
+    )
+</script>
+%       end);
+%   }
 %
 <!DOCTYPE html>
 <html>

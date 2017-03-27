@@ -28,19 +28,19 @@ method startup {
     $self->plugin('AssetManager', {
         assets_library => {
             js_pre      => {
-                jquery          => [ qw! /js/jquery-3.1.1.min.js                                ! ],
+                jQuery          => [ qw! /js/jquery-3.1.1.min.js                                ! ],
                 bootstrap       => [ qw! /js/bootstrap.min.js                                   ! ],
                 i18next         => [ qw! /js/plugins/i18next/i18next.min.js                     ! ],
-                metismenu       => [ qw! /js/plugins/metisMenu/jquery.metisMenu.js              ! ],
-                slimscroll      => [ qw! /js/plugins/slimscroll/jquery.slimscroll.min.js        ! ]
+                metisMenu       => [ qw! /js/plugins/metisMenu/jquery.metisMenu.js              ! ],
+                slimScroll      => [ qw! /js/plugins/slimscroll/jquery.slimscroll.min.js        ! ]
             },
             js          => {
-                multifields     => [ qw! /js/plugins/multiFields/multiFields.js                 ! ],
+                multiField      => [ qw! /js/plugins/multiField/multiField.js                   ! ],
                 steps           => [ qw! /js/plugins/steps/jquery.steps.min.js                  ! ],
                 formValidation  => [ qw! /js/plugins/formValidation/formValidation.min.js
                                          /js/plugins/formValidation/framework/bootstrap.min.js  ! ],
                 select2         => [ qw! /js/plugins/select2/select2.min.js                     ! ],
-                datatables      => [ qw! /js/plugins/dataTables/datatables.min.js               ! ],
+                dataTables      => [ qw! /js/plugins/dataTables/datatables.min.js               ! ],
                 toastr          => [ qw! /js/plugins/toastr/toastr.min.js                       ! ],
                 googleMaps      => [ qw! https://maps.google.com/maps/api/js?key=AIzaSyC8eacjB7FIw6OH4OMCloaWeoRxiDdfJak&libraries=places ! ],
                 locationPicker  => [ qw! /js/plugins/locationPicker/locationpicker.jquery.js    ! ],
@@ -58,8 +58,8 @@ method startup {
                 toastr          => [ qw! /css/plugins/toastr/toastr.min.css                     ! ],
                 steps           => [ qw! /css/plugins/steps/jquery.steps.css                    ! ],
                 select2         => [ qw! /css/plugins/select2/select2.min.css                   ! ],
-                datatables      => [ qw! /css/plugins/dataTables/datatables.min.css             ! ],
-                datepicker      => [ qw! /css/plugins/datapicker/datepicker3.css                ! ],
+                dataTables      => [ qw! /css/plugins/dataTables/datatables.min.css             ! ],
+                datePicker      => [ qw! /css/plugins/datapicker/datepicker3.css                ! ],
                 iCheck          => [ qw! /css/plugins/iCheck/custom.css                         ! ],
                 summernote      => [ qw! /css/plugins/summernote/summernote.css
                                          /css/plugins/summernote/summernote-bs3.css             ! ]
@@ -92,12 +92,19 @@ method startup {
             ->any('/person/login')
                 ->to('person#login');
        $routes
-            ->any('/person/signup/:token')
+            ->any('/person/signup')
                 ->to(
                     controller      => 'person',
-                    action          => 'signup',
-                    token           => undef
+                    action          => 'signup'
                 );
+       $routes
+            ->get('/person/confirm/:token')
+                ->name('person.confirm')
+                    ->to(
+                        controller      => 'person',
+                        action          => 'confirm',
+                        token           => undef
+                    );
 
     my $routes_authenticated = $routes->under->to('person#is_authenticated')
                                       ->under->to('person#load_settings')

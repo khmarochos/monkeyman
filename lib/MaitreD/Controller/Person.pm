@@ -7,6 +7,7 @@ use Moose;
 use namespace::autoclean;
 extends 'Mojolicious::Controller';
 
+use Mojolicious::Validator;
 use Method::Signatures;
 use TryCatch;
 use Switch;
@@ -28,11 +29,13 @@ method is_authenticated {
 }
 
 method load_settings {
+
     $self->stash->{'language_id'}           = $self->stash->{'authorized_person_result'}->language->id;
     $self->stash->{'language_code'}         = $self->stash->{'authorized_person_result'}->language->code;
     $self->stash->{'timezone'}              = $self->stash->{'authorized_person_result'}->timezone;
     $self->stash->{'datetime_format_date'}  = $self->stash->{'authorized_person_result'}->datetime_format->format_date;
     $self->stash->{'datetime_format_time'}  = $self->stash->{'authorized_person_result'}->datetime_format->format_time;
+
 }
 
 method authenticate (Str $email!, Str $password!) {
@@ -43,20 +46,24 @@ method authenticate (Str $email!, Str $password!) {
             password    => $password
         );
     } catch (HyperMouse::Schema::ResultSet::Person::Exception::EmailNotFound $e) {
-        $self->stash(error_message => "The email isn't registered");
+        $self->stash(error_title    => "Authentication Error");
+        $self->stash(error_message  => "The email isn't registered");
         return(0);
     } catch (HyperMouse::Schema::ResultSet::Person::Exception::PersonNotFound $e) {
-        $self->stash(error_message => "The account isn't enabled");
+        $self->stash(error_title    => "Authentication Error");
+        $self->stash(error_message  => "The account isn't enabled");
         return(0);
     } catch (HyperMouse::Schema::ResultSet::Person::Exception::PasswordNotFound $e) {
-        $self->stash(error_message => "The account isn't enabled");
+        $self->stash(error_title    => "Authentication Error");
+        $self->stash(error_message  => "The account isn't enabled");
         return(0);
     } catch (HyperMouse::Schema::ResultSet::Person::Exception::PasswordIncorrect $e) {
-        $self->stash(error_message => "The password isn't correct");
+        $self->stash(error_title    => "Authentication Error");
+        $self->stash(error_message  => "The password isn't correct");
         return(0);
     }
 
-    $self->session  (authorized_person_email => $email);
+    $self->session(authorized_person_email => $email);
     return(1);
 
 }
@@ -96,7 +103,44 @@ method logout {
 
 
 
+method signup {
+
+    if($self->req->method eq 'POST') {
+        if(defined(my $token = $self->param('token'))) {
+            $self->redirect_to('person.confirm', token => $token);
+        }
+        my $v = $self->validation;
+        $v->required('full_name', 'trim');
+        $v->required('email', 'trim');
+        $v->optional('language', 'trim');
+        if($v->has_error) {
+            $self->stash(error_message  => "The data entered isn't valid");
+            $self->stash(error_title    => "Registration Error");
+        } elsif($self->hm_schema->resultset('PersonEmail')->find({ email => $v->param('email') })) {
+            $v->error('email' => 'Already registered');
+            $self->stash(error_message  => "The email entered is already registered");
+            $self->stash(error_title    => "Registration Error");
+        } else {
+            my $person = {};
+            (
+                $person->{'first_name'},
+                $person->{'middle_name'},
+                $person->{'last_name'}
+            ) = $v->param('full_name') =~ /^(?:(\S+)?\s+)?(?:(\S.+\S)?\s+)?(\S+)$/;
+            $person->{'valid_since'}    = undef;
+            $person->{'valid_till'}     = undef;
+            $person->{'valid_removed'}  = undef;
+            warn($v->param('language'));
+            $self->stash(confirmation_needed => 1);
+        }
+    }
+
+}
+
+
+
 method list {
+
     my @provisioning_agreements;
     my $mask_permitted  = 0b000111;
     my $mask_valid      = 0b000111;
@@ -121,6 +165,7 @@ method list {
             ]);
         }
     }
+
 }
 
 

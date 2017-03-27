@@ -1,6 +1,6 @@
 <%
-    asset_required('css', 'datatables', { });
-    asset_required('js',  'datatables', { });
+    asset_required('css', 'dataTables', { });
+    asset_required('js',  'dataTables', { });
     my $language = stash->{'language_id'};
 %>
 <%=
