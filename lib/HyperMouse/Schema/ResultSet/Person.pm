@@ -7,7 +7,7 @@ use Moose;
 use MooseX::MarkAsMethods autoclean => 1;
 extends 'HyperMouse::Schema::DefaultResultSet';
 
-use MonkeyMan::Exception qw(EmailNotFound PersonNotFound PasswordNotFound PasswordIncorrect);
+use MonkeyMan::Exception qw(EmailNotFound EmailNotConfirmed PersonNotFound PasswordNotFound PasswordIncorrect);
 
 use Method::Signatures;
 use TryCatch;
@@ -26,6 +26,12 @@ method authenticate (
         $email
     )
         unless(defined($db_email));
+
+    (__PACKAGE__ . '::Exception::EmailNotConfirmed')->throwf(
+        "The %s email address isn't confirmed",
+        $email
+    )
+        unless(defined($db_email->confirmed));
 
     my $db_person   = $db_email->search_related("person")->filter_valid->single;
     (__PACKAGE__ . '::Exception::PersonNotFound')->throwf(

@@ -57,7 +57,7 @@ __PACKAGE__->table("person");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 valid_till
 
@@ -86,7 +86,7 @@ __PACKAGE__->table("person");
 =head2 middle_name
 
   data_type: 'varchar'
-  is_nullable: 0
+  is_nullable: 1
   size: 64
 
 =head2 language_id
@@ -123,7 +123,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "valid_till",
   {
@@ -142,7 +142,7 @@ __PACKAGE__->add_columns(
   "last_name",
   { data_type => "varchar", is_nullable => 0, size => 64 },
   "middle_name",
-  { data_type => "varchar", is_nullable => 0, size => 64 },
+  { data_type => "varchar", is_nullable => 1, size => 64 },
   "language_id",
   {
     data_type => "integer",
@@ -296,8 +296,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-15 05:46:10
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:M0WugRNnAz2hj8Hsc98K7A
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 04:26:13
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:E8eQqqpwVnGhtfJ9YufTuQ
 
 use Method::Signatures;
 

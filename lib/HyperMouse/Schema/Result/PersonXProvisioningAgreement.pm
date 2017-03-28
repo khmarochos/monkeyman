@@ -57,7 +57,7 @@ __PACKAGE__->table("person_x_provisioning_agreement");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 valid_till
 
@@ -114,7 +114,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "valid_till",
   {
@@ -195,8 +195,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PBlALqT7yb6adT5JCUPs9A
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 01:07:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wiaaJb/taoVf+kDnIn5igQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

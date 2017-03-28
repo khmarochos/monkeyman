@@ -53,6 +53,13 @@ method filter_valid (
     Bool        :$not_expired   = 1,
     Maybe[Int]  :$mask?         = undef
 ) {
+    die
+        if(
+            ($removed   && $not_removed  ) ||
+            ($premature && $not_premature) ||
+            ($expired   && $not_expired  )
+        );
+    # ^^^ FIXME: Raise a proper exception if mutual contradictory flags are given
     $mask =
         (    $removed << 5) + (    $premature << 4) + (    $expired << 3) +
         ($not_removed << 2) + ($not_premature << 1) + ($not_expired << 0)
@@ -60,14 +67,30 @@ method filter_valid (
     $self->search(
         {
             -and => [
-                $mask & 32 ? ( "$source_alias.removed"       => { -not => { '=' => undef }             } ) : (),
-                $mask & 16 ? ( "$source_alias.valid_since"   => { '>'  => $self->format_datetime($now) } ) : (),
-                $mask & 8  ? ( "$source_alias.valid_till"    => { '<=' => $self->format_datetime($now) } ) : (),
-                $mask & 4  ? ( "$source_alias.removed"       => { '='  => undef                        } ) : (),
-                $mask & 2  ? ( "$source_alias.valid_since"   => { '<=' => $self->format_datetime($now) } ) : (),
-                $mask & 1  ? (
+                $mask & 32 ? ( # removed
+                               "$source_alias.removed"       => { -not => { '=' => undef               } }
+                ) : (),
+                $mask & 16 ? ( # premature
                     -or => [
-                             { "$source_alias.valid_till"    => { '='  => undef } },
+                             { "$source_alias.valid_since"   => { '='  => undef                        } },
+                             { "$source_alias.valid_since"   => { '>'  => $self->format_datetime($now) } }
+                    ]
+                ) : (),
+                $mask & 8  ? ( # expired
+                               "$source_alias.valid_till"    => { '<=' => $self->format_datetime($now) }
+                ) : (),
+                $mask & 4  ? ( # not_removed
+                               "$source_alias.removed"       => { '='  => undef                        }
+                ) : (),
+                $mask & 2  ? ( # not_premature
+                    -or => [
+                             { "$source_alias.valid_since"   => { -not => { '=' => undef             } } },
+                             { "$source_alias.valid_since"   => { '<=' => $self->format_datetime($now) } }
+                    ]
+                ) : (),
+                $mask & 1  ? ( # not_expired
+                    -or => [
+                             { "$source_alias.valid_till"    => { '='  => undef                        } },
                              { "$source_alias.valid_till"    => { '>'  => $self->format_datetime($now) } }
                     ]
                 ) : ()

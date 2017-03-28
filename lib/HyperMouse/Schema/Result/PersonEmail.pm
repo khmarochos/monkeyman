@@ -57,7 +57,7 @@ __PACKAGE__->table("person_email");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 valid_till
 
@@ -77,7 +77,7 @@ __PACKAGE__->table("person_email");
   is_nullable: 0
   size: 64
 
-=head2 validated
+=head2 confirmed
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
@@ -104,7 +104,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "valid_till",
   {
@@ -120,7 +120,7 @@ __PACKAGE__->add_columns(
   },
   "email",
   { data_type => "varchar", is_nullable => 0, size => 64 },
-  "validated",
+  "confirmed",
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
@@ -164,9 +164,24 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
+=head2 person_email_confirmations
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8O75Fzpmzv27SiiivE5WOg
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::PersonEmailConfirmation>
+
+=cut
+
+__PACKAGE__->has_many(
+  "person_email_confirmations",
+  "HyperMouse::Schema::Result::PersonEmailConfirmation",
+  { "foreign.person_email_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 05:01:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Hg/3CpMB5J63GX/iZmXNmQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

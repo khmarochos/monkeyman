@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::CorporationXContractor;
+package HyperMouse::Schema::Result::PersonEmailConfirmation;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::CorporationXContractor
+HyperMouse::Schema::Result::PersonEmailConfirmation
 
 =cut
 
@@ -38,11 +38,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<corporation_x_contractor>
+=head1 TABLE: C<person_email_confirmation>
 
 =cut
 
-__PACKAGE__->table("corporation_x_contractor");
+__PACKAGE__->table("person_email_confirmation");
 
 =head1 ACCESSORS
 
@@ -71,14 +71,19 @@ __PACKAGE__->table("corporation_x_contractor");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 corporation_id
+=head2 confirmed
 
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
+  is_nullable: 1
+
+=head2 code
+
+  data_type: 'varchar'
   is_nullable: 0
+  size: 36
 
-=head2 contractor_id
+=head2 person_email_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -113,14 +118,15 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "corporation_id",
+  "confirmed",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
   },
-  "contractor_id",
+  "code",
+  { data_type => "varchar", is_nullable => 0, size => 36 },
+  "person_email_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -143,39 +149,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 contractor
+=head2 person_email
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::Contractor>
+Related object: L<HyperMouse::Schema::Result::PersonEmail>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "contractor",
-  "HyperMouse::Schema::Result::Contractor",
-  { id => "contractor_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
-);
-
-=head2 corporation
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::Corporation>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "corporation",
-  "HyperMouse::Schema::Result::Corporation",
-  { id => "corporation_id" },
+  "person_email",
+  "HyperMouse::Schema::Result::PersonEmail",
+  { id => "person_email_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 01:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oxZoCog1MnLlYbc6ZobyMQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 05:01:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+/p9i7d3dgKxOw79bxNwiA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

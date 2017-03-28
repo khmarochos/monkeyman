@@ -57,7 +57,7 @@ __PACKAGE__->table("provisioning_agreement");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 valid_till
 
@@ -105,7 +105,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "valid_till",
   {
@@ -212,8 +212,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XwcFp3Lab7ux/ecFLLSY4A
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 01:07:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:GIgX6kVN3KWi8LeUoDB+eA
 
 use Method::Signatures;
 

@@ -57,7 +57,7 @@ __PACKAGE__->table("service_group");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 valid_till
 
@@ -92,7 +92,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "valid_till",
   {
@@ -175,8 +175,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pp2t0ekcTYO9mEVQu/TDAA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 01:07:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QgV1AEgaumRUnK9fzxt3sg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

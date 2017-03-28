@@ -56,6 +56,22 @@ method _build_logger {
 
 
 
+has 'mailer' => (
+    is          => 'ro',
+    isa         => 'MonkeyMan::Mailer',
+    reader      =>    'get_mailer',
+    writer      =>   '_set_mailer',
+    builder     => '_build_mailer',
+    lazy        => 1,
+    required    => 0
+);
+
+method _build_mailer {
+    $self->_get_monkeyman->get_mailer;
+}
+
+
+
 has 'schema' => (
     is          => 'ro',
     isa         => 'HyperMouse::Schema',

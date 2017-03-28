@@ -57,7 +57,7 @@ __PACKAGE__->table("contractor_type_i18n");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 valid_till
 
@@ -111,7 +111,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "valid_till",
   {
@@ -190,8 +190,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 15:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ssVp6+zsQkbC2bBHKrkMtQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 01:07:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:b/+eJDozjtxF8YfbNiKS5w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

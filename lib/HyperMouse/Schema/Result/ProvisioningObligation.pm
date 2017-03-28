@@ -57,7 +57,7 @@ __PACKAGE__->table("provisioning_obligation");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 valid_till
 
@@ -112,7 +112,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "valid_till",
   {
@@ -256,8 +256,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-12 04:38:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B3AbpmywrYuW/GR+vlc5oA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 01:07:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mPEr/QqqJG+WtN4Y1vHjuQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
