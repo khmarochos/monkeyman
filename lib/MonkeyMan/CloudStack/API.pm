@@ -528,10 +528,27 @@ method run_command(
 
                 my $job_result = $self->get_job_result($jobid);
 
-                if($job_result->findvalue('/queryasyncjobresultresponse/jobstatus') ne '0') {
-                    $logger->tracef("The job %s is finished", $jobid);
+                my $job_status = $job_result->findvalue('/queryasyncjobresultresponse/jobstatus');
+                if($job_status eq '0') {
+                    $logger->tracef("The %s job is running", $jobid);
+                } elsif($job_status eq '1') {
+                    $logger->tracef("The %s job is finished", $jobid);
                     $dom = $job_result;
                     last;
+                } elsif($job_status eq '2') {
+                    $logger->tracef("The %s job is failed", $jobid);
+                    my $jobresultcode = $job_result->findvalue('/queryasyncjobresultresponse/jobresultcode');
+                    my $errorcode     = $job_result->findvalue('/queryasyncjobresultresponse/jobresult/errorcode');
+                    my $errortext     = $job_result->findvalue('/queryasyncjobresultresponse/jobresult/errortext');
+                    (__PACKAGE__ . '::Exception::CommandFailed')->throwf(
+                        "The %s asynchronous command failed: %s %s (%s)",
+                        $command_to_run, $errorcode, $errortext, $jobresultcode
+                    );
+                } else {
+                    $logger->warnf(
+                        "The %s job result %s doesn't seem to be valid: can't get /queryasyncjobresultresponse/jobstatus",
+                        $command_to_run, $job_result
+                    );
                 }
 
                 if(
