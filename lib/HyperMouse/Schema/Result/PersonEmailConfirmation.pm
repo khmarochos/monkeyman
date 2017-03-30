@@ -71,13 +71,7 @@ __PACKAGE__->table("person_email_confirmation");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 confirmed
-
-  data_type: 'datetime'
-  datetime_undef_if_invalid: 1
-  is_nullable: 1
-
-=head2 code
+=head2 token
 
   data_type: 'varchar'
   is_nullable: 0
@@ -118,13 +112,7 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "confirmed",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
-  "code",
+  "token",
   { data_type => "varchar", is_nullable => 0, size => 36 },
   "person_email_id",
   {
@@ -165,8 +153,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 05:01:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+/p9i7d3dgKxOw79bxNwiA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-31 00:04:20
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:k5YuZYKaAA6oC3e/NF9wpA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

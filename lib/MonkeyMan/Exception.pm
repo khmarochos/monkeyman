@@ -21,18 +21,21 @@ func import (@exceptions) {
 
     foreach(@exceptions) {
         if($_ =~ /^::/) {
-            _register_exception($_);
+            __PACKAGE__->_register_exception_class($_);
         } else {
-            _register_exception((caller)[0] . '::Exception::' . $_);
+            __PACKAGE__->_register_exception_class((caller)[0] . '::Exception::' . $_);
         }
     }
 
 }
 
-func _register_exception(Str $exception!) {
-    unless ( $exception->DOES(__PACKAGE__) ) {
+func _register_exception_class(
+    Str $package!,
+    Str $class!
+) {
+    unless($class->DOES($package)) {
         Moose::Meta::Class->create(
-            $exception => (superclasses => [__PACKAGE__])
+            $class => (superclasses => [ $package ])
         );
     }
 }

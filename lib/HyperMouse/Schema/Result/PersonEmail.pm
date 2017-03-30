@@ -77,12 +77,6 @@ __PACKAGE__->table("person_email");
   is_nullable: 0
   size: 64
 
-=head2 confirmed
-
-  data_type: 'datetime'
-  datetime_undef_if_invalid: 1
-  is_nullable: 1
-
 =head2 person_id
 
   data_type: 'integer'
@@ -120,12 +114,6 @@ __PACKAGE__->add_columns(
   },
   "email",
   { data_type => "varchar", is_nullable => 0, size => 64 },
-  "confirmed",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
   "person_id",
   {
     data_type => "integer",
@@ -180,8 +168,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 05:01:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Hg/3CpMB5J63GX/iZmXNmQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-30 12:20:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:S6LOgiy0rsfti2m7A6HQXg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

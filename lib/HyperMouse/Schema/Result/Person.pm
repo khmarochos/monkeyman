@@ -71,12 +71,6 @@ __PACKAGE__->table("person");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 confirmed
-
-  data_type: 'datetime'
-  datetime_undef_if_invalid: 1
-  is_nullable: 1
-
 =head2 first_name
 
   data_type: 'varchar'
@@ -138,12 +132,6 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
   },
   "removed",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
-  "confirmed",
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
@@ -308,8 +296,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-30 04:17:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tDO1fJkfjOg19DPnjw+AVw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-30 12:20:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:220DzmrVkSOIICe4i2/Qbw
 
 use Method::Signatures;
 
