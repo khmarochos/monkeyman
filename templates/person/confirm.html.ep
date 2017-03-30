@@ -1,4 +1,7 @@
-%   if(1) {
+%   if(defined(stash('person_data'))) {
+%
+%       use Mojo::Util qw(quote);
+%       use Mojo::JSON qw(encode_json);
 %
 %       asset_required  ('css',       'steps',          {                                 });
 %       asset_required  ('css',       'formValidation', { after => [ 'steps'            ] });
@@ -12,9 +15,11 @@
 %       asset_required  ('js',        'googleMaps',     {                                 });
 %       asset_required  ('js',        'locationPicker', { after => [ 'googleMaps'       ] });
 %
-%       #
-%       # This snippet implements the wizard form and fields validation
-%       #
+%       snippet_register('js_snippet', 'personData', { after => [ 'jQuery' ] }, begin
+<script>
+    var personData = jQuery.parseJSON(<%== quote(encode_json(stash('person_data'))) %>);
+</script>
+%       end);
 %       snippet_register('js_snippet', 'steps', { }, begin
 <script>
     $(document).ready(function() {
@@ -204,24 +209,55 @@
     });
 </script>
 %       end);
+%       snippet_register('js_snippet', 'fillNames', { after => [ 'steps', 'personData' ] }, begin
+<script>
+    $(document).ready(function() {
+        var form = $('#wizard');
+        ['first_name', 'middle_name', 'last_name'].forEach(function(fieldName) {
+            var fieldValue = personData[fieldName];
+            fieldName = fieldName.replace('_', '-');
+            field = $('#' + fieldName);
+            field.val(fieldValue);
+            form.formValidation('revalidateField', fieldName);
+        });
+    });
+</script>
+%       end);
 %       snippet_register('js_snippet', 'multiField', { after => [ 'steps' ] }, begin
 <script>
     $(document).ready(function() {
+        var form = $('#wizard');
         var mfEmails = new multiField({
             idContainer:  'emails',
             fieldPrefix:  'email',
             fieldType:    'email',
             addClasses:   'multifield',
+            beforeAppend: function(elementCurrent) {
+                console.debug(elementCurrent);
+                if(elementCurrent != null) {
+                    return(form.formValidation('revalidateField', $(elementCurrent).find('input')));
+                } else {
+                    return(true);
+                }
+            },
             afterAppend:  function(elementCurrent, elementNew) {
                 if(elementNew != null) 
-                    $('#wizard').formValidation('addField', $(elementNew).find('input'), {
+                    form.formValidation('addField', $(elementNew).find('input'), {
                         err: 'tooltip',
                         validators: {
                             notEmpty: {}
                         }
                     });
             }
-        }); mfEmails.fieldAppend();                                                        
+        });
+        if(personData.email && personData.email.length > 0) {
+            personData.email.forEach(function(email) {
+                field = mfEmails.fieldAppend(null, email);
+                form.formValidation('revalidateField', $(field).find('input'));
+            });
+        } else {
+            mfEmails.fieldAppend();
+        }
         var mfPhones = new multiField({
             idContainer:  'phones',
             fieldPrefix:  'phone',
@@ -229,14 +265,21 @@
             addClasses:   'multifield',
             afterAppend:  function(elementCurrent, elementNew) {
                 if(elementNew != null) 
-                    $('#wizard').formValidation('addField', $(elementNew).find('input'), {
+                    form.formValidation('addField', $(elementNew).find('input'), {
                         err: 'tooltip',
                         validators: {
                             notEmpty: {}
                         }
                     });
             }
-        }); mfPhones.fieldAppend();                                                        
+        });
+        if(personData.phone && personData.phone.length > 0) {
+            personData.phone.forEach(function(phone) {
+                mfPhones.fieldAppend(null, phone);
+            });
+        } else {
+            mfPhones.fieldAppend();
+        }
     });
 </script>
 %       end);
@@ -251,9 +294,14 @@
 %       snippet_register('js_snippet', 'language', { after => [ 'steps', 'i18n' ] }, begin
 <script>
     $(document).ready(function() {
-        var language_selected = $.i18n.lng();
-        if(language_selected != null) {
-            $('#language').val(language_selected).trigger('change');
+        var languageSelected;
+        if(personData.language != null) {
+            languageSelected = personData.language;
+        } else {
+            languageSelected = $.i18n.lng();
+        }
+        if(languageSelected != null) {
+            $('#language').val(languageSelected).trigger('change');
         }
     });
 </script>
@@ -263,7 +311,12 @@
     $(document).ready(function() {
 
         var timezones;
-        var timezoneDetected = Intl.DateTimeFormat().resolvedOptions().timeZone.split('/');
+        var timezoneDetected;
+        if(personData.timezone != null) {
+            timezoneDetected = personData.timezone.split('/');
+        } else {
+            timezoneDetected = Intl.DateTimeFormat().resolvedOptions().timeZone.split('/');
+        }
 
         function updateTimezones(timezonesLoaded, areaSelected) {
             if(timezones === undefined) {
@@ -374,6 +427,8 @@
           Some fields are required, some are not, so you could provide us with the information later.
         </p>
         <form id="wizard" method="POST" class="wizard">
+          <input type="hidden" name="token" value="<%= param('token') %>">
+          <input type="hidden" name="update_person_data" value="1">
           <h1>Full Name</h1>
           <fieldset data-step="0">
             <div class="form-group">
@@ -523,6 +578,27 @@
           </fieldset>
         </form>
       </div>
+%
+%   } else {
+%
+<div class="middle-box text-center signupscreen animated fadeInDown">
+  <div>
+    <div>
+      <h1 class="logo-name"><span data-i18n="signupscreen.hi">Hi!</span></h1>
+    </div>
+    <h3><span data-i18n="signupscreen.welcome">Maitre d'Tucha is glad to meet you</span></h3>
+    <p data-i18n="signupscreen.please_confirm_1">We've sent a confirmation token to the address you provided.</p>
+    <p data-i18n="signupscreen.please_confirm_2">Please, be so kind as to enter the secret code in the form below.</p>
+    <form class="m-t" role="form" action="/person/confirm/" method="POST">
+      <div class="form-group">
+        <input type="text" class="form-control" data-i18n="[placeholder]signupform.token"
+          placeholder="Confirmation Token" required="" name="token">
+      </div>
+      <button type="submit" class="btn btn-primary block full-width m-b"><span data-i18n="signupform.confirm">Confirm Yourself</span></button>
+    </form>
+%
+%   }
+%
       <hr />
       <a class="btn btn-white set_en_US" id="button_en_US"><img src="/img/flags/32/United-States.png"></a>
       <a class="btn btn-white set_uk_UA" id="button_uk_UA"><img src="/img/flags/32/Ukraine.png"></a>
@@ -530,5 +606,4 @@
     </div>
   </div>
 </div>
-%   }
 %   layout('unauthorized', title_message => 'Hello!', i18n_classes => [ qw/ signupscreen / ]);

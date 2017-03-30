@@ -6,6 +6,7 @@
         this.fieldPrefix    = init.fieldPrefix;
         this.fieldType      = init.fieldType;
         this.addClasses     = typeof(init.addClasses) == 'Array' ? init.addClasses : [ init.addClasses ];
+        this.beforeAppend   = init.beforeAppend;
         this.afterAppend    = init.afterAppend;
 
         var that = this;
@@ -14,6 +15,7 @@
             var fieldSibling = document.getElementById(composeId("div", appendAfter));
             var fieldCreated = fieldCreate(fieldValue);
             if(fieldSibling != null) {
+                if(this.beforeAppend != null) this.beforeAppend(fieldSibling);
                 document.getElementById(this.idContainer).insertBefore(fieldCreated, fieldSibling.nextSibling);
             } else {
                 document.getElementById(this.idContainer).appendChild(fieldCreated);
@@ -21,6 +23,7 @@
             fieldCreated.querySelectorAll('input[type="' + this.fieldType + '"]')[0].focus();
             buttonsEnableDisable();
             if(this.afterAppend != null) this.afterAppend(fieldSibling, fieldCreated);
+            return(fieldCreated);
         }
 
         this.fieldRemove = function(elementId) {
@@ -57,6 +60,7 @@
                 input.setAttribute("name", that.fieldPrefix + "-" + guid);
                 input.setAttribute("type", that.fieldType);
                 input.setAttribute("class", "form-control required");
+                if(fieldValue != null) input.setAttribute("value", fieldValue);
                 divInputGroup.appendChild(input);
             var divInputGroupBtn = document.createElement("div");
                 divInputGroupBtn.setAttribute("class", "input-group-btn");

@@ -71,13 +71,13 @@ __PACKAGE__->table("person");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
+=head2 confirmed
+
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
+  is_nullable: 1
+
 =head2 first_name
-
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 64
-
-=head2 last_name
 
   data_type: 'varchar'
   is_nullable: 0
@@ -87,6 +87,12 @@ __PACKAGE__->table("person");
 
   data_type: 'varchar'
   is_nullable: 1
+  size: 64
+
+=head2 last_name
+
+  data_type: 'varchar'
+  is_nullable: 0
   size: 64
 
 =head2 language_id
@@ -137,12 +143,18 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "confirmed",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
   "first_name",
-  { data_type => "varchar", is_nullable => 0, size => 64 },
-  "last_name",
   { data_type => "varchar", is_nullable => 0, size => 64 },
   "middle_name",
   { data_type => "varchar", is_nullable => 1, size => 64 },
+  "last_name",
+  { data_type => "varchar", is_nullable => 0, size => 64 },
   "language_id",
   {
     data_type => "integer",
@@ -296,8 +308,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 04:26:13
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:E8eQqqpwVnGhtfJ9YufTuQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-30 04:17:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tDO1fJkfjOg19DPnjw+AVw
 
 use Method::Signatures;
 

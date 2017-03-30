@@ -12,6 +12,8 @@
 %   include('snippets/tooltip');
 %
 %   if(defined(stash('error_message'))) {
+%       my $error_message = stash('error_message') =~ s/\n/ /gmr;
+%       my $error_title   = stash('error_title'  ) =~ s/\n/ /gmr;
 %       asset_required  ('css',         'toastr', { });
 %       asset_required  ('js',          'toastr', { });
 %       snippet_register('js_snippet',  'toastr', { }, begin
@@ -34,7 +36,7 @@
               "showMethod": "fadeIn",
               "hideMethod": "fadeOut"
             };
-            toastr.error("<%= stash('error_message') %>", "<%= stash('error_title') %>")
+            toastr.error("<%= $error_message %>", "<%= $error_title %>")
         }
     )
 </script>

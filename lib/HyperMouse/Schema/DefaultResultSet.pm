@@ -68,7 +68,7 @@ method filter_valid (
         {
             -and => [
                 $mask & 32 ? ( # removed
-                               "$source_alias.removed"       => { -not => { '=' => undef               } }
+                               "$source_alias.removed"       => { '!=' => undef                        }
                 ) : (),
                 $mask & 16 ? ( # premature
                     -or => [
@@ -84,7 +84,7 @@ method filter_valid (
                 ) : (),
                 $mask & 2  ? ( # not_premature
                     -or => [
-                             { "$source_alias.valid_since"   => { -not => { '=' => undef             } } },
+                             { "$source_alias.valid_since"   => { '!=' => undef                        } },
                              { "$source_alias.valid_since"   => { '<=' => $self->format_datetime($now) } }
                     ]
                 ) : (),

@@ -17,7 +17,7 @@ Code
        `dom_best_before` attributes of the
        `MonkeyMan::CloudStack::API::Roles::Element` class.
  - [ ] Make sure that the `best_before` parameter works fine for all methods.
- 	- suggested on `2017.01.10` by `melnik13`
+        - suggested on `2017.01.10` by `melnik13`
  - [ ] Encapsulate all the shit!
         - suggested on `2016.11.06` by `melnik13`
  - [ ] Make the `MonkeyMan`'s `plug` method checking if the plugin has been

@@ -90,7 +90,8 @@ method startup {
                 );
        $routes
             ->any('/person/login')
-                ->to('person#login');
+                ->name('person.login')
+                    ->to('person#login');
        $routes
             ->any('/person/signup')
                 ->to(
@@ -98,7 +99,7 @@ method startup {
                     action          => 'signup'
                 );
        $routes
-            ->get('/person/confirm/:token')
+            ->any('/person/confirm/:token')
                 ->name('person.confirm')
                     ->to(
                         controller      => 'person',
