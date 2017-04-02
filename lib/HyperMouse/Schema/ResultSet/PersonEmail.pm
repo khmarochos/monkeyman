@@ -38,7 +38,6 @@ method authenticate (
             checks_failed   => $checks_failed
         )
         ->single;
-
     unless(defined($r_person_email)) {
         (__PACKAGE__ . '::Exception::PersonEmailNotFound')->throwf_validity(
             $checks_failed, "The %s email address isn't found",
@@ -54,7 +53,6 @@ method authenticate (
             checks_failed   => $checks_failed
         )
         ->single;
-
     unless(defined($r_person_email)) {
         (__PACKAGE__ . '::Exception::PersonNotFound')->throwf_validity(
             $checks_failed, "The %s email's person isn't found",
@@ -70,14 +68,12 @@ method authenticate (
             checks_failed   => $checks_failed
         )
         ->single;
-
     unless(defined($r_person_password)) {
         (__PACKAGE__ . '::Exception::PersonPasswordNotFound')->throwf_validity(
             $checks_failed, "The %s email's person's password isn't found",
             $email
         );
     }
-
     (__PACKAGE__ . '::Exception::PersonPasswordIncorrect')->throwf(
         "The password for the person with the %s email is incorrect",
         $email

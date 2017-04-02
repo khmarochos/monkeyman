@@ -23,15 +23,16 @@ method authenticate (
     Maybe[Int]  :$person_validation_mask?
 ) {
 
-    my $db_schema = $self->get_schema;
     my $checks_failed;
 
-    my $r_person_email = $db_schema->resultset("PersonEmail")->authenticate(
-        email                       => $email,
-        email_validation_mask       => $email_validation_mask,
-        password                    => $password,
-        password_validation_mask    => $password_validation_mask
-    );
+    my $r_person_email = $self->get_schema
+        ->resultset("PersonEmail")
+        ->authenticate(
+            email                       => $email,
+            email_validation_mask       => $email_validation_mask,
+            password                    => $password,
+            password_validation_mask    => $password_validation_mask
+        );
 
     $checks_failed = {};
     my $r_person = $r_person_email
@@ -60,10 +61,9 @@ method find_by_email (
     Maybe[Int]  :$person_validation_mask?
 ) {
 
-    my $db_schema = $self->get_schema;
     my $checks_failed;
 
-    my $r_person_email = $db_schema
+    my $r_person_email = $self->get_schema
         ->resultset("PersonEmail")
         ->search({ email => $email })
         ->filter_valid(
@@ -71,7 +71,6 @@ method find_by_email (
             checks_failed   => $checks_failed
         )
         ->single;
-
     (__PACKAGE__ . '::Exception::EmailNotFound')->throwf_validity(
         $checks_failed, "The %s email address isn't found",
         $email
@@ -85,7 +84,6 @@ method find_by_email (
             checks_failed   => $checks_failed
         )
         ->single;
-
     (__PACKAGE__ . '::Exception::PersonNotFound')->throwf_validity(
         $checks_failed, "The person with the %s email isn't present",
         $email

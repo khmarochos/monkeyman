@@ -7,6 +7,7 @@ use Mojo::Base qw(Mojolicious);
 use Mojolicious::Plugin::DateTimeDisplay;
 use Mojolicious::Plugin::AssetManager;
 use HyperMouse;
+use MaitreD::Schema;
 use MonkeyMan::Exception qw(InvalidParameterSet);
 use Method::Signatures;
 
@@ -71,76 +72,112 @@ method startup {
             }
         }
     });
+    my $md_schema = MaitreD::Schema->connect(
+        'dbi:mysql:maitre_d',
+        'hypermouse',
+        'WTXFa2G1uN3cpwMP',
+        { mysql_enable_utf8 => 1 }
+    );
+    # TODO: Move this crap to the configuration file
+    # TODO: Create a separate database account
+
+    $self->plugin('WebMessages', { schema => $md_schema });
 
     $self->helper(hypermouse    => sub { shift->app->_hypermouse });
     $self->helper(hm_schema     => sub { shift->app->_hypermouse->get_schema });
-    $self->helper(hm_logger     => sub { shift->app->_hypermouse->get_logger });
+    $self->helper(md_schema     => sub { $md_schema });
 
-    my $routes = $self->routes;
-       $routes
+    my  $routes = $self->routes;
+
+        $routes = $routes
+            ->under
+            ->to('client#sesh');
+
+        $routes
             ->post('/ajax/i18n')
-                ->to('ajax#i18n');
-       $routes
+            ->to   ('ajax#i18n');
+
+        $routes
             ->get('/ajax/timezone/:area/:city')
-                ->to(
-                    controller  => 'ajax',
-                    action      => 'list_timezones',
-                    area        => '*',
-                    city        => '*'
-                );
-       $routes
+            ->to(
+                controller  => 'ajax',
+                action      => 'list_timezones',
+                area        => '*',
+                city        => '*'
+            );
+
+    my  $routes_api = $routes->any('/api/v1');
+    my  $routes_api_web_messages = $routes_api->any('/web-messages');
+        $routes_api_web_messages
+            ->get('/:message_id')
+            ->to(
+                controller  => 'Controller::API::V1::WebMessage',
+                action      => 'list',
+                message_id  => undef
+            );
+        $routes_api_web_messages
+            ->get('/:message_id/peek')
+            ->to(
+                controller  => 'Controller::API::V1::WebMessage',
+                action      => 'list',
+                message_id  => undef,
+                peek        => 1
+            );
+
+        $routes
             ->any('/person/login')
-                ->name('person.login')
-                    ->to('person#login');
-       $routes
+            ->name('person.login')
+            ->to  ('person#login');
+
+        $routes
             ->any('/person/signup')
-                ->to(
-                    controller      => 'person',
-                    action          => 'signup'
-                );
-       $routes
+            ->to(
+                controller      => 'person',
+                action          => 'signup'
+            );
+        $routes
             ->any('/person/confirm/:token')
-                ->name('person.confirm')
-                    ->to(
-                        controller      => 'person',
-                        action          => 'confirm',
-                        token           => undef
-                    );
+            ->name('person.confirm')
+            ->to(
+                controller      => 'person',
+                action          => 'confirm',
+                token           => undef
+            );
 
-    my $routes_authenticated = $routes->under->to('person#is_authenticated')
-                                      ->under->to('person#load_settings')
-                                      ->under->to('navigation#build_menu');
-       $routes_authenticated
+    my  $routes_authenticated = $routes->under->to('person#is_authenticated')
+                                       ->under->to('person#load_settings')
+                                       ->under->to('navigation#build_menu');
+        $routes_authenticated
             ->get('/person/logout')
-                ->to(
-                    controller  => 'person',
-                    action      => 'logout'
-                );
-       $routes_authenticated
+            ->to(
+                controller  => 'person',
+                action      => 'logout'
+            );
+        $routes_authenticated
             ->get('/')
-                ->to('dashboard#welcome');
+            ->to('dashboard#welcome');
 
-    my $routes_authenticated_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
-       $routes_authenticated_provisioning_agreement
+    my  $routes_authenticated_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
+        $routes_authenticated_provisioning_agreement
             ->get('/list/:filter/:related_element/:related_id')
-                ->to(
-                    controller      => 'provisioning_agreement',
-                    action          => 'list',
-                    filter          => 'active',
-                    related_element => 'person',
-                    related_id      => '@'
-                );
+            ->to(
+                controller      => 'provisioning_agreement',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
 
-    my $routes_authenticated_person = $routes_authenticated->under('/person');
-       $routes_authenticated_person
+    my  $routes_authenticated_person = $routes_authenticated->under('/person');
+        $routes_authenticated_person
             ->get('/list/:filter/:related_element/:related_id')
-                ->to(
-                    controller      => 'person',
-                    action          => 'list',
-                    filter          => 'active',
-                    related_element => 'person',
-                    related_id      => '@'
-                );
+            ->to(
+                controller      => 'person',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
 
 }
 

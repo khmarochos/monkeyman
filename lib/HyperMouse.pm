@@ -89,6 +89,7 @@ method _build_schema {
         'WTXFa2G1uN3cpwMP',
         { mysql_enable_utf8 => 1 }
     );
+    # FIXME: Move this crap to the configuration file
 }
 
 

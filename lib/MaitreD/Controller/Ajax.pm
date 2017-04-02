@@ -16,9 +16,15 @@ use DateTime::TimeZone::Catalog;
 method i18n {
     if(defined(my $language_code = $self->param('language_code'))) {
         $self->session->{'language_code'} = $language_code;
-        $self->render(json => { 'language_code' => $language_code }, status => 200);
+        $self->render(
+            json    => { language_code => $language_code },
+            status  => 200
+        );
     } else {
-        $self->render(json => { 'error' => 'Zaloopa' }, status => 500);
+        $self->render(
+            json    => { error => 'Zaloopa' },
+            status  => 500
+        );
     }
 }
 

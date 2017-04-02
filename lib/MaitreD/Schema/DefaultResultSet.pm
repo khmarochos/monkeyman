@@ -1,4 +1,4 @@
-package HyperMouse::Schema::DefaultResultSet;
+package MaitreD::Schema::DefaultResultSet;
 
 use strict;
 use warnings;
@@ -15,6 +15,8 @@ use Method::Signatures;
 use DateTime;
 use DateTime::TimeZone;
 use Switch;
+
+our $LocalTZ = DateTime::TimeZone->new(name => 'local');
 
 
 

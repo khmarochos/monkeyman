@@ -1,3 +1,9 @@
+<%
+    my $language_selected = defined(session('language_code'))
+                                  ? session('language_code')
+                                  : 'en_US';
+%>
+%
 %   snippet_register('js_snippet', 'i18n', { }, begin
 <script>
     $(document).ready(function() {

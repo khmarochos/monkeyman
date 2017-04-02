@@ -44,35 +44,56 @@ method load_settings {
 
 method authenticate (Str $email!, Str $password!) {
 
+    my $r_person;
+
     try {
-        $self->hm_schema->resultset("Person")->authenticate(
-            email       => $email,
-            password    => $password
+        $r_person = $self
+            ->hm_schema
+            ->resultset("Person")
+            ->authenticate(
+                email       => $email,
+                password    => $password
+            );
+    } catch(HyperMouse::Schema::ResultSet::PersonEmail::Exception::PersonEmailNotFound $e) {
+        $self->web_message_send(
+            type        => 'ERROR',
+            subject     => 'Authentication Error',
+            text        => 'The email isn\'t registered'
         );
-    } catch(HyperMouse::Schema::ResultSet::Person::Exception::EmailNotFound $e) {
-        $self->stash(error_title    => "Authentication Error");
-        $self->stash(error_message  => "The email isn't registered");
         return(0);
-    } catch(HyperMouse::Schema::ResultSet::Person::Exception::EmailNotConfirmed $e) {
-        $self->stash(error_title    => "Authentication Error");
-        $self->stash(error_message  => "The email isn't confirmed");
+    } catch(HyperMouse::Schema::ResultSet::PersonEmail::Exception::PersonNotFound $e) {
+        $self->web_message_send(
+            type        => 'ERROR',
+            subject     => 'Authentication Error',
+            text        => 'The account isn\'t enabled'
+        );
         return(0);
     } catch(HyperMouse::Schema::ResultSet::Person::Exception::PersonNotFound $e) {
-        $self->stash(error_title    => "Authentication Error");
-        $self->stash(error_message  => "The account isn't enabled");
+        $self->web_message_send(
+            type        => 'ERROR',
+            subject     => 'Authentication Error',
+            text        => 'The account isn\'t enabled'
+        );
         return(0);
-    } catch(HyperMouse::Schema::ResultSet::Person::Exception::PasswordNotFound $e) {
-        $self->stash(error_title    => "Authentication Error");
-        $self->stash(error_message  => "The account isn't enabled");
+    } catch(HyperMouse::Schema::ResultSet::PersonEmail::Exception::PersonPasswordNotFound $e) {
+        $self->web_message_send(
+            type        => 'ERROR',
+            subject     => 'Authentication Error',
+            text        => 'The account isn\'t enabled'
+        );
         return(0);
-    } catch(HyperMouse::Schema::ResultSet::Person::Exception::PasswordIncorrect $e) {
-        $self->stash(error_title    => "Authentication Error");
-        $self->stash(error_message  => "The password isn't correct");
+    } catch(HyperMouse::Schema::ResultSet::PersonEmail::Exception::PersonPasswordIncorrect $e) {
+        $self->web_message_send(
+            type        => 'ERROR',
+            subject     => 'Authentication Error',
+            text        => 'The password isn\'t correct'
+        );
         return(0);
     }
 
     $self->session(authorized_person_email => $email);
-    return(1);
+
+    return($r_person);
 
 }
 
@@ -120,16 +141,21 @@ method signup {
         $v->required(qw/ language   trim /);
         $v->required(qw/ timezone   trim /);
         if($v->has_error) {
-            $self->stash(error_message  => "The data entered isn't valid");
-            $self->stash(error_title    => "Registration Error");
+            $self->web_message_send(
+                type        => 'ERROR',
+                subject     => 'Registration Error',
+                text        => 'The data entered isn\'t valid'
+            );
             return;
-        } elsif($hm_schema->resultset('PersonEmail')->find({ email => $v->param('email') })) {
-            $v->error('email' => 'Already registered');
-            $self->stash(error_message  => "The email entered is already registered");
-            $self->stash(error_title    => "Registration Error");
+        } elsif($hm_schema->resultset('PersonEmail')->search({ email => $v->param('email') })->filter_valid->all > 0) {
+            $self->web_message_send(
+                type        => 'ERROR',
+                subject     => 'Registration Error',
+                text        => sprintf('The %s email is already registered', $v->param('email'))
+            );
             return;
         }
-        my $token = lc(Data::UUID->new->create_from_name_str(NameSpace_URL, 'https://maitre-d.tucha.ua/')); # FIXME: declare a constant!
+
         my $now = DateTime->now;
         my $person_name;
         (
@@ -148,6 +174,7 @@ method signup {
             ->filter_valid
             ->first
             ->id;
+
         my $person_id = ($hm_schema->resultset('Person')->populate([ {
             valid_since         => undef,
             valid_till          => undef,
@@ -159,30 +186,15 @@ method signup {
             datetime_format_id  => $person_datetime_format_id,
             timezone            => $v->param('timezone')
         } ]))[0]->id;
-        my $person_email_id = ($hm_schema->resultset('PersonEmail')->populate([ {
-            valid_since         => undef, 
-            valid_till          => undef,
-            removed             => undef,
+
+        $self->_add_email(
+            now                 => $now,
             email               => $v->param('email'),
-            person_id           => $person_id
-        } ]))[0]->id;
-        $hm_schema->resultset('PersonEmailConfirmation')->create({
-            valid_since         => $now,
-            valid_till          => $now->add(DateTime::Duration->new(hours => 12)), # FIXME: declare a constant!
-            removed             => undef,
-            token               => $token,
-            person_email_id     => $person_email_id
-        });
-        $self->hypermouse->get_mailer->send_message_from_template(
-            recipients      => $v->param('email'),
-            subject         => 'Hello, world!',
-            template_id     => 'maitre-d::person_confirmation_needed',
-            template_values => {
-                first_name          => $person_name->{'first'},
-                confirmation_code   => $token,
-                confirmation_href   => 'https://maitre-d.tucha.ua/person/confirm/' . $token # FIXME: use url_for()
-            }
+            person_id           => $person_id,
+            person_name         => $person_name,
+            person_confirmation => 1
         );
+
         $self->redirect_to('person.confirm');
     }
 }
@@ -190,35 +202,78 @@ method signup {
 
 
 method confirm {
+
     my $now         = DateTime->now;
     my $hm_schema   = $self->hm_schema;
     my $v           = $self->validation;
     my $method      = $self->req->method;
+
     if($method eq 'POST') {
+
         $v->optional(qw/ update_person_data trim /);
         $v->required(qw/ token              trim /);
+
         if(defined(my $token = $v->param('token'))) {
+
             if($v->param('update_person_data')) {
 
-                $v->required(qw/ first_name         trim /);
-                $v->optional(qw/ middle_name        trim /);
-                $v->required(qw/ last_name          trim /);
+                $v->required(qw/ first-name         trim /);
+                $v->optional(qw/ middle-name        trim /);
+                $v->required(qw/ last-name          trim /);
                 $v->required(qw/ password           trim /);
-                $v->required(qw/ password_repeat    trim /);
+                $v->required(qw/ password-repeat    trim /);
                 # TODO: validate other fields
 
                 my($r_person, $r_person_email, $r_person_email_confirmation) =
                     $self->_find_by_confirmation_token($token, 1);
                 # If an error occuried, stop processing
-                return
-                    unless(defined($r_person));
+                unless(defined($r_person)) {
+                    $self->stash(error_message  => "The confirmation token isn't valid")
+                        unless(defined($self->stash('error_message')));
+                    $self->stash(error_title    => "Confirmation Error")
+                        unless(defined($self->stash('error_title')));
+                    return;
+                }
+
+                $hm_schema->txn_begin;
 
                 $r_person->update({
                     valid_since     => $now,
-                    first_name      => $v->param('first_name'),
-                    middle_name     => $v->param('middle'),
-                    last_name       => $v->param('last'),
+                    first_name      => $v->param('first-name'),
+                    middle_name     => $v->param('middle-name'),
+                    last_name       => $v->param('last-name'),
                 });
+
+                foreach my $email_field (grep(/^email-/, keys(%{ $self->req->params->to_hash }))) {
+                    my $email = $v->required($email_field, 'trim')->param;
+                    my $email_found;
+                    foreach my $r_person_email ($hm_schema
+                        ->resultset('PersonEmail')
+                        ->search({ email => $email })
+                        ->filter_valid(mask => 0b000101)
+                        ->all
+                    ) {
+                        if($r_person_email->person_id != $r_person->id) {
+                            $self->stash(error_message  => sprintf("The %s email belongs to other person", $email));
+                            $self->stash(error_title    => "Confirmation Error");
+                            $self->redirect_to('person.confirm', token => $token);
+                        }
+                        $email_found = $r_person_email;
+                    }
+                    unless(defined($email_found)) {
+                        $self->_add_email(
+                            now                 => $now,
+                            email               => $email,
+                            person_id           => $r_person->id,
+                            person_confirmation => 1,
+                            person_name         => {
+                                first   => $v->param('first-name'),
+                                middle  => $v->param('middle-name'),
+                                last    => $v->param('last-name')
+                            }
+                        );
+                    }
+                }
 
                 $hm_schema
                     ->resultset('PersonPassword')
@@ -230,6 +285,11 @@ method confirm {
                         person_id   => $r_person->id
                     });
 
+                $hm_schema->txn_commit;
+
+                $self->flash(info_message  => "The person's data has been confirmed");
+                $self->flash(info_title    => "Confirmation Success");
+
                 $self->redirect_to('person.login');
 
             } else {
@@ -237,9 +297,11 @@ method confirm {
                 $self->redirect_to('person.confirm', token => $token);
 
             }
+
         }
 
     } elsif($method eq 'GET') {
+
         # TODO: It seems to be a Mojolicious' bug, so it needs to be reported:
         # xxx::Controller->param() works fine with placeholder-parameters, but
         # xxx::Validation->param() doesn't :-(
@@ -270,50 +332,112 @@ method confirm {
             language        =>   $r_person->search_related('language')->filter_valid->single->code,
             timezone        =>   $r_person->timezone
         };
+
     }
+
 }
 
 
 
 method _find_by_confirmation_token(Str $token!, Bool $email_confirmed!) {
 
-    my $checks_failed = {};
+    my $checks_failed;
+    
+    $checks_failed = {};
     my $r_person_email_confirmation = $self->hm_schema
         ->resultset('PersonEmailConfirmation')
         ->search({ token => $token })
-        ->filter_valid(checks_failed => $checks_failed)
+        ->filter_valid(
+            mask            => $email_confirmed ? 0b001110 : 0b000111,
+            checks_failed   => $checks_failed
+        )
         ->single;
     unless(defined($r_person_email_confirmation)) {
         $self->stash(error_title    => "Confirmation Error");
-        $self->stash(error_message  => $checks_failed->{ 0b000001 } ?
-            "The confirmation token is expired" :
-            "The confirmation token isn't found"
+        $self->stash(error_message  => $checks_failed->{ 0b000001 }
+            ? "The confirmation token is expired"
+            : "The confirmation token isn't found"
         );
         return;
     }
 
+    $checks_failed = {};
     my $r_person_email = $r_person_email_confirmation
         ->search_related('person_email')
-        ->filter_valid(mask => $email_confirmed ? 0b000000 : 0b010101)
+        ->filter_valid(
+            mask            => $email_confirmed ? 0b000111 : 0b010101,
+            checks_failed   => $checks_failed
+        )
         ->single;
     unless(defined($r_person_email)) {
         $self->stash(error_title    => "Confirmation Error");
-        $self->stash(error_message  => "The email isn't found");
+        $self->stash(error_message  => (! $email_confirmed) && $checks_failed->{ 0b010000 }
+            ? "The email is already confirmed"
+            : "The email isn't found"
+        );
         return;
     }
 
+    $checks_failed = {};
     my $r_person = $r_person_email
         ->search_related('person')
         ->filter_valid(mask => 0b010101)
         ->single;
     unless(defined($r_person)) {
         $self->stash(error_title    => "Confirmation Error");
-        $self->stash(error_message  => "The person isn't found");
+        $self->stash(error_message  => $checks_failed->{ 0b010000 }
+            ? "The person is already confirmed"
+            : "The person isn't found"
+        );
         return;
     }
 
     return($r_person, $r_person_email, $r_person_email_confirmation);
 
+}
+
+
+
+method _add_email(
+    DateTime    :$now!,
+    Str         :$email!,
+    Int         :$person_id!,
+    HashRef     :$person_name,
+    Bool        :$person_confirmation? = 0
+) {
+
+    my $hm_schema = $self->hm_schema;
+
+    my $person_email_id = ($hm_schema->resultset('PersonEmail')->populate([ {
+        valid_since         => undef, 
+        valid_till          => undef,
+        removed             => undef,
+        email               => $email,
+        person_id           => $person_id
+    } ]))[0]->id;
+
+    my $token = lc(Data::UUID->new->create_str());
+
+    $hm_schema->resultset('PersonEmailConfirmation')->create({
+        valid_since         => $now,
+        valid_till          => $now->add(DateTime::Duration->new(hours => 12)), # FIXME: declare a constant!
+        removed             => undef,
+        token               => $token,
+        person_email_id     => $person_email_id
+    });
+
+    $self->hypermouse->get_mailer->send_message_from_template(
+        subject         => 'Hello, world!',
+        recipients      => $email,
+        template_id     => $person_confirmation
+            ? 'maitre-d::person_confirmation_needed'
+            : 'maitre-d::email_confirmation_needed',
+        template_values => {
+            first_name          => $person_name->{'first'},
+            confirmation_code   => $token,
+            confirmation_href   => 'https://maitre-d.tucha.ua/person/confirm/' . $token # FIXME: use url_for()
+        }
+    );
 }
 
 

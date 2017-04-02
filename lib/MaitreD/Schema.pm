@@ -1,5 +1,5 @@
 use utf8;
-package HyperMouse::Schema;
+package MaitreD::Schema;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
@@ -11,8 +11,8 @@ extends 'DBIx::Class::Schema';
 __PACKAGE__->load_namespaces;
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 13:49:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UB8B/zvbNA6ST/vxTo012A
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-01 12:57:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mSx4AsdCLGWr/PBi+8F65g
 
 __PACKAGE__->load_namespaces(
     default_resultset_class => 'DefaultResultSet'
