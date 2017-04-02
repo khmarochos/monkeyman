@@ -58,7 +58,7 @@ method filter_permitted (
     $mask = ($not_admin << 5) + ($not_billing << 4) + ($not_tech << 3) +
             (    $admin << 2) + (    $billing << 1) + (    $tech << 0)
        unless(defined($mask));
-    $self->search(
+    my $r = $self->search(
         {
             ($and ? '-and' : '-or') => [
                 $mask & 32 ?         ( { "$source_alias.admin"    => 0 } ) : (),
@@ -70,6 +70,7 @@ method filter_permitted (
             ]
         }
     );
+    return($r);
 }
 
 

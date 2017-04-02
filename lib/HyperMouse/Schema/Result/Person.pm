@@ -326,21 +326,24 @@ method find_related_provisioning_agreements (
     foreach my $corporation (
         $self
             ->corporations
-                ->filter_valid(source_alias => 'me')
-                    ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
-                        ->filter_valid(source_alias => 'corporation')
+            ->filter_valid(source_alias => 'me')
+            ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
+            ->filter_valid(source_alias => 'corporation')
+            ->all
     ) {
         if($corporation->provider) {
             push(@result,
                 $corporation
                     ->provisioning_agreement_provider_corporations
-                        ->filter_valid(mask => $mask_valid)
+                    ->filter_valid(mask => $mask_valid)
+                    ->all
             );
         } else {
             push(@result,
                 $corporation
                     ->provisioning_agreement_client_corporations
-                        ->filter_valid(mask => $mask_valid)
+                    ->filter_valid(mask => $mask_valid)
+                    ->all
             );
         }
     }
@@ -348,21 +351,24 @@ method find_related_provisioning_agreements (
     foreach my $contractor (
         $self
             ->contractors
-                ->filter_valid(source_alias => 'me')
-                    ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
-                        ->filter_valid(source_alias => 'contractor')
+            ->filter_valid(source_alias => 'me')
+            ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
+            ->filter_valid(source_alias => 'contractor')
+            ->all
     ) {
         if($contractor->provider) {
             push(@result,
                 $contractor
                     ->provisioning_agreement_provider_contractors
-                        ->filter_valid(mask => $mask_valid)
+                    ->filter_valid(mask => $mask_valid)
+                    ->all
             );
         } else {
             push(@result,
                 $contractor
                     ->provisioning_agreement_client_contractors
-                        ->filter_valid(mask => $mask_valid)
+                    ->filter_valid(mask => $mask_valid)
+                    ->all
             );
         }
     }
@@ -370,9 +376,10 @@ method find_related_provisioning_agreements (
     foreach my $provisioning_agreement (
         $self
             ->provisioning_agreements
-                ->filter_valid(source_alias => 'me')
-                    ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
-                        ->filter_valid(source_alias => 'provisioning_agreement', mask => $mask_valid)
+            ->filter_valid(source_alias => 'me')
+            ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
+            ->filter_valid(source_alias => 'provisioning_agreement', mask => $mask_valid)
+            ->all
         ) {
             push(@result, $provisioning_agreement);
     }

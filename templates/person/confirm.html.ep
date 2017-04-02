@@ -587,7 +587,7 @@
       <h1 class="logo-name"><span data-i18n="signupscreen.hi">Hi!</span></h1>
     </div>
     <h3><span data-i18n="signupscreen.welcome">Maitre d'Tucha is glad to meet you</span></h3>
-    <p data-i18n="signupscreen.please_confirm_1">We've sent a confirmation token to the address you provided.</p>
+    <p data-i18n="signupscreen.please_confirm_1">We sent a confirmation token to the address you provided.</p>
     <p data-i18n="signupscreen.please_confirm_2">Please, be so kind as to enter the secret code in the form below.</p>
     <form class="m-t" role="form" action="/person/confirm/" method="POST">
       <div class="form-group">

@@ -34,14 +34,14 @@ method list {
             $self->stash('rows' => [
                 $self
                     ->hm_schema
-                        ->resultset("Person")
-                            ->search({ id => $person_id })
-                                ->filter_valid
-                                    ->single
-                                        ->find_related_provisioning_agreements(
-                                            mask_permitted  => $mask_permitted,
-                                            mask_valid      => $mask_valid
-                                        )
+                    ->resultset("Person")
+                    ->search({ id => $person_id })
+                    ->filter_valid
+                    ->single
+                    ->find_related_provisioning_agreements(
+                        mask_permitted  => $mask_permitted,
+                        mask_valid      => $mask_valid
+                    )
             ]);
         }
     }

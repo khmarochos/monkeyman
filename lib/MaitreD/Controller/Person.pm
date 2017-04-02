@@ -228,10 +228,11 @@ method confirm {
                     $self->_find_by_confirmation_token($token, 1);
                 # If an error occuried, stop processing
                 unless(defined($r_person)) {
-                    $self->stash(error_message  => "The confirmation token isn't valid")
-                        unless(defined($self->stash('error_message')));
-                    $self->stash(error_title    => "Confirmation Error")
-                        unless(defined($self->stash('error_title')));
+                    $self->web_message_send(
+                        type        => 'ERROR',
+                        subject     => 'Confirmation Error',
+                        text        => 'The confirmation token isn\'t valid'
+                    );
                     return;
                 }
 
@@ -254,8 +255,11 @@ method confirm {
                         ->all
                     ) {
                         if($r_person_email->person_id != $r_person->id) {
-                            $self->stash(error_message  => sprintf("The %s email belongs to other person", $email));
-                            $self->stash(error_title    => "Confirmation Error");
+                            $self->web_message_send(
+                                type        => 'ERROR',
+                                subject     => 'Confirmation Error',
+                                text        => sprintf("The %s email belongs to other person", $email)
+                            );
                             $self->redirect_to('person.confirm', token => $token);
                         }
                         $email_found = $r_person_email;
@@ -287,9 +291,11 @@ method confirm {
 
                 $hm_schema->txn_commit;
 
-                $self->flash(info_message  => "The person's data has been confirmed");
-                $self->flash(info_title    => "Confirmation Success");
-
+                $self->web_message_send(
+                    type        => 'INFO',
+                    subject     => 'Confirmation Success',
+                    text        => 'The account is activated'
+                );
                 $self->redirect_to('person.login');
 
             } else {
@@ -324,14 +330,34 @@ method confirm {
             valid_since => $now
         });
 
-        $self->stash->{'person_data'} = {
-            first_name      =>   $r_person->first_name,
-            middle_name     =>   $r_person->middle_name,
-            last_name       =>   $r_person->last_name,
-            email           => [ $r_person->search_related('person_emails')->filter_valid->get_column('email')->all ],
-            language        =>   $r_person->search_related('language')->filter_valid->single->code,
-            timezone        =>   $r_person->timezone
-        };
+        $self->web_message_send(
+            type        => 'INFO',
+            subject     => 'Confirmation Success',
+            text        => sprintf('The %s email is activated', $r_person_email->email)
+        );
+
+        if(defined($r_person->valid_since)) {
+
+            $self->redirect_to('person.login');
+
+        } else {
+
+            $self->stash->{'person_data'} = {
+                first_name      =>   $r_person->first_name,
+                middle_name     =>   $r_person->middle_name,
+                last_name       =>   $r_person->last_name,
+                email           => [ $r_person->search_related('person_emails')->filter_valid->get_column('email')->all ],
+                language        =>   $r_person->search_related('language')->filter_valid->single->code,
+                timezone        =>   $r_person->timezone
+            };
+
+            $self->web_message_send(
+                type        => 'WARNING',
+                subject     => 'Confirmation Needed',
+                text        => 'Some personal data is required'
+            );
+
+        }
 
     }
 
@@ -353,10 +379,12 @@ method _find_by_confirmation_token(Str $token!, Bool $email_confirmed!) {
         )
         ->single;
     unless(defined($r_person_email_confirmation)) {
-        $self->stash(error_title    => "Confirmation Error");
-        $self->stash(error_message  => $checks_failed->{ 0b000001 }
-            ? "The confirmation token is expired"
-            : "The confirmation token isn't found"
+        $self->web_message_send(
+            type        => 'ERROR',
+            subject     => 'Confirmation Error',
+            text        => $checks_failed->{ 0b000001 }
+                ? 'The confirmation token is expired'
+                : 'The confirmation token isn\'t found'
         );
         return;
     }
@@ -370,10 +398,12 @@ method _find_by_confirmation_token(Str $token!, Bool $email_confirmed!) {
         )
         ->single;
     unless(defined($r_person_email)) {
-        $self->stash(error_title    => "Confirmation Error");
-        $self->stash(error_message  => (! $email_confirmed) && $checks_failed->{ 0b010000 }
-            ? "The email is already confirmed"
-            : "The email isn't found"
+        $self->web_message_send(
+            type        => 'ERROR',
+            subject     => 'Confirmation Error',
+            text        => (! $email_confirmed) && $checks_failed->{ 0b010000 }
+                ? "The email is already confirmed"
+                : "The email isn't found"
         );
         return;
     }
@@ -381,13 +411,15 @@ method _find_by_confirmation_token(Str $token!, Bool $email_confirmed!) {
     $checks_failed = {};
     my $r_person = $r_person_email
         ->search_related('person')
-        ->filter_valid(mask => 0b010101)
+        ->filter_valid(mask => 0b000101, checks_failed => $checks_failed)
         ->single;
     unless(defined($r_person)) {
-        $self->stash(error_title    => "Confirmation Error");
-        $self->stash(error_message  => $checks_failed->{ 0b010000 }
-            ? "The person is already confirmed"
-            : "The person isn't found"
+        $self->web_message_send(
+            type        => 'ERROR',
+            subject     => 'Confirmation Error',
+            text        => $checks_failed->{ 0b010000 }
+                ? 'The person is already confirmed'
+                : 'The person isn\'t found'
         );
         return;
     }
@@ -438,6 +470,12 @@ method _add_email(
             confirmation_href   => 'https://maitre-d.tucha.ua/person/confirm/' . $token # FIXME: use url_for()
         }
     );
+
+    $self->web_message_send(
+        type        => 'WARNING',
+        subject     => 'Confirmation Needed',
+        text        => sprintf("The %s email needs to be confirmed, the message is sent", $email)
+    );
 }
 
 
@@ -457,14 +495,15 @@ method list {
             $self->stash('rows' => [
                 $self
                     ->hm_schema
-                        ->resultset("ProvisioningAgreement")
-                            ->search({ id => $self->stash->{'related_id'} })
-                                ->filter_valid
-                                    ->single
-                                        ->find_related_persons(
-                                            mask_permitted  => $mask_permitted,
-                                            mask_valid      => $mask_valid
-                                        )
+                    ->resultset("ProvisioningAgreement")
+                    ->search({ id => $self->stash->{'related_id'} })
+                    ->filter_valid
+                    ->single
+                    ->find_related_persons(
+                        mask_permitted  => $mask_permitted,
+                        mask_valid      => $mask_valid
+                    )
+                    ->all
             ]);
         }
     }
