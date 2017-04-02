@@ -1,4 +1,4 @@
-package MaitreD::Controller::ProvisioningAgreement;
+package MaitreD::Controller::ProvisioningObligation;
 
 use strict;
 use warnings;
@@ -15,7 +15,6 @@ use Switch;
 
 
 method list {
-    my @provisioning_agreements;
     my $mask_permitted  = 0b000111;
     my $mask_valid      = 0b000111;
     switch($self->stash->{'filter'}) {
@@ -24,22 +23,18 @@ method list {
         case('archived')    { $mask_valid = 0b001100 }
     };
     switch($self->stash->{'related_element'}) {
-        case('person') {
-            my $person_id =
-                ($self->stash->{'related_id'} ne '@') ?
-                 $self->stash->{'related_id'} :
-                 $self->stash->{'authorized_person_result'}->id;
+        case('provisioning_agreement') {
+            my $provisioning_agreement_id = $self->stash->{'related_id'};
             $self->stash('rows' => [
                 $self
                     ->hm_schema
-                    ->resultset("Person")
-                    ->search({ id => $person_id })
+                    ->resultset("ProvisioningAgreement")
+                    ->search({ id => $provisioning_agreement_id })
                     ->filter_valid
                     ->single
-                    ->find_related_provisioning_agreements(
-                        mask_permitted  => $mask_permitted,
-                        mask_valid      => $mask_valid
-                    )
+                    ->provisioning_obligations
+                    ->filter_valid(mask => $mask_valid)
+                    ->all
             ]);
         }
     }

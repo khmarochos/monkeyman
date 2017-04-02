@@ -168,6 +168,17 @@ method startup {
                 related_id      => '@'
             );
 
+    my  $routes_authenticated_provisioning_obligation = $routes_authenticated->under('/provisioning_obligation');
+        $routes_authenticated_provisioning_obligation
+            ->get('/list/:filter/:related_element/:related_id')
+            ->to(
+                controller      => 'provisioning_obligation',
+                action          => 'list',
+                filter          => 'active',
+                related_element => undef,
+                related_id      => undef
+            );
+
     my  $routes_authenticated_person = $routes_authenticated->under('/person');
         $routes_authenticated_person
             ->get('/list/:filter/:related_element/:related_id')

@@ -1,0 +1,54 @@
+<%
+    asset_required('css', 'dataTables', { });
+    asset_required('js',  'dataTables', { });
+    my $language = stash->{'language_id'};
+%>
+<%=
+    include('snippets/table',
+        name      => 'provisioning_obligation',
+        columns   => {
+            'Valid Since' => {
+                order => 2,
+                value => sub { datetime_display(shift->valid_since, 2); }
+            },
+            'Valid Till' => {
+                order => 3,
+                value => sub { datetime_display(shift->valid_till, 2) || '∞'; }
+            },
+            'Service' => {
+                order => 4,
+                value => sub {
+                    shift->service_type->service_type_i18n($language)->name,
+                }
+            },
+            'Quantity' => {
+                order => 5,
+                value => sub {
+                    shift->quantity
+                }
+            },
+            'Actions' => {
+                order   => 6,
+                actions => 1,
+                related => 1
+            }
+        },
+        related   => {
+            'Provisioning Agreements'  => {
+                order => 1,
+                icon  => 'fa fa-file-text-o',
+                value => sub { sprintf("/provisioning_agreement/list/related_to/provisioning_obligation/%s", shift->id); }
+            },
+            'Resources'  => {
+                order => 2,
+                icon  => 'fa fa-server',
+                value => sub { sprintf("/resource_piece/list/related_to/provisioning_obligation/%s", shift->id); }
+            }
+        },
+        rows      => stash->{'rows'},
+        language  => $language
+    );
+%>
+<%
+    layout('authorized', title_message => 'Welcome!');
+%>

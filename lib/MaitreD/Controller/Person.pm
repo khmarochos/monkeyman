@@ -125,6 +125,11 @@ method login {
 method logout {
 
     $self->session(authorized_person_email => undef);
+    $self->web_message_send(
+        type        => 'INFO',
+        subject     => 'Logged Out',
+        text        => 'We\'ll be happy to see you soon!'
+    );
 
     $self->redirect_to('/');
 

@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ProvisioningAgreement;
+package HyperMouse::Schema::Result::ServiceTypeI18n;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ProvisioningAgreement
+HyperMouse::Schema::Result::ServiceTypeI18n
 
 =cut
 
@@ -38,11 +38,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<provisioning_agreement>
+=head1 TABLE: C<service_type_i18n>
 
 =cut
 
-__PACKAGE__->table("provisioning_agreement");
+__PACKAGE__->table("service_type_i18n");
 
 =head1 ACCESSORS
 
@@ -71,25 +71,25 @@ __PACKAGE__->table("provisioning_agreement");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
+=head2 service_type_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 0
+
+=head2 language_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 0
+
 =head2 name
 
   data_type: 'varchar'
   is_nullable: 0
-  size: 32
-
-=head2 provider_contractor_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
-
-=head2 client_contractor_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
+  size: 127
 
 =cut
 
@@ -119,22 +119,22 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "service_type_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
+  "language_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "name",
-  { data_type => "varchar", is_nullable => 0, size => 32 },
-  "provider_contractor_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "client_contractor_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
+  { data_type => "varchar", is_nullable => 0, size => 127 },
 );
 
 =head1 PRIMARY KEY
@@ -151,93 +151,41 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 client_contractor
+=head2 language
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::Contractor>
+Related object: L<HyperMouse::Schema::Result::Language>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "client_contractor",
-  "HyperMouse::Schema::Result::Contractor",
-  { id => "client_contractor_id" },
+  "language",
+  "HyperMouse::Schema::Result::Language",
+  { id => "language_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
-=head2 person_x_provisioning_agreements
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::PersonXProvisioningAgreement>
-
-=cut
-
-__PACKAGE__->has_many(
-  "person_x_provisioning_agreements",
-  "HyperMouse::Schema::Result::PersonXProvisioningAgreement",
-  { "foreign.provisioning_agreement_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 provider_contractor
+=head2 service_type
 
 Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::Contractor>
+Related object: L<HyperMouse::Schema::Result::ServiceType>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "provider_contractor",
-  "HyperMouse::Schema::Result::Contractor",
-  { id => "provider_contractor_id" },
+  "service_type",
+  "HyperMouse::Schema::Result::ServiceType",
+  { id => "service_type_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
-=head2 provisioning_obligations
 
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ProvisioningObligation>
-
-=cut
-
-__PACKAGE__->has_many(
-  "provisioning_obligations",
-  "HyperMouse::Schema::Result::ProvisioningObligation",
-  { "foreign.provisioning_agreement_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 01:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:GIgX6kVN3KWi8LeUoDB+eA
-
-use Method::Signatures;
-
-
-
-__PACKAGE__->many_to_many(
-  "persons" => "person_x_provisioning_agreements", "person"
-);
-
-
-
-method find_related_persons (
-    Int :$mask_permitted?   = 0b000111,
-    Int :$mask_valid?       = 0b000111
-) {
-    $self
-        ->persons
-        ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
-        ->filter_valid(source_alias => 'person', mask => $mask_valid);
-}
-
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-02 16:17:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wVSNkObaaTJzcyC24CGsBg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
-
 1;

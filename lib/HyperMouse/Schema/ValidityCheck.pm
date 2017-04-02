@@ -7,6 +7,8 @@ use Moose;
 use MooseX::NonMoose;
 use MooseX::MarkAsMethods autoclean => 1;
 
+use HyperMouse::Schema::ValidityCheck::Constants qw(:ALL);
+
 use Method::Signatures;
 use DateTime;
 use DateTime::TimeZone;
@@ -18,36 +20,36 @@ our $LocalTZ = DateTime::TimeZone->new(name => 'local');
 
 method _get_validity_check(Int $check!, Str $source_alias!, DateTime $now!) {
     switch($check) {
-          case(0) {
+          case(VC_B_NOT_EXPIRED) {
             return(
                 -or => [
                      { "$source_alias.valid_till"    => { '='  => undef                        } },
                      { "$source_alias.valid_till"    => { '>'  => $self->format_datetime($now) } }
                 ]
             );
-        } case(1) {
+        } case(VC_B_NOT_PREMATURE) {
             return(
                 -or => [
                      { "$source_alias.valid_since"   => { '!=' => undef                        } },
                      { "$source_alias.valid_since"   => { '<=' => $self->format_datetime($now) } }
                 ]
             );
-        } case(2) {
+        } case(VC_B_NOT_REMOVED) {
             return(
                        "$source_alias.removed"       => { '='  => undef                        }
             );
-        } case(3) {
+        } case(VC_B_EXPIRED) {
             return(
                        "$source_alias.valid_till"    => { '<=' => $self->format_datetime($now) }
             );
-        } case(4) {
+        } case(VC_B_PREMATURE) {
             return(
                 -or => [
                      { "$source_alias.valid_since"   => { '='  => undef                        } },
                      { "$source_alias.valid_since"   => { '>'  => $self->format_datetime($now) } }
                 ]
             );
-        } case(5) {
+        } case(VC_B_REMOVED) {
             return(
                        "$source_alias.removed"       => { '!=' => undef                        }
             );
@@ -88,8 +90,8 @@ method filter_valid (
     # ^^^ FIXME: Raise a proper exception if mutual contradictory flags are given
 
     $mask =
-        (    $removed << 5) + (    $premature << 4) + (    $expired << 3) +
-        ($not_removed << 2) + ($not_premature << 1) + ($not_expired << 0)
+        (    $removed << VC_B_REMOVED    ) + (    $premature << VC_B_PREMATURE    ) + (    $expired << VC_B_EXPIRED    ) +
+        ($not_removed << VC_B_NOT_REMOVED) + ($not_premature << VC_B_NOT_PREMATURE) + ($not_expired << VC_B_NOT_EXPIRED)
        unless(defined($mask));
 
     my $resultset = $self;

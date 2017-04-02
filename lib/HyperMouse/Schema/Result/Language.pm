@@ -259,21 +259,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 service_i18ns
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ServiceI18n>
-
-=cut
-
-__PACKAGE__->has_many(
-  "service_i18ns",
-  "HyperMouse::Schema::Result::ServiceI18n",
-  { "foreign.language_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 service_level_i18ns
 
 Type: has_many
@@ -289,9 +274,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 service_type_i18ns
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 01:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TyoO3kE6GpwMfPS60T1/UQ
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::ServiceTypeI18n>
+
+=cut
+
+__PACKAGE__->has_many(
+  "service_type_i18ns",
+  "HyperMouse::Schema::Result::ServiceTypeI18n",
+  { "foreign.language_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-02 16:17:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:W/rR1AGgnfrWSGWhpem+cA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
