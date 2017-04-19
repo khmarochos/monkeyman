@@ -8,27 +8,31 @@
         name      => 'provisioning_obligation',
         columns   => {
             'Valid Since' => {
-                order => 2,
+                order => 1,
                 value => sub { datetime_display(shift->valid_since, 2); }
             },
             'Valid Till' => {
-                order => 3,
+                order => 2,
                 value => sub { datetime_display(shift->valid_till, 2) || '∞'; }
             },
+            'Provisioning Agreement' => {
+                order => 3,
+                value => sub { shift->provisioning_agreement->name }
+            },
             'Service' => {
-                order => 4,
+                order => 5,
                 value => sub {
                     shift->service_type->service_type_i18n($language)->name,
                 }
             },
             'Quantity' => {
-                order => 5,
+                order => 6,
                 value => sub {
                     shift->quantity
                 }
             },
             'Actions' => {
-                order   => 6,
+                order   => 7,
                 actions => 1,
                 related => 1
             }

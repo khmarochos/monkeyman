@@ -1,4 +1,4 @@
-%  snippet_register('js_snipppet', 'dataTables', { }, begin
+%  snippet_register('js_snippet', 'dataTables', { }, begin
         <script>
             $(document).ready(function(){
                 $('.<%= $name %>').DataTable({
@@ -100,7 +100,8 @@
                                     defined($columns->{ $column_name }->{'value'}) &&
                                         ref($columns->{ $column_name }->{'value'}) eq 'CODE'
                                 ) { %>
-%=                                  &{ $columns->{ $column_name }->{'value'} }($row);
+%                                   my $value = join(', ', &{ $columns->{ $column_name }->{'value'} }($row));
+%=                                  $value
 %                               }
 %                           end);   # </td>
 %                       }

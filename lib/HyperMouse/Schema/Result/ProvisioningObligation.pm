@@ -259,6 +259,11 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-28 01:07:05
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mPEr/QqqJG+WtN4Y1vHjuQ
 
+__PACKAGE__->many_to_many(
+  "resource_pieces" => "provisioning_obligation_x_resource_pieces", "resource_piece"
+);
+
+
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

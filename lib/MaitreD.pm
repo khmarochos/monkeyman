@@ -175,8 +175,19 @@ method startup {
                 controller      => 'provisioning_obligation',
                 action          => 'list',
                 filter          => 'active',
-                related_element => undef,
-                related_id      => undef
+                related_element => 'person',
+                related_id      => '@'
+            );
+
+    my  $routes_authenticated_resource_piece = $routes_authenticated->under('/resource_piece');
+        $routes_authenticated_resource_piece
+            ->get('/list/:filter/:related_element/:related_id')
+            ->to(
+                controller      => 'resource_piece',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
             );
 
     my  $routes_authenticated_person = $routes_authenticated->under('/person');
