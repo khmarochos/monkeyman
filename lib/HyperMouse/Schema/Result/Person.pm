@@ -321,7 +321,8 @@ method find_related_provisioning_agreements (
     Int :$mask_permitted?   = 0b000111,
     Int :$mask_valid?       = 0b000111
 ) {
-    my @result;
+
+    my @resultsets;
 
     foreach my $corporation (
         $self
@@ -332,18 +333,20 @@ method find_related_provisioning_agreements (
             ->all
     ) {
         if($corporation->provider) {
-            push(@result,
+            push(@resultsets,
                 $corporation
-                    ->provisioning_agreement_provider_corporations
+                    ->contractors
+                    ->filter_valid
+                    ->search_related('provisioning_agreement_client_contractors')
                     ->filter_valid(mask => $mask_valid)
-                    ->all
             );
         } else {
-            push(@result,
+            push(@resultsets,
                 $corporation
-                    ->provisioning_agreement_client_corporations
+                    ->contractors
+                    ->filter_valid
+                    ->search_related('provisioning_agreement_client_contractors')
                     ->filter_valid(mask => $mask_valid)
-                    ->all
             );
         }
     }
@@ -357,34 +360,28 @@ method find_related_provisioning_agreements (
             ->all
     ) {
         if($contractor->provider) {
-            push(@result,
+            push(@resultsets,
                 $contractor
                     ->provisioning_agreement_provider_contractors
                     ->filter_valid(mask => $mask_valid)
-                    ->all
             );
         } else {
-            push(@result,
+            push(@resultsets,
                 $contractor
                     ->provisioning_agreement_client_contractors
                     ->filter_valid(mask => $mask_valid)
-                    ->all
             );
         }
     }
 
-    foreach my $provisioning_agreement (
-        $self
-            ->provisioning_agreements
-            ->filter_valid(source_alias => 'me')
-            ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
-            ->filter_valid(source_alias => 'provisioning_agreement', mask => $mask_valid)
-            ->all
-        ) {
-            push(@result, $provisioning_agreement);
-    }
+    push(@resultsets, $self
+        ->provisioning_agreements
+        ->filter_valid(source_alias => 'me')
+        ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
+        ->filter_valid(source_alias => 'provisioning_agreement', mask => $mask_valid)
+    );
 
-    @result;
+    my $result_rs = shift(@resultsets); $result_rs->union([ @resultsets ]);
 
 }
 

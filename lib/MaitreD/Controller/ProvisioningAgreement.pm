@@ -40,6 +40,7 @@ method list {
                         mask_permitted  => $mask_permitted,
                         mask_valid      => $mask_valid
                     )
+                    ->all
             ]);
         }
     }

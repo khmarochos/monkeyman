@@ -10,9 +10,9 @@ use MooseX::MarkAsMethods autoclean => 1;
 use HyperMouse::Schema::ValidityCheck::Constants qw(:ALL);
 
 use Method::Signatures;
+use Switch;
 use DateTime;
 use DateTime::TimeZone;
-use Switch;
 
 our $LocalTZ = DateTime::TimeZone->new(name => 'local');
 

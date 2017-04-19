@@ -18,6 +18,10 @@ use Switch;
 
 
 
+__PACKAGE__->load_components('Helper::ResultSet');
+
+
+
 method get_schema {
     $self->result_source->schema;
 }
