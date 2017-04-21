@@ -251,7 +251,8 @@ method confirm {
                 });
 
                 foreach my $email_field (grep(/^email-/, keys(%{ $self->req->params->to_hash }))) {
-                    my $email = $v->required($email_field, 'trim')->param;
+                    $v->required($email_field, 'trim');
+                    my $email = $v->param($email_field);
                     my $email_found;
                     foreach my $r_person_email ($hm_schema
                         ->resultset('PersonEmail')
