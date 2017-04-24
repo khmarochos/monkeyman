@@ -68,7 +68,7 @@ method _get_validity_checks(Int $mask!, Str $source_alias!, DateTime $now!) {
     return(@result);
 }
 
-method filter_valid (
+method filter_validated (
     Str         :$source_alias?     = $self->current_source_alias,
        DateTime :$now?              = DateTime->now(time_zone => $LocalTZ),
     Bool        :$removed?          = 0,

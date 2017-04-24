@@ -5,8 +5,10 @@ use warnings;
 
 use Moose;
 use namespace::autoclean;
+
 extends 'Mojolicious::Controller';
 
+use HyperMouse::Schema::ValidityCheck::Constants ':ALL';
 use Mojolicious::Validator;
 use Method::Signatures;
 use TryCatch;
@@ -152,7 +154,7 @@ method signup {
                 text        => 'The data entered isn\'t valid'
             );
             return;
-        } elsif($hm_schema->resultset('PersonEmail')->search({ email => $v->param('email') })->filter_valid->all > 0) {
+        } elsif($hm_schema->resultset('PersonEmail')->search({ email => $v->param('email') })->filter_validated->all > 0) {
             $self->web_message_send(
                 type        => 'ERROR',
                 subject     => 'Registration Error',
@@ -171,12 +173,12 @@ method signup {
         my $person_language_id = $hm_schema
             ->resultset('Language')
             ->search({ code => $v->param('language') })
-            ->filter_valid
+            ->filter_validated
             ->single
             ->id;
         my $person_datetime_format_id = $hm_schema
             ->resultset('DatetimeFormat')
-            ->filter_valid
+            ->filter_validated
             ->first
             ->id;
 
@@ -251,13 +253,12 @@ method confirm {
                 });
 
                 foreach my $email_field (grep(/^email-/, keys(%{ $self->req->params->to_hash }))) {
-                    $v->required($email_field, 'trim');
-                    my $email = $v->param($email_field);
+                    my $email = $v->required($email_field, 'trim')->param;
                     my $email_found;
                     foreach my $r_person_email ($hm_schema
                         ->resultset('PersonEmail')
                         ->search({ email => $email })
-                        ->filter_valid(mask => 0b000101)
+                        ->filter_validated(mask => 0b000101)
                         ->all
                     ) {
                         if($r_person_email->person_id != $r_person->id) {
@@ -323,44 +324,48 @@ method confirm {
             unless(defined($token));
 
         my($r_person, $r_person_email, $r_person_email_confirmation) =
-            $self->_find_by_confirmation_token($token, 0);
+            $self->_find_by_confirmation_token($token, 1);
         # If an error occuried, stop processing
         return
             unless(defined($r_person));
 
-        $r_person_email_confirmation->update({
-            valid_till  => $now
-        });
-
-        $r_person_email->update({
-            valid_since => $now
-        });
-
-        $self->web_message_send(
-            type        => 'INFO',
-            subject     => 'Confirmation Success',
-            text        => sprintf('The %s email is activated', $r_person_email->email)
-        );
+        unless(defined($r_person_email->valid_since)) {
+            $r_person_email->update({
+                valid_since => $now
+            });
+            $self->web_message_send(
+                type        => 'INFO',
+                subject     => 'Confirmation Success',
+                text        => sprintf('The %s email is activated', $r_person_email->email)
+            );
+        }
 
         if(defined($r_person->valid_since)) {
 
+            # The person has been confirmed already
+            $self->web_message_send(
+                type        => 'INFO',
+                subject     => 'Confirmation Success',
+                text        => sprintf('The person is activated already')
+            );
             $self->redirect_to('person.login');
 
         } else {
 
+            # The person needs to be confirmed
             $self->stash->{'person_data'} = {
                 first_name      =>   $r_person->first_name,
                 middle_name     =>   $r_person->middle_name,
                 last_name       =>   $r_person->last_name,
-                email           => [ $r_person->search_related('person_emails')->filter_valid->get_column('email')->all ],
-                language        =>   $r_person->search_related('language')->filter_valid->single->code,
+                email           => [ $r_person->search_related('person_emails')->filter_validated->get_column('email')->all ],
+                language        =>   $r_person->search_related('language')->filter_validated->single->code,
                 timezone        =>   $r_person->timezone
             };
 
             $self->web_message_send(
                 type        => 'WARNING',
                 subject     => 'Confirmation Needed',
-                text        => 'Some personal data is required'
+                text        => 'Some personal data needs to be submitted and confirmed'
             );
 
         }
@@ -379,8 +384,8 @@ method _find_by_confirmation_token(Str $token!, Bool $email_confirmed!) {
     my $r_person_email_confirmation = $self->hm_schema
         ->resultset('PersonEmailConfirmation')
         ->search({ token => $token })
-        ->filter_valid(
-            mask            => $email_confirmed ? 0b001110 : 0b000111,
+        ->filter_validated(
+            mask            => 0b000111,
             checks_failed   => $checks_failed
         )
         ->single;
@@ -398,8 +403,8 @@ method _find_by_confirmation_token(Str $token!, Bool $email_confirmed!) {
     $checks_failed = {};
     my $r_person_email = $r_person_email_confirmation
         ->search_related('person_email')
-        ->filter_valid(
-            mask            => $email_confirmed ? 0b000111 : 0b010101,
+        ->filter_validated(
+            mask            => 0b000101,
             checks_failed   => $checks_failed
         )
         ->single;
@@ -407,9 +412,7 @@ method _find_by_confirmation_token(Str $token!, Bool $email_confirmed!) {
         $self->web_message_send(
             type        => 'ERROR',
             subject     => 'Confirmation Error',
-            text        => (! $email_confirmed) && $checks_failed->{ 0b010000 }
-                ? "The email is already confirmed"
-                : "The email isn't found"
+            text        => 'The email isn\'t found'
         );
         return;
     }
@@ -417,15 +420,16 @@ method _find_by_confirmation_token(Str $token!, Bool $email_confirmed!) {
     $checks_failed = {};
     my $r_person = $r_person_email
         ->search_related('person')
-        ->filter_valid(mask => 0b000101, checks_failed => $checks_failed)
+        ->filter_validated(
+            mask            => 0b000101,
+            checks_failed   => $checks_failed
+        )
         ->single;
     unless(defined($r_person)) {
         $self->web_message_send(
             type        => 'ERROR',
             subject     => 'Confirmation Error',
-            text        => $checks_failed->{ 0b010000 }
-                ? 'The person is already confirmed'
-                : 'The person isn\'t found'
+            text        => 'The person isn\'t found'
         );
         return;
     }
@@ -489,25 +493,49 @@ method _add_email(
 method list {
 
     my @provisioning_agreements;
-    my $mask_permitted  = 0b000111;
-    my $mask_valid      = 0b000111;
+    my $mask_permitted = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
+    my $mask_validated = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     switch($self->stash->{'filter'}) {
-        case('all')         { $mask_valid = 0b000101 }
-        case('active')      { $mask_valid = 0b000111 }
-        case('archived')    { $mask_valid = 0b001100 }
+        case('all')         { $mask_validated = VC_NOT_REMOVED & VC_NOT_PREMATURE }
+        case('active')      { $mask_validated = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED }
+        case('archived')    { $mask_validated = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_EXPIRED }
     }
     switch($self->stash->{'related_element'}) {
+        case('person') {
+            my $person_id =
+                ($self->stash->{'related_id'} ne '@') ?
+                 $self->stash->{'related_id'} :
+                 $self->stash->{'authorized_person_result'}->id;
+            $self->stash('rows' => [
+                $self
+                    ->hm_schema
+                    ->resultset('Person')
+                    ->search({ id => $person_id })
+                    ->filter_validated(mask => VC_NOT_REMOVED)
+                    ->single
+                    ->search_related_persons(
+                        mask_permitted              => $mask_permitted,
+                        mask_validated              => $mask_validated,
+                        same_corporation            => 1,
+                        same_contractor             => 1,
+                        same_corporation_contractor => 1
+                    )
+                    ->all
+            ]);
+        }
         case('provisioning_agreement') {
             $self->stash('rows' => [
                 $self
                     ->hm_schema
-                    ->resultset("ProvisioningAgreement")
+                    ->resultset('ProvisioningAgreement')
                     ->search({ id => $self->stash->{'related_id'} })
-                    ->filter_valid
+                    ->filter_validated(mask => VC_NOT_REMOVED)
                     ->single
-                    ->find_related_persons(
-                        mask_permitted  => $mask_permitted,
-                        mask_valid      => $mask_valid
+                    ->search_related_persons(
+                        mask_permitted      => $mask_permitted,
+                        mask_validated      => $mask_validated,
+                        same_corporation    => 1,
+                        same_contractor     => 1
                     )
                     ->all
             ]);

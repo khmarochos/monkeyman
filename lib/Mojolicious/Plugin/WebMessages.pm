@@ -88,7 +88,7 @@ method _recipients(@recipients_uuid) {
             ->_get_schema
             ->resultset('Session')
             ->search({ uuid => $recipient_uuid })
-            ->filter_valid
+            ->filter_validated
             ->single
         )) {
             push(@recipients_id, $r_recipient->id);

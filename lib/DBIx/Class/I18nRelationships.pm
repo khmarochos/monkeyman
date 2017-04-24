@@ -43,12 +43,12 @@ method _build_default_language_code {
 method _get_language_id (Str $language_code!) {
     $self
         ->result_source
-            ->schema
-                ->resultset("Language")
-                    ->search({ code => $language_code })
-                        ->filter_valid
-                            ->single
-                                ->id;
+        ->schema
+        ->resultset('Language')
+        ->search({ code => $language_code })
+        ->filter_validated
+        ->single
+        ->id;
 }
 
 
@@ -76,7 +76,7 @@ method i18n_translate (
     } elsif($language !~ /^\d+$/) {
         $language = $self->_get_language_id($language);
     }
-    return($self->$accessor->search({ language_id => $language })->filter_valid->single);
+    return($self->$accessor->search({ language_id => $language })->filter_validated->single);
 }
 
 

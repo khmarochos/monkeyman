@@ -16,8 +16,9 @@
 %       asset_required  ('js',        'locationPicker', { after => [ 'googleMaps'       ] });
 %
 %       snippet_register('js_snippet', 'personData', { after => [ 'jQuery' ] }, begin
+%
 <script>
-    var personData = jQuery.parseJSON(<%== quote(encode_json(stash('person_data'))) %>);
+    var personData = jQuery.parseJSON(<%== quote(b(encode_json(stash('person_data')))->decode('UTF-8')) %>);
 </script>
 %       end);
 %       snippet_register('js_snippet', 'steps', { }, begin

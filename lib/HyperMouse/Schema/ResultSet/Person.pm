@@ -37,7 +37,7 @@ method authenticate (
     $checks_failed = {};
     my $r_person = $r_person_email
         ->search_related("person")
-        ->filter_valid(
+        ->filter_validated(
             mask            => $person_validation_mask,
             checks_failed   => $checks_failed
         )
@@ -64,9 +64,9 @@ method find_by_email (
     my $checks_failed;
 
     my $r_person_email = $self->get_schema
-        ->resultset("PersonEmail")
+        ->resultset('PersonEmail')
         ->search({ email => $email })
-        ->filter_valid(
+        ->filter_validated(
             mask            => $person_validation_mask,
             checks_failed   => $checks_failed
         )
@@ -78,8 +78,8 @@ method find_by_email (
         unless(defined($r_person_email));
 
     my $r_person = $r_person_email
-        ->search_related("person")
-        ->filter_valid(
+        ->search_related('person')
+        ->filter_validated(
             mask            => $person_validation_mask,
             checks_failed   => $checks_failed
         )

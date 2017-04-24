@@ -225,14 +225,22 @@ __PACKAGE__->many_to_many(
 
 
 
-method find_related_persons (
-    Int :$mask_permitted?   = 0b000111,
-    Int :$mask_valid?       = 0b000111
+method search_related_persons (
+    Maybe[Int]      :$mask_permitted?,
+    Maybe[Int]      :$mask_validated?,
+    Maybe[HashRef]  :$permission_checks?    = {},
+    Maybe[HashRef]  :$validation_checks?    = {}
 ) {
+
+    $permission_checks->{'mask'} = defined($mask_permitted) ? $mask_permitted : 0b000111;
+    $validation_checks->{'mask'} = defined($mask_validated) ? $mask_validated : 0b000111;
+
     $self
-        ->persons
-        ->filter_permitted(source_alias => 'me', mask => $mask_permitted)
-        ->filter_valid(source_alias => 'person', mask => $mask_valid);
+        ->search_related('person_x_provisioning_agreements')
+        ->filter_validated(%{ $validation_checks })
+        ->filter_permitted(%{ $permission_checks })
+        ->search_related('person')
+        ->filter_validated(%{ $validation_checks });
 }
 
 

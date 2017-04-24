@@ -33,7 +33,7 @@ method authenticate (
     $checks_failed = {};
     my $r_person_email = $self
         ->search({ email => $email })
-        ->filter_valid(
+        ->filter_validated(
             mask            => $email_validation_mask,
             checks_failed   => $checks_failed
         )
@@ -47,8 +47,8 @@ method authenticate (
 
     $checks_failed = {};
     my $r_person = $r_person_email
-        ->search_related("person")
-        ->filter_valid(
+        ->search_related('person')
+        ->filter_validated(
             mask            => $email_validation_mask,
             checks_failed   => $checks_failed
         )
@@ -62,8 +62,8 @@ method authenticate (
 
     $checks_failed = {};
     my $r_person_password = $r_person
-        ->search_related("person_passwords")
-        ->filter_valid(
+        ->search_related('person_passwords')
+        ->filter_validated(
             mask            => $password_validation_mask,
             checks_failed   => $checks_failed
         )

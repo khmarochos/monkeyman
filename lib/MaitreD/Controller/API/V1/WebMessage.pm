@@ -24,10 +24,10 @@ method list {
             ->md_schema
             ->resultset('Session')
             ->search({ uuid => $session_uuid })
-            ->filter_valid
+            ->filter_validated
             ->single
             ->messages
-            ->filter_valid
+            ->filter_validated
             ->search({ 'message.id' => $message_id })
             ->single;
         if(defined($r_message)) {
@@ -55,10 +55,10 @@ method list {
             ->md_schema
             ->resultset('Session')
             ->search({ uuid => $session_uuid })
-            ->filter_valid
+            ->filter_validated
             ->single
             ->messages
-            ->filter_valid
+            ->filter_validated
             ->search({ received => undef })
             ->all
         ) {

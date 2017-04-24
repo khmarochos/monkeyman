@@ -28,7 +28,7 @@ method sesh {
             ->md_schema
             ->resultset('Session')
             ->search({ uuid => $session_uuid })
-            ->filter_valid
+            ->filter_validated
             ->single
         )) {
             last if (defined($session_uuid_given));

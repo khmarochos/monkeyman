@@ -40,10 +40,16 @@ method format_datetime(
 
 
 
-method i18n_translate(
-    Str|Int $language?
-) {
-    $self;
+#method i18n_translate(
+#    Str|Int $language?
+#) {
+#    $self;
+#}
+
+
+
+method search_foreach(Str :$method_name!, ...) {
+    my @resultsets;
 }
 
 
