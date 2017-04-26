@@ -218,33 +218,11 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-26 08:31:38
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3rLcufW6wW7iKEciXfOL/Q
 
-use Method::Signatures;
-
 
 
 __PACKAGE__->many_to_many(
   "persons" => "person_x_provisioning_agreements", "person"
 );
-
-
-
-method search_related_persons (
-    Maybe[Int]      :$mask_permitted?,
-    Maybe[Int]      :$mask_validated?,
-    Maybe[HashRef]  :$permission_checks?    = {},
-    Maybe[HashRef]  :$validation_checks?    = {}
-) {
-
-    $permission_checks->{'mask'} = defined($mask_permitted) ? $mask_permitted : 0b000111;
-    $validation_checks->{'mask'} = defined($mask_validated) ? $mask_validated : 0b000111;
-
-    $self
-        ->search_related('person_x_provisioning_agreements')
-        ->filter_validated(%{ $validation_checks })
-        ->filter_permitted(%{ $permission_checks })
-        ->search_related('person')
-        ->filter_validated(%{ $validation_checks });
-}
 
 
 

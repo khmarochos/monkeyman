@@ -492,7 +492,6 @@ method _add_email(
 
 method list {
 
-    my @provisioning_agreements;
     my $mask_permitted_d = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
     my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
@@ -528,100 +527,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        search => {
-                            'person_x_corporations' => {
-                                permissions => -1,
-                                validations => -1,
-                                search => {
-                                    'corporation' => {
-                                        validations => -1,
-                                        search => {
-                                            'person_x_contractors' => {
-                                                permissions => -1,
-                                                validations => -1,
-                                                fetch => { 'person' => { validations => -1 } }
-                                            },
-                                            'corporation_x_contractors' => {
-                                                validations => -1,
-                                                search => {
-                                                    'contractor' => {
-                                                        validations => -1,
-                                                        search => {
-                                                            'person_x_contractors'  => {
-                                                                permissions => -1,
-                                                                validations => -1,
-                                                                fetch => { 'person' => { validations => -1 } }
-                                                            },
-                                                            'provisioning_agreement_client_contractors' => {
-                                                                validations => -1,
-                                                                search => {
-                                                                    'person_x_provisioning_agreements' => {
-                                                                        validations => -1,
-                                                                        permissions => -1,
-                                                                        fetch => { 'person' => { validations => -1 } }
-                                                                    }
-                                                                }
-                                                            },
-                                                            'provisioning_agreement_provider_contractors' => {
-                                                                validations => -1,
-                                                                search => {
-                                                                    'person_x_provisioning_agreements' => {
-                                                                        validations => -1,
-                                                                        permissions => -1,
-                                                                        fetch => { 'person' => { validations => -1 } }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            'person_x_contractors' => {
-                                permissions => -1,
-                                validations => -1,
-                                search => {
-                                    'contractor' => {
-                                        validations => -1,
-                                        search => {
-                                            'person_x_contractors'  => {
-                                                permissions => -1,
-                                                validations => -1,
-                                                fetch => { 'person' => { validations => -1 } }
-                                            },
-                                            'provisioning_agreement_client_contractors' => {
-                                                validations => -1,
-                                                search => {
-                                                    'person_x_provisioning_agreements' => {
-                                                        validations => -1,
-                                                        permissions => -1,
-                                                        fetch => { 'person' => { validations => -1 } }
-                                                    }
-                                                }
-                                            },
-                                            'provisioning_agreement_provider_contractors' => {
-                                                validations => -1,
-                                                search => {
-                                                    'person_x_provisioning_agreements' => {
-                                                        validations => -1,
-                                                        permissions => -1,
-                                                        fetch => { 'person' => { validations => -1 } }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            'person_x_provisioning_agreements' => {
-                                validations => -1,
-                                permissions => -1,
-                                fetch => { 'person' => { validations => -1 } }
-                            }
-                        }
+                        callout_join => [ 'person_to_person' => { } ]
                     )
                     ->all
              ]);
@@ -632,20 +538,13 @@ method list {
                     ->resultset('ProvisioningAgreement')
                     ->search({ id => $self->stash->{'related_id'} })
                     ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->single
                     ->search_related_deep(
                         resultset_class            => 'Person',
                         fetch_permissions_default  => $mask_permitted_d,
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        search => {
-                            'person_x_provisioning_agreements' => {
-                                validations => -1,
-                                permissions => -1,
-                                fetch => { 'person' => { validations => -1 } }
-                            }
-                        }
+                        callout_join => [ 'provisioning_agreement_to_person' => { } ]
                     )
                     ->all
             ]);

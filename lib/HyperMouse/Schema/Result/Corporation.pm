@@ -167,58 +167,11 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-26 08:31:38
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Nt1wIk8BGeqHKNfZh2y01w
 
-use Method::Signatures;
-
 
 
 __PACKAGE__->many_to_many(
   "contractors" => "corporation_x_contractors", "contractor"
 );
-
-
-
-method search_related_persons(
-    Int     :$mask_permitted?,
-    Int     :$mask_validated?,
-    HashRef :$permission_checks?            = {},
-    HashRef :$validation_checks?            = {},
-    Bool    :$same_corporation?             = 1,
-    Bool    :$same_corporation_contractor?  = 1
-) {
-
-    my @resultsets;
-
-    $permission_checks->{'mask'} = defined($mask_permitted) ? $mask_permitted : 0b000111;
-    $validation_checks->{'mask'} = defined($mask_validated) ? $mask_validated : 0b000111;
-
-    foreach my $contractor (
-        $self
-            ->search_related('corporation_x_contractors')
-            ->filter_validated(%{ $validation_checks })
-            ->search_related('corporation')
-            ->filter_validated(%{ $validation_checks })
-            ->all
-    ) {
-        push(@resultsets,
-            $contractor
-                ->search_related_persons(
-                    permission_checks           => $permission_checks,
-                    validation_checks           => $validation_checks
-                )
-        ) if($same_corporation_contractor);
-    }
-
-    push(@resultsets, $self
-        ->search_related('person_x_corporations')
-        ->filter_validated(%{ $validation_checks })
-        ->filter_permitted(%{ $permission_checks })
-        ->search_related('person')
-        ->filter_validated(%{ $validation_checks })
-    );
-
-    my $result_rs = shift(@resultsets); $result_rs ? $result_rs->union([ @resultsets ]) : $result_rs;
-
-}
 
 
 

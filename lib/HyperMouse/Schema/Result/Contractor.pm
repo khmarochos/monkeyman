@@ -317,35 +317,6 @@ __PACKAGE__->has_many(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0n59GmJy1J4/m1PNlO7iqA
 
 
-
-use Method::Signatures;
-
-
-
-method search_related_persons(
-    Int     :$mask_permitted?,
-    Int     :$mask_validated?,
-    HashRef :$permission_checks?            = {},
-    HashRef :$validation_checks?            = {},
-) {
-
-    my @resultsets;
-
-    $permission_checks->{'mask'} = defined($mask_permitted) ? $mask_permitted : 0b000111;
-    $validation_checks->{'mask'} = defined($mask_validated) ? $mask_validated : 0b000111;
-
-    push(@resultsets, $self
-        ->search_related('person_x_contractors')
-        ->filter_validated(%{ $validation_checks })
-        ->filter_permitted(%{ $permission_checks })
-        ->search_related('person')
-        ->filter_validated(%{ $validation_checks })
-    );
-
-    my $result_rs = shift(@resultsets); $result_rs ? $result_rs->union([ @resultsets ]) : $result_rs;
-
-}
-
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;

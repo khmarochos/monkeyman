@@ -60,7 +60,6 @@ method search_related_deep(
 
     if($union) {
         my $resultset = shift(@resultsets);
-        warn($resultset);
         return(
             defined($resultset)
                   ? $resultset->union([ @resultsets ])
