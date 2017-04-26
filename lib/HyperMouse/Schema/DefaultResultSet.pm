@@ -48,9 +48,9 @@ method format_datetime(
 
 
 
-method search_foreach(Str :$method_name!, ...) {
-    my @resultsets;
-}
+#mVethod search_foreach(Str :$method_name!, ...) {
+#    my @resultsets;
+#}
 
 
 

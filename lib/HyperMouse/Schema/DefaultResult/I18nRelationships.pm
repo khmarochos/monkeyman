@@ -1,4 +1,4 @@
-package DBIx::Class::I18nRelationships;
+package HyperMouse::Schema::DefaultResult::I18nRelationships;
 
 use Moose;
 use MooseX::NonMoose;
@@ -53,6 +53,7 @@ method _get_language_id (Str $language_code!) {
 
 
 
+# We perform all the magic after the original register_relationship method
 method register_relationship(...) {
     my $result = $self->next::method(@_);
 

@@ -22,7 +22,9 @@ extends 'DBIx::Class::Core';
 
 =over 4
 
-=item * L<DBIx::Class::I18nRelationships>
+=item * L<HyperMouse::Schema::DefaultResult::I18nRelationships>
+
+=item * L<HyperMouse::Schema::DefaultResult::DeepRelationships>
 
 =item * L<DBIx::Class::InflateColumn::DateTime>
 
@@ -33,7 +35,8 @@ extends 'DBIx::Class::Core';
 =cut
 
 __PACKAGE__->load_components(
-  "I18nRelationships",
+  "+HyperMouse::Schema::DefaultResult::I18nRelationships",
+  "+HyperMouse::Schema::DefaultResult::DeepRelationships",
   "InflateColumn::DateTime",
   "EncodedColumn",
 );
@@ -296,8 +299,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-30 12:20:17
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:220DzmrVkSOIICe4i2/Qbw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-26 08:31:38
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mKZd5uUPH5pzOYu9E2owxw
 
 use Method::Signatures;
 
@@ -322,9 +325,7 @@ method search_related_persons(
     Int     :$mask_validated?,
     HashRef :$permission_checks?            = {},
     HashRef :$validation_checks?            = {},
-    Bool    :$same_corporation?             = 1,
-    Bool    :$same_contractor?              = 1,
-    Bool    :$same_corporation_contractor?  = 1
+    HashRef :$related?                      = {}
 ) {
 
     my @resultsets;
@@ -343,23 +344,12 @@ method search_related_persons(
     ) {
         push(@resultsets,
             $corporation
-                ->search_related('person_x_corporations')
-                ->filter_validated(%{ $validation_checks })
-                ->search_related('person')
-                ->filter_validated(%{ $validation_checks })
-        );
-        if($same_corporation_contractor) {
-            push(@resultsets,
-                $corporation
-                    ->search_related('corporation_x_contractors')
-                    ->filter_validated(%{ $validation_checks })
-                    ->search_related('person_x_contractors')
-                    ->filter_validated(%{ $validation_checks })
-                    ->filter_permitted(%{ $permission_checks })
-                    ->search_related('person')
-                    ->filter_validated(%{ $validation_checks })
-            );
-        }
+                ->search_related_persons(
+                    permission_checks           => $permission_checks,
+                    validation_checks           => $validation_checks,
+                    related                     => $related->{'corporation'},
+                )
+        ) if(exists($related->{'corporation'}));
     }
 
     foreach my $contractor (
@@ -373,11 +363,12 @@ method search_related_persons(
     ) {
         push(@resultsets,
             $contractor
-                ->search_related('person_x_contractors')
-                ->filter_validated(%{ $validation_checks })
-                ->search_related('person')
-                ->filter_validated(%{ $validation_checks })
-        );
+                ->search_related_persons(
+                    permission_checks           => $permission_checks,
+                    validation_checks           => $validation_checks,
+                    related                     => $related->{'contractor'}
+                )
+        ) if(exists($related->{'contractor'}));
     }
 
     my $result_rs = shift(@resultsets); $result_rs ? $result_rs->union([ @resultsets ]) : $result_rs;
@@ -400,63 +391,59 @@ method search_related_provisioning_agreements(
     $permission_checks->{'mask'} = defined($mask_permitted) ? $mask_permitted : 0b000111;
     $validation_checks->{'mask'} = defined($mask_validated) ? $mask_validated : 0b000111;
 
-    if($same_corporation) {
-        foreach my $corporation (
-            $self
-                ->search_related('person_x_corporations')
-                ->filter_validated(%{ $validation_checks })
-                ->filter_permitted(%{ $permission_checks })
-                ->search_related('corporation')
-                ->filter_validated(%{ $validation_checks })
-                ->all
-        ) {
-            if($corporation->provider) {
-                push(@resultsets,
-                    $corporation
-                        ->search_related('corporation_x_contractors')
-                        ->filter_validated(%{ $validation_checks })
-                        ->search_related('contractors')
-                        ->filter_validated(%{ $validation_checks })
-                        ->search_related('provisioning_agreement_provider_contractors')
-                        ->filter_validated(%{ $validation_checks })
-                );
-            } else {
-                push(@resultsets,
-                    $corporation
-                        ->search_related('corporation_x_contractors')
-                        ->filter_validated(%{ $validation_checks })
-                        ->search_related('contractors')
-                        ->filter_validated(%{ $validation_checks })
-                        ->search_related('provisioning_agreement_client_contractors')
-                        ->filter_validated(%{ $validation_checks })
-                );
-            }
+    foreach my $corporation (
+        $self
+            ->search_related('person_x_corporations')
+            ->filter_validated(%{ $validation_checks })
+            ->filter_permitted(%{ $permission_checks })
+            ->search_related('corporation')
+            ->filter_validated(%{ $validation_checks })
+            ->all
+    ) {
+        if($corporation->provider) {
+            push(@resultsets,
+                $corporation
+                    ->search_related('corporation_x_contractors')
+                    ->filter_validated(%{ $validation_checks })
+                    ->search_related('contractors')
+                    ->filter_validated(%{ $validation_checks })
+                    ->search_related('provisioning_agreement_provider_contractors')
+                    ->filter_validated(%{ $validation_checks })
+            ) if($same_corporation);
+        } else {
+            push(@resultsets,
+                $corporation
+                    ->search_related('corporation_x_contractors')
+                    ->filter_validated(%{ $validation_checks })
+                    ->search_related('contractors')
+                    ->filter_validated(%{ $validation_checks })
+                    ->search_related('provisioning_agreement_client_contractors')
+                    ->filter_validated(%{ $validation_checks })
+            ) if($same_corporation);
         }
     }
 
-    if($same_contractor) {
-        foreach my $contractor (
-            $self
-                ->search_related('person_x_contractors')
-                ->filter_validated(%{ $validation_checks })
-                ->filter_permitted(%{ $permission_checks })
-                ->search_related('contractor')
-                ->filter_validated(%{ $validation_checks })
-                ->all
-        ) {
-            if($contractor->provider) {
-                push(@resultsets,
-                    $contractor
-                        ->search_related('provisioning_agreement_provider_contractors')
-                        ->filter_validated(%{ $validation_checks })
-                );
-            } else {
-                push(@resultsets,
-                    $contractor
-                        ->search_related('provisioning_agreement_client_contractors')
-                        ->filter_validated(%{ $validation_checks })
-                );
-            }
+    foreach my $contractor (
+        $self
+            ->search_related('person_x_contractors')
+            ->filter_validated(%{ $validation_checks })
+            ->filter_permitted(%{ $permission_checks })
+            ->search_related('contractor')
+            ->filter_validated(%{ $validation_checks })
+            ->all
+    ) {
+        if($contractor->provider) {
+            push(@resultsets,
+                $contractor
+                    ->search_related('provisioning_agreement_provider_contractors')
+                    ->filter_validated(%{ $validation_checks })
+            ) if($same_contractor);
+        } else {
+            push(@resultsets,
+                $contractor
+                    ->search_related('provisioning_agreement_client_contractors')
+                    ->filter_validated(%{ $validation_checks })
+            ) if($same_contractor);
         }
     }
 
@@ -475,9 +462,6 @@ method search_related_provisioning_agreements(
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-1;
-
-
-# You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
+
 1;
