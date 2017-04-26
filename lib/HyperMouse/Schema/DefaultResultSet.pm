@@ -9,7 +9,8 @@ use MooseX::MarkAsMethods autoclean => 1;
 
 extends
     'DBIx::Class::ResultSet',
-    'HyperMouse::Schema::ValidityCheck';
+    'HyperMouse::Schema::ValidityCheck',
+    'HyperMouse::Schema::PermissionCheck';
 
 use Method::Signatures;
 use DateTime;
@@ -40,47 +41,35 @@ method format_datetime(
 
 
 
-#method i18n_translate(
-#    Str|Int $language?
-#) {
-#    $self;
-#}
-
-
-
-#mVethod search_foreach(Str :$method_name!, ...) {
-#    my @resultsets;
-#}
-
-
-
-method filter_permitted (
-    Str         :$source_alias? = $self->current_source_alias,
-    Bool        :$and?          = 0,
-    Bool        :$not_admin?    = 0,
-    Bool        :$not_billing?  = 0,
-    Bool        :$not_tech?     = 0,
-    Bool        :$admin?        = 1,
-    Bool        :$billing?      = 1,
-    Bool        :$tech?         = 1,
-    Maybe[Int]  :$mask?         = undef
+method search_related_deep(
+    Str  :$resultset_class!,
+    Bool :$union? = 1,
+    ...
 ) {
-    $mask = ($not_admin << 5) + ($not_billing << 4) + ($not_tech << 3) +
-            (    $admin << 2) + (    $billing << 1) + (    $tech << 0)
-       unless(defined($mask));
-    my $r = $self->search(
-        {
-            ($and ? '-and' : '-or') => [
-                $mask & 32 ?         ( { "$source_alias.admin"    => 0 } ) : (),
-                $mask & 16 ?         ( { "$source_alias.billing"  => 0 } ) : (),
-                $mask & 8  ?         ( { "$source_alias.tech"     => 0 } ) : (),
-                $mask & 4  ? ( -not => { "$source_alias.admin"    => 0 } ) : (),
-                $mask & 2  ? ( -not => { "$source_alias.billing"  => 0 } ) : (),
-                $mask & 1  ? ( -not => { "$source_alias.tech"     => 0 } ) : ()
-            ]
-        }
-    );
-    return($r);
+
+    my @resultsets  = ();
+    my $resultset   = $self;
+    my %parameters  = @_;
+
+    foreach my $result ($resultset->all) {
+        push(@resultsets, scalar($result->search_related_deep(%parameters)));
+    }
+
+    push(@resultsets, scalar($self->result_source->schema->resultset($resultset_class)->search({ id => undef })))
+        unless(@resultsets);
+
+    if($union) {
+        my $resultset = shift(@resultsets);
+        warn($resultset);
+        return(
+            defined($resultset)
+                  ? $resultset->union([ @resultsets ])
+                  : $resultset
+        )
+    } else {
+        return(@resultsets);
+    }
+
 }
 
 

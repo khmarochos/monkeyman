@@ -110,7 +110,7 @@ method filter_validated (
             }
         }
     } else {
-        $resultset = $self->search({ -and => [ $self->_get_validity_checks($mask, $source_alias, $now) ] });
+        $resultset = $self->search_rs({ -and => [ $self->_get_validity_checks($mask, $source_alias, $now) ] });
     }
 
     return($resultset);

@@ -20,90 +20,98 @@ method register_relationship(...) {
 }
 
 method search_related_deep(
-    Int     :$_permissions_default? = 0b000111,
-    Int     :$_validations_default? = 0b000111,
-    Str     :$_fetch?,
-    Int     :$_fetch_union?         = 1,
-    Int     :$_fetch_permissions?,
-    Int     :$_fetch_validations?,
-    HashRef :$_fetch_validations_failed?,
-    HashRef :$_search?,
-    Int     :$_search_permissions?,
-    Int     :$_search_validations?,
-    HashRef :$_search_validations_failed?,
+    Str     :$resultset_class!,
+    Int     :$search_permissions_default?   = 0b000111,
+    Int     :$search_validations_default?   = 0b000111,
+    HashRef :$search?,
+    Int     :$fetch_permissions_default?    = 0b000111,
+    Int     :$fetch_validations_default?    = 0b000111,
+    HashRef :$fetch?,
+    Bool    :$union?                        = 1,
+    ...
 ) {
 
     my @resultsets;
 
-    if(defined($_fetch)) {
+    if(defined($fetch)) {
 
         my $resultset = $self;
         
-        $resultset = $resultset->search_related($_fetch);
+        foreach my $fetch_key (keys(%{ $fetch })) {
+        
+            my $resultset = $self->search_related_rs($fetch_key);
 
-        $resultset = $resultset->filter_validated(
-            mask => $_fetch_validations >= 0
-                  ? $_fetch_validations
-                  : $_validations_default,
-            defined($_fetch_validations_failed)
-                  ? (checks_failed => $_fetch_validations_failed)
-                  : ( )
-        )
-            if(defined($_fetch_validations));
+            my $fetch_permissions = $fetch->{ $fetch_key }->{'permissions'};
+            my $fetch_validations = $fetch->{ $fetch_key }->{'validations'};
 
-        $resultset = $resultset->filter_permitted(
-            mask => $_fetch_permissions >= 0
-                  ? $_fetch_permissions
-                  : $_permissions_default
-        )
-            if(defined($_fetch_permissions));
+            $resultset = $resultset->filter_validated(
+                mask => $fetch_validations >= 0
+                      ? $fetch_validations
+                      : $fetch_validations_default
+            )
+                if(defined($fetch_validations));
 
-        push(@resultsets, $resultset);
+            $resultset = $resultset->filter_permitted(
+                mask => $fetch_permissions >= 0
+                      ? $fetch_permissions
+                      : $fetch_permissions_default
+            )
+                if(defined($fetch_permissions));
+
+            push(@resultsets, scalar($resultset));
+
+        }
 
     }
 
-    if(defined($_search)) {
+    if(defined($search)) {
 
-        foreach my $search_key (keys(%{ $_search })) {
+        foreach my $search_key (keys(%{ $search })) {
         
             my $resultset = $self->search_related($search_key);
 
-            my $search_permissions          = $_search->{ $search_key }->{'_search_permissions'};
-            my $search_validations          = $_search->{ $search_key }->{'_search_validations'};
-            my $search_validations_failed   = $_search->{ $search_key }->{'_search_validations'};
+            my $search_permissions = $search->{ $search_key }->{'permissions'};
+            my $search_validations = $search->{ $search_key }->{'validations'};
 
             $resultset = $resultset->filter_validated(
                 mask => defined($search_validations) && $search_validations >= 0
                       ? $search_validations
-                      : $_validations_default,
-                defined($search_validations_failed) && ref($search_validations_failed) eq 'HASH'
-                      ? (checks_failed => $search_validations_failed)
-                      : ( )
+                      : $search_validations_default
             )
                 if(defined($search_validations));
 
             $resultset = $resultset->filter_permitted(
                 mask => $search_permissions >= 0
                       ? $search_permissions
-                      : $_permissions_default
+                      : $search_permissions_default
                 )
                 if(defined($search_permissions));
 
+            my %search_parameters = %{ $search->{ $search_key } };
+            $search_parameters{'resultset_class'}            = $resultset_class;
+            $search_parameters{'fetch_permissions_default'}  = $fetch_permissions_default;
+            $search_parameters{'fetch_validations_default'}  = $fetch_validations_default;
+            $search_parameters{'search_permissions_default'} = $search_permissions_default;
+            $search_parameters{'search_validations_default'} = $search_validations_default;
             foreach my $result ($resultset->all) {
-                my $resultset = $result->search_related_deep(%{ $_search->{ $search_key } });
-                push(@resultsets, $resultset) if($resultset->all > 0);
+                my $resultset = $result->search_related_deep(%search_parameters);
+                push(@resultsets, scalar($resultset)) if($resultset->all > 0);
             }
 
         }
 
     }
 
-    if($_fetch_union) {
+    push(@resultsets, scalar($self->result_source->schema->resultset($resultset_class)->search({ id => undef })))
+        unless(@resultsets);
+
+
+    if($union) {
         my $resultset = shift(@resultsets);
         return(
             defined($resultset)
-                ? $resultset->union([ @resultsets ])
-                : $resultset
+                  ? $resultset->union([ @resultsets ])
+                  : $resultset
         )
     } else {
         return(@resultsets);

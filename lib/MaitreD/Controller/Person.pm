@@ -493,12 +493,22 @@ method _add_email(
 method list {
 
     my @provisioning_agreements;
-    my $mask_permitted = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
-    my $mask_validated = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
+    my $mask_permitted_d = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
+    my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
+    my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     switch($self->stash->{'filter'}) {
-        case('all')         { $mask_validated = VC_NOT_REMOVED & VC_NOT_PREMATURE }
-        case('active')      { $mask_validated = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED }
-        case('archived')    { $mask_validated = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_EXPIRED }
+        case('all')         {
+            $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
+            $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE;
+        }
+        case('active')      {
+            $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
+            $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
+        }
+        case('archived')    {
+            $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
+            $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_EXPIRED;
+        }
     }
     switch($self->stash->{'related_element'}) {
         case('person') {
@@ -512,55 +522,53 @@ method list {
                     ->resultset('Person')
                     ->search({ id => $person_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->single
                     ->search_related_deep(
-                        _permissions_default    => $mask_permitted,
-                        _validations_default    => $mask_validated,
-                        _search                 => {
+                        resultset_class            => 'Person',
+                        fetch_permissions_default  => $mask_permitted_d,
+                        fetch_validations_default  => $mask_validated_d,
+                        search_permissions_default => $mask_permitted_d,
+                        search_validations_default => $mask_validated_d,
+                        search => {
                             'person_x_corporations' => {
-                                _search_permissions     => -1,
-                                _search_validations     => -1,
-                                _search                 => {
+                                permissions => -1,
+                                validations => -1,
+                                search => {
                                     'corporation' => {
-                                        _search_validations => -1,
-                                        _search             => {
-                                            'person_x_contractors'  => {
-                                                _search_permissions => -1,
-                                                _search_validations => -1,
-                                                _fetch_validations  => -1,
-                                                _fetch              => 'person',
+                                        validations => -1,
+                                        search => {
+                                            'person_x_contractors' => {
+                                                permissions => -1,
+                                                validations => -1,
+                                                fetch => { 'person' => { validations => -1 } }
                                             },
                                             'corporation_x_contractors' => {
-                                                _search_validations => -1,
-                                                _search => {
+                                                validations => -1,
+                                                search => {
                                                     'contractor' => {
-                                                        _search_validations => -1,
-                                                        _search             => {
+                                                        validations => -1,
+                                                        search => {
                                                             'person_x_contractors'  => {
-                                                                _search_permissions => -1,
-                                                                _search_validations => -1,
-                                                                _fetch_validations  => -1,
-                                                                _fetch              => 'person',
+                                                                permissions => -1,
+                                                                validations => -1,
+                                                                fetch => { 'person' => { validations => -1 } }
                                                             },
                                                             'provisioning_agreement_client_contractors' => {
-                                                                _search_validations     => -1,
-                                                                _search                 => {
+                                                                validations => -1,
+                                                                search => {
                                                                     'person_x_provisioning_agreements' => {
-                                                                        _search_validations     => -1,
-                                                                        _search_permissions     => -1,
-                                                                        _fetch                  => 'person',
-                                                                        _fetch_validations      => -1
+                                                                        validations => -1,
+                                                                        permissions => -1,
+                                                                        fetch => { 'person' => { validations => -1 } }
                                                                     }
                                                                 }
                                                             },
                                                             'provisioning_agreement_provider_contractors' => {
-                                                                _search_validations     => -1,
-                                                                _search                 => {
+                                                                validations => -1,
+                                                                search => {
                                                                     'person_x_provisioning_agreements' => {
-                                                                        _search_validations     => -1,
-                                                                        _search_permissions     => -1,
-                                                                        _fetch                  => 'person',
-                                                                        _fetch_validations      => -1
+                                                                        validations => -1,
+                                                                        permissions => -1,
+                                                                        fetch => { 'person' => { validations => -1 } }
                                                                     }
                                                                 }
                                                             }
@@ -573,43 +581,45 @@ method list {
                                 }
                             },
                             'person_x_contractors' => {
-                                _search_permissions     => -1,
-                                _search_validations     => -1,
-                                _search                 => {
+                                permissions => -1,
+                                validations => -1,
+                                search => {
                                     'contractor' => {
-                                        _search_validations => -1,
-                                        _search             => {
+                                        validations => -1,
+                                        search => {
                                             'person_x_contractors'  => {
-                                                _search_permissions => -1,
-                                                _search_validations => -1,
-                                                _fetch_validations  => -1,
-                                                _fetch              => 'person',
+                                                permissions => -1,
+                                                validations => -1,
+                                                fetch => { 'person' => { validations => -1 } }
                                             },
                                             'provisioning_agreement_client_contractors' => {
-                                                _search_validations     => -1,
-                                                _search                 => {
+                                                validations => -1,
+                                                search => {
                                                     'person_x_provisioning_agreements' => {
-                                                        _search_validations     => -1,
-                                                        _search_permissions     => -1,
-                                                        _fetch                  => 'person',
-                                                        _fetch_validations      => -1
+                                                        validations => -1,
+                                                        permissions => -1,
+                                                        fetch => { 'person' => { validations => -1 } }
                                                     }
                                                 }
                                             },
                                             'provisioning_agreement_provider_contractors' => {
-                                                _search_validations     => -1,
-                                                _search                 => {
+                                                validations => -1,
+                                                search => {
                                                     'person_x_provisioning_agreements' => {
-                                                        _search_validations     => -1,
-                                                        _search_permissions     => -1,
-                                                        _fetch                  => 'person',
-                                                        _fetch_validations      => -1
+                                                        validations => -1,
+                                                        permissions => -1,
+                                                        fetch => { 'person' => { validations => -1 } }
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                 }
+                            },
+                            'person_x_provisioning_agreements' => {
+                                validations => -1,
+                                permissions => -1,
+                                fetch => { 'person' => { validations => -1 } }
                             }
                         }
                     )
@@ -624,14 +634,16 @@ method list {
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->single
                     ->search_related_deep(
-                        _permissions_default    => $mask_permitted,
-                        _validations_default    => $mask_validated,
-                        _search                 => {
+                        resultset_class            => 'Person',
+                        fetch_permissions_default  => $mask_permitted_d,
+                        fetch_validations_default  => $mask_validated_d,
+                        search_permissions_default => $mask_permitted_d,
+                        search_validations_default => $mask_validated_d,
+                        search => {
                             'person_x_provisioning_agreements' => {
-                                _search_validations     => -1,
-                                _search_permissions     => -1,
-                                _fetch                  => 'person',
-                                _fetch_validations      => -1
+                                validations => -1,
+                                permissions => -1,
+                                fetch => { 'person' => { validations => -1 } }
                             }
                         }
                     )
