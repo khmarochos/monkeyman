@@ -157,6 +157,39 @@ method startup {
             ->get('/')
             ->to('dashboard#welcome');
 
+    my  $routes_authenticated_person = $routes_authenticated->under('/person');
+        $routes_authenticated_person
+            ->get('/list/:filter/:related_element/:related_id')
+            ->to(
+                controller      => 'person',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
+
+    my  $routes_authenticated_contractor = $routes_authenticated->under('/contractor');
+        $routes_authenticated_contractor
+            ->get('/list/:filter/:related_element/:related_id')
+            ->to(
+                controller      => 'contractor',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
+
+    my  $routes_authenticated_corporation = $routes_authenticated->under('/corporation');
+        $routes_authenticated_corporation
+            ->get('/list/:filter/:related_element/:related_id')
+            ->to(
+                controller      => 'corporation',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
+
     my  $routes_authenticated_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
         $routes_authenticated_provisioning_agreement
             ->get('/list/:filter/:related_element/:related_id')
@@ -184,17 +217,6 @@ method startup {
             ->get('/list/:filter/:related_element/:related_id')
             ->to(
                 controller      => 'resource_piece',
-                action          => 'list',
-                filter          => 'active',
-                related_element => 'person',
-                related_id      => '@'
-            );
-
-    my  $routes_authenticated_person = $routes_authenticated->under('/person');
-        $routes_authenticated_person
-            ->get('/list/:filter/:related_element/:related_id')
-            ->to(
-                controller      => 'person',
                 action          => 'list',
                 filter          => 'active',
                 related_element => 'person',

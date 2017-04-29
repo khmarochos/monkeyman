@@ -527,10 +527,27 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout_join => [ 'person_to_person' => { } ]
+                        callout => [ 'person_TO_person_FULL' => { } ]
                     )
                     ->all
              ]);
+        } case('contractor') {
+            $self->stash('rows' => [
+                $self
+                    ->hm_schema
+                    ->resultset('Contractor')
+                    ->search({ id => $self->stash->{'related_id'} })
+                    ->filter_validated(mask => VC_NOT_REMOVED)
+                    ->search_related_deep(
+                        resultset_class            => 'Person',
+                        fetch_permissions_default  => $mask_permitted_d,
+                        fetch_validations_default  => $mask_validated_d,
+                        search_permissions_default => $mask_permitted_d,
+                        search_validations_default => $mask_validated_d,
+                        callout => [ 'contractor_TO_person_VIA_provisioning_agreement_ALL' => { } ]
+                    )
+                    ->all
+            ]);
         } case('provisioning_agreement') {
             $self->stash('rows' => [
                 $self
@@ -544,7 +561,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout_join => [ 'provisioning_agreement_to_person' => { } ]
+                        callout => [ 'provisioning_agreement_TO_person' => { } ]
                     )
                     ->all
             ]);

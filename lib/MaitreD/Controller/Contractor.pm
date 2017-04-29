@@ -1,4 +1,4 @@
-package MaitreD::Controller::ResourcePiece;
+package MaitreD::Controller::Contractor;
 
 use strict;
 use warnings;
@@ -33,7 +33,6 @@ method list {
             $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_EXPIRED;
         }
     }
-    
     switch($self->stash->{'related_element'}) {
         case('person') {
             my $person_id =
@@ -47,17 +46,16 @@ method list {
                     ->search({ id => $person_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
-                        resultset_class            => 'ResourcePiece',
+                        resultset_class            => 'Contractor',
                         fetch_permissions_default  => $mask_permitted_d,
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ person_TO_resource_piece => { } ]
+                        callout => [ person_TO_contractor_VIA_corporation_INC_DIRECT => { } ]
                     )
                     ->all
             ]);
-        }
-        case('provisioning_agreement') {
+        } case('provisioning_agreement') {
             my $provisioning_agreement_id = $self->stash->{'related_id'};
             $self->stash('rows' => [
                 $self
@@ -66,17 +64,16 @@ method list {
                     ->search({ id => $provisioning_agreement_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
-                        resultset_class            => 'ResourcePiece',
+                        resultset_class            => 'Contractor',
                         fetch_permissions_default  => $mask_permitted_d,
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ provisioning_agreement_TO_resource_piece => { } ]
+                        callout => [ provisioning_agreement_TO_contractor => { } ]
                     )
                     ->all
             ]);
-        }
-        case('provisioning_obligation') {
+        } case('provisioning_obligation') {
             my $provisioning_obligation_id = $self->stash->{'related_id'};
             $self->stash('rows' => [
                 $self
@@ -85,12 +82,12 @@ method list {
                     ->search({ id => $provisioning_obligation_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
-                        resultset_class            => 'ResourcePiece',
+                        resultset_class            => 'Contractor',
                         fetch_permissions_default  => $mask_permitted_d,
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ provisioning_obligation_TO_resource_piece => { } ]
+                        callout => [ provisioning_obligation_TO_contractor => { } ]
                     )
                     ->all
             ]);

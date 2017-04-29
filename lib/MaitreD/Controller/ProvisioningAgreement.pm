@@ -51,7 +51,28 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout_join => [ person_to_provisioning_agreement => { } ]
+                        callout => [ person_TO_provisioning_agreement_INC_DIRECT => { } ]
+                    )
+                    ->all
+            ]);
+        } case('contractor') {
+            my $person_id =
+                ($self->stash->{'related_id'} ne '@') ?
+                 $self->stash->{'related_id'} :
+                 $self->stash->{'authorized_person_result'}->id;
+            $self->stash('rows' => [
+                $self
+                    ->hm_schema
+                    ->resultset('Person')
+                    ->search({ id => $person_id })
+                    ->filter_validated(mask => VC_NOT_REMOVED)
+                    ->search_related_deep(
+                        resultset_class            => 'ProvisioningAgreement',
+                        fetch_permissions_default  => $mask_permitted_d,
+                        fetch_validations_default  => $mask_validated_d,
+                        search_permissions_default => $mask_permitted_d,
+                        search_validations_default => $mask_validated_d,
+                        callout => [ contractor_TO_provisioning_agreement => { } ]
                     )
                     ->all
             ]);

@@ -33,8 +33,6 @@ method list {
             $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_EXPIRED;
         }
     }
-    my $mask_permitted = 0b000111;
-    my $mask_validated = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     switch($self->stash->{'related_element'}) {
         case('person') {
             my $person_id =
@@ -53,7 +51,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout_join => [ person_to_provisioning_obligation => { } ]
+                        callout => [ person_TO_provisioning_obligation => { } ]
                     )
                     ->all
             ]);
@@ -72,7 +70,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout_join => [ provisioning_agreement_to_provisioning_obligation => { } ]
+                        callout => [ provisioning_agreement_TO_provisioning_obligation => { } ]
                     )
                     ->all
             ]);

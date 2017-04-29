@@ -1,0 +1,63 @@
+<%
+    asset_required('css', 'dataTables', { });
+    asset_required('js',  'dataTables', { });
+    my $language = stash->{'language_id'};
+%>
+<%=
+    include('snippets/table',
+        name      => 'contractor',
+        columns   => {
+            'Name' => {
+                order => 1,
+                value => sub {
+                    my $row = shift;
+                    sprintf(
+                        "%s, %s",
+                        $row->name,
+                        $row->contractor_type->contractor_type_i18n($language)->name_short
+                    );
+                }
+            },
+            'Valid Since' => {
+                order => 2,
+                value => sub { datetime_display(shift->valid_since, 2); }
+            },
+            'Valid Till' => {
+                order => 3,
+                value => sub { datetime_display(shift->valid_till, 2) || '∞'; }
+            },
+            'Actions' => {
+                order   => 6,
+                actions => 1,
+                related => 1
+            }
+        },
+        related   => {
+            'Provisioning Agreements' => {
+                order => 1,
+                icon  => 'fa fa-file-text-o',
+                value => sub { sprintf("/provisioning_agreement/list/related_to/contractor/%s", shift->id); }
+            },
+            'Partnership Agreements' => {
+                order => 2,
+                icon  => 'fa fa-file-text',
+                value => sub { sprintf("/partnership_agreement/list/related_to/contractor/%s", shift->id); }
+            },
+            'Persons' => {
+                order => 3,
+                icon  => 'fa fa-user-o',
+                value => sub { sprintf("/person/list/related_to/contractor/%s", shift->id); }
+            },
+            'Corporations' => {
+                order => 4,
+                icon  => 'fa fa-building-o',
+                value => sub { sprintf("/corporation/list/related_to/person/%s", shift->id); }
+            }
+        },
+        rows      => stash->{'rows'},
+        language  => $language
+    );
+%>
+<%
+    layout('authorized', title_message => 'Welcome!');
+%>
