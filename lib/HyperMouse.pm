@@ -83,13 +83,18 @@ has 'schema' => (
 );
 
 method _build_schema {
-    HyperMouse::Schema->connect(
+
+    my $hm_schema = HyperMouse::Schema->connect(
         'dbi:mysql:hypermouse',
         'hypermouse',
         'WTXFa2G1uN3cpwMP',
         { mysql_enable_utf8 => 1 }
     );
     # FIXME: Move this crap to the configuration file
+    
+    $hm_schema->set_hypermouse($self);
+
+    return($hm_schema);
 }
 
 

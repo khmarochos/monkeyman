@@ -51,7 +51,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ person_TO_contractor_VIA_corporation_INC_DIRECT => { } ]
+                        callout => [ 'Person>Corporation>Contractor+Person>Contractor' => { } ]
                     )
                     ->all
             ]);

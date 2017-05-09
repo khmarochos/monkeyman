@@ -496,19 +496,20 @@ method list {
     my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     switch($self->stash->{'filter'}) {
-        case('all')         {
+        case('all') {
             $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
             $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE;
         }
-        case('active')      {
+        case('active') {
             $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
             $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
         }
-        case('archived')    {
+        case('archived') {
             $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
             $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_EXPIRED;
         }
     }
+
     switch($self->stash->{'related_element'}) {
         case('person') {
             my $person_id =
@@ -527,11 +528,12 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'person_TO_person_FULL' => { } ]
+                        callout => [ 'Person>[FULL]>Person' => { } ]
                     )
                     ->all
              ]);
-        } case('contractor') {
+        }
+        case('contractor') {
             $self->stash('rows' => [
                 $self
                     ->hm_schema
@@ -548,7 +550,8 @@ method list {
                     )
                     ->all
             ]);
-        } case('provisioning_agreement') {
+        }
+        case('provisioning_agreement') {
             $self->stash('rows' => [
                 $self
                     ->hm_schema

@@ -12,7 +12,7 @@ use Switch;
 
 
 
-method filter_permitted (
+method filter_permitted(
     Str         :$source_alias? = $self->current_source_alias,
     Bool        :$and?          = 0,
     Bool        :$not_admin?    = 0,

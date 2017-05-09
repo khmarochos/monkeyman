@@ -22,6 +22,8 @@ extends 'DBIx::Class::Core';
 
 =over 4
 
+=item * L<HyperMouse::Schema::DefaultResult::HyperMouse>
+
 =item * L<HyperMouse::Schema::DefaultResult::I18nRelationships>
 
 =item * L<HyperMouse::Schema::DefaultResult::DeepRelationships>
@@ -35,6 +37,7 @@ extends 'DBIx::Class::Core';
 =cut
 
 __PACKAGE__->load_components(
+  "+HyperMouse::Schema::DefaultResult::HyperMouse",
   "+HyperMouse::Schema::DefaultResult::I18nRelationships",
   "+HyperMouse::Schema::DefaultResult::DeepRelationships",
   "InflateColumn::DateTime",
@@ -156,8 +159,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-26 08:31:38
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:igG9aeIAyEJg93K+lfCtiQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-30 02:54:03
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dOVI6He8yRWrc+NDsOCSPQ
 
 __PACKAGE__->load_components(qw/EncodedColumn/);
 
