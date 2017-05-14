@@ -26,6 +26,7 @@
 %   end);
 %   my @columns_names_sorted = sort { $columns->{ $a }->{'order'} <=> $columns->{ $b }->{'order'} } (keys(%{ $columns }));
 %   my @related_names_sorted = sort { $related->{ $a }->{'order'} <=> $related->{ $b }->{'order'} } (keys(%{ $related }));
+%=  tag('h1' => $title);
 %=  tag('div' => ('class' => 'table-responsive') => begin
 %=      tag('table' => ('class' => "table table-striped table-bordered table-hover $name") => begin
 %=          tag('thead' => begin

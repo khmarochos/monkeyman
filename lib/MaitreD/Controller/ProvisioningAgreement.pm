@@ -39,43 +39,49 @@ method list {
                 ($self->stash->{'related_id'} ne '@') ?
                  $self->stash->{'related_id'} :
                  $self->stash->{'authorized_person_result'}->id;
-            $self->stash('rows' => [
-                $self
-                    ->hm_schema
-                    ->resultset('Person')
-                    ->search({ id => $person_id })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'ProvisioningAgreement',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ '(Person>Corporation>Contractor+Person>Contractor)>ProvisioningAgreement[ALL]+Person>ProvisioningAgreement' => { } ]
-                    )
-                    ->all
-            ]);
+            $self->stash->{'tables'} = [ {
+                title   => 'Provisioning Agreements',
+                data    => [
+                    $self
+                        ->hm_schema
+                        ->resultset('Person')
+                        ->search({ id => $person_id })
+                        ->filter_validated(mask => VC_NOT_REMOVED)
+                        ->search_related_deep(
+                            resultset_class            => 'ProvisioningAgreement',
+                            fetch_permissions_default  => $mask_permitted_d,
+                            fetch_validations_default  => $mask_validated_d,
+                            search_permissions_default => $mask_permitted_d,
+                            search_validations_default => $mask_validated_d,
+                            callout => [ 'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[client|provider]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => { } ]
+                        )
+                        ->all
+                ]
+            } ];
         } case('contractor') {
             my $person_id =
                 ($self->stash->{'related_id'} ne '@') ?
                  $self->stash->{'related_id'} :
                  $self->stash->{'authorized_person_result'}->id;
-            $self->stash('rows' => [
-                $self
-                    ->hm_schema
-                    ->resultset('Person')
-                    ->search({ id => $person_id })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'ProvisioningAgreement',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ contractor_TO_provisioning_agreement => { } ]
-                    )
-                    ->all
-            ]);
+            $self->stash->{'tables'} = [ {
+                title   => 'Provisioning Agreements',
+                data    => [
+                    $self
+                        ->hm_schema
+                        ->resultset('Person')
+                        ->search({ id => $person_id })
+                        ->filter_validated(mask => VC_NOT_REMOVED)
+                        ->search_related_deep(
+                            resultset_class            => 'ProvisioningAgreement',
+                            fetch_permissions_default  => $mask_permitted_d,
+                            fetch_validations_default  => $mask_validated_d,
+                            search_permissions_default => $mask_permitted_d,
+                            search_validations_default => $mask_validated_d,
+                            callout => [ 'Contractor-[client|provider]>-ProvisioningAgreement' => { } ]
+                        )
+                        ->all
+                ]
+            } ]
         }
     }
 }

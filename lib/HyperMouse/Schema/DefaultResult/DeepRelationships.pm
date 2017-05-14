@@ -5,6 +5,8 @@ use MooseX::NonMoose;
 use MooseX::MarkAsMethods autoclean => 1;
 extends 'DBIx::Class';
 
+use HyperMouse::Exception qw(PatternAbsent);
+
 use Method::Signatures;
 use Lingua::EN::Inflect::Phrase qw(to_S to_PL);
 
@@ -41,6 +43,10 @@ method search_related_deep(
 ) {
 
     my $logger = $self->get_logger;
+    $logger->tracef(
+        "Searching the %s records related to %s (%s)",
+        $resultset_class, $self, { (@_) }
+    );
 
     my $search_parmeters_base = {
         resultset_class             => $resultset_class,
@@ -56,13 +62,21 @@ method search_related_deep(
 
         my @callout_local = @{ $callout };
         while(my($callout_key, $callout_val) = splice(@callout_local, 0, 2)) {
-            die("$callout_key") # FIXME: raise a proper exception
+
+            $logger->tracef("Calling out the %s search pattern", $callout_key);
+
+            (__PACKAGE__ . '::Exception::PatternAbsent')->throwf(
+                "Can't call out the %s search pattern",
+                "$callout_key"
+            )
                 unless(defined($self->_get_search_related_deep_shortcut->{ $callout_key }));
+
             push(@resultsets, scalar($self->search_related_deep(
                 %{ $search_parmeters_base },
                 %{ $self->_get_search_related_deep_shortcut->{ $callout_key } },
                 %{ $callout_val }
             )));
+
         }
 
     }
@@ -93,6 +107,10 @@ method search_related_deep(
         push(@resultsets, $resultset) if($resultset != $self);
 
     }
+
+
+
+    # TODO: Join the following 2 blocks into a single foreach(qw/fetch search/) one
 
     if(defined($fetch)) {
 
@@ -161,6 +179,8 @@ method search_related_deep(
         }
 
     }
+
+
 
     push(@resultsets, scalar($self->result_source->schema->resultset($resultset_class)->search({ id => undef })))
         unless(@resultsets);

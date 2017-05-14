@@ -473,6 +473,16 @@ func _sprintf(
             $value_new = $shall_be_colored{$i} ?
                 '[' . $self->colorify('WARNING', 'UNDEF', 1) . ']' :
                 '[UNDEF]'
+#        } elsif(ref($values_new[$i]) eq 'ARRAY') {
+#            $value_new = '(' . join(', ', map {
+#                _sprintf(
+#                    self        => $self,
+#                    format      => '%s',
+#                    values      => [$_],
+#                    colored     => $colored,
+#                    colorscheme => $colorscheme
+#                )
+#            } (@{ $values_new[$i] })) . ')';
         } elsif(ref($values_new[$i])) {
             $value_new = defined($self) ?
                 $self->mm_showref($values_new[$i]) :

@@ -164,8 +164,8 @@ method startup {
                 controller      => 'person',
                 action          => 'list',
                 filter          => 'active',
-                related_element => 'person',
-                related_id      => '@'
+                related_element => '',
+                related_id      => ''
             );
 
     my  $routes_authenticated_contractor = $routes_authenticated->under('/contractor');

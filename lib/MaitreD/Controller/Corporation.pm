@@ -53,7 +53,7 @@ method list {
                                 fetch_validations_default  => $mask_validated_d,
                                 search_permissions_default => $mask_permitted_d,
                                 search_validations_default => $mask_validated_d,
-                                callout => [ 'Person>Corporation' => { } ]
+                                callout => [ 'Person->-Corporation' => { } ]
                             )
                             ->all
                     ]);
@@ -71,7 +71,7 @@ method list {
                                 fetch_validations_default  => $mask_validated_d,
                                 search_permissions_default => $mask_permitted_d,
                                 search_validations_default => $mask_validated_d,
-                                callout => [ 'ProvisioningAgreement>[CLIENT]>Corporation' => { } ]
+                                callout => [ 'ProvisioningAgreement-[client]>-Corporation' => { } ]
                             )
                             ->all
                     ]);

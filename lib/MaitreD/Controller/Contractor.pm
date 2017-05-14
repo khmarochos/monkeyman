@@ -51,7 +51,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'Person>Corporation>Contractor+Person>Contractor' => { } ]
+                        callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ]
                     )
                     ->all
             ]);
@@ -69,7 +69,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ provisioning_agreement_TO_contractor => { } ]
+                        callout => [ 'ProvisioningAgreement-[client|provider]>-Contractor' => { } ]
                     )
                     ->all
             ]);
@@ -87,7 +87,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ provisioning_obligation_TO_contractor => { } ]
+                        callout => [ 'ProvisioningObligation->-Contractor' => { } ]
                     )
                     ->all
             ]);

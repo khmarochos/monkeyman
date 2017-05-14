@@ -24,94 +24,62 @@ our $DeepRelationships = {
 
     #  ... person
 
-    'Person>[FULL]>Person' => {
+    'Person-[everything]>-Person' => {
+        resultset_class => 'Person',
+        pipe => [
+            { callout         => [ 'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[client|provider]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => { } ] },
+            { callout         => [ 'ProvisioningAgreement->-((@-[client|provider]>-Contractor->-((@->Corporation->-Person)-&-(@->-Person)))-&-(@->-Person))' => { } ] }
+        ]
+    },
+
+    'Person->-((@->-Corporation->-Person)-&-((@->-Corporation->-Contractor)-&-(@->-Contractor))->-Person)' => {
         resultset_class => 'Person',
         join => [
-            { callout => [ 'Person>Contractor>Person' => { } ] },
-            { callout => [ 'Person>Contractor>[PROVIDER]>ProvisioningAgreement>Person' => { } ] },
-            { callout => [ 'Person>Contractor>[CLIENT]>ProvisioningAgreement>Person' => { } ] },
-            { callout => [ 'Person>Corporation>Person' => { } ] },
-            { callout => [ 'Person>Corporation>Contractor>Person' => { } ] },
-            { callout => [ 'Person>Corporation>Contractor>[PROVIDER]>ProvisioningAgreement>Person' => { } ] },
-            { callout => [ 'Person>Corporation>Contractor>[CLIENT]>ProvisioningAgreement>Person' => { } ] },
+            { callout => [ 'Person->-Corporation->-Person' => { } ] },
+            {
+                pipe => [
+                    { callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ] },
+                    { callout => [ 'Contractor->-Person' => { } ] }
+                ]
+            }
         ]
     },
 
-    'Person>Contractor>Person' => {
+    'Person->-Corporation->-Person' => {
         resultset_class => 'Person',
         pipe => [
-            { callout => [ 'Person>Contractor' => { } ] },
-            { callout => [ 'Contractor>Person' => { } ] },
+            { callout => [ 'Person->-Corporation' => { } ] },
+            { callout => [ 'Corporation->-Person' => { } ] },
         ]
     },
 
-    'Person>Contractor>[PROVIDER]>ProvisioningAgreement>Person' => {
+    'Person->-Contractor->-Person' => {
         resultset_class => 'Person',
         pipe => [
-            { callout => [ 'Person>Contractor>[PROVIDER]>ProvisioningAgreement' => { } ] },
-            { callout => [ 'ProvisioningAgreement>Person' => { } ] },
-        ]
-    },
-
-    'Person>Contractor>[CLIENT]>ProvisioningAgreement>Person' => {
-        resultset_class => 'Person',
-        pipe => [
-            { callout => [ 'Person>Contractor>[CLIENT]>ProvisioningAgreement' => { } ] },
-            { callout => [ 'ProvisioningAgreement>Person' => { } ] },
-        ]
-    },
-
-    'Person>Corporation>Person' => {
-        resultset_class => 'Person',
-        pipe => [
-            { callout => [ 'Person>Corporation' => { } ] },
-            { callout => [ 'Corporation>Person' => { } ] },
-        ]
-    },
-
-    'Person>Corporation>Contractor>Person' => {
-        resultset_class => 'Person',
-        pipe => [
-            { callout => [ 'Person>Corporation>Contractor' => { } ] },
-            { callout => [ 'Contractor>Person' => { } ] },
-        ]
-    },
-
-    'Person>Corporation>Contractor>[CLIENT]>ProvisioningAgreement>Person' => {
-        resultset_class => 'Person',
-        pipe => [
-            { callout => [ 'Person>Corporation>Contractor>[CLIENT]>ProvisioningAgreement' => { } ] },
-            { callout => [ 'ProvisioningAgreement>Person' => { } ] },
-        ]
-    },
-
-    'Person>Corporation>Contractor>[PROVIDER]>ProvisioningAgreement>Person' => {
-        resultset_class => 'Person',
-        pipe => [
-            { callout => [ 'Person>Corporation>Contractor>[PROVIDER]>ProvisioningAgreement' => { } ] },
-            { callout => [ 'ProvisioningAgreement>Person' => { } ] },
+            { callout => [ 'Person->-Contractor' => { } ] },
+            { callout => [ 'Contractor->-Person' => { } ] },
         ]
     },
 
     #  ... contractor
 
-    'Person>[FULL]>Contractor' => {
+    'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => {
         resultset_class => 'Contractor',
         join => [
-            { callout => [ 'Person>Corporation>Contractor' => { } ] },
-            { callout => [ 'Person>Contractor' => { } ] }
+            { callout => [ 'Person->-Corporation->-Contractor' => { } ] },
+            { callout => [ 'Person->-Contractor' => { } ] }
         ]
     },
 
-    'Person>Corporation>Contractor' => {
+    'Person->-Corporation->-Contractor' => {
         resultset_class => 'Contractor',
         pipe => [
-            { callout => [ 'Person>Corporation' => { } ] },
-            { callout => [ 'Corporation>Contractor' => { } ] },
+            { callout => [ 'Person->-Corporation' => { } ] },
+            { callout => [ 'Corporation->-Contractor' => { } ] },
         ]
     },
 
-    'Person>Contractor' => {
+    'Person->-Contractor' => {
         resultset_class => 'Contractor',
         search => [
             'person_x_contractors' => {
@@ -124,27 +92,7 @@ our $DeepRelationships = {
 
     #  ... corporation
 
-    'Person>[FULL]>Corporation' => {
-        resultset_class => 'Corporation',
-        join => [
-            {
-                pipe => [
-                    { callout => [ 'Person>Corporation>Contractor' => { } ] },
-                    { callout => [ 'Contractor>Corporation' => { } ] },
-                ]
-            }, {
-                pipe => [
-                    { callout => [ 'Person>Corporation>Contractor>[PROVIDER]>ProvisioningAgreement' => { } ] },
-                    { callout => [ 'ProvisioningAgreement>Contractor' => { } ] },
-                    { callout => [ 'Contractor>Corporation' => { } ] },
-                ]
-            }, {
-                callout => [ 'Person>Corporation' => { } ]
-            }
-        ]
-    },
-
-    'Person>Corporation' => {
+    'Person->-Corporation' => {
         resultset_class => 'Corporation',
         search => [
             'person_x_corporations' => {
@@ -157,39 +105,46 @@ our $DeepRelationships = {
 
     #  ... provisioning_agreement
 
-    'Person>Corporation>Contractor>[PROVIDER]>ProvisioningAgreement' => {
+    'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[client]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => {
         resultset_class => 'ProvisioningAgreement',
-        pipe => [
-            { callout => [ 'Person>Corporation>Contractor' => { } ] },
-            { callout => [ 'Contractor>[PROVIDER]>ProvisioningAgreement' => { } ] }
+        join => [
+            {
+                pipe => [
+                    { callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ] },
+                    { callout => [ 'Contractor-[client]>-ProvisioningAgreement' => { } ] }
+                ]
+            },
+            { callout => [ 'Person->-ProvisioningAgreement' => { } ] }
         ]
     },
 
-    'Person>Corporation>Contractor>[CLIENT]>ProvisioningAgreement' => {
+    'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[provider]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => {
         resultset_class => 'ProvisioningAgreement',
-        pipe => [
-            { callout => [ 'Person>Corporation>Contractor' => { } ] },
-            { callout => [ 'Contractor>[CLIENT]>ProvisioningAgreement' => { } ] }
+        join => [
+            {
+                pipe => [
+                    { callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ] },
+                    { callout => [ 'Contractor-[provider]>-ProvisioningAgreement' => { } ] }
+                ]
+            },
+            { callout => [ 'Person->-ProvisioningAgreement' => { } ] }
         ]
     },
 
-    'Person>Contractor>[PROVIDER]>ProvisioningAgreement' => {
+    'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[client|provider]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => {
         resultset_class => 'ProvisioningAgreement',
-        pipe => [
-            { callout => [ 'Person>Contractor' => { } ] },
-            { callout => [ 'Contractor>[PROVIDER]>ProvisioningAgreement' => { } ] }
+        join => [
+            {
+                pipe => [
+                    { callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ] },
+                    { callout => [ 'Contractor-[client|provider]>-ProvisioningAgreement' => { } ] }
+                ]
+            },
+            { callout => [ 'Person->-ProvisioningAgreement' => { } ] }
         ]
     },
 
-    'Person>Contractor>[CLIENT]>ProvisioningAgreement' => {
-        resultset_class => 'ProvisioningAgreement',
-        pipe => [
-            { callout => [ 'Person>Contractor' => { } ] },
-            { callout => [ 'Contractor>[CLIENT]>ProvisioningAgreement' => { } ] }
-        ]
-    },
-
-    'Person>ProvisioningAgreement' => {
+    'Person->-ProvisioningAgreement' => {
         resultset_class => 'ProvisioningAgreement',
         search => [
             'person_x_provisioning_agreements' => {
@@ -226,36 +181,15 @@ our $DeepRelationships = {
 
     #  ... person
 
-    'Contractor>ProvisioningAgreement[ALL]>Person+Contractor>Person' => {
+    'Contractor->-Corporation->-Person' => {
         resultset_class => 'Person',
-        join => [
-            { callout => [ 'contractor_TO_person_VIA_provisioning_agreement_CLIENT' => { } ] },
-            { callout => [ 'contractor_TO_person_VIA_provisioning_agreement_PROVIDER' => { } ] },
-            { callout => [ 'contractor_TO_person_DIRECT' => { } ] }
+        pipe => [
+            { callout => [ 'Contractor->-Corporation' => { } ] },
+            { callout => [ 'Corporation->-Person' => { } ] },
         ]
     },
 
-    contractor_TO_person_VIA_provisioning_agreement_CLIENT => {
-        resultset_class => 'Person',
-        search => [
-            'provisioning_agreement_client_contractors' => {
-                validations => -1,
-                callout => [ 'provisioning_agreement_TO_person' => { } ]
-            }
-        ]
-    },
-
-    contractor_TO_person_VIA_provisioning_agreement_PROVIDER => {
-        resultset_class => 'Person',
-        search => [
-            'provisioning_agreement_provider_contractors' => {
-                validations => -1,
-                callout => [ 'provisioning_agreement_TO_person' => { } ]
-            }
-        ]
-    },
-
-    'Contractor>Person' => {
+    'Contractor->-Person' => {
         resultset_class => 'Person',
         search => [
             'person_x_contractors'  => {
@@ -268,7 +202,7 @@ our $DeepRelationships = {
 
     #  ... corporation
 
-    contractor_TO_corporation_DIRECT => {
+    'Contractor->-Corporation' => {
         resultset_class => 'Corporation',
         search => [
             'corporation_x_contractors'  => {
@@ -280,43 +214,21 @@ our $DeepRelationships = {
 
     #  ... provisioning_agreement
 
-    'Contractor>ProvisioningAgreement[ALL]' => {
+    'Contractor-[client]>-ProvisioningAgreement' => {
+        resultset_class => 'ProvisioningAgreement',
+        fetch => [ 'provisioning_agreement_client_contractors' => { validations => -1 } ]
+    },
+
+    'Contractor-[provider]>-ProvisioningAgreement' => {
+        resultset_class => 'ProvisioningAgreement',
+        fetch => [ 'provisioning_agreement_provider_contractors' => { validations => -1 } ]
+    },
+
+    'Contractor-[client|provider]>-ProvisioningAgreement' => {
         resultset_class => 'ProvisioningAgreement',
         join => [
-            { callout => [ 'contractor_TO_provisioning_agreement_CLIENT' => { } ] },
-            { callout => [ 'contractor_TO_provisioning_agreement_PROVIDER' => { } ] }
-        ]
-    },
-
-    'Contractor>[CLIENT]>ProvisioningAgreement' => {
-        resultset_class => 'ProvisioningAgreement',
-        search => [
-            'provisioning_agreement_client_contractors' => {
-                validations => -1,
-                search => [
-                    'person_x_provisioning_agreements' => {
-                        validations => -1,
-                        permissions => -1,
-                        fetch => [ 'provisioning_agreement' => { validations => -1 } ]
-                    }
-                ]
-            },
-        ]
-    },
-
-    'Contractor>[PROVIDER]>ProvisioningAgreement' => {
-        resultset_class => 'ProvisioningAgreement',
-        search => [
-            'provisioning_agreement_provider_contractors' => {
-                validations => -1,
-                search => [
-                    'person_x_provisioning_agreements' => {
-                        validations => -1,
-                        permissions => -1,
-                        fetch => [ 'provisioning_agreement' => { validations => -1 } ]
-                    }
-                ]
-            },
+            { callout => [ 'Contractor-[client]>-ProvisioningAgreement' => { } ] },
+            { callout => [ 'Contractor-[provider]>-ProvisioningAgreement' => { } ] }
         ]
     },
 
@@ -324,9 +236,22 @@ our $DeepRelationships = {
     # FROM corporation TO ...
     #
 
+    #  ... person
+
+    'Corporation->-Person' => {
+        resultset_class => 'Person',
+        search => [
+            'person_x_corporations' => {
+                validations => -1,
+                permissions => -1,
+                fetch => [ 'person' => { validations => '-1' } ]
+            }
+        ]
+    },
+
     #  ... contractor
 
-    corporation_TO_contractor_DIRECT => {
+    'Corporation->-Contractor' => {
         resultset_class => 'Contractor',
         search => [
             'corporation_x_contractors' => {
@@ -342,7 +267,61 @@ our $DeepRelationships = {
 
     #  ... person
 
-    'ProvisioningAgreement>Person' => {
+    'ProvisioningAgreement->-((@-[client]>-Contractor->-((@->Corporation->-Person)-&-(@->-Person)))-&-(@->-Person))' => {
+        resultset_class => 'Person',
+        join => [
+            {
+                pipe => [
+                    { callout => [ 'ProvisioningAgreement-[client]>-Contractor' => { } ] },
+                    {
+                        join => [
+                            { callout => [ 'Contractor->-Corporation->-Person' => { } ] },
+                            { callout => [ 'Contractor->-Person' => { } ] }
+                        ]
+                    }
+                ]
+            },
+            { callout => [ 'ProvisioningAgreement->-Person' => { } ] },
+        ]
+    },
+
+    'ProvisioningAgreement->-((@-[provider]>-Contractor->-((@->Corporation->-Person)-&-(@->-Person)))-&-(@->-Person))' => {
+        resultset_class => 'Person',
+        join => [
+            {
+                pipe => [
+                    { callout => [ 'ProvisioningAgreement-[provider]>-Contractor' => { } ] },
+                    {
+                        join => [
+                            { callout => [ 'Contractor->-Corporation->-Person' => { } ] },
+                            { callout => [ 'Contractor->-Person' => { } ] }
+                        ]
+                    }
+                ]
+            },
+            { callout => [ 'ProvisioningAgreement->-Person' => { } ] },
+        ]
+    },
+
+    'ProvisioningAgreement->-((@-[client|provider]>-Contractor->-((@->Corporation->-Person)-&-(@->-Person)))-&-(@->-Person))' => {
+        resultset_class => 'Person',
+        join => [
+            {
+                pipe => [
+                    { callout => [ 'ProvisioningAgreement-[client|provider]>-Contractor' => { } ] },
+                    {
+                        join => [
+                            { callout => [ 'Contractor->-Corporation->-Person' => { } ] },
+                            { callout => [ 'Contractor->-Person' => { } ] }
+                        ]
+                    }
+                ]
+            },
+            { callout => [ 'ProvisioningAgreement->-Person' => { } ] },
+        ]
+    },
+
+    'ProvisioningAgreement->-Person' => {
         resultset_class => 'Person',
         search => [
             'person_x_provisioning_agreements' => {
@@ -355,38 +334,38 @@ our $DeepRelationships = {
 
     #  ... contractor
 
-    provisioning_agreement_TO_contractor_ALL => {
-        resultset_class => 'Contractor',
-        join => [
-            { callout => [ 'provisioning_agreement_TO_contractor_CLIENT' => { } ] },
-            { callout => [ 'provisioning_agreement_TO_contractor_PROVIDER' => { } ] }
-        ]
-    },
-
-    provisioning_agreement_TO_contractor_CLIENT => {
+    'ProvisioningAgreement-[client]>-Contractor' => {
         resultset_class => 'Contractor',
         fetch => [ 'client_contractor' => { validations => -1 } ]
     },
 
-    provisioning_agreement_TO_contractor_PROVIDER => {
+    'ProvisioningAgreement-[provider]>-Contractor' => {
         resultset_class => 'Contractor',
         fetch => [ 'provider_contractor' => { validations => -1 } ]
     },
 
+    'ProvisioningAgreement-[client|provider]>-Contractor' => {
+        resultset_class => 'Contractor',
+        join => [
+            { callout => [ 'ProvisioningAgreement-[client]>-Contractor' => { } ] },
+            { callout => [ 'ProvisioningAgreement-[provider]>-Contractor' => { } ] }
+        ]
+    },
+
     #  ... provisioning_obligation
 
-    provisioning_agreement_TO_provisioning_obligation => {
+    'ProvisioningAgreement->-ProvisioningObligation' => {
         resultset_class => 'ProvisioningObligation',
         fetch => [ 'provisioning_obligations' => { validations => -1 } ]
     },
 
     #  ... resource_piece
 
-    provisioning_agreement_TO_resource_piece => {
+    'ProvisioningAgreement->-ProvisioningObligation->-ResourcePiece' => {
         resultset_class => 'ResourcePiece',
         pipe => [
-            { callout => [ 'provisioning_agreement_TO_provisioning_obligation' => { } ] },
-            { callout => [ 'provisioning_obligation_TO_resource_piece' => { } ] }
+            { callout => [ 'ProvisioningAgreement->-ProvisioningObligation' => { } ] },
+            { callout => [ 'ProvisioningObligation->-ResourcePiece' => { } ] }
         ],
     },
 
@@ -396,7 +375,7 @@ our $DeepRelationships = {
 
     #  ... resource_piece
 
-    provisioning_obligation_TO_resource_piece => {
+    'ProvisioningObligation->-ResourcePiece' => {
         resultset_class => 'ResourcePiece',
         search => [
             'provisioning_obligation_x_resource_pieces' => {

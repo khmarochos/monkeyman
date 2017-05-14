@@ -511,16 +511,12 @@ method list {
     }
 
     switch($self->stash->{'related_element'}) {
-        case('person') {
-            my $person_id =
-                ($self->stash->{'related_id'} ne '@') ?
-                 $self->stash->{'related_id'} :
-                 $self->stash->{'authorized_person_result'}->id;
+        case('') {
             $self->stash('rows' => [
                 $self
                     ->hm_schema
                     ->resultset('Person')
-                    ->search({ id => $person_id })
+                    ->search({ id => $self->stash->{'authorized_person_result'}->id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
                         resultset_class            => 'Person',
@@ -528,7 +524,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'Person>[FULL]>Person' => { } ]
+                        callout => [ 'Person-[everything]>-Person' => { } ]
                     )
                     ->all
              ]);
@@ -546,7 +542,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'contractor_TO_person_VIA_provisioning_agreement_ALL' => { } ]
+                        callout => [ 'Contractor->-Person' => { } ]
                     )
                     ->all
             ]);
@@ -564,7 +560,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'provisioning_agreement_TO_person' => { } ]
+                        callout => [ 'ProvisioningAgreement->-Person' => { } ]
                     )
                     ->all
             ]);
