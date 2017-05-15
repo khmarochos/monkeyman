@@ -5,7 +5,7 @@
     foreach my $table (@{ stash->{'tables'} }) {
 %>
 <%=     include('snippets/table',
-            name      => 'provisioning_agreement',
+            name      => $table->{'name'},
             title     => $table->{'title'},
             columns   => {
                 'Number' => {

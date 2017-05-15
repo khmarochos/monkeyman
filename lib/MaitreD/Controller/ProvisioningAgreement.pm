@@ -41,6 +41,7 @@ method list {
                  $self->stash->{'authorized_person_result'}->id;
             $self->stash->{'tables'} = [ {
                 title   => 'Provisioning Agreements',
+                name    => 'provisioning_agreements_1',
                 data    => [
                     $self
                         ->hm_schema
