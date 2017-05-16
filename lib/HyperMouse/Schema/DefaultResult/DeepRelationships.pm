@@ -9,6 +9,7 @@ use HyperMouse::Exception qw(PatternAbsent);
 
 use Method::Signatures;
 use Lingua::EN::Inflect::Phrase qw(to_S to_PL);
+use Text::Balanced qw(extract_bracketed);
 
 
 
@@ -65,15 +66,16 @@ method search_related_deep(
 
             $logger->tracef("Calling out the %s search pattern", $callout_key);
 
+            my $search_parameters_more = $self->_search_related_deep_pattern_translate($callout_key);
             (__PACKAGE__ . '::Exception::PatternAbsent')->throwf(
                 "Can't call out the %s search pattern",
                 "$callout_key"
             )
-                unless(defined($self->_get_search_related_deep_shortcut->{ $callout_key }));
+                unless(defined($search_parameters_more));
 
             push(@resultsets, scalar($self->search_related_deep(
                 %{ $search_parmeters_base },
-                %{ $self->_get_search_related_deep_shortcut->{ $callout_key } },
+                %{ $search_parameters_more },
                 %{ $callout_val }
             )));
 
@@ -197,6 +199,40 @@ method search_related_deep(
     }
 
 }
+
+
+
+method _search_related_deep_pattern_translate(
+    Str         $exp!,
+    Maybe[Str]  $input_class?       = $self->source_name    when undef,
+    Maybe[Bool] $update_vocabulary? = 0                     when undef
+) {
+
+    my $logger = $self->get_logger;
+
+    $logger->tracef("Translating the %s search pattern", $exp);
+
+    my $result = $self->_get_search_related_deep_shortcut->{ $exp };
+    if(defined($result)) {
+        $logger->tracef("We've found the search pattern in the vocabulary: %s", $result);
+        return($result);
+    }
+
+    my($extracted, $suffix, $prefix) = extract_bracketed($exp, '()', qr/[^()]*/);
+    $logger->tracef("%s consists of %s, %s, %s", $exp, $extracted, $suffix, $prefix);
+    # TODO: if $@ defined, raise an exception
+    
+    if(defined($extracted)) {
+        $extracted =~ s/^[(\s]|[\s)]$//g;
+        $extracted =~ s/^\@/$input_class/;
+        $result = $self->_search_related_deep_pattern_translate($extracted);
+    }
+
+    return($result);
+
+}
+
+
 
 # We perform all the magic after the original register_relationship method
 func register_relationship(...) {

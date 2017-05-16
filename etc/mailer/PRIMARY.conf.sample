@@ -1,0 +1,10 @@
+<smtp_transport>
+	  host		    localhost
+	  port        25
+    ssl         0
+</smtp_transport>
+
+<templates>
+    directory   /home/mmkeeper/monkeyman/etc/mailer/templates
+</templates>
+
