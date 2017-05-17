@@ -14,6 +14,8 @@ __PACKAGE__->load_namespaces;
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 13:49:31
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UB8B/zvbNA6ST/vxTo012A
 
+use Parse::RecDescent;
+
 
 
 our $DeepRelationships = {
@@ -386,6 +388,20 @@ our $DeepRelationships = {
     }
 
 };
+
+
+
+our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(q{
+    <autotree>
+    parse:              operation end
+    operation:          operand operation_join(s?) operation_pipe(s?)
+    operation_join:     '-&-' operand
+    operation_pipe:     '->-' operand
+    operand:            group | element_class
+    group:              '(' operation ')'
+    element_class:      /\@|\w+/
+    end:                /^\Z/
+});
 
 
 

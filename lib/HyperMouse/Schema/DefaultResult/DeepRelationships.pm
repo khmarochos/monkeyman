@@ -27,6 +27,8 @@ method _build_search_related_deep_shortcut {
     return($HyperMouse::Schema::DeepRelationships);
 }
 
+
+
 method search_related_deep(
     Str         :$resultset_class!,
     ArrayRef    :$callout?,
@@ -202,10 +204,42 @@ method search_related_deep(
 
 
 
-method _search_related_deep_pattern_translate(
+has _search_related_deep_grammar_parser => (
+    is          => 'ro',
+    isa         => 'Parse::RecDescent',
+    reader      =>   '_get_search_related_deep_grammar_parser',
+    writer      =>   '_set_search_related_deep_grammar_parser',
+    predicate   =>   '_has_search_related_deep_grammar_parser',
+    builder     => '_build_search_related_deep_grammar_parser',
+    lazy        => 1
+);
+
+method _build_search_related_deep_grammar_parser {
+    return($HyperMouse::Schema::DeepRelationshipsGrammarParser);
+}
+
+method _search_related_deep_pattern_translate(Str $exp!) {
+
+    my $logger = $self->get_logger;
+
+    $logger->tracef("Translating the %s search pattern", $exp);
+
+$::RD_HINT   = 1;
+$::RD_TRACE  = 1;
+$::RD_WARN   = 1;
+$::RD_ERRORS = 1;
+use Data::Dumper;
+
+    print(Dumper($self->_get_search_related_deep_grammar_parser->parse($exp)));
+
+    return({});
+
+}
+
+method _search_related_deep_pattern_translate_DEPRECATED(
     Str         $exp!,
-    Maybe[Str]  $input_class?       = $self->source_name    when undef,
-    Maybe[Bool] $update_vocabulary? = 0                     when undef
+    Maybe[Str]  $input_class?       = $self->result_source->source_name when undef,
+    Maybe[Bool] $update_vocabulary? = 0                                 when undef
 ) {
 
     my $logger = $self->get_logger;
@@ -218,19 +252,27 @@ method _search_related_deep_pattern_translate(
         return($result);
     }
 
-    my($extracted, $suffix, $prefix) = extract_bracketed($exp, '()', qr/[^()]*/);
-    $logger->tracef("%s consists of %s, %s, %s", $exp, $extracted, $suffix, $prefix);
-    # TODO: if $@ defined, raise an exception
-    
-    if(defined($extracted)) {
-        $extracted =~ s/^[(\s]|[\s)]$//g;
-        $extracted =~ s/^\@/$input_class/;
-        $result = $self->_search_related_deep_pattern_translate($extracted);
+    my $keep_extracting = 1;
+    while ($keep_extracting) {
+        my($extracted, $suffix, $prefix) = extract_bracketed($exp, '()', qr/[^()]*/);
+        $logger->tracef("%s consists of %s, %s, %s", $exp, $extracted, $suffix, $prefix);
+        # TODO: if $@ defined, raise an exception
+        
+        if(defined($extracted)) {
+            $extracted =~ s/^[(\s]|[\s)]$//g;
+            $extracted =~ s/^\@/$input_class/;
+            $result = $self->_search_related_deep_pattern_translate($extracted, $input_class, $update_vocabulary);
+            $exp = $suffix;
+        } else {
+            $keep_extracting = 0;
+            $result = {};
+        }
     }
 
     return($result);
 
 }
+
 
 
 
