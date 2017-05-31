@@ -1,0 +1,77 @@
+logdir                                                                  = /opt/monkeyman/var/log
+max_size                                                                = 104857600
+max_archives                                                            = 10
+
+log4perl.logger                                                         = ALL, full
+log4perl.appender.full                                                  = Log::Dispatch::FileRotate
+log4perl.appender.full.layout                                           = Log::Log4perl::Layout::PatternLayout
+log4perl.appender.full.layout.ConversionPattern                         = %d [%p{1}] [%c] %m%n
+log4perl.appender.full.filename                                         = ${logdir}/full.log
+log4perl.appender.full.mode                                             = append
+log4perl.appender.full.autoflush                                        = 1
+log4perl.appender.full.size                                             = ${max_size}
+log4perl.appender.full.max                                              = ${max_archives}
+
+log4perl.logger.main                                                    = ALL, main
+log4perl.appender.main                                                  = Log::Dispatch::FileRotate
+log4perl.appender.main.layout                                           = Log::Log4perl::Layout::PatternLayout
+log4perl.appender.main.layout.ConversionPattern                         = %d [%p{1}] [%c] %m%n
+log4perl.appender.main.filename                                         = ${logdir}/main.log
+log4perl.appender.main.mode                                             = append
+log4perl.appender.main.autoflush                                        = 1
+log4perl.appender.main.size                                             = ${max_size}
+log4perl.appender.main.max                                              = ${max_archives}
+
+log4perl.logger.MonkeyMan                                               = ALL, monkeyman
+log4perl.appender.monkeyman                                             = Log::Dispatch::FileRotate
+log4perl.appender.monkeyman.layout                                      = Log::Log4perl::Layout::PatternLayout
+log4perl.appender.monkeyman.layout.ConversionPattern                    = %d [%p{1}] [%c] %m%n
+log4perl.appender.monkeyman.filename                                    = ${logdir}/monkeyman.log
+log4perl.appender.monkeyman.mode                                        = append
+log4perl.appender.monkeyman.autoflush                                   = 1
+log4perl.appender.monkeyman.size                                        = ${max_size}
+log4perl.appender.monkeyman.max                                         = ${max_archives}
+
+log4perl.logger.console.MonkeyMan.CloudStack.API                        = DEBUG
+log4perl.logger.MonkeyMan.CloudStack.API                                = ALL, cloudstack_api
+log4perl.appender.cloudstack_api                                        = Log::Dispatch::FileRotate
+log4perl.appender.cloudstack_api.layout                                 = Log::Log4perl::Layout::PatternLayout
+log4perl.appender.cloudstack_api.layout.ConversionPattern               = %d [%p{1}] [%c] %m%n
+log4perl.appender.cloudstack_api.filename                               = ${logdir}/cloudstack/api.log
+log4perl.appender.cloudstack_api.mode                                   = append
+log4perl.appender.cloudstack_api.autoflush                              = 1
+log4perl.appender.cloudstack_api.size                                   = ${max_size}
+log4perl.appender.cloudstack_api.max                                    = ${max_archives}
+
+log4perl.logger.console.MonkeyMan.CloudStack.API.Command                = DEBUG
+log4perl.logger.MonkeyMan.CloudStack.API.Command                        = ALL, cloudstack_api_command
+log4perl.appender.cloudstack_api_command                                = Log::Dispatch::FileRotate
+log4perl.appender.cloudstack_api_command.layout                         = Log::Log4perl::Layout::PatternLayout
+log4perl.appender.cloudstack_api_command.layout.ConversionPattern       = %d [%p{1}] [%c] %m%n
+log4perl.appender.cloudstack_api_command.filename                       = ${logdir}/cloudstack/api/command.log
+log4perl.appender.cloudstack_api_command.mode                           = append
+log4perl.appender.cloudstack_api_command.autoflush                      = 1
+log4perl.appender.cloudstack_api_command.size                           = ${max_size}
+log4perl.appender.cloudstack_api_command.max                            = ${max_archives}
+
+log4perl.logger.console.MonkeyMan.CloudStack.API.Cache                  = DEBUG
+log4perl.logger.MonkeyMan.CloudStack.API.Cache                          = ALL, cloudstack_api_cache
+log4perl.appender.cloudstack_api_cache                                  = Log::Dispatch::FileRotate
+log4perl.appender.cloudstack_api_cache.layout                           = Log::Log4perl::Layout::PatternLayout
+log4perl.appender.cloudstack_api_cache.layout.ConversionPattern         = %d [%p{1}] [%c] %m%n
+log4perl.appender.cloudstack_api_cache.filename                         = ${logdir}/cloudstack/api/cache.log
+log4perl.appender.cloudstack_api_cache.mode                             = append
+log4perl.appender.cloudstack_api_cache.autoflush                        = 1
+log4perl.appender.cloudstack_api_cache.size                             = ${max_size}
+log4perl.appender.cloudstack_api_cache.max                              = ${max_archives}
+
+log4perl.logger.console.MonkeyMan.CloudStack.API.Vocabulary             = DEBUG
+log4perl.logger.MonkeyMan.CloudStack.API.Vocabulary                     = ALL, cloudstack_api_vocabulary
+log4perl.appender.cloudstack_api_vocabulary                             = Log::Dispatch::FileRotate
+log4perl.appender.cloudstack_api_vocabulary.layout                      = Log::Log4perl::Layout::PatternLayout
+log4perl.appender.cloudstack_api_vocabulary.layout.ConversionPattern    = %d [%p{1}] [%c] %m%n
+log4perl.appender.cloudstack_api_vocabulary.filename                    = ${logdir}/cloudstack/api/vocabulary.log
+log4perl.appender.cloudstack_api_vocabulary.mode                        = append
+log4perl.appender.cloudstack_api_vocabulary.autoflush                   = 1
+log4perl.appender.cloudstack_api_vocabulary.size                        = ${max_size}
+log4perl.appender.cloudstack_api_vocabulary.max                         = ${max_archives}

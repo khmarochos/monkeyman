@@ -1,0 +1,34 @@
+<api>
+
+    #
+    # API authentication parameters and address
+    #
+    secret_key      = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    api_key         = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    api_address     = https://secure.tucha13.net:8443/client/api
+
+    #
+    # How much time shall we wait for an asynchronous job to finish?
+    #
+    wait_for_finish = 3600
+
+    #
+    # How much time shall we sleep between attempts to get the result of an
+    # asynchronous job?
+    #
+    sleep           = 10
+
+    #
+    # This is a dirty hack, but sometimes we have to ignore the HTTP-431 reply
+    # due to the odd feature of ACS which makes it replying with this code when
+    # it can't find the object requested. :(
+    #
+    ignore_431_code = 1
+
+    <cache>
+
+        default_cache_time = 600
+
+    </cache>
+
+</api>
