@@ -390,18 +390,92 @@ our $DeepRelationships = {
 };
 
 
+our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR__');
 
-our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(q{
-    <autotree>
-    parse:              operation end
-    operation:          operand operation_join(s?) operation_pipe(s?)
-    operation_join:     '-&-' operand
-    operation_pipe:     '->-' operand
-    operand:            group | element_class
-    group:              '(' operation ')'
-    element_class:      /\@|\w+/
-    end:                /^\Z/
-});
+    {
+        use strict;
+        use warnings;
+
+        my @src_class = (undef);
+        my @dst_class = (undef);
+    }
+
+    parse:                  operation end
+        {
+            $return = $item[1];
+        }
+
+    operation:              operand ( operation_join | operation_pipe )(s?)
+        {
+            my $i = 0;
+            my $r = $item[1];
+            while(1) {
+                last unless(defined($item[2][$i]));
+                $r = scalar(keys(%{ $r }))
+                    ? { $item[2][$i]->{'operator'} => [ $r, $item[2][$i]->{'operand'} ] }
+                    : { $item[2][$i]->{'operator'} => [     $item[2][$i]->{'operand'} ] };
+                $i++;
+            }
+            $r->{'resultset_class'} = $dst_class[-1];
+            $return                 = $r;
+        }
+
+    operation_join:         '-&-' operand
+        {
+            $return = {
+                operand     => $item[2],
+                operator    => 'join'
+            };
+        }
+
+    operation_pipe:         /-(\[.+\])*>-/ operand
+        {
+            $return = {
+                operand     => $item[2],
+                operator    => 'pipe'
+            };
+        }
+
+    operand:                group | element_class
+
+    group:                  group_begin operation group_end
+        {
+            $return = $item[2];
+        }
+
+    group_begin:            '('
+        {
+            push(@src_class, $dst_class[-1]);
+        }
+
+    group_end:              ')'
+        {
+            pop(@src_class);
+        }
+
+    element_class:          element_class_given | element_class_exact
+        {
+            #$src_class[-1] = $item[1]->{'search'}->[0];
+            $src_class[-1] = ($item[1]->{'callout'}->[0] =~ /^.*->-(\w+)$/\1/)[1];
+            $dst_class[-1] = $src_class[-1];
+            $return = $item[1];
+        }
+
+    element_class_given:    '@'
+        {
+            $return = { };
+        }
+
+    element_class_exact:    /\w+/
+        {
+            my %parameters = (validations => -1);
+            $return = { search => [ $item[1], { from => $src_class[-2], %parameters } ] };
+            $return = { callout => [ $src_class[-2] . '->-' . $item[1], { } ] };
+        }
+
+    end:                    /^\Z/
+
+__END_OF_GRAMMAR__
 
 
 

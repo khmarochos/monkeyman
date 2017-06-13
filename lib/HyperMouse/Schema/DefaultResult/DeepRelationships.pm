@@ -224,15 +224,21 @@ method _search_related_deep_pattern_translate(Str $exp!) {
 
     $logger->tracef("Translating the %s search pattern", $exp);
 
-$::RD_HINT   = 1;
-$::RD_TRACE  = 1;
-$::RD_WARN   = 1;
-$::RD_ERRORS = 1;
-use Data::Dumper;
+    $::RD_HINT   = 1;
+    $::RD_TRACE  = 1;
+    $::RD_WARN   = 1;
+    $::RD_ERRORS = 1;
+    # TODO: ^^^ remove these lines
 
-    print(Dumper($self->_get_search_related_deep_grammar_parser->parse($exp)));
+    my $parse_result = $self->_get_search_related_deep_grammar_parser->parse($exp);
+    unless(defined($parse_result)) {
+        # TODO: raise an exception
+    }
+    
+    $logger->set_dump_enabled_limited(1);
+    $logger->tracef("The translation result is: %s", $parse_result);
 
-    return({});
+    return($parse_result);
 
 }
 
@@ -261,7 +267,7 @@ method _search_related_deep_pattern_translate_DEPRECATED(
         if(defined($extracted)) {
             $extracted =~ s/^[(\s]|[\s)]$//g;
             $extracted =~ s/^\@/$input_class/;
-            $result = $self->_search_related_deep_pattern_translate($extracted, $input_class, $update_vocabulary);
+            $result = $self->_search_related_deep_pattern_translate_DEPRECATED($extracted, $input_class, $update_vocabulary);
             $exp = $suffix;
         } else {
             $keep_extracting = 0;
