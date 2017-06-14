@@ -106,6 +106,7 @@ method startup {
                 city        => '*'
             );
 
+    # api
     my  $routes_api = $routes->any('/api/v1');
     my  $routes_api_web_messages = $routes_api->any('/web-messages');
         $routes_api_web_messages
@@ -123,7 +124,9 @@ method startup {
                 message_id  => undef,
                 peek        => 1
             );
-
+            
+    # // api
+    
         $routes
             ->any('/person/login')
             ->name('person.login')
@@ -159,7 +162,17 @@ method startup {
 
     my  $routes_authenticated_person = $routes_authenticated->under('/person');
         $routes_authenticated_person
-            ->get('/list/:filter/:related_element/:related_id')
+            ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'list',
+                filter          => 'active',
+                related_element => '',
+                related_id      => ''
+            );
+
+        $routes_authenticated_person
+            ->get('/list/:filter/:related_element/:related_id' )
             ->to(
                 controller      => 'person',
                 action          => 'list',
@@ -167,6 +180,7 @@ method startup {
                 related_element => '',
                 related_id      => ''
             );
+
 
     my  $routes_authenticated_contractor = $routes_authenticated->under('/contractor');
         $routes_authenticated_contractor

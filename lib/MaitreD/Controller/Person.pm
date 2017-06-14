@@ -512,6 +512,7 @@ method list {
 
     switch($self->stash->{'related_element'}) {
         case('') {
+            $self->stash->{'title'} = "Person -> " . $self->stash->{'filter'};
             $self->stash('rows' => [
                 $self
                     ->hm_schema
@@ -530,6 +531,7 @@ method list {
              ]);
         }
         case('contractor') {
+            $self->stash->{'title'} = "Contractor -> " . $self->stash->{'filter'};
             $self->stash('rows' => [
                 $self
                     ->hm_schema
@@ -548,6 +550,7 @@ method list {
             ]);
         }
         case('provisioning_agreement') {
+            $self->stash->{'title'} = "ProvisioningAgreement -> " . $self->stash->{'filter'};
             $self->stash('rows' => [
                 $self
                     ->hm_schema
@@ -565,7 +568,7 @@ method list {
                     ->all
             ]);
         }
-    }
+    } 
 
 }
 

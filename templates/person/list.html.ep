@@ -5,6 +5,7 @@
 %>
 <%=
     include('snippets/table',
+        title     => stash->{'title'},
         name      => 'person',
         columns   => {
             'Name' => {
@@ -14,12 +15,19 @@
                     sprintf("%s %s", $row->first_name, $row->last_name);
                 }
             },
-            'Valid Since' => {
+            'Last Name' => {
                 order => 2,
+                value => sub {
+                    my $row = shift;
+                    sprintf("%s %s", $row->first_name, $row->last_name);
+                }
+            },
+            'Valid Since' => {
+                order => 3,
                 value => sub { datetime_display(shift->valid_since, 2); }
             },
             'Valid Till' => {
-                order => 3,
+                order => 4,
                 value => sub { datetime_display(shift->valid_till, 2) || '∞'; }
             },
             'Actions' => {

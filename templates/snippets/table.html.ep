@@ -5,6 +5,16 @@
                     pageLength: 25,
                     responsive: true,
                     dom: '<"html5buttons"B>lTfgitp',
+                    processing: true,
+                    serverSide: true,
+                    columns   : [
+                        { "data": "first_name" },
+                        { "data": "last_name" },
+                        { "data": "valid_since" },
+                        { "data": "valid_till" },
+                        { "data": "actions" }
+                    ],                     
+                    ajax: "/person/list/all.json",
                     buttons: [
                         { extend: 'copy'},
                         { extend: 'csv'},
