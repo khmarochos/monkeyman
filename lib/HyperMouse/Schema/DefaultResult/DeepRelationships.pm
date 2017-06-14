@@ -224,19 +224,13 @@ method _search_related_deep_pattern_translate(Str $exp!) {
 
     $logger->tracef("Translating the %s search pattern", $exp);
 
-    $::RD_HINT   = 1;
-    $::RD_TRACE  = 1;
-    $::RD_WARN   = 1;
-    $::RD_ERRORS = 1;
-    # TODO: ^^^ remove these lines
-
-    my $parse_result = $self->_get_search_related_deep_grammar_parser->parse($exp);
+    my $parse_result = $self->_get_search_related_deep_grammar_parser->parse($exp, 1);
     unless(defined($parse_result)) {
         # TODO: raise an exception
     }
     
-    $logger->set_dump_enabled_limited(1);
     $logger->tracef("The translation result is: %s", $parse_result);
+    use Data::Dumper; $logger->tracef("%s", Dumper($parse_result));
 
     return($parse_result);
 

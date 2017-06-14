@@ -390,14 +390,78 @@ our $DeepRelationships = {
 };
 
 
+$::RD_HINT   = 1;
+$::RD_TRACE  = 1;
+$::RD_WARN   = 1;
+$::RD_ERRORS = 1;
+# TODO: ^^^ remove these lines
+
 our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR__');
 
     {
         use strict;
         use warnings;
 
+        use String::CamelCase qw(decamelize);
+
         my @src_class = (undef);
-        my @dst_class = (undef);
+        my $dst_class;
+        my $pipe_type;
+
+        my $macroses = {
+
+            '@Person->-%Corporation' => {
+                resultset_class => 'Corporation',
+                search => [
+                    'person_x_corporations' => {
+                        permissions => -1,
+                        validations => -1,
+                        fetch => [ 'corporation' => { validations => -1 } ]
+                    }
+                ]
+            },
+
+            '@Person->-%Contractor' => {
+                resultset_class => 'Contractor',
+                search => [
+                    'person_x_contractors' => {
+                        permissions => -1,
+                        validations => -1,
+                        fetch => [ 'contractor' => { validations => -1 } ]
+                    }
+                ]
+            },
+
+            '@Corporation->-%Contractor' => {
+                resultset_class => 'Contractor',
+                search => [
+                    'corporation_x_contractors' => {
+                        validations => -1,
+                        fetch => [ 'contractor' => { validations => -1 } ]
+                    }
+                ]
+            },
+
+            '@Contractor-[client]>-%ProvisioningAgreement' => {
+                resultset_class => 'ProvisioningAgreement',
+                fetch => [ 'provisioning_agreement_client_contractors' => { validations => -1 } ]
+            },
+
+            '@Contractor-[provider]>-%ProvisioningAgreement' => {
+                resultset_class => 'ProvisioningAgreement',
+                fetch => [ 'provisioning_agreement_provider_contractors' => { validations => -1 } ]
+            },
+
+            '@Contractor-[client|provider]>-%ProvisioningAgreement' => {
+                resultset_class => 'ProvisioningAgreement',
+                join => [
+                    { callout => [ '@Contractor-[client]>-%ProvisioningAgreement' => { } ] },
+                    { callout => [ '@Contractor-[provider]>-%ProvisioningAgreement' => { } ] }
+                ]
+            },
+
+        };
+
     }
 
     parse:                  operation end
@@ -405,38 +469,46 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
             $return = $item[1];
         }
 
-    operation:              operand ( operation_join | operation_pipe )(s?)
+    operation:              operand ( operator_and_operand )(s?)
         {
-            my $i = 0;
+            my $i = -1;
             my $r = $item[1];
-            while(1) {
-                last unless(defined($item[2][$i]));
-                $r = scalar(keys(%{ $r }))
-                    ? { $item[2][$i]->{'operator'} => [ $r, $item[2][$i]->{'operand'} ] }
-                    : { $item[2][$i]->{'operator'} => [     $item[2][$i]->{'operand'} ] };
-                $i++;
+            while(defined($item[2][++$i])) {
+                use Data::Dumper; warn('!!! ' . Dumper($item[2]));
+                $r = { $item[2][$i]->{'operator'} => [ $r, $item[2][$i]->{'operand'} ] };
             }
-            $r->{'resultset_class'} = $dst_class[-1];
+            $r->{'resultset_class'} = $dst_class;
             $return                 = $r;
         }
 
-    operation_join:         '-&-' operand
+    operator_and_operand:   operator operand
         {
             $return = {
-                operand     => $item[2],
-                operator    => 'join'
+                operator    => $item[1],
+                operand     => $item[2]
             };
         }
 
-    operation_pipe:         /-(\[.+\])*>-/ operand
+    operator:               operator_join | operator_pipe
         {
-            $return = {
-                operand     => $item[2],
-                operator    => 'pipe'
-            };
+            $return = $item[1];
         }
 
-    operand:                group | element_class
+    operator_join:          '-&-'
+        {
+            $return = 'join';
+        }
+
+    operator_pipe:          '-' ( /\[.+\]/ )(?) '>-'
+        {
+            $pipe_type = $item[2][0];
+            $return = 'pipe';
+        }
+
+    operand:                group | element_given | element_macros | search_related
+        {
+            $return = $item[1];
+        }
 
     group:                  group_begin operation group_end
         {
@@ -445,32 +517,40 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
 
     group_begin:            '('
         {
-            push(@src_class, $dst_class[-1]);
+            $dst_class = $src_class[-1];
+            push(@src_class, $dst_class);
+            $return = $item[1];
         }
 
     group_end:              ')'
         {
             pop(@src_class);
-        }
-
-    element_class:          element_class_given | element_class_exact
-        {
-            #$src_class[-1] = $item[1]->{'search'}->[0];
-            $src_class[-1] = ($item[1]->{'callout'}->[0] =~ /^.*->-(\w+)$/\1/)[1];
-            $dst_class[-1] = $src_class[-1];
             $return = $item[1];
         }
 
-    element_class_given:    '@'
+    element_given:          '@' ( /\w+/ )(?)
         {
-            $return = { };
+            if(defined($item[2][0])) {
+                $src_class[-1] = $item[2][0];
+            } else {
+                $src_class[-1] = $src_class[-2];
+            }
+            $return = { prepare => [ $src_class[-1], { validations => -1 } ] };
         }
 
-    element_class_exact:    /\w+/
+    element_macros:         '%' /\w+/
         {
-            my %parameters = (validations => -1);
-            $return = { search => [ $item[1], { from => $src_class[-2], %parameters } ] };
-            $return = { callout => [ $src_class[-2] . '->-' . $item[1], { } ] };
+            my $macros = sprintf('@%s-%s>-%%%s', $dst_class, defined($pipe_type) ? $pipe_type : '', $item[2]);
+            unless(defined($return = $macroses->{ $macros })) {
+                $return = { search => [ decamelize($item[2]), { validations => -1, from => $dst_class } ] };
+            }
+            $dst_class = $item[2];
+        }
+
+    search_related:    /\w+/
+        {
+            $src_class[-1] = $item[1];
+            $return = { search => [ $item[1], { validations => -1 } ] };
         }
 
     end:                    /^\Z/
