@@ -809,16 +809,22 @@ func suitable (
         );
 
     # What about the related components then, are they OK?
-    unless(defined($component_configuration->{'ignore_related'}) && $component_configuration->{'ignore_related'}) {
-        foreach my $related_type (keys(%{ $component_related })) {
-            foreach my $related_id (keys(%{ $component_related->{ $related_type }->{'by-id'} })) {
-                return(@result)
-                    unless((@result = suitable(
-                        $components->{ $related_type }->{'by-id'}->{ $related_id }->{'element'},
-                        $components,
-                        $time_now
-                    ))[0] eq 'OK');
-            }
+    foreach my $related_type (keys(%{ $component_related })) {
+    	next if(
+            defined($component_configuration->{'override'}) && (
+                (
+            	    (ref($component_configuration->{'override'}) eq 'ARRAY') &&
+                    (grep { $_ eq $related_type } @{ $component_configuration->{'override'} })
+                ) || ($component_configuration->{'override'} eq $related_type)
+            )
+        );
+        foreach my $related_id (keys(%{ $component_related->{ $related_type }->{'by-id'} })) {
+            return(@result)
+                unless((@result = suitable(
+                    $components->{ $related_type }->{'by-id'}->{ $related_id }->{'element'},
+                    $components,
+                    $time_now
+                ))[0] eq 'OK');
         }
     }
 
