@@ -493,6 +493,7 @@ method _add_email(
 method list {
 
     my $mask_permitted_d = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
+    my $mask_permitted_f = $mask_permitted_d;
     my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     switch($self->stash->{'filter'}) {
@@ -512,58 +513,70 @@ method list {
 
     switch($self->stash->{'related_element'}) {
         case('') {
-            $self->stash('rows' => [
-                $self
-                    ->hm_schema
-                    ->resultset('Person')
-                    ->search({ id => $self->stash->{'authorized_person_result'}->id })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'Person',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ 'Person-[everything]>-Person' => { } ]
-                    )
-                    ->all
-             ]);
+            $self->stash->{'tables'} = [ {
+                title   => 'Persons',
+                name    => 'persons',
+                data    => [
+                    $self
+                        ->hm_schema
+                        ->resultset('Person')
+                        ->search({ id => $self->stash->{'authorized_person_result'}->id })
+                        ->filter_validated(mask => VC_NOT_REMOVED)
+                        ->search_related_deep(
+                            resultset_class            => 'Person',
+                            fetch_permissions_default  => $mask_permitted_f,
+                            fetch_validations_default  => $mask_validated_f,
+                            search_permissions_default => $mask_permitted_d,
+                            search_validations_default => $mask_validated_d,
+                            callout => [ '@Person [everything]> @Person' => { } ]
+                        )
+                        ->all
+                ]
+            } ];
         }
         case('contractor') {
-            $self->stash('rows' => [
-                $self
-                    ->hm_schema
-                    ->resultset('Contractor')
-                    ->search({ id => $self->stash->{'related_id'} })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'Person',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ 'Contractor->-Person' => { } ]
-                    )
-                    ->all
-            ]);
+            $self->stash->{'tables'} = [ {
+                title   => 'Persons',
+                name    => 'persons',
+                data    => [
+                    $self
+                        ->hm_schema
+                        ->resultset('Contractor')
+                        ->search({ id => $self->stash->{'related_id'} })
+                        ->filter_validated(mask => VC_NOT_REMOVED)
+                        ->search_related_deep(
+                            resultset_class            => 'Person',
+                            fetch_permissions_default  => $mask_permitted_f,
+                            fetch_validations_default  => $mask_validated_f,
+                            search_permissions_default => $mask_permitted_d,
+                            search_validations_default => $mask_validated_d,
+                            callout => [ '@Contractor > @Person' => { } ]
+                        )
+                        ->all
+                ]
+            } ];
         }
         case('provisioning_agreement') {
-            $self->stash('rows' => [
-                $self
-                    ->hm_schema
-                    ->resultset('ProvisioningAgreement')
-                    ->search({ id => $self->stash->{'related_id'} })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'Person',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ 'ProvisioningAgreement->-Person' => { } ]
-                    )
-                    ->all
-            ]);
+            $self->stash->{'tables'} = [ {
+                title   => 'Persons',
+                name    => 'persons',
+                data    => [
+                    $self
+                        ->hm_schema
+                        ->resultset('ProvisioningAgreement')
+                        ->search({ id => $self->stash->{'related_id'} })
+                        ->filter_validated(mask => VC_NOT_REMOVED)
+                        ->search_related_deep(
+                            resultset_class            => 'Person',
+                            fetch_permissions_default  => $mask_permitted_f,
+                            fetch_validations_default  => $mask_validated_f,
+                            search_permissions_default => $mask_permitted_d,
+                            search_validations_default => $mask_validated_d,
+                            callout => [ '@ProvisioningAgreement > @Person' => { } ]
+                        )
+                        ->all
+                ]
+            } ];
         }
     }
 
