@@ -34,6 +34,8 @@ method search_related_deep(
     ArrayRef    :$callout?,
     ArrayRef    :$pipe?,
     ArrayRef    :$join?,
+    Int         :$fetch_permissions_default?    = 0b000111,
+    Int         :$fetch_validations_default?    = 0b000111,
     Int         :$search_permissions_default?   = 0b000111,
     Int         :$search_validations_default?   = 0b000111,
     ArrayRef    :$search?,
@@ -133,21 +135,18 @@ method search_related_deep(
             $resultset = $resultset->filter_validated(
                 mask => $search_validations >= 0
                       ? $search_validations
-                      : $search_validations_default
+                      : ($search_val->{'fetch'} ? $fetch_validations_default : $search_validations_default)
             )
                 if(defined($search_validations));
 
             $resultset = $resultset->filter_permitted(
                 mask => $search_permissions >= 0
                       ? $search_permissions
-                      : $search_permissions_default
+                      : ($search_val->{'fetch'} ? $fetch_permissions_default : $search_permissions_default)
                 )
                 if(defined($search_permissions));
 
             push(@resultsets, scalar($resultset))
-                if($search_val->{'fetch'});
-
-            $logger->tracef('Fetched %s', scalar($resultset))
                 if($search_val->{'fetch'});
 
             if(

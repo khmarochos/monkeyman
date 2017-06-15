@@ -17,6 +17,7 @@ use Switch;
 
 method list {
     my $mask_permitted_d = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
+    my $mask_permitted_f = $mask_permitted_d;
     my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     switch($self->stash->{'filter'}) {
@@ -50,8 +51,8 @@ method list {
                         ->filter_validated(mask => VC_NOT_REMOVED)
                         ->search_related_deep(
                             resultset_class            => 'ProvisioningAgreement',
-                            fetch_permissions_default  => $mask_permitted_d,
-                            fetch_validations_default  => $mask_validated_d,
+                            fetch_permissions_default  => $mask_permitted_f,
+                            fetch_validations_default  => $mask_validated_f,
                             search_permissions_default => $mask_permitted_d,
                             search_validations_default => $mask_validated_d,
                             callout => [ 'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[client|provider]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => { } ]
@@ -74,8 +75,8 @@ method list {
                         ->filter_validated(mask => VC_NOT_REMOVED)
                         ->search_related_deep(
                             resultset_class            => 'ProvisioningAgreement',
-                            fetch_permissions_default  => $mask_permitted_d,
-                            fetch_validations_default  => $mask_validated_d,
+                            fetch_permissions_default  => $mask_permitted_f,
+                            fetch_validations_default  => $mask_validated_f,
                             search_permissions_default => $mask_permitted_d,
                             search_validations_default => $mask_validated_d,
                             callout => [ 'Contractor-[client|provider]>-ProvisioningAgreement' => { } ]
