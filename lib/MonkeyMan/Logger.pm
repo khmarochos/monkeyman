@@ -454,11 +454,10 @@ func _sprintf(
                 )
             )
         /xg) {
-            if($1 eq 's') {
-                $shall_be_colored{$parameter_number} = 1;
-            } elsif($1 eq '%') {
-                next;
-            }
+            next
+                if($1 eq '%');
+            $shall_be_colored{$parameter_number} = 1
+                if($1 eq 's');
             $parameter_number++;
         }
     }

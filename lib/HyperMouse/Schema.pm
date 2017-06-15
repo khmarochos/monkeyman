@@ -16,385 +16,11 @@ __PACKAGE__->load_namespaces;
 
 use Parse::RecDescent;
 
-
-
-our $DeepRelationships = {
-
-    #
-    # FROM person TO ...
-    #
-
-    #  ... person
-
-    'Person-[everything]>-Person' => {
-        resultset_class => 'Person',
-        pipe => [
-            { callout         => [ 'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[client|provider]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => { } ] },
-            { callout         => [ 'ProvisioningAgreement->-((@-[client|provider]>-Contractor->-((@->Corporation->-Person)-&-(@->-Person)))-&-(@->-Person))' => { } ] }
-        ]
-    },
-
-    'Person->-((@->-Corporation->-Person)-&-((@->-Corporation->-Contractor)-&-(@->-Contractor))->-Person)' => {
-        resultset_class => 'Person',
-        join => [
-            { callout => [ 'Person->-Corporation->-Person' => { } ] },
-            {
-                pipe => [
-                    { callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ] },
-                    { callout => [ 'Contractor->-Person' => { } ] }
-                ]
-            }
-        ]
-    },
-
-    'Person->-Corporation->-Person' => {
-        resultset_class => 'Person',
-        pipe => [
-            { callout => [ 'Person->-Corporation' => { } ] },
-            { callout => [ 'Corporation->-Person' => { } ] },
-        ]
-    },
-
-    'Person->-Contractor->-Person' => {
-        resultset_class => 'Person',
-        pipe => [
-            { callout => [ 'Person->-Contractor' => { } ] },
-            { callout => [ 'Contractor->-Person' => { } ] },
-        ]
-    },
-
-    #  ... contractor
-
-    'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => {
-        resultset_class => 'Contractor',
-        join => [
-            { callout => [ 'Person->-Corporation->-Contractor' => { } ] },
-            { callout => [ 'Person->-Contractor' => { } ] }
-        ]
-    },
-
-    'Person->-Corporation->-Contractor' => {
-        resultset_class => 'Contractor',
-        pipe => [
-            { callout => [ 'Person->-Corporation' => { } ] },
-            { callout => [ 'Corporation->-Contractor' => { } ] },
-        ]
-    },
-
-    'Person->-Contractor' => {
-        resultset_class => 'Contractor',
-        search => [
-            'person_x_contractors' => {
-                permissions => -1,
-                validations => -1,
-                fetch => [ 'contractor' => { validations => -1 } ]
-            }
-        ]
-    },
-
-    #  ... corporation
-
-    'Person->-Corporation' => {
-        resultset_class => 'Corporation',
-        search => [
-            'person_x_corporations' => {
-                permissions => -1,
-                validations => -1,
-                fetch => [ 'corporation' => { validations => -1 } ]
-            }
-        ]
-    },
-
-    #  ... provisioning_agreement
-
-    'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[client]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => {
-        resultset_class => 'ProvisioningAgreement',
-        join => [
-            {
-                pipe => [
-                    { callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ] },
-                    { callout => [ 'Contractor-[client]>-ProvisioningAgreement' => { } ] }
-                ]
-            },
-            { callout => [ 'Person->-ProvisioningAgreement' => { } ] }
-        ]
-    },
-
-    'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[provider]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => {
-        resultset_class => 'ProvisioningAgreement',
-        join => [
-            {
-                pipe => [
-                    { callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ] },
-                    { callout => [ 'Contractor-[provider]>-ProvisioningAgreement' => { } ] }
-                ]
-            },
-            { callout => [ 'Person->-ProvisioningAgreement' => { } ] }
-        ]
-    },
-
-    'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[client|provider]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => {
-        resultset_class => 'ProvisioningAgreement',
-        join => [
-            {
-                pipe => [
-                    { callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ] },
-                    { callout => [ 'Contractor-[client|provider]>-ProvisioningAgreement' => { } ] }
-                ]
-            },
-            { callout => [ 'Person->-ProvisioningAgreement' => { } ] }
-        ]
-    },
-
-    'Person->-ProvisioningAgreement' => {
-        resultset_class => 'ProvisioningAgreement',
-        search => [
-            'person_x_provisioning_agreements' => {
-                validations => -1,
-                permissions => -1,
-                fetch => [ 'provisioning_agreement' => { validations => -1 } ]
-            }
-        ]
-    },
-
-    #  ... provisioning_obligation
-
-    person_TO_provisioning_obligation => {
-        resultset_class => 'ProvisioningObligation',
-        pipe => [
-            { callout => [ '(Person>Corporation>Contractor+Person>Contractor)>ProvisioningAgreement[ALL]+Person>ProvisioningAgreement' => { } ] },
-            { callout => [ 'provisioning_agreement_TO_provisioning_obligation' => { } ] }
-        ]
-    },
-
-    #  ... resource_piece
-
-    person_TO_resource_piece => {
-        resultset_class => 'ResourcePiece',
-        pipe => [
-            { callout => [ 'person_TO_provisioning_obligation' => { } ] },
-            { callout => [ 'provisioning_obligation_TO_resource_piece' => { } ] }
-        ]
-    },
-
-    #
-    # FROM contractor TO ...
-    #
-
-    #  ... person
-
-    'Contractor->-Corporation->-Person' => {
-        resultset_class => 'Person',
-        pipe => [
-            { callout => [ 'Contractor->-Corporation' => { } ] },
-            { callout => [ 'Corporation->-Person' => { } ] },
-        ]
-    },
-
-    'Contractor->-Person' => {
-        resultset_class => 'Person',
-        search => [
-            'person_x_contractors'  => {
-                permissions => -1,
-                validations => -1,
-                fetch => [ 'person' => { validations => -1 } ]
-            }
-        ]
-    },
-
-    #  ... corporation
-
-    'Contractor->-Corporation' => {
-        resultset_class => 'Corporation',
-        search => [
-            'corporation_x_contractors'  => {
-                validations => -1,
-                fetch => [ 'corporation' => { validations => -1 } ]
-            }
-        ]
-    },
-
-    #  ... provisioning_agreement
-
-    'Contractor-[client]>-ProvisioningAgreement' => {
-        resultset_class => 'ProvisioningAgreement',
-        fetch => [ 'provisioning_agreement_client_contractors' => { validations => -1 } ]
-    },
-
-    'Contractor-[provider]>-ProvisioningAgreement' => {
-        resultset_class => 'ProvisioningAgreement',
-        fetch => [ 'provisioning_agreement_provider_contractors' => { validations => -1 } ]
-    },
-
-    'Contractor-[client|provider]>-ProvisioningAgreement' => {
-        resultset_class => 'ProvisioningAgreement',
-        join => [
-            { callout => [ 'Contractor-[client]>-ProvisioningAgreement' => { } ] },
-            { callout => [ 'Contractor-[provider]>-ProvisioningAgreement' => { } ] }
-        ]
-    },
-
-    #
-    # FROM corporation TO ...
-    #
-
-    #  ... person
-
-    'Corporation->-Person' => {
-        resultset_class => 'Person',
-        search => [
-            'person_x_corporations' => {
-                validations => -1,
-                permissions => -1,
-                fetch => [ 'person' => { validations => '-1' } ]
-            }
-        ]
-    },
-
-    #  ... contractor
-
-    'Corporation->-Contractor' => {
-        resultset_class => 'Contractor',
-        search => [
-            'corporation_x_contractors' => {
-                validations => -1,
-                fetch => [ 'contractor' => { validations => -1 } ]
-            }
-        ]
-    },
-
-    #
-    # FROM provisioning_agreement TO ...
-    #
-
-    #  ... person
-
-    'ProvisioningAgreement->-((@-[client]>-Contractor->-((@->Corporation->-Person)-&-(@->-Person)))-&-(@->-Person))' => {
-        resultset_class => 'Person',
-        join => [
-            {
-                pipe => [
-                    { callout => [ 'ProvisioningAgreement-[client]>-Contractor' => { } ] },
-                    {
-                        join => [
-                            { callout => [ 'Contractor->-Corporation->-Person' => { } ] },
-                            { callout => [ 'Contractor->-Person' => { } ] }
-                        ]
-                    }
-                ]
-            },
-            { callout => [ 'ProvisioningAgreement->-Person' => { } ] },
-        ]
-    },
-
-    'ProvisioningAgreement->-((@-[provider]>-Contractor->-((@->Corporation->-Person)-&-(@->-Person)))-&-(@->-Person))' => {
-        resultset_class => 'Person',
-        join => [
-            {
-                pipe => [
-                    { callout => [ 'ProvisioningAgreement-[provider]>-Contractor' => { } ] },
-                    {
-                        join => [
-                            { callout => [ 'Contractor->-Corporation->-Person' => { } ] },
-                            { callout => [ 'Contractor->-Person' => { } ] }
-                        ]
-                    }
-                ]
-            },
-            { callout => [ 'ProvisioningAgreement->-Person' => { } ] },
-        ]
-    },
-
-    'ProvisioningAgreement->-((@-[client|provider]>-Contractor->-((@->Corporation->-Person)-&-(@->-Person)))-&-(@->-Person))' => {
-        resultset_class => 'Person',
-        join => [
-            {
-                pipe => [
-                    { callout => [ 'ProvisioningAgreement-[client|provider]>-Contractor' => { } ] },
-                    {
-                        join => [
-                            { callout => [ 'Contractor->-Corporation->-Person' => { } ] },
-                            { callout => [ 'Contractor->-Person' => { } ] }
-                        ]
-                    }
-                ]
-            },
-            { callout => [ 'ProvisioningAgreement->-Person' => { } ] },
-        ]
-    },
-
-    'ProvisioningAgreement->-Person' => {
-        resultset_class => 'Person',
-        search => [
-            'person_x_provisioning_agreements' => {
-                validations => -1,
-                permissions => -1,
-                fetch => [ 'person' => { validations => -1 } ]
-            }
-        ]
-    },
-
-    #  ... contractor
-
-    'ProvisioningAgreement-[client]>-Contractor' => {
-        resultset_class => 'Contractor',
-        fetch => [ 'client_contractor' => { validations => -1 } ]
-    },
-
-    'ProvisioningAgreement-[provider]>-Contractor' => {
-        resultset_class => 'Contractor',
-        fetch => [ 'provider_contractor' => { validations => -1 } ]
-    },
-
-    'ProvisioningAgreement-[client|provider]>-Contractor' => {
-        resultset_class => 'Contractor',
-        join => [
-            { callout => [ 'ProvisioningAgreement-[client]>-Contractor' => { } ] },
-            { callout => [ 'ProvisioningAgreement-[provider]>-Contractor' => { } ] }
-        ]
-    },
-
-    #  ... provisioning_obligation
-
-    'ProvisioningAgreement->-ProvisioningObligation' => {
-        resultset_class => 'ProvisioningObligation',
-        fetch => [ 'provisioning_obligations' => { validations => -1 } ]
-    },
-
-    #  ... resource_piece
-
-    'ProvisioningAgreement->-ProvisioningObligation->-ResourcePiece' => {
-        resultset_class => 'ResourcePiece',
-        pipe => [
-            { callout => [ 'ProvisioningAgreement->-ProvisioningObligation' => { } ] },
-            { callout => [ 'ProvisioningObligation->-ResourcePiece' => { } ] }
-        ],
-    },
-
-    #
-    # FROM provisioning_obligation TO ...
-    #
-
-    #  ... resource_piece
-
-    'ProvisioningObligation->-ResourcePiece' => {
-        resultset_class => 'ResourcePiece',
-        search => [
-            'provisioning_obligation_x_resource_pieces' => {
-                validations => -1,
-                fetch => [ 'resource_piece' => { validations => -1 } ]
-            }
-        ]
-    }
-
-};
-
-
-$::RD_HINT   = 1;
-$::RD_TRACE  = 1;
-$::RD_WARN   = 1;
-$::RD_ERRORS = 1;
-# TODO: ^^^ remove these lines
+# In case of trouble uncomment these:
+#$::RD_ERRORS    = 1;
+#$::RD_WARN      = 1;
+#$::RD_HINT      = 1;
+#$::RD_TRACE     = 1;
 
 our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR__');
 
@@ -402,65 +28,278 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
         use strict;
         use warnings;
 
-        use String::CamelCase qw(decamelize);
+        use HyperMouse::Exception qw(SourceClassUndefined);
 
-        my @src_class = (undef);
-        my $dst_class;
-        my $pipe_type;
+        use String::CamelCase qw(decamelize);
+        use Data::Dumper;
+
+        my $op_stack = [
+            {
+                operator    => undef,
+                join        => undef,
+                pipe        => undef
+            }
+        ];
+        my $pipe_type; #TODO: move it to $op_stack
 
         my $macroses = {
 
-            '@Person->-%Corporation' => {
+            #
+            # FROM Person TO ...
+            #
+
+            '@Person-[everything]>-@Person' => {
+                resultset_class => 'Person',
+                callout => [ q{
+                    @Person > (
+                        (
+                            (
+                                (
+                                    (
+                                        @ > @Corporation > @Contractor
+                                    ) & (
+                                        @ > @Contractor
+                                    )
+                                ) [client|provider]> @ProvisioningAgreement
+                            ) & (
+                                @ > @ProvisioningAgreement
+                            )
+                        ) > (
+                            (
+                                @ [client|provider]> @Contractor > (
+                                    (
+                                        @ > @Corporation > @Person
+                                    ) & (
+                                        @ > @Person
+                                    )
+                                )
+                            ) & (
+                                @ > @Person
+                            )
+                        )
+                    )
+                } => { } ]
+            },
+
+            '@Person->-@Corporation' => {
                 resultset_class => 'Corporation',
                 search => [
                     'person_x_corporations' => {
                         permissions => -1,
                         validations => -1,
-                        fetch => [ 'corporation' => { validations => -1 } ]
+                        search => [
+                            'corporation' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
                     }
                 ]
             },
 
-            '@Person->-%Contractor' => {
+            '@Person->-@Contractor' => {
                 resultset_class => 'Contractor',
                 search => [
                     'person_x_contractors' => {
                         permissions => -1,
                         validations => -1,
-                        fetch => [ 'contractor' => { validations => -1 } ]
+                        search => [
+                            'contractor' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
                     }
                 ]
             },
 
-            '@Corporation->-%Contractor' => {
+            '@Person->-@ProvisioningAgreement' => {
+                resultset_class => 'ProvisioningAgreement',
+                search => [
+                    'person_x_provisioning_agreements' => {
+                        validations => -1,
+                        permissions => -1,
+                        search => [
+                            'provisioning_agreement' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            #
+            # FROM ProvisioningAgreement TO ...
+            #
+
+            '@ProvisioningAgreement->-@Person' => {
+                resultset_class => 'Person',
+                search => [
+                    'person_x_provisioning_agreements' => {
+                        validations => -1,
+                        permissions => -1,
+                        fetch => [ 'person' => { validations => -1 } ]
+                    }
+                ]
+            },
+
+            '@ProvisioningAgreement-[client]>-@Contractor' => {
+                resultset_class => 'Contractor',
+                search => [
+                    'client_contractor' => {
+                        validations => -1,
+                        fetch       =>  1
+                    }
+                ]
+            },
+
+            '@ProvisioningAgreement-[provider]>-@Contractor' => {
+                resultset_class => 'Contractor',
+                search => [
+                    'provider_contractor' => {
+                        validations => -1,
+                        fetch       =>  1
+                    }
+                ]
+            },
+
+            '@ProvisioningAgreement-[client|provider]>-@Contractor' => {
+                resultset_class => 'Contractor',
+                join => [
+                    { callout => [ '@ProvisioningAgreement-[client]>-@Contractor' => { } ] },
+                    { callout => [ '@ProvisioningAgreement-[provider]>-@Contractor' => { } ] }
+                ]
+            },
+
+            #
+            # FROM Corporation TO ...
+            #
+
+            '@Corporation->-@Contractor' => {
                 resultset_class => 'Contractor',
                 search => [
                     'corporation_x_contractors' => {
                         validations => -1,
-                        fetch => [ 'contractor' => { validations => -1 } ]
+                        search => [
+                            'contractor' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
                     }
                 ]
             },
 
-            '@Contractor-[client]>-%ProvisioningAgreement' => {
-                resultset_class => 'ProvisioningAgreement',
-                fetch => [ 'provisioning_agreement_client_contractors' => { validations => -1 } ]
+            '@Corporation->-@Person' => {
+                resultset_class => 'Person',
+                search => [
+                    'person_x_corporations' => {
+                        validations => -1,
+                        permissions => -1,
+                        search => [
+                            'person' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
+                    }
+                ]
             },
 
-            '@Contractor-[provider]>-%ProvisioningAgreement' => {
-                resultset_class => 'ProvisioningAgreement',
-                fetch => [ 'provisioning_agreement_provider_contractors' => { validations => -1 } ]
+            #
+            # FROM Contractor TO ...
+            #
+
+            '@Corporation->-@Contractor' => {
+                resultset_class => 'Contractor',
+                search => [
+                    'corporation_x_contractors' => {
+                        validations => -1,
+                        search => [
+                            'contractor' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
+                    }
+                ]
             },
 
-            '@Contractor-[client|provider]>-%ProvisioningAgreement' => {
+            '@Contractor-[client]>-@ProvisioningAgreement' => {
+                resultset_class => 'ProvisioningAgreement',
+                search => [
+                    'provisioning_agreement_client_contractors' => {
+                        validations => -1,
+                        fetch       =>  1
+                    }
+                ]
+            },
+
+            '@Contractor-[provider]>-@ProvisioningAgreement' => {
+                resultset_class => 'ProvisioningAgreement',
+                search => [
+                    'provisioning_agreement_provider_contractors' => {
+                        validations => -1,
+                        fetch       =>  1
+                    }
+                ]
+            },
+
+            '@Contractor-[client|provider]>-@ProvisioningAgreement' => {
                 resultset_class => 'ProvisioningAgreement',
                 join => [
-                    { callout => [ '@Contractor-[client]>-%ProvisioningAgreement' => { } ] },
-                    { callout => [ '@Contractor-[provider]>-%ProvisioningAgreement' => { } ] }
+                    { callout => [ '@Contractor-[client]>-@ProvisioningAgreement' => { } ] },
+                    { callout => [ '@Contractor-[provider]>-@ProvisioningAgreement' => { } ] }
+                ]
+            },
+
+            '@Contractor->-@Person' => {
+                resultset_class => 'Person',
+                search => [
+                    'person_x_contractors'  => {
+                        permissions => -1,
+                        validations => -1,
+                        search => [
+                            'person' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            '@Contractor->-@Corporation' => {
+                resultset_class => 'Corporation',
+                search => [
+                    'corporation_x_contractors'  => {
+                        validations => -1,
+                        search => [
+                            'corporation' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
+                    }
                 ]
             },
 
         };
+
+        sub _show_stack {
+            warn(shift . ' ' . join(' ',
+                map( {
+                    sprintf(
+                        '[%s|%s|%s|%s]',
+                        $_->{'operator'},
+                        $_->{'join'},
+                        $_->{'pipe'},
+                        $_->{'pipe_type'}
+                    );
+                } @{ $op_stack })
+            ));
+        }
 
     }
 
@@ -469,15 +308,16 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
             $return = $item[1];
         }
 
-    operation:              operand ( operator_and_operand )(s?)
+    operation:              operand_first ( operator_and_operand )(s?)
         {
-            my $i = -1;
+            my $i = 0;
             my $r = $item[1];
-            while(defined($item[2][++$i])) {
-                use Data::Dumper; warn('!!! ' . Dumper($item[2]));
-                $r = { $item[2][$i]->{'operator'} => [ $r, $item[2][$i]->{'operand'} ] };
+            while(defined(my $g = $item[2][$i++])) {
+                $r = {
+                    resultset_class     => $g->{'operand'}->{'resultset_class'},
+                    $g->{'operator'}    => [ $r, $g->{'operand'} ]
+                };
             }
-            $r->{'resultset_class'} = $dst_class;
             $return                 = $r;
         }
 
@@ -494,18 +334,23 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
             $return = $item[1];
         }
 
-    operator_join:          '-&-'
+    operator_join:          /-*&-*/
         {
-            $return = 'join';
+            $return = $op_stack->[-1]->{'operator'} = 'join';
         }
 
-    operator_pipe:          '-' ( /\[.+\]/ )(?) '>-'
+    operator_pipe:          /-*/ ( /\[.+\]/ )(?) />-*/
         {
             $pipe_type = $item[2][0];
-            $return = 'pipe';
+            $return = $op_stack->[-1]->{'operator'} = 'pipe';
         }
 
-    operand:                group | element_given | element_macros | search_related
+    operand_first:          group | element_given
+        {
+            $return = $item[1];
+        }
+
+    operand:                group | element_macros | element_searched
         {
             $return = $item[1];
         }
@@ -517,39 +362,73 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
 
     group_begin:            '('
         {
-            $dst_class = $src_class[-1];
-            push(@src_class, $dst_class);
+            #_show_stack('(' . $item[1]);
+            push(@{ $op_stack }, $op_stack->[-1]);
             $return = $item[1];
+            #_show_stack('(' . $item[1]);
         }
 
     group_end:              ')'
         {
-            pop(@src_class);
+            #_show_stack(')' . $item[1]);
+            $op_stack->[-1]->{'pipe'} = pop(@{ $op_stack })->{'pipe'};
             $return = $item[1];
+            #_show_stack(')' . $item[1]);
         }
 
     element_given:          '@' ( /\w+/ )(?)
         {
+            #_show_stack('@' . $item[2][0]);
+            my $class_found;
             if(defined($item[2][0])) {
-                $src_class[-1] = $item[2][0];
+                $class_found = $item[2][0];
+            } elsif(
+                defined($op_stack->[-1])                                    &&
+                defined($op_stack->[-1]->{'operator'})                      &&
+                defined($op_stack->[-1]->{ $op_stack->[-1]->{'operator'} })
+            ) {
+                $class_found = $op_stack->[-1]->{ $op_stack->[-1]->{'operator'} };
             } else {
-                $src_class[-1] = $src_class[-2];
+                (__PACKAGE__ . '::Exception::SourceClassUndefined')->throw(
+                    "Can't parse the expression, the source class isn't defined at the point where it should be"
+                );
             }
-            $return = { prepare => [ $src_class[-1], { validations => -1 } ] };
+            $op_stack->[-1]->{'join'} = $op_stack->[-1]->{'pipe'} = $class_found;
+            $return = {
+                resultset_class =>   $class_found,
+                prepare         => [ $class_found, { validations => -1 } ]
+            };
+            #_show_stack(sprintf("%s\n", Dumper($return)));
+            #_show_stack('@' . $item[2][0]);
         }
 
-    element_macros:         '%' /\w+/
+    element_macros:         '@' /\w+/
         {
-            my $macros = sprintf('@%s-%s>-%%%s', $dst_class, defined($pipe_type) ? $pipe_type : '', $item[2]);
+            #_show_stack('@@@' . $item[2]);
+            unless(
+                defined($op_stack->[-1])                                    &&
+                defined($op_stack->[-1]->{'operator'})                      &&
+                defined($op_stack->[-1]->{ $op_stack->[-1]->{'operator'} })
+            ) {
+                (__PACKAGE__ . '::Exception::SourceClassUndefined')->throw(
+                    "Can't parse the expression, the source class isn't defined at the point where it should be"
+                );
+            }
+            my $macros = sprintf('@%s-%s>-@%s', $op_stack->[-1]->{ $op_stack->[-1]->{'operator'} }, defined($pipe_type) ? $pipe_type : '', $item[2]);
             unless(defined($return = $macroses->{ $macros })) {
-                $return = { search => [ decamelize($item[2]), { validations => -1, from => $dst_class } ] };
+                $return = {
+                    resultset_class => $item[2],
+                    search          => [ decamelize($item[2]), { validations => -1, from => $op_stack->[-1]->{ $op_stack->[-1]->{'operator'} } } ]
+                };
             }
-            $dst_class = $item[2];
+            #_show_stack(sprintf("%s\n%s\n", $macros, Dumper($return)));
+            $op_stack->[-1]->{'pipe'} = $item[2];
+            #_show_stack('@@@' . $item[2]);
         }
 
-    search_related:    /\w+/
+    element_searched:       /\w+/
         {
-            $src_class[-1] = $item[1];
+            $op_stack->[-1]->{'pipe'} = $item[1];
             $return = { search => [ $item[1], { validations => -1 } ] };
         }
 

@@ -19,7 +19,7 @@ $logger->debugf("The person is %s", $person_r);
 
 my $person_rs = $person_r->search_related_deep(
     resultset_class => 'Person',
-    callout         => [ '@Person->-((((@->-%Corporation->-%Contractor)-&-(@->-%Contractor))-[client|provider]>-%ProvisioningAgreement)-&-(@->-%ProvisioningAgreement))' => { } ]
+    callout         => [ '@Person-[everything]>-@Person' => { } ]
 );
 
 $logger->debugf("The related persons found: %s", scalar($person_rs->all));

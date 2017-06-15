@@ -37,12 +37,12 @@ method search_related_deep(
     Int         :$search_permissions_default?   = 0b000111,
     Int         :$search_validations_default?   = 0b000111,
     ArrayRef    :$search?,
-    Int         :$fetch_permissions_default?    = 0b000111,
-    Int         :$fetch_validations_default?    = 0b000111,
-    ArrayRef    :$fetch?,
+    ArrayRef    :$prepare?,
+    Int         :$prepare_permissions_default?  = 0b000111,
+    Int         :$prepare_validations_default?  = 0b000111,
     Bool        :$union?                        = 1,
-    Maybe[Int]  :$permissions, # ...isn't being used at all
-    Maybe[Int]  :$validations  # ..........................
+    Maybe[Int]  :$permissions,
+    Maybe[Int]  :$validations,
 ) {
 
     my $logger = $self->get_logger;
@@ -55,8 +55,6 @@ method search_related_deep(
         resultset_class             => $resultset_class,
         search_permissions_default  => $search_permissions_default,
         search_validations_default  => $search_validations_default,
-        fetch_permissions_default   => $fetch_permissions_default,
-        fetch_validations_default   => $fetch_validations_default
     };
 
     my @resultsets;
@@ -114,46 +112,20 @@ method search_related_deep(
 
 
 
-    # TODO: Join the following 2 blocks into a single foreach(qw/fetch search/) one
+    if(defined($prepare)) {
 
-    if(defined($fetch)) {
-
-        my $resultset = $self;
-        
-        my @fetch_local = @{ $fetch };
-        while(my($fetch_key, $fetch_val) = splice(@fetch_local, 0, 2)) {
-       
-            my $resultset = $self->search_related_rs($fetch_key);
-
-            my $fetch_permissions = $fetch_val->{'permissions'};
-            my $fetch_validations = $fetch_val->{'validations'};
-
-            $resultset = $resultset->filter_validated(
-                mask => $fetch_validations >= 0
-                      ? $fetch_validations
-                      : $fetch_validations_default
-            )
-                if(defined($fetch_validations));
-
-            $resultset = $resultset->filter_permitted(
-                mask => $fetch_permissions >= 0
-                      ? $fetch_permissions
-                      : $fetch_permissions_default
-            )
-                if(defined($fetch_permissions));
-
-            push(@resultsets, scalar($resultset));
-
-        }
+        push(@resultsets, scalar($self->result_source->schema->resultset($resultset_class)->search({ id => $self->id })));
 
     }
+
+
 
     if(defined($search)) {
 
         my @search_local = @{ $search };
         while(my($search_key, $search_val) = splice(@search_local, 0, 2)) {
         
-            my $resultset = $self->search_related($search_key);
+            my $resultset = $self->search_related_rs($search_key);
 
             my $search_permissions = $search_val->{'permissions'};
             my $search_validations = $search_val->{'validations'};
@@ -172,12 +144,24 @@ method search_related_deep(
                 )
                 if(defined($search_permissions));
 
-            foreach my $result ($resultset->all) {
-                my $resultset = $result->search_related_deep(
-                    %{ $search_parmeters_base },
-                    %{ $search_val }
-                );
-                push(@resultsets, scalar($resultset)) if($resultset->all > 0);
+            push(@resultsets, scalar($resultset))
+                if($search_val->{'fetch'});
+
+            $logger->tracef('Fetched %s', scalar($resultset))
+                if($search_val->{'fetch'});
+
+            if(
+                defined($search_val->{'search'})    ||
+                defined($search_val->{'callout'})   ||
+                defined($search_val->{'prepare'})
+            ) {
+                foreach my $result ($resultset->all) {
+                    my $resultset = $result->search_related_deep(
+                        %{ $search_parmeters_base },
+                        %{ $search_val }
+                    );
+                    push(@resultsets, scalar($resultset)) if($resultset->all > 0);
+                }
             }
 
         }
@@ -230,7 +214,6 @@ method _search_related_deep_pattern_translate(Str $exp!) {
     }
     
     $logger->tracef("The translation result is: %s", $parse_result);
-    use Data::Dumper; $logger->tracef("%s", Dumper($parse_result));
 
     return($parse_result);
 
