@@ -4,7 +4,7 @@
     my $language = stash->{'language_id'};
 %>
 <%=
-    include('snippets/table',
+    include('snippets/table_json',
         title     => stash->{'title'},
         name      => 'person',
         columns   => {
@@ -12,14 +12,14 @@
                 order => 1,
                 value => sub {
                     my $row = shift;
-                    sprintf("%s %s", $row->first_name, $row->last_name);
+                    $row->first_name;
                 }
             },
             'Last Name' => {
                 order => 2,
                 value => sub {
                     my $row = shift;
-                    sprintf("%s %s", $row->first_name, $row->last_name);
+                    $row->last_name;
                 }
             },
             'Valid Since' => {
@@ -30,11 +30,11 @@
                 order => 4,
                 value => sub { datetime_display(shift->valid_till, 2) || '∞'; }
             },
-            'Actions' => {
-                order   => 6,
-                actions => 1,
-                related => 1
-            }
+            #'Actions' => {
+            #    order   => 6,
+            #    actions => 1,
+            #    related => 1
+            #}
         },
         related   => {
             'Provisioning Agreements' => {

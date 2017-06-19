@@ -1,0 +1,75 @@
+%  snippet_register('js_snippet', 'dataTables', { }, begin
+        <script>
+            $(document).ready(function(){
+                var table = $('.<%= $name %>').DataTable({
+                    pageLength: 25,
+                    responsive: true,
+                    dom: '<"html5buttons"B>lTfgitp',
+                    processing: true,
+                    serverSide: true,
+                    columns   : [
+                        { "data": "first_name" },
+                        { "data": "last_name" },
+                        { "data": "valid_since" },
+                        { "data": "valid_till" },
+                        {
+                            "class":          "",
+                            "orderable":      false,
+                            "data":           null,
+                            "defaultContent": "<button class='dt_view'><i class='fa fa-eye'></i></button> <button class='dt_edit'><i class='fa fa-edit'></i></button> <button class='dt_pause'><i class='fa fa-pause'></i></button> <button class='dt_remove'><i class='fa fa-remove'></i></button>"
+                        }      
+                                                
+                    ],                     
+                    ajax: "/person/list/all.json",
+                    buttons: [
+                        { extend: 'copy'},
+                        { extend: 'csv'},
+                        { extend: 'excel', title: '<%= $name %>' },
+                        { extend: 'pdf', title: '<%= $name %>' },
+                        { extend: 'print',
+                            customize: function (win){
+                                $(win.document.body).addClass('white-bg');
+                                $(win.document.body).css('font-size', '10px');
+                                $(win.document.body).find('table')
+                                        .addClass('compact')
+                                        .css('font-size', 'inherit');
+                            }
+                        },
+                    ],
+                });
+
+                $('.<%= $name %> tbody').on( 'click', 'button', function () {
+                   var data = table.row( $(this).parents('tr') ).data();
+                   console.log( data, $(this).attr('class') );
+                } );
+
+            });
+            
+        </script>
+%   end);
+%   my @columns_names_sorted = sort { $columns->{ $a }->{'order'} <=> $columns->{ $b }->{'order'} } (keys(%{ $columns }));
+%   my @related_names_sorted = sort { $related->{ $a }->{'order'} <=> $related->{ $b }->{'order'} } (keys(%{ $related }));
+%=  tag('h1' => $title);
+%=  tag('div' => ('class' => 'table-responsive') => begin
+%=      tag('table' => ('class' => "table table-striped table-bordered table-hover $name") => begin
+%=          tag('thead' => begin
+%=              tag('tr' => begin
+%                   foreach my $column_name (@columns_names_sorted) {
+%=                      tag('th' => $column_name);
+%                   }
+%=                  tag('th' => 'Action');
+%               end);               # </tr>
+%           end);                   # </thead>
+
+
+%=          tag('tfoot' => begin
+%=              tag('tr' => begin
+%                   foreach my $column_name (@columns_names_sorted) {
+%=                      tag('th' => $column_name);
+%                   }
+%=                  tag('th' => 'Action');
+%               end);               # </tr>
+%           end);                   # </thead>
+
+%       end);                       # </table>
+%   end);                           # </div>

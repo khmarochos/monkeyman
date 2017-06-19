@@ -6,6 +6,7 @@ use warnings;
 use Mojo::Base qw(Mojolicious);
 use Mojolicious::Plugin::DateTimeDisplay;
 use Mojolicious::Plugin::AssetManager;
+use Mojolicious::Plugin::DataTableParams;
 use HyperMouse;
 use MaitreD::Schema;
 use MonkeyMan::Exception qw(InvalidParameterSet);
@@ -26,6 +27,8 @@ has _hypermouse => method() {
 method startup {
 
     $self->plugin('DateTimeDisplay');
+    $self->plugin('DataTableParams');
+    
     $self->plugin('AssetManager', {
         assets_library => {
             js_pre      => {

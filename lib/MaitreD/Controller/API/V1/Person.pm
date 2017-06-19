@@ -12,6 +12,7 @@ use HyperMouse::Schema::ValidityCheck::Constants ':ALL';
 use Method::Signatures;
 use TryCatch;
 use Switch;
+use DateTime;
 use Data::Dumper;
 
 method list {
@@ -35,6 +36,8 @@ method list {
         }
     }
 
+    my $datatable_params = $self->datatable_params;
+
     switch($self->stash->{'related_element'}) {
         case('') {
             $self->stash->{'title'} = "Person -> " . $self->stash->{'filter'};
@@ -55,21 +58,18 @@ method list {
                     )
                     ->search({},
                         {
-                            page => 0,
-                            rows => 10,
+                            page         => $datatable_params->{'page'},
+                            rows         => $datatable_params->{'rows'},
                             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                            order_by     => $datatable_params->{'order'},
                         }
                     )->all
             ];
             
-            @{ $json->{'data'} } =
-                map {
-                    #$_->{'valid_since'} = $self->datetime_display( $_->{'valid_since'}, 2);
-                    #$_->{'valid_till'}  = $self->datetime_display( $_->{'valid_till'}, 2) || '∞';
-                    $_;
-                }
-                @{ $json->{'data'} };
-            
+            @{ $json->{'data'} } = map {
+                $_->{"DT_RowId"} = "row_" . $_->{'id'};
+                $_;
+            } @{ $json->{'data'} };
             
             $json->{'recordsTotal'} =
                 $self
@@ -90,7 +90,7 @@ method list {
             $json->{'recordsFiltered'} = $json->{'recordsTotal'} = 100;
         }
     }
-    
+            
     $self->render( json => $json );
 }
 
