@@ -14,8 +14,19 @@ use TryCatch;
 use Switch;
 
 
-
 method list {
+    my $settings = $MaitreD::Extra::API::V1::TemplateSettings::settings;
+    my $key      = $self->stash->{'related_element'} || 'person';
+    $key .= '->list'; 
+    $self->stash->{'extra_settings'} =
+        $settings->{ $key };
+    
+    $self->stash->{'title'} = "Contractor -> " . $self->stash->{'filter'};
+    $self->render( template => 'person/list' )
+    
+}
+
+method list_old {
     my $mask_permitted_d = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
     my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;

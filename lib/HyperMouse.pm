@@ -8,6 +8,7 @@ use utf8;
 binmode(STDERR, ':encoding(utf8)');
 binmode(STDOUT, ':encoding(utf8)');
 
+use Moo;
 use Moose 2.1604;
 use namespace::autoclean;
 

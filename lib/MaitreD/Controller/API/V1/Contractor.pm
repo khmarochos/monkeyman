@@ -1,4 +1,4 @@
-package MaitreD::Controller::API::V1::Person;
+package MaitreD::Controller::API::V1::Contractor;
 
 use Moose;
 use namespace::autoclean;
@@ -16,45 +16,89 @@ use MaitreD::Extra::API::V1::TemplateSettings;
 my $settings = $MaitreD::Extra::API::V1::TemplateSettings::settings;
 
 method list {
-    my $json             = {};
-    my $mask_permitted_d = 0b000111; 
+    my $json = {};
+    my $mask_permitted_d = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
     my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     
     switch($self->stash->{'filter'}) {
-        case('all') {
+        case('all')         {
             $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
             $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE;
         }
-        case('active') {
+        case('active')      {
             $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
             $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
         }
-        case('archived') {
+        case('archived')    {
             $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
             $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_EXPIRED;
         }
     }
-
-    my $datatable_params = $self->datatable_params;
-
+    
     switch($self->stash->{'related_element'}) {
-        case('') {
-            $self->stash->{'title'} = "Person -> " . $self->stash->{'filter'};
+        case('person') {
+            my $person_id =
+                ($self->stash->{'related_id'} ne '@')
+                    ? $self->stash->{'related_id'}
+                    : $self->stash->{'authorized_person_result'}->id
+                    ;
             
             $json->{'data'} = [
                 $self
                     ->hm_schema
                     ->resultset('Person')
-                    ->search({ id => $self->stash->{'authorized_person_result'}->id })
+                    ->search({ id => $person_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
-                        resultset_class            => 'Person',
+                        resultset_class            => 'Contractor',
                         fetch_permissions_default  => $mask_permitted_d,
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'Person-[everything]>-Person' => { } ]
+                        callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ]
+                    )
+                    ->search({},
+                        {
+                            page         => $datatable_params->{'page'},
+                            rows         => $datatable_params->{'rows'},
+                            order_by     => $datatable_params->{'order'},
+                        }
+                    )->all
+            ];
+            
+            $json->{'recordsTotal'} =            
+                $self
+                    ->hm_schema
+                    ->resultset('Person')
+                    ->search({ id => $person_id })
+                    ->filter_validated(mask => VC_NOT_REMOVED)
+                    ->search_related_deep(
+                        resultset_class            => 'Contractor',
+                        fetch_permissions_default  => $mask_permitted_d,
+                        fetch_validations_default  => $mask_validated_d,
+                        search_permissions_default => $mask_permitted_d,
+                        search_validations_default => $mask_validated_d,
+                        callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ]
+                    )->count;
+                    
+        } case('provisioning_agreement') {
+            
+            my $provisioning_agreement_id = $self->stash->{'related_id'};
+            
+            $json->{'data'} = [
+                $self
+                    ->hm_schema
+                    ->resultset('ProvisioningAgreement')
+                    ->search({ id => $provisioning_agreement_id })
+                    ->filter_validated(mask => VC_NOT_REMOVED)
+                    ->search_related_deep(
+                        resultset_class            => 'Contractor',
+                        fetch_permissions_default  => $mask_permitted_d,
+                        fetch_validations_default  => $mask_validated_d,
+                        search_permissions_default => $mask_permitted_d,
+                        search_validations_default => $mask_validated_d,
+                        callout => [ 'ProvisioningAgreement-[client|provider]>-Contractor' => { } ]
                     )
                     ->search({},
                         {
@@ -68,37 +112,36 @@ method list {
             $json->{'recordsTotal'} =
                 $self
                     ->hm_schema
-                    ->resultset('Person')
-                    ->search({ id => $self->stash->{'authorized_person_result'}->id })
+                    ->resultset('ProvisioningAgreement')
+                    ->search({ id => $provisioning_agreement_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
-                        resultset_class            => 'Person',
+                        resultset_class            => 'Contractor',
                         fetch_permissions_default  => $mask_permitted_d,
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'Person-[everything]>-Person' => { } ]
+                        callout => [ 'ProvisioningAgreement-[client|provider]>-Contractor' => { } ]
                     )
                     ->count;
             
-        }
-        case('contractor') {
+        } case('provisioning_obligation') {
             
-            $self->stash->{'title'} = "Contractor -> " . $self->stash->{'filter'};
+            my $provisioning_obligation_id = $self->stash->{'related_id'};
             
             $json->{'data'} = [
                 $self
                     ->hm_schema
-                    ->resultset('Contractor')
-                    ->search({ id => $self->stash->{'related_id'} })
+                    ->resultset('ProvisioningObligation')
+                    ->search({ id => $provisioning_obligation_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
-                        resultset_class            => 'Person',
+                        resultset_class            => 'Contractor',
                         fetch_permissions_default  => $mask_permitted_d,
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'Contractor->-Person' => { } ]
+                        callout => [ 'ProvisioningObligation->-Contractor' => { } ]
                     )
                     ->search({},
                         {
@@ -106,72 +149,28 @@ method list {
                             rows         => $datatable_params->{'rows'},
                             order_by     => $datatable_params->{'order'},
                         }
-                    )->all                    
+                    )->all
             ];
             
             $json->{'recordsTotal'} =
                 $self
                     ->hm_schema
-                    ->resultset('Contractor')
-                    ->search({ id => $self->stash->{'related_id'} })
+                    ->resultset('ProvisioningObligation')
+                    ->search({ id => $provisioning_obligation_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
-                        resultset_class            => 'Person',
+                        resultset_class            => 'Contractor',
                         fetch_permissions_default  => $mask_permitted_d,
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'Contractor->-Person' => { } ]
-                    )
-                    ->all
+                        callout => [ 'ProvisioningObligation->-Contractor' => { } ]
+                    )->count;            
         }
-        case('provisioning_agreement') {
-            
-            $self->stash->{'title'} = "ProvisioningAgreement -> " . $self->stash->{'filter'};
-            
-            $json->{'data'} = [
-                $self
-                    ->hm_schema
-                    ->resultset('ProvisioningAgreement')
-                    ->search({ id => $self->stash->{'related_id'} })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'Person',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ 'ProvisioningAgreement->-Person' => { } ]
-                    )
-                    ->search({},
-                        {
-                            page         => $datatable_params->{'page'},
-                            rows         => $datatable_params->{'rows'},
-                            order_by     => $datatable_params->{'order'},
-                        }
-                    )->all  
-            ];
-            
-            $json->{'recordsTotal'} =
-                $self
-                    ->hm_schema
-                    ->resultset('Contractor')
-                    ->search({ id => $self->stash->{'related_id'} })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'Person',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ 'Contractor->-Person' => { } ]
-                    )
-                    ->all            
-        }        
     }
     
     my $columns =
-        $settings->{'contractor->list'}
+        $settings->{'person->list'}
             ->{'snippets->table_json'}
                 ->{'columns'};
                 
@@ -195,11 +194,9 @@ method list {
     }
     @{ $json->{'data'} };
     
-    $json->{'recordsFiltered'} = $json->{'recordsTotal'}; 
-            
+    $json->{'recordsFiltered'} = $json->{'recordsTotal'};    
+    
     $self->render( json => $json );
 }
 
-__PACKAGE__->meta->make_immutable(inline_constructor => 0);
-
-1;
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);    

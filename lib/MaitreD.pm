@@ -186,6 +186,17 @@ method startup {
 
 
     my  $routes_authenticated_contractor = $routes_authenticated->under('/contractor');
+
+        $routes_authenticated_contractor
+            ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
+
         $routes_authenticated_contractor
             ->get('/list/:filter/:related_element/:related_id')
             ->to(

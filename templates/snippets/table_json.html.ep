@@ -1,6 +1,25 @@
-%  snippet_register('js_snippet', 'dataTables', { }, begin
+% my $releted_select = begin
+% my $name  = shift;
+% my $icon  = shift;
+% my $value = shift;
+  + '<option value="<%= $value %>">'
+  + '<i class="<%= $icon %>" title="<%= $name %>"><%= $name %></i>'
+  + '</option>'
+% end
+
+%  snippet_register('js_snippet', 'dataTables', { }, begin   
         <script>
             $(document).ready(function(){
+                var select = '<select size="1" name="action">'
+                + '<option value="" selected="selected">...</option>'
+
+%                my @releted = sort{ $related->{$a}->{'order'} <=> $related->{$b}->{'order'} } keys %{$related};
+%                for my $col ( @releted )  {
+%=                  $releted_select->($col, $related->{$col}->{'icon'}, $related->{$col}->{'value'} );
+%                }
+
+                + '</select>';
+                
                 var table = $('.<%= $name %>').DataTable({
                     pageLength: 25,
                     responsive: true,
@@ -8,19 +27,20 @@
                     processing: true,
                     serverSide: true,
                     columns   : [
-                        { "data": "first_name" },
-                        { "data": "last_name" },
-                        { "data": "valid_since" },
-                        { "data": "valid_till" },
+
+%                       for my $col ( @{ $datatable->{'columns'} } )  {
+                            { data: "<%= $col->{'data'} %>" },
+%                       }
+
                         {
                             "class":          "",
                             "orderable":      false,
                             "data":           null,
-                            "defaultContent": "<button class='dt_view'><i class='fa fa-eye'></i></button> <button class='dt_edit'><i class='fa fa-edit'></i></button> <button class='dt_pause'><i class='fa fa-pause'></i></button> <button class='dt_remove'><i class='fa fa-remove'></i></button>"
+                            "defaultContent": select + " <button class='dt_view'><i class='fa fa-eye'></i></button> <button class='dt_edit'><i class='fa fa-edit'></i></button> <button class='dt_pause'><i class='fa fa-pause'></i></button> <button class='dt_remove'><i class='fa fa-remove'></i></button>"
                         }      
                                                 
                     ],                     
-                    ajax: "/person/list/all.json",
+                    ajax: '<%= $datatable->{ajax} %>',
                     buttons: [
                         { extend: 'copy'},
                         { extend: 'csv'},
@@ -43,33 +63,45 @@
                    console.log( data, $(this).attr('class') );
                 } );
 
+                $('.<%= $name %> tbody').on( 'change', 'select', function () {
+                   var data = table.row( $(this).parents('tr') ).data();
+                   var tmpl = $(this).val();
+                   tmpl = tmpl.replace(/%s/g, data.id);
+                   console.log( data , tmpl, data.id );
+                   window.location.href = tmpl;
+                } );
+
             });
             
         </script>
 %   end);
+
 %   my @columns_names_sorted = sort { $columns->{ $a }->{'order'} <=> $columns->{ $b }->{'order'} } (keys(%{ $columns }));
-%   my @related_names_sorted = sort { $related->{ $a }->{'order'} <=> $related->{ $b }->{'order'} } (keys(%{ $related }));
-%=  tag('h1' => $title);
+
+%=  tag('h1' => $title );
+
 %=  tag('div' => ('class' => 'table-responsive') => begin
+
 %=      tag('table' => ('class' => "table table-striped table-bordered table-hover $name") => begin
 %=          tag('thead' => begin
 %=              tag('tr' => begin
 %                   foreach my $column_name (@columns_names_sorted) {
 %=                      tag('th' => $column_name);
 %                   }
-%=                  tag('th' => 'Action');
-%               end);               # </tr>
-%           end);                   # </thead>
+%               end);               
+%           end);                   
 
-
+%=          tag('tbody' => begin
+%           end);               
+        
 %=          tag('tfoot' => begin
 %=              tag('tr' => begin
 %                   foreach my $column_name (@columns_names_sorted) {
 %=                      tag('th' => $column_name);
 %                   }
-%=                  tag('th' => 'Action');
-%               end);               # </tr>
-%           end);                   # </thead>
+%               end);            
+%           end);                        
 
-%       end);                       # </table>
-%   end);                           # </div>
+%       end);
+
+%  end);
