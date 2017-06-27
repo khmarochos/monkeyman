@@ -14,6 +14,14 @@ __PACKAGE__->load_namespaces;
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-02-11 13:49:31
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UB8B/zvbNA6ST/vxTo012A
 
+
+
+__PACKAGE__->load_namespaces(
+    default_resultset_class => 'DefaultResultSet'
+);
+
+
+
 use Parse::RecDescent;
 
 # In case of trouble uncomment these:
@@ -26,7 +34,7 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
 
     {
         use strict;
-        use warnings;
+        no warnings;
 
         use HyperMouse::Exception qw(SourceClassUndefined);
 
@@ -37,10 +45,10 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
             {
                 operator    => undef,
                 join        => undef,
-                pipe        => undef
+                pipe        => undef,
+                pipe_type   => undef
             }
         ];
-        my $pipe_type; #TODO: move it to $op_stack
 
         my $macroses = {
 
@@ -139,7 +147,12 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
                     'person_x_provisioning_agreements' => {
                         validations => -1,
                         permissions => -1,
-                        fetch => [ 'person' => { validations => -1 } ]
+                        search => [
+                            'person' => {
+                                validations => -1,
+                                fetch       => 1
+                            }
+                        ]
                     }
                 ]
             },
@@ -288,14 +301,15 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
         };
 
         sub _show_stack {
-            warn(shift . ' ' . join(' ',
+            warn(shift . ' ' . join('+',
                 map( {
+                    my $s = $_;
                     sprintf(
-                        '[%s|%s|%s|%s]',
-                        $_->{'operator'},
-                        $_->{'join'},
-                        $_->{'pipe'},
-                        $_->{'pipe_type'}
+                        '[%.1s|%.4s|%.4s|%.4s]',
+                        $s->{'operator'},
+                        $s->{'join'},
+                        $s->{'pipe'},
+                        $s->{'pipe_type'}
                     );
                 } @{ $op_stack })
             ));
@@ -315,7 +329,7 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
             while(defined(my $g = $item[2][$i++])) {
                 $r = {
                     resultset_class     => $g->{'operand'}->{'resultset_class'},
-                    $g->{'operator'}    => [ $r, $g->{'operand'} ]
+                    $g->{'operator'}    => [ $r, $g->{'operand'} ],
                 };
             }
             $return                 = $r;
@@ -336,12 +350,13 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
 
     operator_join:          /-*&-*/
         {
+            $op_stack->[-1]->{'pipe'} = $op_stack->[-1]->{'join'};
             $return = $op_stack->[-1]->{'operator'} = 'join';
         }
 
     operator_pipe:          /-*/ ( /\[.+\]/ )(?) />-*/
         {
-            $pipe_type = $item[2][0];
+            $op_stack->[-1]->{'pipe_type'} = $item[2][0];
             $return = $op_stack->[-1]->{'operator'} = 'pipe';
         }
 
@@ -362,68 +377,81 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
 
     group_begin:            '('
         {
-            #_show_stack('(' . $item[1]);
-            push(@{ $op_stack }, $op_stack->[-1]);
+            # _show_stack('(((');
+            push(@{ $op_stack }, {
+                operator    => $op_stack->[-1]->{'operator'},
+                join        => $op_stack->[-1]->{'pipe'},
+                pipe        => $op_stack->[-1]->{'pipe'},
+                pipe_type   => $op_stack->[-1]->{'pipe_type'},
+            } );
             $return = $item[1];
-            #_show_stack('(' . $item[1]);
+            # _show_stack('(((');
         }
 
     group_end:              ')'
         {
-            #_show_stack(')' . $item[1]);
-            $op_stack->[-1]->{'pipe'} = pop(@{ $op_stack })->{'pipe'};
+            # _show_stack(')))');
+            # $op_stack->[-2]->{'join'} = $op_stack->[-1]->{'join'};
+            $op_stack->[-2]->{'pipe'} = $op_stack->[-1]->{'pipe'};
+            pop(@{ $op_stack });
             $return = $item[1];
-            #_show_stack(')' . $item[1]);
+            # _show_stack(')))');
         }
 
     element_given:          '@' ( /\w+/ )(?)
         {
-            #_show_stack('@' . $item[2][0]);
+            # _show_stack(' @ ');
             my $class_found;
             if(defined($item[2][0])) {
                 $class_found = $item[2][0];
             } elsif(
-                defined($op_stack->[-1])                                    &&
-                defined($op_stack->[-1]->{'operator'})                      &&
-                defined($op_stack->[-1]->{ $op_stack->[-1]->{'operator'} })
+                defined($op_stack->[-1])            &&
+                defined($op_stack->[-1]->{'pipe'})
             ) {
-                $class_found = $op_stack->[-1]->{ $op_stack->[-1]->{'operator'} };
+                $class_found = $op_stack->[-1]->{'pipe'};
             } else {
                 (__PACKAGE__ . '::Exception::SourceClassUndefined')->throw(
                     "Can't parse the expression, the source class isn't defined at the point where it should be"
                 );
             }
-            $op_stack->[-1]->{'join'} = $op_stack->[-1]->{'pipe'} = $class_found;
+            $op_stack->[-1]->{'pipe'} = $class_found;
+            $op_stack->[-1]->{'join'} = $class_found
+                unless(defined($op_stack->[-1]->{'join'}));
             $return = {
                 resultset_class =>   $class_found,
-                prepare         => [ $class_found, { validations => -1 } ]
+                prepare         => [ $class_found, { } ]
             };
-            #_show_stack(sprintf("%s\n", Dumper($return)));
-            #_show_stack('@' . $item[2][0]);
+            # _show_stack(sprintf("%s\n", Dumper($return)));
+            # _show_stack(' @ ');
         }
 
     element_macros:         '@' /\w+/
         {
-            #_show_stack('@@@' . $item[2]);
+            # _show_stack('@@@');
             unless(
-                defined($op_stack->[-1])                                    &&
-                defined($op_stack->[-1]->{'operator'})                      &&
-                defined($op_stack->[-1]->{ $op_stack->[-1]->{'operator'} })
+                defined($op_stack->[-1])            &&
+                defined($op_stack->[-1]->{'pipe'})
             ) {
                 (__PACKAGE__ . '::Exception::SourceClassUndefined')->throw(
                     "Can't parse the expression, the source class isn't defined at the point where it should be"
                 );
             }
-            my $macros = sprintf('@%s-%s>-@%s', $op_stack->[-1]->{ $op_stack->[-1]->{'operator'} }, defined($pipe_type) ? $pipe_type : '', $item[2]);
+            my $macros = sprintf('@%s-%s>-@%s',
+                        $op_stack->[-1]->{'pipe'},
+                defined($op_stack->[-1]->{'pipe_type'})
+                      ? $op_stack->[-1]->{'pipe_type'}
+                      : '',
+                $item[2]
+            );
             unless(defined($return = $macroses->{ $macros })) {
                 $return = {
                     resultset_class => $item[2],
-                    search          => [ decamelize($item[2]), { validations => -1, from => $op_stack->[-1]->{ $op_stack->[-1]->{'operator'} } } ]
+                    search          => [ decamelize($item[2]), { validations => -1, from => $op_stack->[-1]->{'pipe'} } ]
                 };
             }
-            #_show_stack(sprintf("%s\n%s\n", $macros, Dumper($return)));
-            $op_stack->[-1]->{'pipe'} = $item[2];
-            #_show_stack('@@@' . $item[2]);
+            # $op_stack->[-1]->{'pipe'} = $item[2];
+            $op_stack->[-1]->{'join'} = $op_stack->[-1]->{'pipe'} = $item[2];
+            # _show_stack('@@@');
         }
 
     element_searched:       /\w+/
@@ -435,12 +463,6 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
     end:                    /^\Z/
 
 __END_OF_GRAMMAR__
-
-
-
-__PACKAGE__->load_namespaces(
-    default_resultset_class => 'DefaultResultSet'
-);
 
 
 

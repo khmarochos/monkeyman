@@ -520,7 +520,7 @@ method list {
                     $self
                         ->hm_schema
                         ->resultset('Person')
-                        ->search({ id => $self->stash->{'authorized_person_result'}->id })
+                        ->search({ 'me.id' => $self->stash->{'authorized_person_result'}->id })
                         ->filter_validated(mask => VC_NOT_REMOVED)
                         ->search_related_deep(
                             resultset_class            => 'Person',
@@ -542,7 +542,7 @@ method list {
                     $self
                         ->hm_schema
                         ->resultset('Contractor')
-                        ->search({ id => $self->stash->{'related_id'} })
+                        ->search({ 'me.id' => $self->stash->{'related_id'} })
                         ->filter_validated(mask => VC_NOT_REMOVED)
                         ->search_related_deep(
                             resultset_class            => 'Person',
