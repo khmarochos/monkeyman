@@ -6,7 +6,7 @@
     my $title          = stash->{'title'};
 %>
 <%=
-    include('snippets/table_json', title => $title, %{ $extra_settings->{'snippets->table_json'} } );
+    include('snippets/table_json', title => $title, %{ $extra_settings->{'table'} } );
 %>
 <%
     layout('authorized', title_message => 'Welcome!');

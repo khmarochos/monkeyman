@@ -493,96 +493,13 @@ method _add_email(
 method list {
     my $settings = $MaitreD::Extra::API::V1::TemplateSettings::settings;
     my $key      = $self->stash->{'related_element'} || 'person';
-    $key .= '->list'; 
+
     $self->stash->{'extra_settings'} =
         $settings->{ $key };
     
     $self->stash->{'title'} = "Person -> " . $self->stash->{'filter'};
     
 }
-
-method list_old {
-
-    my $mask_permitted_d = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
-    my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
-    my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
-    switch($self->stash->{'filter'}) {
-        case('all') {
-            $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
-            $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE;
-        }
-        case('active') {
-            $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
-            $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
-        }
-        case('archived') {
-            $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
-            $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_EXPIRED;
-        }
-    }
-
-    switch($self->stash->{'related_element'}) {
-        case('') {
-            $self->stash->{'title'} = "Person -> " . $self->stash->{'filter'};
-            $self->stash('rows' => [
-                $self
-                    ->hm_schema
-                    ->resultset('Person')
-                    ->search({ id => $self->stash->{'authorized_person_result'}->id })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'Person',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ 'Person-[everything]>-Person' => { } ]
-                    )
-                    ->all
-             ]);
-        }
-        case('contractor') {
-            $self->stash->{'title'} = "Contractor -> " . $self->stash->{'filter'};
-            $self->stash('rows' => [
-                $self
-                    ->hm_schema
-                    ->resultset('Contractor')
-                    ->search({ id => $self->stash->{'related_id'} })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'Person',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ 'Contractor->-Person' => { } ]
-                    )
-                    ->all
-            ]);
-        }
-        case('provisioning_agreement') {
-            $self->stash->{'title'} = "ProvisioningAgreement -> " . $self->stash->{'filter'};
-            $self->stash('rows' => [
-                $self
-                    ->hm_schema
-                    ->resultset('ProvisioningAgreement')
-                    ->search({ id => $self->stash->{'related_id'} })
-                    ->filter_validated(mask => VC_NOT_REMOVED)
-                    ->search_related_deep(
-                        resultset_class            => 'Person',
-                        fetch_permissions_default  => $mask_permitted_d,
-                        fetch_validations_default  => $mask_validated_d,
-                        search_permissions_default => $mask_permitted_d,
-                        search_validations_default => $mask_validated_d,
-                        callout => [ 'ProvisioningAgreement->-Person' => { } ]
-                    )
-                    ->all
-            ]);
-        }
-    }
-    
-}
-
 
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

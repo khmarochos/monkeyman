@@ -1,10 +1,10 @@
-% my $releted_select = begin
-% my $name  = shift;
-% my $icon  = shift;
-% my $value = shift;
-  + '<option value="<%= $value %>">'
-  + '<i class="<%= $icon %>" title="<%= $name %>"><%= $name %></i>'
-  + '</option>'
+% my $related_select = begin
+%       my $name  = shift;
+%       my $icon  = shift;
+%       my $value = shift;
+        + '<option value="<%= $value %>">'
+        + '<i class="<%= $icon %>" title="<%= $name %>"><%= $name %></i>'
+        + '</option>'
 % end
 
 %  snippet_register('js_snippet', 'dataTables', { }, begin   
@@ -13,9 +13,9 @@
                 var select = '<select size="1" name="action">'
                 + '<option value="" selected="selected">...</option>'
 
-%                my @releted = sort{ $related->{$a}->{'order'} <=> $related->{$b}->{'order'} } keys %{$related};
-%                for my $col ( @releted )  {
-%=                  $releted_select->($col, $related->{$col}->{'icon'}, $related->{$col}->{'value'} );
+%                my @related = sort{ $related->{$a}->{'order'} <=> $related->{$b}->{'order'} } keys %{$related};
+%                for my $col ( @related )  {
+%=                  $related_select->($col, $related->{$col}->{'icon'}, $related->{$col}->{'value'} );
 %                }
 
                 + '</select>';

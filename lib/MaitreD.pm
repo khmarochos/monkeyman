@@ -203,7 +203,7 @@ method startup {
                 controller      => 'contractor',
                 action          => 'list',
                 filter          => 'active',
-                related_element => 'person',
+                related_element => 'contractor',
                 related_id      => '@'
             );
 
