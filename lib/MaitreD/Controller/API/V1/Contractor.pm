@@ -64,19 +64,7 @@ method list {
                         search_validations_default => $mask_validated_d,
                         callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ]
                     );
-            
-            $json->{'data'} = [
-                    $tmpl_rs->search({},
-                        {
-                            page         => $datatable_params->{'page'},
-                            rows         => $datatable_params->{'rows'},
-                            order_by     => $datatable_params->{'order'},
-                        }
-                    )->all
-            ];
-            
-            $json->{'recordsTotal'} = $tmpl_rs->count;
-                    
+                                
         } case('provisioning_agreement') {
             
             my $provisioning_agreement_id = $self->stash->{'related_id'};
@@ -96,17 +84,6 @@ method list {
                         callout => [ 'ProvisioningAgreement-[client|provider]>-Contractor' => { } ]
                     );
 
-            $json->{'data'} = [
-                    $tmpl_rs->search({},
-                        {
-                            page         => $datatable_params->{'page'},
-                            rows         => $datatable_params->{'rows'},
-                            order_by     => $datatable_params->{'order'},
-                        }
-                    )->all
-            ];
-            
-            $json->{'recordsTotal'} = $tmpl_rs->count;
             
         } case('provisioning_obligation') {
             
@@ -126,21 +103,22 @@ method list {
                         search_validations_default => $mask_validated_d,
                         callout => [ 'ProvisioningObligation->-Contractor' => { } ]
                     );
-            
-            $json->{'data'} = [
-                    $tmpl_rs->search({},
-                        {
-                            page         => $datatable_params->{'page'},
-                            rows         => $datatable_params->{'rows'},
-                            order_by     => $datatable_params->{'order'},
-                        }
-                    )->all
-            ];
-            
-            $json->{'recordsTotal'} = $tmpl_rs->count;
-            
+                        
         }
     }
+    
+    $json->{'data'} = [
+            $tmpl_rs->search({},
+                {
+                    page         => $datatable_params->{'page'},
+                    rows         => $datatable_params->{'rows'},
+                    order_by     => $datatable_params->{'order'},
+                }
+            )->all
+    ];
+    
+    $json->{'recordsTotal'} = $tmpl_rs->count;
+    
     
     my $columns = $settings->{'contractor'}->{'table'}->{'columns'};
                 

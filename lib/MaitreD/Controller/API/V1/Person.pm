@@ -61,18 +61,6 @@ method list {
                         callout => [ 'Person-[everything]>-Person' => { } ]
                     );
             
-            $json->{'data'} = [
-                    $tmpl_rs->search({},
-                        {
-                            page         => $datatable_params->{'page'},
-                            rows         => $datatable_params->{'rows'},
-                            order_by     => $datatable_params->{'order'},
-                        }
-                    )->all
-            ];
-            
-            $json->{'recordsTotal'} = $tmpl_rs->count;
-            
         }
         case('contractor') {
             
@@ -139,6 +127,18 @@ method list {
             
         }        
     }
+    
+    $json->{'data'} = [
+            $tmpl_rs->search({},
+                {
+                    page         => $datatable_params->{'page'},
+                    rows         => $datatable_params->{'rows'},
+                    order_by     => $datatable_params->{'order'},
+                }
+            )->all
+    ];
+    
+    $json->{'recordsTotal'} = $tmpl_rs->count;    
     
     my $columns = $settings->{'person'}->{'table'}->{'columns'};
                 
