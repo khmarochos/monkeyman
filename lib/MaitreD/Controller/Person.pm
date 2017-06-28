@@ -492,13 +492,11 @@ method _add_email(
 
 method list {
     my $settings = $MaitreD::Extra::API::V1::TemplateSettings::settings;
-    my $key      = $self->stash->{'related_element'} || 'person';
-
-    $self->stash->{'extra_settings'} =
-        $settings->{ $key };
-    
+    my $key      = defined($self->stash->{'related_element'})
+                         ? $self->stash->{'related_element'}
+                         : 'person';
+    $self->stash->{'extra_settings'} = $settings->{ $key };
     $self->stash->{'title'} = "Person -> " . $self->stash->{'filter'};
-    
 }
 
 
