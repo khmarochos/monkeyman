@@ -1,4 +1,4 @@
-package MaitreD::Controller::API::V1::ProvisioningObligation;
+package MaitreD::Controller::API::V1::ResourcePiece;
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use TryCatch;
 use Switch;
 use MaitreD::Extra::API::V1::TemplateSettings;
 
-method list {    
+method list {
     my $settings         = $MaitreD::Extra::API::V1::TemplateSettings::settings;
     my $json             = {};
     my $mask_permitted_d = 0b000111; # FIXME: implement HyperMosuse::Schema::PermissionCheck and define the PC_* constants
@@ -45,7 +45,7 @@ method list {
                 ($self->stash->{'related_id'} ne '@') ?
                  $self->stash->{'related_id'} :
                  $self->stash->{'authorized_person_result'}->id;
-            
+                 
             $tmpl_rs =
                 $self
                     ->hm_schema
@@ -53,18 +53,18 @@ method list {
                     ->search({ id => $person_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
-                        resultset_class            => 'ProvisioningObligation',
+                        resultset_class            => 'ResourcePiece',
                         fetch_permissions_default  => $mask_permitted_f,
                         fetch_validations_default  => $mask_validated_f,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ person_TO_provisioning_obligation => { } ]
+                        callout => [ person_TO_resource_piece => { } ]
                     );
-            
         }
         case('provisioning_agreement') {
+            
             my $provisioning_agreement_id = $self->stash->{'related_id'};
-
+            
             $tmpl_rs =
                 $self
                     ->hm_schema
@@ -72,18 +72,36 @@ method list {
                     ->search({ id => $provisioning_agreement_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
-                        resultset_class            => 'ProvisioningObligation',
+                        resultset_class            => 'ResourcePiece',
                         fetch_permissions_default  => $mask_permitted_f,
                         fetch_validations_default  => $mask_validated_f,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ provisioning_agreement_TO_provisioning_obligation => { } ]
+                        callout => [ provisioning_agreement_TO_resource_piece => { } ]
                     );
-                    
+        }
+        case('provisioning_obligation') {
+            
+            my $provisioning_obligation_id = $self->stash->{'related_id'};
+
+            $tmpl_rs =
+                $self
+                    ->hm_schema
+                    ->resultset('ProvisioningObligation')
+                    ->search({ id => $provisioning_obligation_id })
+                    ->filter_validated(mask => VC_NOT_REMOVED)
+                    ->search_related_deep(
+                        resultset_class            => 'ResourcePiece',
+                        fetch_permissions_default  => $mask_permitted_f,
+                        fetch_validations_default  => $mask_validated_f,
+                        search_permissions_default => $mask_permitted_d,
+                        search_validations_default => $mask_validated_d,
+                        callout => [ provisioning_obligation_TO_resource_piece => { } ]
+                    );
         }
     }
     
-    my $columns = $settings->{'provisioning_obligation'}->{'table'}->{'columns'};
+    my $columns = $settings->{'resource_piece'}->{'table'}->{'columns'};
                 
     @{ $json->{'data'} } = map {
         my $hash = {};
@@ -107,9 +125,9 @@ method list {
     
     $json->{'recordsFiltered'} = $json->{'recordsTotal'}; 
             
-    $self->render( json => $json );      
+    $self->render( json => $json );     
 }
 
-__PACKAGE__->meta->make_immutable(inline_constructor => 0); 
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;

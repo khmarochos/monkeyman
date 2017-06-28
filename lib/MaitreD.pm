@@ -256,7 +256,7 @@ method startup {
         $routes_authenticated_provisioning_obligation
             ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
             ->to(
-                controller      => 'provisioning_obligation',
+                controller      => 'Controller::API::V1::ProvisioningObligation',
                 action          => 'list',
                 filter          => 'active',
                 related_element => 'person',
@@ -274,6 +274,17 @@ method startup {
             );
 
     my  $routes_authenticated_resource_piece = $routes_authenticated->under('/resource_piece');
+
+        $routes_authenticated_resource_piece
+            ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::ResourcePiece',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
+
         $routes_authenticated_resource_piece
             ->get('/list/:filter/:related_element/:related_id')
             ->to(

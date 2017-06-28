@@ -407,6 +407,87 @@ our $settings = {
             
         },
     },
+    #
+    # resource_piece
+    #
+    'resource_piece' => {
+        'table' => {
+            'name'    => 'resource_piece',
+            'columns' => {
+                'ID' => {
+                    'order'    => 1,
+                    'db_name'  => 'id',
+                    'db_value' => sub {
+                        shift;
+                        sprintf("%s", shift->id);
+                    },
+                },
+                'Valid Since' => {
+                    'order'    => 2,
+                    'db_name'  => 'valid_since',
+                    'db_value' => sub { shift->datetime_display(shift->valid_since, 2); }
+                },
+                'Valid Till' => {
+                    'order'    => 3,
+                    'db_name'  => 'valid_till',
+                    'db_value' => sub { shift->datetime_display(shift->valid_till, 2) || '∞'; }
+                },
+                'Resource Type' => {
+                    'order'    => 4,
+                    'db_name'  => 'resource_type',
+                    'db_value' => sub {
+                        shift;
+                        shift->resource_type->name
+                    }
+                },
+                'Resource Handle' => {
+                    'order' => 5,
+                    'db_name'  => 'resource_handle',
+                    'db_value' => sub {
+                        shift;
+                        shift->resource_handle;
+                    }
+                },
+                'Resource Host' => {
+                    'order'    => 6,
+                    'db_name'  => 'resource_host',
+                    'db_value' => sub {
+                        shift;
+                        shift->resource_host->id;
+                    }
+                },
+                'Action' => {
+                    'order' => 7,
+                },
+            },
+
+            'related'   => {
+                'Provisioning Agreements'  => {
+                    'order' => 1,
+                    'icon'  => 'fa fa-file-text-o',
+                    'value' => "/provisioning_agreement/list/related_to/resource_piece/%s",
+                },
+                'Provisioning Obligations'  => {
+                    'order' => 2,
+                    'icon'  => 'fa fa-shopping-cart',
+                    'value' => "/resource_piece/list/related_to/resource_piece/%s",
+                }
+            },
+            
+            'datatable' => {
+                'columns' =>  [
+                    { "data" => "id" },
+                    { "data" => "valid_since" },
+                    { "data" => "valid_till" },
+                    { "data" => "resource_type" },
+                    { "data" => "resource_handle" },
+                    { "data" => "resource_host" },
+                ],
+                'ajax' =>  '/resource_piece/list/all.json',
+            },            
+            
+        },        
+    },
 };
 
 1;
