@@ -6,6 +6,7 @@ use warnings;
 use Mojo::Base qw(Mojolicious);
 use Mojolicious::Plugin::DateTimeDisplay;
 use Mojolicious::Plugin::AssetManager;
+use Mojolicious::Plugin::DataTableParams;
 use HyperMouse;
 use MaitreD::Schema;
 use MonkeyMan::Exception qw(InvalidParameterSet);
@@ -26,6 +27,8 @@ has _hypermouse => method() {
 method startup {
 
     $self->plugin('DateTimeDisplay');
+    $self->plugin('DataTableParams');
+    
     $self->plugin('AssetManager', {
         assets_library => {
             js_pre      => {
@@ -106,6 +109,7 @@ method startup {
                 city        => '*'
             );
 
+    # api
     my  $routes_api = $routes->any('/api/v1');
     my  $routes_api_web_messages = $routes_api->any('/web-messages');
         $routes_api_web_messages
@@ -123,7 +127,9 @@ method startup {
                 message_id  => undef,
                 peek        => 1
             );
-
+            
+    # // api
+    
         $routes
             ->any('/person/login')
             ->name('person.login')
@@ -159,7 +165,17 @@ method startup {
 
     my  $routes_authenticated_person = $routes_authenticated->under('/person');
         $routes_authenticated_person
-            ->get('/list/:filter/:related_element/:related_id')
+            ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'list',
+                filter          => 'active',
+                related_element => '',
+                related_id      => ''
+            );
+
+        $routes_authenticated_person
+            ->get('/list/:filter/:related_element/:related_id' )
             ->to(
                 controller      => 'person',
                 action          => 'list',
@@ -168,7 +184,19 @@ method startup {
                 related_id      => ''
             );
 
+
     my  $routes_authenticated_contractor = $routes_authenticated->under('/contractor');
+
+        $routes_authenticated_contractor
+            ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
+
         $routes_authenticated_contractor
             ->get('/list/:filter/:related_element/:related_id')
             ->to(
@@ -180,6 +208,17 @@ method startup {
             );
 
     my  $routes_authenticated_corporation = $routes_authenticated->under('/corporation');
+        
+        $routes_authenticated_corporation
+            ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
+
         $routes_authenticated_corporation
             ->get('/list/:filter/:related_element/:related_id')
             ->to(

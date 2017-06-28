@@ -1,60 +1,12 @@
 <%
     asset_required('css', 'dataTables', { });
     asset_required('js',  'dataTables', { });
-    my $language = stash->{'language_id'};
-    foreach my $table (@{ stash->{'tables'} }) {
+    my $language       = stash->{'language_id'};
+    my $extra_settings = stash->{'extra_settings'};
+    my $title          = stash->{'title'};
 %>
-<%=     include('snippets/table',
-            name      => $table->{'name'},
-            title     => $table->{'title'},
-            columns   => {
-                'Name' => {
-                    order => 1,
-                    value => sub {
-                        my $row = shift;
-                        sprintf("%s %s", $row->first_name, $row->last_name);
-                    }
-                },
-                'Valid Since' => {
-                    order => 2,
-                    value => sub { datetime_display(shift->valid_since, 2); }
-                },
-                'Valid Till' => {
-                    order => 3,
-                    value => sub { datetime_display(shift->valid_till, 2) || '∞'; }
-                },
-                'Actions' => {
-                    order   => 6,
-                    actions => 1,
-                    related => 1
-                }
-            },
-            related   => {
-                'Provisioning Agreements' => {
-                    order => 1,
-                    icon  => 'fa fa-file-text-o',
-                    value => sub { sprintf("/provisioning_agreement/list/related_to/person/%s", shift->id); }
-                },
-                'Partnership Agreements' => {
-                    order => 2,
-                    icon  => 'fa fa-file-text',
-                    value => sub { sprintf("/partnership_agreement/list/related_to/person/%s", shift->id); }
-                },
-                'Contractors' => {
-                    order => 3,
-                    icon  => 'fa fa-briefcase',
-                    value => sub { sprintf("/contractor/list/related_to/person/%s", shift->id); }
-                },
-                'Corporations' => {
-                    order => 4,
-                    icon  => 'fa fa-building-o',
-                    value => sub { sprintf("/corporation/list/related_to/person/%s", shift->id); }
-                }
-            },
-            rows      => $table->{'data'},
-            language  => $language
-        );
-    }
+<%=
+    include('snippets/table_json', title => $title, %{ $extra_settings->{'table'} } );
 %>
 <%
     layout('authorized', title_message => 'Welcome!');
