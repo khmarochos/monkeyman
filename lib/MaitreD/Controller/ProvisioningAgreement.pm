@@ -12,6 +12,7 @@ use HyperMouse::Schema::ValidityCheck::Constants ':ALL';
 use Method::Signatures;
 use TryCatch;
 use Switch;
+use MaitreD::Extra::API::V1::TemplateSettings;
 
 
 method list {
