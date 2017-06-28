@@ -61,7 +61,7 @@ method datatable_params (
             }
         }
         elsif( defined $1 && $1 eq 'order' ){
-            if ( $2 && $3 ){
+            if ( defined $2 && $3 && $data->{$key} ){
                 $order->[$2]->{$3} = $data->{$key};
             }
         }        
