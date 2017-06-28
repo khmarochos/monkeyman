@@ -28,6 +28,8 @@ extends 'DBIx::Class::Core';
 
 =item * L<HyperMouse::Schema::DefaultResult::DeepRelationships>
 
+=item * L<DBIx::Class::Helper::Row::SelfResultSet>
+
 =item * L<DBIx::Class::InflateColumn::DateTime>
 
 =item * L<DBIx::Class::EncodedColumn>
@@ -40,6 +42,7 @@ __PACKAGE__->load_components(
   "+HyperMouse::Schema::DefaultResult::HyperMouse",
   "+HyperMouse::Schema::DefaultResult::I18nRelationships",
   "+HyperMouse::Schema::DefaultResult::DeepRelationships",
+  "Helper::Row::SelfResultSet",
   "InflateColumn::DateTime",
   "EncodedColumn",
 );
@@ -203,8 +206,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-30 02:54:03
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+mREVuXgbvngU1hrjd6VSQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-06-26 15:58:15
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HIz/SxHjrU/8vQy7tbI4JA
 
 __PACKAGE__->many_to_many(
   "provisioning_obligations" => "provisioning_obligation_x_resource_pieces", "provisioning_obligation"

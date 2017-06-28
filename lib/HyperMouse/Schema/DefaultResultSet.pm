@@ -12,6 +12,8 @@ extends
     'HyperMouse::Schema::ValidityCheck',
     'HyperMouse::Schema::PermissionCheck';
 
+use HyperMouse::Exception qw(PatternAbsent InvalidClass);
+
 use Method::Signatures;
 use DateTime;
 use DateTime::TimeZone;
@@ -26,6 +28,15 @@ __PACKAGE__->load_components('Helper::ResultSet');
 method get_schema {
     $self->result_source->schema;
 }
+
+method get_hypermouse {
+    $self->get_schema->get_hypermouse;
+}
+
+method get_logger {
+    $self->get_hypermouse->get_logger;
+}
+
 
 
 
@@ -42,32 +53,193 @@ method format_datetime(
 
 
 method search_related_deep(
-    Str  :$resultset_class!,
-    Bool :$union? = 1,
-    ...
+    Str         :$resultset_class!,
+    ArrayRef    :$callout?,
+    ArrayRef    :$pipe?,
+    ArrayRef    :$join?,
+    Int         :$fetch_permissions_default?    = 0b000111,
+    Int         :$fetch_validations_default?    = 0b000111,
+    Int         :$search_permissions_default?   = 0b000111,
+    Int         :$search_validations_default?   = 0b000111,
+    ArrayRef    :$search?,
+    ArrayRef    :$prepare?,
+    Int         :$prepare_permissions_default?  = 0b000111,
+    Int         :$prepare_validations_default?  = 0b000111,
+    Bool        :$union?                        = 1,
+    Maybe[Int]  :$permissions,
+    Maybe[Int]  :$validations,
 ) {
 
-    my @resultsets  = ();
-    my $resultset   = $self;
-    my %parameters  = @_;
+    my $logger = $self->get_logger;
+    $logger->tracef(
+        "Searching the %s records related to %s (%s)",
+        $resultset_class, $self, { (@_) }
+    );
 
-    foreach my $result ($resultset->all) {
-        push(@resultsets, scalar($result->search_related_deep(%parameters)));
+    my $search_parmeters_base = {
+        resultset_class             => $resultset_class,
+        search_permissions_default  => $search_permissions_default,
+        search_validations_default  => $search_validations_default,
+    };
+
+    my @resultsets;
+
+    if(defined($callout)) {
+
+        my @callout_local = @{ $callout };
+        while(my($callout_key, $callout_val) = splice(@callout_local, 0, 2)) {
+
+            $logger->tracef("Calling out the %s search pattern", $callout_key);
+
+            my $search_parameters_more = $self->_search_related_deep_pattern_translate($callout_key);
+            (__PACKAGE__ . '::Exception::PatternAbsent')->throwf(
+                "Can't call out the %s search pattern",
+                "$callout_key"
+            )
+                unless(defined($search_parameters_more));
+
+            push(@resultsets, scalar($self->search_related_deep(
+                %{ $search_parmeters_base },
+                %{ $search_parameters_more },
+                %{ $callout_val }
+            )));
+
+        }
+
+    } elsif(defined($join)) {
+
+        foreach my $join_element (@{ $join }) {
+            my $resultset = scalar($self->search_related_deep(
+                %{ $search_parmeters_base },
+                %{ $join_element },
+                union => 1
+            ));
+            push(@resultsets, $resultset);
+        }
+
+    } elsif(defined($pipe)) {
+
+        my $resultset = $self;
+        foreach my $pipe_element (@{ $pipe }) {
+            $resultset = scalar($resultset->search_related_deep(
+                %{ $search_parmeters_base },
+                %{ $pipe_element },
+                union => 1
+            ));
+        }
+        push(@resultsets, $resultset);
+
+    } elsif(defined($prepare)) {
+
+        my $given = ref($self) =~ s/^.*::(?!::)(.+)$/$1/r;
+        (__PACKAGE__ . '::Exception::InvalidClass')->throwf(
+            "%s is given instead of %s expected",
+            $given,
+            $prepare->[0]
+        )
+            if($given ne $prepare->[0]);
+
+        push(@resultsets, $self);
+
+    } elsif(defined($search)) {
+
+        my @search_local = @{ $search };
+        while(my($search_key, $search_val) = splice(@search_local, 0, 2)) {
+        
+            my $resultset = $self->search_related_rs($search_key);
+
+            my $search_permissions = $search_val->{'permissions'};
+            my $search_validations = $search_val->{'validations'};
+
+            $resultset = $resultset->filter_validated(
+                mask => $search_validations >= 0
+                      ? $search_validations
+                      : ($search_val->{'fetch'} ? $fetch_validations_default : $search_validations_default)
+            )
+                if(defined($search_validations));
+
+            $resultset = $resultset->filter_permitted(
+                mask => $search_permissions >= 0
+                      ? $search_permissions
+                      : ($search_val->{'fetch'} ? $fetch_permissions_default : $search_permissions_default)
+            )
+                if(defined($search_permissions));
+
+            push(@resultsets, scalar($resultset))
+                if($search_val->{'fetch'});
+
+            if(
+                defined($search_val->{'pipe'})      ||
+                defined($search_val->{'join'})      ||
+                defined($search_val->{'search'})    ||
+                defined($search_val->{'callout'})   ||
+                defined($search_val->{'prepare'})
+            ) {
+                foreach my $resultset ($resultset->search_related_deep(
+                    %{ $search_parmeters_base },
+                    %{ $search_val }
+                )) {
+                    push(@resultsets, scalar($resultset));
+                }
+            }
+
+        }
+
     }
 
-    push(@resultsets, scalar($self->result_source->schema->resultset($resultset_class)->search({ id => undef })))
-        unless(@resultsets);
+
+
+    unless(@resultsets) {
+        push(@resultsets, scalar($self->get_schema->resultset($resultset_class)->search({ 0 => 1 })));
+        # $logger->tracef("No findings :-( %s %s", $resultset_class, $resultsets[0]);
+    }
 
     if($union) {
+        # $logger->tracef("Uniting %s", join(', ', map({ ref($_) . '(' . join (', ', map({ $_->id } $_->all)) . ')' } @resultsets)));
         my $resultset = shift(@resultsets);
         return(
-            defined($resultset)
+            scalar(@resultsets) > 0
                   ? $resultset->union([ @resultsets ])
                   : $resultset
         )
     } else {
         return(@resultsets);
     }
+
+}
+
+
+
+has _search_related_deep_grammar_parser => (
+    is          => 'ro',
+    isa         => 'Parse::RecDescent',
+    reader      =>   '_get_search_related_deep_grammar_parser',
+    writer      =>   '_set_search_related_deep_grammar_parser',
+    predicate   =>   '_has_search_related_deep_grammar_parser',
+    builder     => '_build_search_related_deep_grammar_parser',
+    lazy        => 1
+);
+
+method _build_search_related_deep_grammar_parser {
+    return($HyperMouse::Schema::DeepRelationshipsGrammarParser);
+}
+
+
+
+method _search_related_deep_pattern_translate(Str $exp!) {
+
+    my $logger = $self->get_logger;
+
+    $logger->tracef("Translating the %s search pattern", $exp);
+
+    my $parse_result = $self->_get_search_related_deep_grammar_parser->parse($exp, 1);
+    unless(defined($parse_result)) {
+        # TODO: raise an exception
+    }
+    
+    $logger->tracef("The translation result is: %s", $parse_result);
+
+    return($parse_result);
 
 }
 
