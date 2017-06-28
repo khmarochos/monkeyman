@@ -326,6 +326,87 @@ our $settings = {
             
         },
     },
+    #
+    # provisioning_obligation
+    #
+    'provisioning_obligation' => {
+        'table' => {
+            'name'    => 'corporation',
+            'columns' => {
+                'ID' => {
+                    'order'    => 1,
+                    'db_name'  => 'id',
+                    'db_value' => sub {
+                        shift;
+                        sprintf("%s", shift->id);
+                    },
+                },
+                'Valid Since' => {
+                    'order'    => 2,
+                    'db_name'  => 'valid_since',
+                    'db_value' => sub { shift->datetime_display(shift->valid_since, 2); }
+                },
+                'Valid Till' => {
+                    'order'    => 3,
+                    'db_name'  => 'valid_till',
+                    'db_value' => sub { shift->datetime_display(shift->valid_till, 2) || '∞'; }
+                },
+                'Provisioning Agreement' => {
+                    'order'    => 4,
+                    'db_name'  => 'provisioning_agreement',
+                    'db_value' => sub {
+                        shift;
+                        shift->provisioning_agreement->name
+                    }
+                },
+                'Service' => {
+                    'order' => 5,
+                    'db_name'  => 'service',
+                    'db_value' => sub {
+                        shift;
+                        shift->name;
+                    }
+                },
+                'Quantity' => {
+                    'order'    => 6,
+                    'db_name'  => 'quantity',
+                    'db_value' => sub {
+                        shift;
+                        shift->quantity;
+                    }
+                },
+                'Action' => {
+                    'order' => 7,
+                },
+            },
+
+            'related'   => {
+                'Provisioning Agreements'  => {
+                    'order' => 1,
+                    'icon'  => 'fa fa-file-text-o',
+                    'value' => "/provisioning_agreement/list/related_to/provisioning_obligation/%s",
+                },
+                'Resources'  => {
+                    'order' => 2,
+                    'icon'  => 'fa fa-server',
+                    'value' => "/resource_piece/list/related_to/provisioning_obligation/%s",
+                }
+            },
+            
+            'datatable' => {
+                'columns' =>  [
+                    { "data" => "id" },
+                    { "data" => "valid_since" },
+                    { "data" => "valid_till" },
+                    { "data" => "provisioning_agreement" },
+                    { "data" => "service" },
+                    { "data" => "quantity" },
+                ],
+                'ajax' =>  '/provisioning_obligation/list/all.json',
+            },            
+            
+        },
+    },
 };
 
 1;
