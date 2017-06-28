@@ -215,7 +215,7 @@ method startup {
                 controller      => 'Controller::API::V1::Corporation',
                 action          => 'list',
                 filter          => 'active',
-                related_element => 'corporation',
+                related_element => 'person',
                 related_id      => '@'
             );
 
