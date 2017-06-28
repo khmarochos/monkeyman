@@ -208,6 +208,17 @@ method startup {
             );
 
     my  $routes_authenticated_corporation = $routes_authenticated->under('/corporation');
+        
+        $routes_authenticated_corporation
+            ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'corporation',
+                related_id      => '@'
+            );
+
         $routes_authenticated_corporation
             ->get('/list/:filter/:related_element/:related_id')
             ->to(
