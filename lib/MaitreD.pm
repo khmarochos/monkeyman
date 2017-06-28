@@ -230,6 +230,17 @@ method startup {
             );
 
     my  $routes_authenticated_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
+
+        $routes_authenticated_provisioning_agreement
+            ->get('/list/:filter/:related_element/:related_id' =>[ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::ProvisioningAgreement',
+                action          => 'list',
+                filter          => 'active',
+                related_element => 'person',
+                related_id      => '@'
+            );
+            
         $routes_authenticated_provisioning_agreement
             ->get('/list/:filter/:related_element/:related_id')
             ->to(

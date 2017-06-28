@@ -81,7 +81,7 @@ our $settings = {
                 ],
                 'ajax' =>  '/person/list/all.json',
             },            
-        }
+        },
     },
     #
     # Contractor
@@ -156,7 +156,7 @@ our $settings = {
                 ],
                 'ajax' =>  '/contractor/list/all.json',
             },            
-        }
+        },
     },
     #
     # Corporation
@@ -231,8 +231,101 @@ our $settings = {
                 ],
                 'ajax' =>  '/corporation/list/all.json',
             },            
-        }
-    }
+        },
+    },
+    #
+    # provisioning_agreement
+    #
+    'provisioning_agreement' => {
+        'table' => {
+            'name'    => 'corporation',
+            'columns' => {
+                'ID' => {
+                    'order'    => 1,
+                    'db_name'  => 'id',
+                    'db_value' => sub {
+                        shift;
+                        sprintf("%s", shift->id);
+                    },
+                },
+                'Number' => {
+                    'order'    => 2,
+                    'db_name'  => 'number',
+                    'db_value' => sub {
+                        shift;
+                        shift->client_contractor->name;
+                    }
+                },
+                'Valid Since' => {
+                    'order'    => 3,
+                    'db_name'  => 'valid_since',
+                    'db_value' => sub { shift->datetime_display(shift->valid_since, 2); }
+                },
+                'Valid Till' => {
+                    'order'    => 4,
+                    'db_name'  => 'valid_till',
+                    'db_value' => sub { shift->datetime_display(shift->valid_till, 2) || '∞'; }
+                },
+                'Client' => {
+                    'order'    => 5,
+                    'db_name'  => 'client',
+                    'db_value' => sub {
+                        my $controller = shift;
+                        my $row = shift;
+                        sprintf(
+                            "%s",
+                            $row->client_contractor->name
+                        );
+                    }
+                },
+                'Provider' => {
+                    'order'    => 6,
+                    'db_name'  => 'provider',
+                    'db_value' => sub {
+                        my $controller = shift;
+                        my $row = shift;
+                        sprintf(
+                            "%s",
+                            $row->provider_contractor->name,
+                        );
+                    }
+                },
+                'Action' => {
+                    'order' => 7,
+                },
+            },
+            'related'   => {
+                'Persons'                   => {
+                    'order' => 1,
+                    'icon'  => 'fa fa-user-o',
+                    'value' => "/person/list/related_to/provisioning_agreement/%s",
+                },
+                'Provisioning Obligations'  => {
+                    'order' => 2,
+                    'icon'  => 'fa fa-shopping-cart',
+                    'value' => "/provisioning_obligation/list/related_to/provisioning_agreement/%s",
+                },
+                'Resources'  => {
+                    'order' => 3,
+                    'icon'  => 'fa fa-server',
+                    'value' => "/resource_piece/list/related_to/provisioning_agreement/%s",
+                }
+            },
+            
+            'datatable' => {
+                'columns' =>  [
+                    { "data" => "id" },
+                    { "data" => "number" },
+                    { "data" => "valid_since" },
+                    { "data" => "valid_till" },
+                    { "data" => "client" },
+                    { "data" => "provider" },
+                ],
+                'ajax' =>  '/provisioning_agreement/list/all.json',
+            },            
+            
+        },
+    },
 };
 
 1;
