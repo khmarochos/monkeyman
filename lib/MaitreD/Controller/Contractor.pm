@@ -17,10 +17,8 @@ use MaitreD::Extra::API::V1::TemplateSettings;
 
 method list {
     my $settings = $MaitreD::Extra::API::V1::TemplateSettings::settings;
-    my $key      = $self->stash->{'related_element'} || 'person';
 
-    $self->stash->{'extra_settings'} =
-        $settings->{ $key };
+    $self->stash->{'extra_settings'} = $settings->{'contractor'};
     
     $self->stash->{'title'} = "Contractors -> " . $self->stash->{'filter'};
     

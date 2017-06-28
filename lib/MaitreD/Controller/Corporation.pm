@@ -17,12 +17,12 @@ use MaitreD::Extra::API::V1::TemplateSettings;
 
 method list {
     my $settings = $MaitreD::Extra::API::V1::TemplateSettings::settings;
-    my $key      = $self->stash->{'related_element'} || 'person';
+    my $key      = $self->stash->{'related_element'};
 
     $self->stash->{'extra_settings'} =
         $settings->{ $key };
     
-    $self->stash->{'title'} = "Corporations -> " . $self->stash->{'filter'};
+    $self->stash->{'title'} = "Corporations -> " . $self->stash->{'filter'} . " " . $self->stash->{'related_element'};
     
     # person/list - пока универсальный шаблон...
     $self->render( template => 'person/list' )     

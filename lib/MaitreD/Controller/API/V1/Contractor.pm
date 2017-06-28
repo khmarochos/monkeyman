@@ -54,7 +54,7 @@ method list {
                 $self
                     ->hm_schema
                     ->resultset('Person')
-                    ->search({ id => $person_id })
+                    ->search({ 'me.id' => $person_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
                         resultset_class            => 'Contractor',
@@ -62,7 +62,7 @@ method list {
                         fetch_validations_default  => $mask_validated_f,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'Person->-((@->-Corporation->-Contractor)-&-(@->-Contractor))' => { } ]
+                        callout => [ '@Person->-((@->-@Corporation->-@Contractor)-&-(@->-@Contractor))' => { } ]
                     );
                                 
         } case('provisioning_agreement') {

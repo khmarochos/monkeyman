@@ -17,14 +17,15 @@ use Data::Dumper;
 use MaitreD::Extra::API::V1::TemplateSettings;
 
 method list {
+
     my $settings         = $MaitreD::Extra::API::V1::TemplateSettings::settings;
-    my $json             = {};
     my $mask_permitted_f = 0b000111;
     my $mask_permitted_d = 0b000111; 
     my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
+    my $datatable_params = $self->datatable_params;    
+    my $json             = {};
     my $tmpl_rs;
-    my $datatable_params = $self->datatable_params;
     
     switch($self->stash->{'filter'}) {
         case('all') {
@@ -81,18 +82,6 @@ method list {
                         callout => [ '@Contractor > @Person' => { } ]
                     );
             
-            $json->{'data'} = [
-                    $tmpl_rs->search({},
-                        {
-                            page         => $datatable_params->{'page'},
-                            rows         => $datatable_params->{'rows'},
-                            order_by     => $datatable_params->{'order'},
-                        }
-                    )->all                    
-            ];
-            
-            $json->{'recordsTotal'} =$tmpl_rs->all
-            
         }
         case('provisioning_agreement') {
             
@@ -113,58 +102,40 @@ method list {
                         callout => [ '@ProvisioningAgreement > @Person' => { } ]
                     );
             
-            $json->{'data'} = [
-                    $tmpl_rs->search({},
-                        {
-                            page         => $datatable_params->{'page'},
-                            rows         => $datatable_params->{'rows'},
-                            order_by     => $datatable_params->{'order'},
-                        }
-                    )->all  
-            ];
-            
-            $json->{'recordsTotal'} = $tmpl_rs->all;
-            
         }        
     }
     
     $json->{'data'} = [
-            $tmpl_rs->search({},
-                {
-                    page         => $datatable_params->{'page'},
-                    rows         => $datatable_params->{'rows'},
-                    order_by     => $datatable_params->{'order'},
-                }
-            )->all
+        $tmpl_rs->search({},
+            {
+                page         => $datatable_params->{'page'},
+                rows         => $datatable_params->{'rows'},
+                order_by     => $datatable_params->{'order'},
+            }
+        )->all
     ];
-    
-    $json->{'recordsTotal'} = $tmpl_rs->count;    
+    $json->{'recordsFiltered'} = $json->{'recordsTotal'} = $tmpl_rs->count;    
     
     my $columns = $settings->{'person'}->{'table'}->{'columns'};
-                
-    @{ $json->{'data'} } = map {
+    @{ $json->{'data'} } = map({
         my $hash = {};
-        
-        for my $col ( keys %$columns ){
-            my $name = $columns->{$col}->{'db_name'};
-            my $fh   = $columns->{$col}->{'db_value'};
-
-            if ( defined $name && defined $fh && ref $fh eq 'CODE' ) {
-                $hash->{ $name } =
-                    $fh->( $self, $_ );                        
-            }
-            elsif( defined $name ){
-                $hash->{'name'} = $_->$name;
+        for my $col (keys(%$columns)) {
+            my $name    = $columns->{ $col }->{'db_name'};
+            my $value   = $columns->{ $col }->{'db_value'};
+            if(defined($name) && defined($value)) {
+                $hash->{ $name } = ref($value) eq 'CODE'
+                    ? $value->($self, $_)
+                    : $_->{ $name };
+            } else {
+                # TODO: Something should happen here
+                next;
             }
         }
-        
         $hash;
-    }
-    @{ $json->{'data'} };
-    
-    $json->{'recordsFiltered'} = $json->{'recordsTotal'}; 
+    } @{ $json->{'data'} });
             
-    $self->render( json => $json );
+    $self->render(json => $json);
+
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
