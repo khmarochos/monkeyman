@@ -20,8 +20,8 @@ method list {
     my $settings         = $MaitreD::Extra::API::V1::TemplateSettings::settings;
     my $json             = {};
     my $mask_permitted_f = 0b000111;
-    my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $mask_permitted_d = 0b000111; 
+    my $mask_validated_f = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE & VC_NOT_EXPIRED;
     my $tmpl_rs;
     my $datatable_params = $self->datatable_params;
@@ -50,7 +50,7 @@ method list {
                 $self
                     ->hm_schema
                     ->resultset('Person')
-                    ->search({ id => $self->stash->{'authorized_person_result'}->id })
+                    ->search({ 'me.id' => $self->stash->{'authorized_person_result'}->id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
                         resultset_class            => 'Person',
@@ -58,7 +58,7 @@ method list {
                         fetch_validations_default  => $mask_validated_f,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'Person-[everything]>-Person' => { } ]
+                        callout => [ '@Person [everything]> @Person' => { } ]
                     );
             
         }
@@ -70,7 +70,7 @@ method list {
                 $self
                     ->hm_schema
                     ->resultset('Contractor')
-                    ->search({ id => $self->stash->{'related_id'} })
+                    ->search({ 'me.id' => $self->stash->{'related_id'} })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
                         resultset_class            => 'Person',
@@ -78,7 +78,7 @@ method list {
                         fetch_validations_default  => $mask_validated_f,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'Contractor->-Person' => { } ]
+                        callout => [ '@Contractor > @Person' => { } ]
                     );
             
             $json->{'data'} = [
@@ -102,7 +102,7 @@ method list {
                 $self
                     ->hm_schema
                     ->resultset('ProvisioningAgreement')
-                    ->search({ id => $self->stash->{'related_id'} })
+                    ->search({ 'me.id' => $self->stash->{'related_id'} })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
                         resultset_class            => 'Person',
@@ -110,7 +110,7 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ 'ProvisioningAgreement->-Person' => { } ]
+                        callout => [ '@ProvisioningAgreement > @Person' => { } ]
                     );
             
             $json->{'data'} = [
