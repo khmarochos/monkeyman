@@ -61,7 +61,7 @@ method list {
                             fetch_validations_default  => $mask_validated_f,
                             search_permissions_default => $mask_permitted_d,
                             search_validations_default => $mask_validated_d,
-                            callout => [ 'Person->-((((@->-Corporation->-Contractor)-&-(@->-Contractor))-[client|provider]>-ProvisioningAgreement)-&-(@->-ProvisioningAgreement))' => { } ]
+                            callout => [ '@Person->-((((@->-@Corporation->-@Contractor)-&-(@->-@Contractor))-[client|provider]>-@ProvisioningAgreement)-&-(@->-@ProvisioningAgreement))' => { } ]
                         );
             
         
@@ -84,7 +84,7 @@ method list {
                             fetch_validations_default  => $mask_validated_f,
                             search_permissions_default => $mask_permitted_d,
                             search_validations_default => $mask_validated_d,
-                            callout => [ 'Contractor-[client|provider]>-ProvisioningAgreement' => { } ]
+                            callout => [ '@Contractor-[client|provider] > @ProvisioningAgreement' => { } ]
                         );
         
         }
@@ -96,16 +96,18 @@ method list {
         my $hash = {};
         
         for my $col ( keys %$columns ){
-            my $name = $columns->{$col}->{'db_name'};
-            my $fh   = $columns->{$col}->{'db_value'};
-
-            if ( defined $name && defined $fh && ref $fh eq 'CODE' ) {
-                $hash->{ $name } =
-                    $fh->( $self, $_ );                        
+            my $name  = $columns->{$col}->{'db_name'};
+            my $value = $columns->{$col}->{'db_value'};
+#                   
+            if(defined($name) && defined($value)) {
+                $hash->{ $name } = ref($value) eq 'CODE'
+                    ? $value->($self, $_)
+                    : $_->{ $name };
+            } else {
+                # TODO: Something should happen here
+                next;
             }
-            elsif( defined $name ){
-                $hash->{'name'} = $_->$name;
-            }
+            
         }
         
         $hash;
