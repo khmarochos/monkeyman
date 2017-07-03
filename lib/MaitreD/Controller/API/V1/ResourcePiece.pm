@@ -96,7 +96,7 @@ method list {
                         fetch_validations_default  => $mask_validated_f,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ provisioning_obligation_TO_resource_piece => { } ]
+                        callout => [ '@ProvisioningObligation->-@ResourcePiece' => { } ]
                     );
         }
     }

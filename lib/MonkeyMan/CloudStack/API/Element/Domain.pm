@@ -19,6 +19,10 @@ our %vocabulary_tree = (
     type => 'Domain',
     name => 'domain',
     entity_node => 'domain',
+    information => {
+        id      => '/id',
+        name    => '/name'
+    },
     actions => {
         list => {
             request => {
