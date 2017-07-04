@@ -20,54 +20,18 @@ our $VERSION = '0.0.1';
 
 
 
-has 'monkeyman' => (
+has 'configuration' => (
     is          => 'ro',
-    isa         => 'MonkeyMan',
-    reader      =>   '_get_monkeyman',
-    writer      =>   '_set_monkeyman',
-    builder     => '_build_monkeyman',
-    lazy        => 1,
-    required    => 0
+    isa         => 'HashRef',
+    predicate   =>    'has_configuration',
+    reader      =>    'get_configuration',
+    writer      =>   '_set_configuration',
+    builder     => '_build_configuration',
+    lazy        => 1
 );
 
-method _build_monkeyman {
-    MonkeyMan->new(
-        app_name        => 'HyperMouse',
-        app_description => 'No description is available yet',
-        app_version     => $VERSION
-    );
-}
-
-
-
-has 'logger' => (
-    is          => 'ro',
-    isa         => 'MonkeyMan::Logger',
-    reader      =>    'get_logger',
-    writer      =>   '_set_logger',
-    builder     => '_build_logger',
-    lazy        => 1,
-    required    => 0
-);
-
-method _build_logger {
-    $self->_get_monkeyman->get_logger;
-}
-
-
-
-has 'mailer' => (
-    is          => 'ro',
-    isa         => 'MonkeyMan::Mailer',
-    reader      =>    'get_mailer',
-    writer      =>   '_set_mailer',
-    builder     => '_build_mailer',
-    lazy        => 1,
-    required    => 0
-);
-
-method _build_mailer {
-    $self->_get_monkeyman->get_mailer;
+method _build_configuration {
+    return({});
 }
 
 
@@ -85,13 +49,18 @@ has 'schema' => (
 method _build_schema {
 
     my $hm_schema = HyperMouse::Schema->connect(
-        'dbi:mysql:hypermouse',
-        'hypermouse',
-        'WTXFa2G1uN3cpwMP',
+        sprintf(
+            'dbi:%s:%s',
+            $self->get_configuration->{'database'}->{'type'},
+            $self->get_configuration->{'database'}->{'database'}
+        ),
+        $self->get_configuration->{'database'}->{'username'},
+        $self->get_configuration->{'database'}->{'password'},
         { mysql_enable_utf8 => 1 }
     );
-    # FIXME: Move this crap to the configuration file
-    
+
+    # We need to store the reference to the HyperMouse object inside of the
+    # HyperMouse::Schema object, as we'll need to use it later
     $hm_schema->set_hypermouse($self);
 
     return($hm_schema);
@@ -99,21 +68,20 @@ method _build_schema {
 
 
 
-has 'configuration' => (
+has 'logger' => (
     is          => 'ro',
-    isa         => 'HashRef',
-    predicate   =>    'has_configuration',
-    reader      =>    'get_configuration',
-    writer      =>   '_set_configuration',
-    builder     => '_build_configuration',
+    isa         => 'MonkeyMan::Logger',
+    reader      =>    'get_logger',
+    writer      =>   '_set_logger',
+    predicate   =>   '_has_logger',
+    builder     => '_build_logger',
     lazy        => 1
 );
 
-method _build_configuration {
-    {
-        password_encryption_key => 'My Amazingly Cool Encryption Key'
-    };
+method _build_logger {
+    return(MonkeyMan::Logger->instance);
 }
+
 
 
 

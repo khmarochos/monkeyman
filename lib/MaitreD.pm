@@ -7,24 +7,27 @@ use Mojo::Base qw(Mojolicious);
 use Mojolicious::Plugin::DateTimeDisplay;
 use Mojolicious::Plugin::AssetManager;
 use Mojolicious::Plugin::DataTableParams;
-use HyperMouse;
-use MaitreD::Schema;
-use MonkeyMan::Exception qw(InvalidParameterSet);
 use Method::Signatures;
+use MonkeyMan;
+use MonkeyMan::Exception qw(InvalidParameterSet);
+use MaitreD::Schema;
 
 
-
-our $HYPER_MOUSE;
-
-
-
-has _hypermouse => method() {
-    $HYPER_MOUSE = defined($HYPER_MOUSE) ? $HYPER_MOUSE : HyperMouse->new;
-};
 
 
 
 method startup {
+
+    $self->attr('_monkeyman'     => sub {
+        MonkeyMan->initialize(
+            app_name        => "MaitreD",
+            app_description => "Maitre d'Tucha Application",
+            app_version     => "та.похуй.блять"
+        );
+    });
+    $self->attr('_hypermouse'    => sub {
+        $self->_monkeyman->get_hypermouse
+    });
 
     $self->plugin('DateTimeDisplay');
     $self->plugin('DataTableParams');

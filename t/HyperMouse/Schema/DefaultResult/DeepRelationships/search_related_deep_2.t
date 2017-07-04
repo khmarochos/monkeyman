@@ -3,15 +3,21 @@
 use strict;
 use warnings;
 
-use HyperMouse;
+use MonkeyMan;
 
 use Test::More (tests => 2);
 
 
 
-my $hypermouse  = HyperMouse->new;
+my $monkeyman   = MonkeyMan->new(
+    app_code            => undef,
+    app_name            => 'search_related_deep_2.t',
+    app_description     => '...',
+    app_version         => $MonkeyMan::VERSION
+);
+my $hypermouse  = $monkeyman->get_hypermouse;
+my $logger      = $monkeyman->get_logger;
 my $db_schema   = $hypermouse->get_schema;
-my $logger      = $hypermouse->get_logger;
 
 my $person_r = $db_schema->resultset('Person')->find(1);
 
