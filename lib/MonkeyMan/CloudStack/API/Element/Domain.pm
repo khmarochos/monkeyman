@@ -77,6 +77,63 @@ our %vocabulary_tree = (
                 }
             }
         },
+        list_children => {
+            request => {
+                command             => 'listDomainChildren',
+                async               => 0,
+                paged               => 1,
+                parameters          => {
+                    parent_id => {
+                        required            => 1,
+                        command_parameters  => { 'id' => '<%VALUE%>' },
+                    },
+                    all => {
+                        required            => 0,
+                        command_parameters  => { 'listall' => 'true' },
+                    },
+                    filter_by_name => {
+                        required            => 0,
+                        command_parameters  => { 'name' => '<%VALUE%>' },
+                    },
+                    filter_by_path => {
+                        required            => 0,
+                        filters             => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>[path = "<%VALUE%>"]' ]
+                    },
+                    filter_by_path_all => {
+                        required            => 0,
+                        command_parameters  => { 'listall' => 'true' },
+                        filters             => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>[path = "<%VALUE%>"]' ]
+                    },
+                    recursive => {
+                        required            => 0,
+                        command_parameters  => { 'isrecursive' => 'true' }
+                    }
+                }
+            },
+            response => {
+                response_node   => 'listdomainchildrenresponse',
+                results         => {
+                    element         => {
+                        return_as       => [ qw( dom element id ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    id              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/id' ],
+                        required        => 0,
+                        multiple        => 1
+                    },
+                    path              => {
+                        return_as       => [ qw( value ) ],
+                        queries         => [ '/<%OUR_RESPONSE_NODE%>/<%OUR_ENTITY_NODE%>/path' ],
+                        required        => 0,
+                        multiple        => 1
+                    }
+                }
+            }
+        },
         create => {
             request => {
                 command             => 'createDomain',

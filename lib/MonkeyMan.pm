@@ -39,10 +39,10 @@ use Method::Signatures;
 use TryCatch;
 use Getopt::Long qw(:config no_ignore_case);
 use Config::General;
-use File::Slurp;
 use String::CamelCase qw(camelize);
 use YAML::XS;
 use File::Slurp;
+use File::Basename;
 
 # I have to use Log::Log4perl here, because it adds the END-block which
 # destroys all the loggers. I need this block to be added before I add my
@@ -84,10 +84,10 @@ has 'mm_version' => (
 );
 
 method _build_mm_version {
-
-    MM_VERSION;
-
+    return(MM_VERSION);
 }
+
+
 
 has 'app_code' => (
     is          => 'ro',
@@ -96,29 +96,55 @@ has 'app_code' => (
     predicate   => 'has_app_code'
 );
 
+
+
 has 'app_name' => (
     is          => 'ro',
     isa         => 'Str',
-    required    => 1,
-    reader      =>  'get_app_name',
-    writer      => '_set_app_name'
+    required    => 0,
+    reader      =>    'get_app_name',
+    writer      =>   '_set_app_name',
+    builder     => '_build_app_name',
+    lazy        => 1
 );
+
+method _build_app_name {
+    return(basename($0));
+}
+
+
 
 has 'app_description' => (
     is          => 'ro',
     isa         => 'Str',
-    required    => 1,
-    reader      =>  'get_app_description',
-    writer      => '_set_app_description'
+    required    => 0,
+    reader      =>    'get_app_description',
+    writer      =>   '_set_app_description',
+    builder     => '_build_app_description',
+    lazy        => 1
 );
+
+method _build_app_description {
+    return("No description provided");
+}
+
+
 
 has 'app_version' => (
     is          => 'ro',
     isa         => 'Str',
-    required    => 1,
-    reader      =>  'get_app_version',
-    writer      => '_set_app_version'
+    required    => 0,
+    reader      =>    'get_app_version',
+    writer      =>   '_set_app_version',
+    builder     => '_build_app_version',
+    lazy        => 1
 );
+
+method _build_app_version {
+    return("0.0.0");
+}
+
+
 
 has 'app_usage_help' => (
     is          => 'ro',

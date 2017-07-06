@@ -35,11 +35,15 @@ our %vocabulary_tree = (
                         required            => 0,
                         command_parameters  => { 'id' => '<%VALUE%>' },
                     },
+                    filter_by_virtual_machine_id => {
+                        required            => 0,
+                        command_parameters  => { 'virtualmachineid' => '<%VALUE%>' },
+                    },
                     filter_by_domain_id => {
                         required            => 0,
                         command_parameters  => { 'domainid' => '<%VALUE%>' },
                     },
-                    filter_by_zoneid => {
+                    filter_by_zone_id => {
                         required            => 0,
                         command_parameters  => { 'zoneid' => '<%VALUE%>' },
                     },

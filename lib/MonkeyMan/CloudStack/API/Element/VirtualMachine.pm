@@ -16,6 +16,10 @@ our %vocabulary_tree = (
     type => 'VirtualMachine',
     name => 'virtual machine',
     entity_node => 'virtualmachine',
+    information => {
+        id              => '/id',
+        instancename    => '/instancename'
+    },
     actions => {
         list => {
             request => {

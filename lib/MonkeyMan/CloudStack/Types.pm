@@ -20,6 +20,7 @@ our @_ElementType_values = qw(
     Account
     User
     VirtualMachine
+    Nic
     Volume
     Snapshot
     ServiceOffering
