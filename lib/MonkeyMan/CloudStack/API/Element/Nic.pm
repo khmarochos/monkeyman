@@ -17,7 +17,8 @@ our %vocabulary_tree = (
     name => 'nic',
     entity_node => 'nic',
     information => {
-        id              => '/id'
+        id              => '/id',
+        ipaddress       => '/ipaddress'
     },
     actions => {
         list => {
