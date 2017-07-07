@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ResourcePiece;
+package HyperMouse::Schema::Result::ResourceGroup;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ResourcePiece
+HyperMouse::Schema::Result::ResourceGroup
 
 =cut
 
@@ -47,11 +47,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<resource_piece>
+=head1 TABLE: C<resource_group>
 
 =cut
 
-__PACKAGE__->table("resource_piece");
+__PACKAGE__->table("resource_group");
 
 =head1 ACCESSORS
 
@@ -80,25 +80,11 @@ __PACKAGE__->table("resource_piece");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 resource_type_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
-
-=head2 resource_group_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
-
-=head2 resource_handle
+=head2 name
 
   data_type: 'varchar'
   is_nullable: 0
-  size: 127
+  size: 255
 
 =cut
 
@@ -128,22 +114,8 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "resource_type_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "resource_group_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "resource_handle",
-  { data_type => "varchar", is_nullable => 0, size => 127 },
+  "name",
+  { data_type => "varchar", is_nullable => 0, size => 255 },
 );
 
 =head1 PRIMARY KEY
@@ -160,59 +132,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 provisioning_obligation_x_resource_pieces
+=head2 resource_pieces
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ProvisioningObligationXResourcePiece>
+Related object: L<HyperMouse::Schema::Result::ResourcePiece>
 
 =cut
 
 __PACKAGE__->has_many(
-  "provisioning_obligation_x_resource_pieces",
-  "HyperMouse::Schema::Result::ProvisioningObligationXResourcePiece",
-  { "foreign.resource_piece_id" => "self.id" },
+  "resource_pieces",
+  "HyperMouse::Schema::Result::ResourcePiece",
+  { "foreign.resource_group_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 resource_group
 
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::ResourceGroup>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "resource_group",
-  "HyperMouse::Schema::Result::ResourceGroup",
-  { id => "resource_group_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
-);
-
-=head2 resource_type
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::ResourceType>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "resource_type",
-  "HyperMouse::Schema::Result::ResourceType",
-  { id => "resource_type_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-07 00:25:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oZ77HUJxxLYB1UJvKBnCpA
-
-__PACKAGE__->many_to_many(
-  "provisioning_obligations" => "provisioning_obligation_x_resource_pieces", "provisioning_obligation"
-);
-
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-07 16:10:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PyI4LyCyHfG+vVFS2eqRvw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

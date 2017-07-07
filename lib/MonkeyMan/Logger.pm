@@ -528,9 +528,10 @@ func _sprintf(
                 $value_new = '[' . $value_new . ']';
             }
         } else {
-            $value_new = $shall_be_colored{$i} ?
-                $self->colorify('PARAMETER', $values_new[$i], 1) :
-                $values_new[$i];
+            $value_new = $values_new[$i];
+#            $value_new = $shall_be_colored{$i} ?
+#                $self->colorify('PARAMETER', $values_new[$i], 1) :
+#                $values_new[$i];
         }
 
         $values_new[$i] = $value_new;
@@ -607,7 +608,7 @@ func mm_showref(...) {
                         $dumpfile,
                         $!
                 );
-            print({$filehandle} $dump);
+            print({ $filehandle } $dump);
             close($filehandle) ||
                 MonkeyMan::Exception->throwf(
                     "Can't close the %s file: %s",
