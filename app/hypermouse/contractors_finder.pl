@@ -10,12 +10,6 @@ use DateTime;
 
 
 
-my $service_types   = {
-    cpu     => 1,
-    ram     => 2,
-    ssd     => 3,
-    ipv4    => 7
-};
 my $monkeyman       = MonkeyMan->new(
     app_code                    => undef,
     app_name                    => 'contractors_finder',
@@ -64,7 +58,7 @@ my $now             = DateTime->now;
 
 
 
-foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) {
+foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) { #FIXME: Make a parameter
 
     my $cloudstack      = $monkeyman->get_cloudstack($cloudstack_handle);
     my $cloudstack_api  = $cloudstack->get_api;
@@ -113,7 +107,9 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) {
     }
 
     if(@parent_domains_found < 1) {
-        (__PACKAGE__ . '::Exception::NoParentDomains')->throw('No parent domains found');
+        (__PACKAGE__ . '::Exception::NoParentDomains')->throw(
+            'No parent domains found'
+        );
     } elsif(@parent_domains_found > 1) {
         (__PACKAGE__ . '::Exception::MultipleParentDomains')->throwf(
             'More than one parent domains found: %s',
@@ -121,6 +117,7 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) {
         );
     }
 
+    # 
     foreach my $domain (
         $cloudstack_api->perform_action(
             type        => 'Domain',
@@ -198,10 +195,10 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) {
             best_before => 0
         )) {
             my $resources = {
-                cpu         => $virtual_machine->get_value('/cpunumber'),
-                ram         => $virtual_machine->get_value('/memory'),
-                ssd         => 0,
-                ipv4        => 0
+                'vdc.element.cpu'   => $virtual_machine->get_value('/cpunumber'),
+                'vdc.element.ram'   => $virtual_machine->get_value('/memory'),
+                'vdc.element.ssd'   => 0,
+                'ip.ip.ipv4'        => 0
             };
             $logger->debugf("Found the %s virtual machine", $virtual_machine);
             foreach my $volume ($cloudstack_api->perform_action(
@@ -215,7 +212,7 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) {
                 best_before => 0
             )) {
                 $logger->debugf("Found the %s volume", $volume);
-                $resources->{'ssd'} = $resources->{'ssd'} + $volume->get_value('size');
+                $resources->{'vdc.element.ssd'} += $volume->get_value('size');
             }
             foreach my $nic ($cloudstack_api->perform_action(
                 type        => 'Nic',
@@ -231,7 +228,7 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) {
                     $nic->get_values('/secondaryip/ipaddress')
                 ); 
                 $logger->debugf("Found the %s NIC (%s)", $nic, join(', ', @ipv4_addresses));
-                $resources->{'ipv4'} = $resources->{'ipv4'} + scalar(@ipv4_addresses);
+                $resources->{'ip.ip.ipv4'} += scalar(@ipv4_addresses);
             }
             my $resource_piece = $db_schema
                 ->resultset('ResourcePiece')
@@ -242,6 +239,7 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) {
                 ->filter_validated(mask => 0b000111)
                 ->single;
             unless(defined($resource_piece)) {
+                $logger->infof("Creating the %s resource piece", $virtual_machine->get_id);
                 $resource_piece = $db_schema
                     ->resultset('ResourcePiece')
                     ->create({
@@ -253,47 +251,24 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) {
                         resource_handle     => $virtual_machine->get_id
                     });
             }
-            foreach my $service_key (keys(%{ $service_types })) {
-                my $provisioning_obligation_ok = 0;
-                my $provisioning_obligations = $db_schema
-                    ->resultset('ProvisioningObligation')
-                    ->search({
-                        provisioning_agreement_id   => $provisioning_agreement->id,
-                        service_type_id             => $service_types->{ $service_key },
-                        service_level_id            => 1, #FIXME
-                    })
-                    ->filter_validated(mask => 0b000111);
-                foreach my $provisioning_obligation ($provisioning_obligations->all) {
-                    if($provisioning_obligation->quantity == $resources->{ $service_key }) {
-                        $provisioning_obligation_ok++;
-                    } else {
-                        $provisioning_obligation->update({ valid_till => $now });
-                        $provisioning_obligation
-                            ->provisioning_obligation_x_resource_pieces
-                            ->update({ valid_till => $now });
-                    }
-                }
-                unless($provisioning_obligation_ok) {
-                    my $provisioning_obligation = $db_schema
-                        ->resultset('ProvisioningObligation')
-                        ->create({
-                            valid_since                 => $now,
-                            valid_till                  => undef,
-                            removed                     => undef,
-                            provisioning_agreement_id   => $provisioning_agreement->id,
-                            service_type_id             => $service_types->{ $service_key },
-                            service_level_id            => 1, #FIXME
-                            quantity                    => $resources->{ $service_key }
-                        });
+            foreach my $service_type_full_name (keys(%{ $resources })) {
+                if(defined(my $service_type_id = $db_schema
+                    ->resultset('ServiceType')
+                    ->find_by_full_name(service_type_full_name => $service_type_full_name)
+                )) {
                     $db_schema
-                        ->resultset('ProvisioningObligationXResourcePiece')
-                        ->create({
-                            valid_since                 => $now,
-                            valid_till                  => undef,
-                            removed                     => undef,
-                            provisioning_obligation_id  => $provisioning_obligation->id,
-                            resource_piece_id           => $resource_piece->id
-                        });
+                        ->resultset('ProvisioningObligation')
+                        ->update_obligations(
+                            provisioning_agreement  => $provisioning_agreement,
+                            resource_piece          => $resource_piece,
+                            service_type_id         => $service_type_id,
+                            service_level_id        => 1, #FIXME
+                            quantity                => $resources->{ $service_type_full_name },
+                            now                     => $now
+                        );
+                } else {
+                    #TODO: send a warning
+                    next;
                 }
             }
         }
