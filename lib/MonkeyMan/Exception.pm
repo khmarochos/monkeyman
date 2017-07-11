@@ -22,6 +22,8 @@ func import (@exceptions) {
     foreach(@exceptions) {
         if($_ =~ /^::/) {
             __PACKAGE__->_register_exception_class($_);
+        } elsif($_ eq '.') {
+            __PACKAGE__->_register_exception_class((caller)[0] . '::Exception');
         } else {
             __PACKAGE__->_register_exception_class((caller)[0] . '::Exception::' . $_);
         }
