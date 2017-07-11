@@ -103,7 +103,7 @@ __PACKAGE__->table("provisioning_obligation");
 
 =head2 quantity
 
-  data_type: 'integer'
+  data_type: 'bigint'
   extra: {unsigned => 1}
   is_nullable: 0
 
@@ -157,7 +157,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "quantity",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  { data_type => "bigint", extra => { unsigned => 1 }, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -265,8 +265,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-06-26 15:58:15
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OMErt7kV2gewD9kATGJHuA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-11 13:17:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kVop8UpsvAD+U0IA2fLzsQ
 
 __PACKAGE__->many_to_many(
   "resource_pieces" => "provisioning_obligation_x_resource_pieces", "resource_piece"

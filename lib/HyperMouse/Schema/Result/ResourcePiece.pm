@@ -80,6 +80,13 @@ __PACKAGE__->table("resource_piece");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
+=head2 parent_resource_piece_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
 =head2 resource_type_id
 
   data_type: 'integer'
@@ -128,6 +135,13 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "parent_resource_piece_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "resource_type_id",
   {
     data_type => "integer",
@@ -160,6 +174,26 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
+=head2 parent_resource_piece
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::ResourcePiece>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "parent_resource_piece",
+  "HyperMouse::Schema::Result::ResourcePiece",
+  { id => "parent_resource_piece_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
 =head2 provisioning_obligation_x_resource_pieces
 
 Type: has_many
@@ -190,6 +224,21 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 resource_pieces
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::ResourcePiece>
+
+=cut
+
+__PACKAGE__->has_many(
+  "resource_pieces",
+  "HyperMouse::Schema::Result::ResourcePiece",
+  { "foreign.parent_resource_piece_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 resource_type
 
 Type: belongs_to
@@ -206,8 +255,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-07 00:25:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oZ77HUJxxLYB1UJvKBnCpA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-11 13:17:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yS3a6UmY46/px6MjECNeCQ
 
 __PACKAGE__->many_to_many(
   "provisioning_obligations" => "provisioning_obligation_x_resource_pieces", "provisioning_obligation"

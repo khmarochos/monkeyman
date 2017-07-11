@@ -87,6 +87,12 @@ __PACKAGE__->table("service_group");
   is_foreign_key: 1
   is_nullable: 0
 
+=head2 short_name
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 255
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -122,6 +128,8 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
+  "short_name",
+  { data_type => "varchar", is_nullable => 0, size => 255 },
 );
 
 =head1 PRIMARY KEY
@@ -184,8 +192,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-06-26 15:58:15
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Ys4INkDbjw2D9Kbb44cX8Q
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-11 13:17:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xkVu1u1IPFvet/YyCsIMhw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
