@@ -67,14 +67,6 @@ method BUILD(...) {
 
 
 
-=pod
-
-There are a few parameters that can (and need to) be defined:
-
-=head3 Application-Related Parameters
-
-=cut
-
 has 'mm_version' => (
     is          => 'ro',
     isa         => 'Str',

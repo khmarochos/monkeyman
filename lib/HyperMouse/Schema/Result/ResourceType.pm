@@ -80,6 +80,12 @@ __PACKAGE__->table("resource_type");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
+=head2 short_name
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 255
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -108,6 +114,8 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "short_name",
+  { data_type => "varchar", is_nullable => 1, size => 255 },
 );
 
 =head1 PRIMARY KEY
@@ -155,8 +163,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-06-26 15:58:15
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:t02UbgAX+t5X0F+XJfaM0A
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-12 13:30:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pXb6+N+q3Xlun1bK5s89iQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

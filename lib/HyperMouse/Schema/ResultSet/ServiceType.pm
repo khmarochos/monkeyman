@@ -73,7 +73,7 @@ method find_by_full_name(
             $service_type_short_name
         ) : return(undef));
 
-    return($service_type->id);
+    return($service_type);
 
 }
 
