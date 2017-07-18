@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>test</title>
+        
+        <link rel="stylesheet" href="http://cdn.webix.com/edge/webix.css" />
+        <!--<link rel="stylesheet" href="http://cdn.webix.com/site/skins/aircompact.css">-->
+        <script src="http://cdn.webix.com/edge/webix.js"></script>    
+    </head>
+    <body>
+
+    <script src="/i18n.js"></script>
+    <script src="/settings.js"></script>
+    <script src="/proxy.js"></script>
+    <script src="/components.js"></script>
+    <script src="/controller.js"></script>
+
+    <script>    
+        webix.ready(function(){
+            //
+            var setting    = new ObjSetting();
+            //
+            var controller = new Controller({
+                'setting': setting
+            });            
+            
+            webix.ui({
+                id   :'root',
+                rows :[
+                    setting.header.view,
+                    {
+                        id   :'body',
+                        cols :[
+                            setting.tree.view,
+                            { view: "resizer" },
+                            {
+                                id  : 'main',
+                                rows: [
+                                    setting.datatable.person.toolbar.view,
+                                    setting.datatable.person.view,
+                                    setting.datatable.datatable_pager.view
+                                ]
+                            }
+                        ]
+                    },
+                    setting.footer.view
+                ]
+            });
+            
+            /*
+                controller init
+            */
+            //var ct_datatable = new Datatable( setting );
+            //ct_datatable.create('person');
+            
+            controller.tree.onSelectChange( $$( setting.tree.view.id ), function( id ){
+                var ct_datatable = new Datatable( setting );
+                return ct_datatable.create(id);
+            });
+            
+            controller.header.onChange( $$('changeLocale'), function( locale ){
+                //localizator   = locales[locale];
+                //webix.i18n.setLocale( localizator );
+                id = datatable_id;
+                console.log( 'onChange', dt.id );
+               
+                var ct_datatable = new Datatable( setting );
+                return ct_datatable.create(id);
+                            
+            } );
+            /*
+                end controller init
+            */
+            console.log('main.html OK', localizator );
+            
+        }); // ready    
+    </script>
+    </body>
+</html>
