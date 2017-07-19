@@ -1,10 +1,62 @@
 /*
     Constructor new
-    var setting = new ObjSetting();
+    var components = new Components();
 */
-function ObjSetting (){
-    "use strict";
+function Components (){
     this.args = [].slice.call(arguments);
+
+    this.init = function () {
+        var me = this;
+        
+        webix.ui({
+            id   :'root',
+            rows :[
+                me.header.view,
+                {
+                    id   :'body',
+                    cols :[
+                        me.tree.view,
+                        { view: "resizer" },
+                        {
+                            id  : 'main',
+                            rows: []
+                        }
+                    ]
+                },
+                me.footer.view
+            ]
+        });
+        
+        controller.datatable.create( global_setting.datatable.id );
+        /*
+            Tree
+        */
+        var tree_ls = local_storage.get( me.tree.localStorage.key );
+            if( tree_ls && $$(me.tree.view.id) ){
+                $$( me.tree.view.id ).setState( tree_ls );
+            }
+
+        controller.tree.onSelectChange( $$( me.tree.view.id ), function( id ){
+            global_setting.datatable.id = id;
+            console.log( controller.datatable );
+            return controller.datatable.create(id);
+        });
+        /*
+            end Tree
+        */
+        $$('changeLocale').setValue( global_setting.i18n.locale );
+        controller.onChange( $$('changeLocale'), function( locale ){
+            console.log('locale ' + locale );
+            global_setting.i18n.locale = locale;
+            location.reload();
+        } );        
+        // save Local Sorage
+        webix.attachEvent('unload', function(){
+            local_storage.set( me.tree.localStorage.key, $$( me.tree.view.id ).getState() );
+            local_storage.set( global_setting.localStorage.key, global_setting );
+        });
+        
+    };
     
     this.header = {
         view: {
@@ -95,6 +147,9 @@ function ObjSetting (){
                     ]
                 }
             ]
+        },
+        localStorage: {
+            key: 'tree'
         }
     };
     /*
@@ -165,7 +220,8 @@ function ObjSetting (){
                     },
                     {
                         id       : "valid_since",
-                        footer   : "valid_since",
+                        header   : localizator.datatable.valid_since,
+                        footer   : localizator.datatable.valid_since,
                         sort     : "server",
                         format   : webix.i18n.dateFormatStr,
                         //startdate: new Date(),
@@ -179,7 +235,8 @@ function ObjSetting (){
                     },
                     {
                         id       : "valid_till",
-                        footer   : "valid_till",
+                        header   : localizator.datatable.valid_till,
+                        footer   : localizator.datatable.valid_till,
                         sort     : "server",
                         startdate: new Date(),
                         fillspace: true,
@@ -219,12 +276,13 @@ function ObjSetting (){
                     cols:[
                         { view:"button", id:"add", type:"icon", icon:"plus", label:"ADD", width:100, align:"left" },
                         {
-                            view      :"menu",
-                            autowidth :true, 
-                            autoheight:true,
-                            //type      :{
-                                //subsign:true
-                            //},                            
+                            view      : "menu",
+                            id        : "datatable_actions",
+                            autowidth : true, 
+                            autoheight: true,
+                            type      : {
+                                subsign:true
+                            },                            
                             data       :[
                                 {
                                     id      :"сommunication",
@@ -252,13 +310,7 @@ function ObjSetting (){
                                         },
                                     ]
                                 }
-                            ],
-                            on:{
-                                onMenuItemClick:function(id){
-                                    webix.message("Global click: "+this.getMenuItem(id).value);
-                                    webix.message("Global click: "+this.getMenuItem(id).url  );
-                                }
-                            }
+                            ]
                         },             
                         { gravity: 2},
                         { view:"button", id:"LoadBut1", value:"PNG", width:100, align:"left" },
@@ -280,29 +332,18 @@ function ObjSetting (){
             view: {
                 view : "datatable",
                 id   : "datatable",
-                editable    :true,
-                autoConfig  :true, 
+                select      : "row",
+                editable    : false,
+                autoConfig  : true, 
                 datafetch   : 2,
-                resizeColumn:true,
-                url         :"myproxy->/contractor/list/all.json",
-                save        :"myproxy->/contractor/list/all.json",
-                columns     :[
+                resizeColumn: true,
+                url         : "myproxy->/contractor/list/all.json",
+                save        : "myproxy->/contractor/list/all.json",
+                columns     : [
                     { id: "id",          sort:"server" },
                     { id: "name",        sort:"server", fillspace:true, editor:"text" },
                     { id: "valid_since", sort:"server", fillspace:true, editor:"date", format:webix.Date.dateToStr("%d-%m-%Y") },
                     { id: "valid_till",  sort:"server", fillspace:true, editor:"date", format:webix.Date.dateToStr("%d-%m-%Y")  },
-                    /*{
-                        id       : "actions",
-                        fillspace: true,
-                        footer   : "actions",
-                        editor   : "combo",
-                        value    : 1,
-                        options  : [
-                            { id: 1, value:'...'},
-                            { id: 2, value:'Provisioning Agreements'},
-                            { id: 3, value:'Partnership Agreements'},
-                        ]
-                    }*/
                 ],
                 on:{
                     onBeforeLoad:function(){

@@ -3,122 +3,151 @@
     var controller = new Controller();
     attachEvent detachEvent
 */
-function Controller (){
-    this.args = [].slice.call(arguments);
+function Controller (arg){
+    //this.args = [].slice.call(arguments);
+    this.args      = arg;
+    this.tree      = new Tree( this.args );
+    this.datatable = new Datatable( this.args );
     
-    this.localStorge = {
-        set: function( key, obj ){
-            if( obj ){
-                return webix.storage.local.put( key, obj.getState() );
+    this.onChange = function( obj, callback ) {
+        if ( !obj ) return false;
+        obj.attachEvent('onChange', function(){
+            if ( callback ){
+                callback.call( this, this.getValue() );
             }
-            return false;
-        },
-        get: function( key ){
-            console.log( 'controller->get ',this);
-            if( key ){
-                var data = webix.storage.local.get( key );
-                if( data ){
-                    return data;
-                }
-                else{
-                    webix.message('key '+key+' is not exists');
-                }
-            }
-            else{
-                webix.message('select key');
-            }
-            return false;
-        }
-    };
-    
-    this.locale = {
-        get: function(){
-            
-        },
-        set: function( locale ){
-            if( isNaN(locale) ){
-                localizator = translations[locale];
-                if( isNaN(localizator) ){
-                    webix.i18n.setLocale(locale);
-                    return localizator;
-                }
-                else{
-                    webix.message( 'locale ' +locale+' is not support' );
-                }
-            }
-            else{
-                webix.message( 'select locale' );
-            }
-            return false;
-        }
-    };
-    
-    
-    this.tree = {
-        onSelectChange: function( obj, callback ){
-            if ( !obj ) return false;            
-            obj.attachEvent('onSelectChange', function(){
-                selected = this.getSelectedId();
-                if (isNaN(selected)) {
-                    if ( callback ){
-                        callback.call( this, selected );
-                    }
-                }
-            });            
-        }
-    };
-    
-    this.header = {
-        "onChange": function( obj, callback ) {
-            if ( !obj ) return false;
-            obj.attachEvent('onChange', function(){
-                if ( callback ){
-                    callback.call( this, this.getValue() );
-                }
-            });            
-        }
-    };
-    
+        });
+    };    
 }
-
-
-function Datatable( setting ){
-    this.setting = setting;
+/*
+    Datatable  
+ */
+function Datatable( components ){
+    this.components = components;
+    this.rows = {
+        data : {},  
+    };
     
     this.create = function( id ){
-        var me = $$("main");
+        var me        = this;
+        var obj       = $$("main");
+        var datatable = this.components.datatable[id];
         
-        if ( isNaN( this.setting.datatable[id] ) ){
-            datatable_id = id;
+        if ( isNaN( datatable  ) ){
             console.log('datatable '+ id +' start ... ');
                         
-            if( !this.setting.datatable[id] ) {
+            if( !datatable  ) {
                 webix.message('component ' + id + ' not exists');
                 return false;
             }
 
-            console.log( me.removeView("datatable_pager") );
-            console.log( me.removeView("datatable_toolbar") );
-            console.log( me.removeView("datatable") );
-            
-            if (this.setting.datatable[id].toolbar){
-                me.addView( this.setting.datatable[id].toolbar.view );
+            if( $$('datatable_actions') && $$('datatable_actions').hasEvent("onMenuItemClick") ){
+                $$('datatable_actions').detachEvent("onMenuItemClick");
             }
-                
-            if (this.setting.datatable[id].view){
-                //datatable
-                me.addView( this.setting.datatable[id].view  );
+            
+            obj.removeView("datatable_pager");
+            obj.removeView("datatable_toolbar");
+            obj.removeView("datatable");
+            
+            //toolbar
+            if ( datatable.toolbar){
+                obj.addView( datatable .toolbar.view );
+            }            
+            //datatable
+            if ( datatable.view ){
+                obj.addView( datatable.view  );
                 //contextmenu
-                webix.ui( this.setting.datatable.contextmenu.view ).attachTo( $$(this.setting.datatable[id].view.id) );
-                $$( this.setting.datatable[id].view.id ).refresh();
+                webix.ui( this.components.datatable.contextmenu.view ).attachTo( $$( datatable.view.id ) );
+                // refresh component
+                $$( datatable.view.id ).attachEvent("onSelectChange", function(){
+                    me.rows.data = this.getSelectedItem();
+                    console.log( me.rows.data );
+                });
+                
+                $$( datatable.view.id ).refresh();
+            }            
+            // pager
+            if ( this.components.datatable.datatable_pager.view ){
+                obj.addView( this.components.datatable.datatable_pager.view );
+                $$( this.components.datatable.datatable_pager.view.id ).refresh();
             }
             
-            if (this.setting.datatable.datatable_pager.view){
-                me.addView( this.setting.datatable.datatable_pager.view );
-                $$( this.setting.datatable.datatable_pager.view.id ).refresh();
-            }                    
+            if( $$('datatable_actions') ){
+                $$('datatable_actions').attachEvent('onMenuItemClick', function(id){
+                    webix.message("Global click: "+this.getMenuItem(id).value);
+                    webix.message("Global click: "+this.getMenuItem(id).url  );
+                });
+            }
+                        
             console.log('datatable '+ id +' is created');
         }
+    };
+}
+
+/*
+    tree  
+ */
+function Tree(){
+    
+    this.onSelectChange = function( obj, callback ){
+        if ( !obj ) return false;            
+        obj.attachEvent('onSelectChange', function(){
+            selected = this.getSelectedId();
+            if (isNaN(selected)) {
+                if ( callback ){
+                    callback.call( this, selected );
+                }
+            }
+        });            
+    };
+    
+}
+/*
+    Local Storage
+*/
+function LocalStorage() {
+    
+    this.get = function( key ){
+        if ( key ) {
+            return webix.storage.local.get(key);
+        }
+        else{
+            webix.message( 'not param key' );
+        }
+        return false;
+    };
+
+    this.set = function( key, data ){
+        if( key && data ){
+            return webix.storage.local.put( key, data );
+        }
+        else{
+            webix.message( 'not params key or data' );
+        }
+        return false;
+    };
+    
+}
+/*
+    i18n
+*/
+function my_i18n (){
+    this.locale      = "en-US";
+    this.localizator = locales[this.locale];
+    
+    this.set = function( locale ){
+        this.locale     = locale ? locale : this.locale;
+        var localizator = locales[this.locale];
+        if( localizator ){
+            webix.i18n.setLocale( localizator );
+        }
+        else{
+            webix.message( 'locale ' + locale + ' is not support' );
+        }
+        return localizator ? localizator : this.localizator;
+    };
+    
+    this.get = function(){
+        return this.localizator;
     };
 }
 

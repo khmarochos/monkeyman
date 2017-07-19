@@ -6,7 +6,7 @@ webix.ready(function(){
         $proxy:true,
         
         load:function(view, callback){
-            console.log( 'proxy', view, callback );
+            //console.log( 'proxy', view, callback );
             webix.ajax(
                 this.source,
                 callback,

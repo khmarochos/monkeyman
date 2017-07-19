@@ -19,62 +19,28 @@
     <script src="/controller.js"></script>
 
     <script>    
-        webix.ready(function(){
+        webix.ready(function(){            
+            // load Local Storage setting
+            local_storage = new LocalStorage ();
+            global_setting_ls = local_storage.get( global_setting.localStorage.key );
+                if( global_setting_ls ){
+                    global_setting = global_setting_ls;
+                }
             //
-            var setting    = new ObjSetting();
+            i18n        = new my_i18n();
+            localizator = i18n.set( global_setting.i18n.locale );
             //
-            var controller = new Controller({
-                'setting': setting
-            });            
-            
-            webix.ui({
-                id   :'root',
-                rows :[
-                    setting.header.view,
-                    {
-                        id   :'body',
-                        cols :[
-                            setting.tree.view,
-                            { view: "resizer" },
-                            {
-                                id  : 'main',
-                                rows: [
-                                    setting.datatable.person.toolbar.view,
-                                    setting.datatable.person.view,
-                                    setting.datatable.datatable_pager.view
-                                ]
-                            }
-                        ]
-                    },
-                    setting.footer.view
-                ]
-            });
-            
+            components = new Components();
+            //
+            controller = new Controller(components);
             /*
-                controller init
+                init
             */
-            //var ct_datatable = new Datatable( setting );
-            //ct_datatable.create('person');
-            
-            controller.tree.onSelectChange( $$( setting.tree.view.id ), function( id ){
-                var ct_datatable = new Datatable( setting );
-                return ct_datatable.create(id);
-            });
-            
-            controller.header.onChange( $$('changeLocale'), function( locale ){
-                //localizator   = locales[locale];
-                //webix.i18n.setLocale( localizator );
-                id = datatable_id;
-                console.log( 'onChange', dt.id );
-               
-                var ct_datatable = new Datatable( setting );
-                return ct_datatable.create(id);
-                            
-            } );
+            components.init();
             /*
-                end controller init
+                end init
             */
-            console.log('main.html OK', localizator );
+            console.log('main.html OK');
             
         }); // ready    
     </script>

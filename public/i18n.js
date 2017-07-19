@@ -19,6 +19,8 @@ var locales = {
             'id'         : 'ID',
             'first_name' : 'First Name',
             'last_name'  : 'Last Name',
+            'valid_since': 'valid_since',
+            'valid_till' : 'valid_till',
         }
     },
     /*
@@ -39,29 +41,11 @@ var locales = {
             'id'         : '#',
             'first_name' : 'Имя',
             'last_name'  : 'Фамилия',
+            'valid_since': 'Дата от',
+            'valid_till' : 'Дата до',
         }
     }
 };
-        
-function my_i18n (){
-    this.store_name  = "locale";
-    this.locale      = "en-US";
-    this.localizator = locales[this.defaultLocale];
-    
-    this.set = function( locale ){
-        this.locale = locale ? locale : this.locale;
-        this.localizator = locales[this.locale];
-        webix.i18n.setLocale( locales[this.locale] );
-        return this.localizator;
-    };
-    
-    this.get = function(){
-        return this.localizator;
-    };
-}
-
-var i18n        = new my_i18n();
-var localizator = i18n.set('en-US');
 
     
 console.log('i18n.js OK');
