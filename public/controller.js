@@ -133,17 +133,35 @@ function Datatable( components ){
                     }
                 });
             }
-            
-            // sort active ...
-            $$("datatable_load_active").attachEvent("onItemClick", function(id){
-                console.log( 'onItemClick', id, datatable );
-                var url = datatable.view.url;
-                url = url.replace();
-                if( id == '' ){
-                    //
-                }
+            // button add
+            $$("datatable_add").attachEvent("onItemClick", function(){
+                console.log("datatable_add click ", datatable, id );
             });
-                                    
+            // export
+            $$("datatable_export_pdf").attachEvent("onItemClick", function(){
+                webix.toPDF( $$("datatable"), {
+                    orientation : "landscape",
+                    autowidth   : true
+                } );
+                console.log("export to PDF");
+            });
+
+            $$("datatable_export_png").attachEvent("onItemClick", function(){
+                webix.toPNG( $$("datatable"), {
+                    orientation : "landscape",
+                    autowidth   : true
+                });
+                console.log("export to PNG");
+            });
+
+            $$("datatable_export_excel").attachEvent("onItemClick", function(){
+                webix.toExcel( $$("datatable"), {
+                    orientation : "landscape",
+                    autowidth   : true
+                });
+                console.log("export to Excel");
+            });
+                                                
             console.log('datatable '+ id +' is created');
         }
     };

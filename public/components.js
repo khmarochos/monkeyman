@@ -44,7 +44,7 @@ function Components (){
                                                         function(text,data,http) {
                                                             var res = data.json();
                                                             if( res.success == 1 ){
-                                                                webix.send( "/main.html" , null, "GET");
+                                                                webix.send( res.redirect , null, "GET");
                                                             }
                                                             else{
                                                                 webix.message( res.message );
@@ -337,7 +337,7 @@ function Components (){
                     cols: [
                         {
                             view : "button",
-                            id   : "add",
+                            id   : "datatable_add",
                             type : "icon",
                             icon : "plus",
                             label: webix.i18n.add,
@@ -384,12 +384,29 @@ function Components (){
                         { gravity: 2},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
-                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
-                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
                         { gravity: 2},
-                        { view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
-                        { view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
-                        { view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
+                        {
+                            view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
+                            click: function(){
+                                controller.args.datatable.person.view.url = "/person/list/active.json";
+                                controller.datatable.create('person');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
+                            click: function(){
+                                controller.args.datatable.person.view.url = "/person/list/archived.json";
+                                controller.datatable.create('person');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
+                            click: function(){
+                                controller.args.datatable.person.view.url = "/person/list/all.json";
+                                controller.datatable.create('person');
+                            }
+                        }
                     ]
                 }
             }          
@@ -450,7 +467,7 @@ function Components (){
                     cols:[
                         {
                             view : "button",
-                            id   : "add",
+                            id   : "datatable_add",
                             type : "icon",
                             icon : "plus",
                             label: webix.i18n.add,
@@ -497,12 +514,29 @@ function Components (){
                         { gravity: 2},                        
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
-                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
-                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
                         { gravity: 2},
-                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
-                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
-                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
+                        {
+                            view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
+                            click: function(){
+                                controller.args.datatable.contractors.view.url = "/contractor/list/active.json";
+                                controller.datatable.create('contractors');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
+                            click: function(){
+                                controller.args.datatable.contractors.view.url = "/contractor/list/archived.json";
+                                controller.datatable.create('contractors');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
+                            click: function(){
+                                controller.args.datatable.contractors.view.url = "/contractor/list/all.json";
+                                controller.datatable.create('contractors');
+                            }
+                        }
                     ]
                 }
             }          
@@ -564,7 +598,7 @@ function Components (){
                     cols: [
                         {
                             view : "button",
-                            id   : "add",
+                            id   : "datatable_add",
                             type : "icon",
                             icon : "plus",
                             label: webix.i18n.add,
@@ -611,12 +645,29 @@ function Components (){
                         { gravity: 2},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
-                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
-                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
                         { gravity: 2},
-                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
-                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
-                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
+                        {
+                            view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
+                            click: function(){
+                                controller.args.datatable.corporations.view.url = "/corporation/list/active.json";
+                                controller.datatable.create('corporations');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
+                            click: function(){
+                                controller.args.datatable.corporations.view.url = "/corporation/list/archived.json";
+                                controller.datatable.create('corporations');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
+                            click: function(){
+                                controller.args.datatable.corporations.view.url = "/corporation/list/all.json";
+                                controller.datatable.create('corporations');
+                            }
+                        }
                     ]
                 }
             }          
@@ -694,7 +745,7 @@ function Components (){
                     cols: [
                         {
                             view : "button",
-                            id   : "add",
+                            id   : "datatable_add",
                             type : "icon",
                             icon : "plus",
                             label: webix.i18n.add,
@@ -736,12 +787,29 @@ function Components (){
                         { gravity: 2},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
-                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
-                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
                         { gravity: 2},
-                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
-                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
-                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
+                        {
+                            view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
+                            click: function(){
+                                controller.args.datatable.provisioning_agreement.view.url = "/provisioning_agreement/list/active.json";
+                                controller.datatable.create('provisioning_agreement');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
+                            click: function(){
+                                controller.args.datatable.provisioning_agreement.view.url = "/provisioning_agreement/list/archived.json";
+                                controller.datatable.create('provisioning_agreement');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
+                            click: function(){
+                                controller.args.datatable.provisioning_agreement.view.url = "/provisioning_agreement/list/all.json";
+                                controller.datatable.create('provisioning_agreement');
+                            }
+                        }
                     ]
                 }
             } // toolbar
@@ -817,7 +885,7 @@ function Components (){
                     cols: [
                         {
                             view : "button",
-                            id   : "add",
+                            id   : "datatable_add",
                             type : "icon",
                             icon : "plus",
                             label: webix.i18n.add,
@@ -854,12 +922,29 @@ function Components (){
                         { gravity: 2},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
-                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
-                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
                         { gravity: 2},
-                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
-                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
-                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
+                        {
+                            view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
+                            click: function(){
+                                controller.args.datatable.provisioning_obligation.view.url = "/provisioning_obligation/list/active.json";
+                                controller.datatable.create('provisioning_obligation');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
+                            click: function(){
+                                controller.args.datatable.provisioning_obligation.view.url = "/provisioning_obligation/list/archived.json";
+                                controller.datatable.create('provisioning_obligation');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
+                            click: function(){
+                                controller.args.datatable.provisioning_obligation.view.url = "/provisioning_obligation/list/all.json";
+                                controller.datatable.create('provisioning_obligation');
+                            }
+                        }
                     ]
                 }
             } // toolbar           
@@ -935,7 +1020,7 @@ function Components (){
                     cols: [
                         {
                             view : "button",
-                            id   : "add",
+                            id   : "datatable_add",
                             type : "icon",
                             icon : "plus",
                             label: webix.i18n.add,
@@ -972,12 +1057,29 @@ function Components (){
                         { gravity: 2},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
-                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
-                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
                         { gravity: 2},
-                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
-                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
-                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
+                        {
+                            view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
+                            click: function(){
+                                controller.args.datatable.resource_piece.view.url = "/resource_piece/list/active.json";
+                                controller.datatable.create('resource_piece');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
+                            click: function(){
+                                controller.args.datatable.resource_piece.view.url = "/resource_piece/list/archived.json";
+                                controller.datatable.create('resource_piece');
+                            }
+                        },
+                        {
+                            view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
+                            click: function(){
+                                controller.args.datatable.resource_piece.view.url = "/resource_piece/list/all.json";
+                                controller.datatable.create('resource_piece');
+                            }
+                        }
                     ]
                 }                
             } // toolbar resource_piece           
