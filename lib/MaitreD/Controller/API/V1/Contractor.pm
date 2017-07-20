@@ -117,8 +117,7 @@ method list {
             )->all
     ];
     
-    $json->{'recordsTotal'} = $tmpl_rs->count;
-    
+    #$json->{'recordsTotal'} = $tmpl_rs->count;
     
     my $columns = $settings->{'contractor'}->{'table'}->{'columns'};
                 
@@ -144,7 +143,9 @@ method list {
     }
     @{ $json->{'data'} };
     
-    $json->{'recordsFiltered'} = $json->{'recordsTotal'};    
+    #$json->{'recordsFiltered'} = $json->{'recordsTotal'};
+    $json->{'pos'}         = $datatable_params->{'start'};
+    $json->{'total_count'} = $tmpl_rs->count;
     
     $self->render( json => $json );
 }

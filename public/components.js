@@ -38,7 +38,7 @@ function Components (){
 
         controller.tree.onSelectChange( $$( me.tree.view.id ), function( id ){
             global_setting.datatable.id = id;
-            console.log( controller.datatable );
+            //console.log( controller.datatable );
             return controller.datatable.create(id);
         });
         /*
@@ -120,30 +120,30 @@ function Components (){
     		id      : "tree",
             gravity : 0.2,
             data    : [  
-                { id:"1", value:"Dashboard" },
-                { id:"2", value:"Clients",
+                { id:"1", value: webix.i18n.dashboard },
+                { id:"2", value: webix.i18n.clients,
                     data: [
-                        { id:"person",       value:"Person"       },
-                        { id:"contractors",  value:"Contractors"  },
-                        { id:"corporations", value:"Corporations" },
+                        { id: "person",       value: webix.i18n.person       },
+                        { id: "contractors",  value: webix.i18n.contractors  },
+                        { id: "corporations", value: webix.i18n.corporations },
                     ]
                 },
                 { id:"3", value: "Service Provisioning",
                     data:[
-                        { id: "sp_agreements", value:"Agreements" },
-                        { id: "obligations",   value:"Obligations"},
-                        { id: "resourses",     value:"Resourses"  },
+                        { id: "provisioning_agreement" , value: "Agreements" },
+                        { id: "provisioning_obligation", value: "Obligations"},
+                        { id: "resource_piece",          value: "Resourses"  },
                     ]
                 },
                 { id:"4", value: "Partnership",
                     data:[
-                        { id:"p_agreements",  value:"Agreements"  },
+                        { id: "partnership_agreement",   value: "Agreements"  },
                     ]
                 },
                 { id:"5", value: "Billing",
                     data:[
-                        { id:"invoces", value:"Invoces" },
-                        { id:"invoces", value:"Top-ups & Write-offs" },
+                        { id:"invoces",        value: "Invoces" },
+                        { id:"invoces",        value: "Top-ups & Write-offs" },
                     ]
                 }
             ]
@@ -161,8 +161,8 @@ function Components (){
                 view    : "pager",
                 template: "{common.prev()} {common.pages()} {common.next()}",
                 id      : "datatable_pager",
-                size    : 10,
-                group   : 5
+                size    : global_setting.datatable.rows,
+                group   : 10,
             }
         },
         contextmenu    : {
@@ -170,63 +170,53 @@ function Components (){
                 view :"contextmenu",
                 id   :"contextmenu",
                 data:[
-                    { value: "Edit" },
-                    { value: "Delete" },
+                    { value: webix.i18n.edit    },
+                    { value: webix.i18n.delete  },
                 ]
             }            
         },
         /*
             person
         */
-        person:
-        {
+        person: {
             view: {
-                view : "datatable",
-                id   : "datatable",
-                //editable    :true,
-                select      :"row",
-                autoConfig  :true, 
-                datafetch   :2,
-                footer      :true,
-                resizeColumn:true,
-                url         :"myproxy->/person/list/all.json",
-                save        :"myproxy->/person/list/all.json",           
+                view        : "datatable",
+                id          : "datatable",
+                select      : "row",
+                //datafetch   : global_setting.datatable.rows,                
+                autoConfig  : true, 
+                footer      : true,
+                resizeColumn: true,
+                url         : "/person/list/all.json",
+                //save        : "myproxy->/person/list/all.json",           
                 columns     :[
                     {
-                        id    : "id",
-                        footer: webix.i18n.datatable.id,
-                        header: webix.i18n.datatable.id,
-                        sort  : "server",
-                        template:function(obj, common){
-                            //console.log( "no more than "+ webix.i18n.datatable.id, obj, common );
-                            return obj.id;
-                        }
+                        id       : "id",
+                        footer   : webix.i18n.datatable.id,
+                        header   : webix.i18n.datatable.id,
+                        sort     : "server"
                     },
                     {
                         id       : "first_name",
-                        footer   : localizator.datatable.first_name,
-                        header   : localizator.datatable.first_name,
+                        footer   : webix.i18n.datatable.first_name,
+                        header   : webix.i18n.datatable.first_name,
                         sort     : "server",
-                        fillspace: true,
-                        editor   : "text"
+                        fillspace: true
                     },
                     {
                         id       : "last_name",
-                        footer   : localizator.datatable.last_name,
-                        header   : localizator.datatable.last_name,
+                        footer   : webix.i18n.datatable.last_name,
+                        header   : webix.i18n.datatable.last_name,
                         sort     : "server",
-                        fillspace: true,
-                        editor   : "text"
+                        fillspace: true
                     },
                     {
                         id       : "valid_since",
-                        header   : localizator.datatable.valid_since,
-                        footer   : localizator.datatable.valid_since,
+                        header   : webix.i18n.datatable.valid_since,
+                        footer   : webix.i18n.datatable.valid_since,
                         sort     : "server",
                         format   : webix.i18n.dateFormatStr,
-                        //startdate: new Date(),
                         fillspace: true,
-                        editor   : "date",
                         template : function(obj, common){
                             //console.log( "no more than "+ webix.i18n.datatable.id, obj, common );
                             //return webix.i18n.dateFormat;
@@ -235,12 +225,11 @@ function Components (){
                     },
                     {
                         id       : "valid_till",
-                        header   : localizator.datatable.valid_till,
-                        footer   : localizator.datatable.valid_till,
+                        header   : webix.i18n.datatable.valid_till,
+                        footer   : webix.i18n.datatable.valid_till,
                         sort     : "server",
                         startdate: new Date(),
-                        fillspace: true,
-                        editor   : "date"
+                        fillspace: true
                     },
                     /*{
                         //id       : "actions",
@@ -257,24 +246,23 @@ function Components (){
                         ]
                     }*/
                 ],
-                on:{
-                    onBeforeLoad:function(){
-                        if( localizator )
-                            this.showOverlay( localizator.loading );
-                    },
-                    onAfterLoad:function(){
-                        this.hideOverlay();
-                        if (!this.count()) this.showOverlay( localizator.loading_no_data );                        
-                    }
-                },
                 pager:"datatable_pager"
             },
+            // toolbar person
             toolbar: {
                 view: {
-                    id  :"datatable_toolbar",
-                    view:"toolbar",
-                    cols:[
-                        { view:"button", id:"add", type:"icon", icon:"plus", label:"ADD", width:100, align:"left" },
+                    id  : "datatable_toolbar",
+                    view: "toolbar",
+                    cols: [
+                        {
+                            view : "button",
+                            id   : "add",
+                            type : "icon",
+                            icon : "plus",
+                            label: webix.i18n.add,
+                            width: 100,
+                            align: "left"
+                        },
                         {
                             view      : "menu",
                             id        : "datatable_actions",
@@ -285,42 +273,42 @@ function Components (){
                             },                            
                             data       :[
                                 {
-                                    id      :"сommunication",
-                                    value   :"Communication",
+                                    id      : "сommunication",
+                                    value   : webix.i18n.communication,
                                     submenu:[
                                         {
-                                            id   : 'provisioning_agreements',
-                                            value: 'Provisioning Agreements',
-                                            url  : '/provisioning_agreement/list/related_to/person/%s'
+                                            id   : 'provisioning_agreement',
+                                            value: webix.i18n.provisioning_agreements,
+                                            url  : '/provisioning_agreement/list/related_to/person/{{id}}'
                                         },
                                         {
-                                            id   : 'partnership_agreements',
-                                            value: 'Partnership Agreements',
-                                            url  : '/partnership_agreement/list/related_to/person/%s',
+                                            id   : 'partnership_agreement',
+                                            value: webix.i18n.partnership_agreements,
+                                            url  : '/partnership_agreement/list/related_to/person/{{id}}',
                                         },
                                         {
                                             id   : 'contractors',
-                                            value: 'Contractors',
-                                            url  : '/contractor/list/related_to/person/%s',
+                                            value: webix.i18n.contractors,
+                                            url  : '/contractor/list/related_to/person/{{id}}',
                                         },
                                         {
                                             id   : 'corporations',
-                                            value: 'Corporations',
-                                            url  : '/corporation/list/related_to/person/%s',
+                                            value: webix.i18n.corporations,
+                                            url  : '/corporation/list/related_to/person/{{id}}',
                                         },
                                     ]
                                 }
                             ]
                         },             
                         { gravity: 2},
-                        { view:"button", id:"LoadBut1", value:"PNG", width:100, align:"left" },
-                        { view:"button", id:"LoadBut2", value:"PDF", width:100, align:"left" },
-                        { view:"button", value:"CVS", width:100, align:"center" },
-                        { view:"button", value:"Print", width:100, align:"right" },
+                        { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
+                        { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
+                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
+                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
                         { gravity: 2},
-                        { view:"button", id:"LoadBut3", value:"Active", width:100, align:"left" },
-                        { view:"button", value:"Archived", width:100, align:"center" },
-                        { view:"button", value:"All", width:100, align:"right" }
+                        { view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
+                        { view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
+                        { view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
                     ]
                 }
             }          
@@ -330,46 +318,110 @@ function Components (){
         */
         contractors : {
             view: {
-                view : "datatable",
-                id   : "datatable",
+                view        : "datatable",
+                id          : "datatable",
                 select      : "row",
                 editable    : false,
-                autoConfig  : true, 
-                datafetch   : 2,
+                autoConfig  : true,
+                footer      : true,
                 resizeColumn: true,
-                url         : "myproxy->/contractor/list/all.json",
-                save        : "myproxy->/contractor/list/all.json",
+                url         : "/contractor/list/all.json",
+                //save        : "myproxy->/contractor/list/all.json",
                 columns     : [
-                    { id: "id",          sort:"server" },
-                    { id: "name",        sort:"server", fillspace:true, editor:"text" },
-                    { id: "valid_since", sort:"server", fillspace:true, editor:"date", format:webix.Date.dateToStr("%d-%m-%Y") },
-                    { id: "valid_till",  sort:"server", fillspace:true, editor:"date", format:webix.Date.dateToStr("%d-%m-%Y")  },
-                ],
-                on:{
-                    onBeforeLoad:function(){
-                        if( localizator )
-                            this.showOverlay( localizator.loading );
+                    {
+                        id       : "id",
+                        header   : webix.i18n.datatable.id,
+                        footer   : webix.i18n.datatable.id,
+                        sort     :"server"
                     },
-                    onAfterLoad:function(){
-                        this.hideOverlay();
-                        if (!this.count()) this.showOverlay( localizator.loading_no_data );                        
-                    }
-                },
-                pager:"datatable_pager"
+                    {
+                        id       : "name",
+                        header   : webix.i18n.datatable.name,
+                        fotter   : webix.i18n.datatable.name,
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "text"
+                    },
+                    {
+                        id       : "valid_since",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_since,
+                        footer   : webix.i18n.datatable.valid_since
+                    },
+                    {
+                        id       : "valid_till",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_till,
+                        footer   : webix.i18n.datatable.valid_till
+                    },
+                ],
+                pager: "datatable_pager"
             },
+            // toolbar contractors
             toolbar: {
                 view: {
-                    id  :"datatable_toolbar",
-                    view:"toolbar",
+                    id  : "datatable_toolbar",
+                    view: "toolbar",
                     cols:[
-                        //{ view:"button", id:"LoadBut1", value:"PNG", width:100, align:"left" },
-                        { view:"button", id:"LoadBut2", value:"PDF", width:100, align:"left" },
-                        { view:"button", value:"CVS", width:100, align:"center" },
-                        { view:"button", value:"Print", width:100, align:"right" },
-                        { gravity: 4},
-                        { view:"button", id:"LoadBut3", value:"Active", width:100, align:"left" },
-                        { view:"button", value:"Archived", width:100, align:"center" },
-                        { view:"button", value:"All", width:100, align:"right" }
+                        {
+                            view : "button",
+                            id   : "add",
+                            type : "icon",
+                            icon : "plus",
+                            label: webix.i18n.add,
+                            width: 100,
+                            align: "left"
+                        },                        
+                        {
+                            view      : "menu",
+                            id        : "datatable_actions",
+                            autowidth : true, 
+                            autoheight: true,
+                            type      : {
+                                subsign:true
+                            },                            
+                            data       :[
+                                {
+                                    id      : "сommunication",
+                                    value   : webix.i18n.communication,
+                                    submenu:[
+                                        {
+                                            id   : 'provisioning_agreement',
+                                            value: webix.i18n.provisioning_agreements,
+                                            url  : '/provisioning_agreement/list/related_to/contractor/{{id}}'
+                                        },
+                                        {
+                                            id   : 'partnership_agreements',
+                                            value: webix.i18n.partnership_agreements,
+                                            url  : '/partnership_agreement/list/related_to/contractor/{{id}}',
+                                        },
+                                        {
+                                            id   : 'person',
+                                            value: webix.i18n.person,
+                                            url  : '/person/list/related_to/contractor/{{id}}',
+                                        },
+                                        {
+                                            id   : 'corporations',
+                                            value: webix.i18n.corporations,
+                                            url  : '/corporation/list/related_to/person/{{id}}',
+                                        },
+                                    ]
+                                }
+                            ]
+                        },             
+                        { gravity: 2},                        
+                        { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
+                        { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
+                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
+                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { gravity: 2},
+                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
+                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
+                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
                     ]
                 }
             }          
@@ -380,51 +432,476 @@ function Components (){
         */
         corporations: {
             view: {            
-                view : "datatable",
-                id   : "datatable",
-                editable    :true,
-                autoConfig  :true, 
-                datafetch   : 2,
-                resizeColumn:true,
-                url         :"myproxy->/corporation/list/all.json",
-                save        :"myproxy->/corporation/list/all.json",
-                columns     :[
-                    { id: "id",          sort:"server" },
-                    { id: "name",        sort:"server", fillspace:true, editor:"text" },
-                    { id: "valid_since", sort:"server", fillspace:true, editor:"date", format:webix.Date.dateToStr("%d-%m-%Y") },
-                    { id: "valid_till",  sort:"server", fillspace:true, editor:"date", format:webix.Date.dateToStr("%d-%m-%Y")  },
-                    { id: "actions" }
-                ],
-                on:{
-                    onBeforeLoad:function(){
-                        if( localizator )
-                            this.showOverlay( localizator.loading );
+                view        : "datatable",
+                id          : "datatable",
+                editable    : false,
+                autoConfig  : true,
+                footer      : true,  
+                resizeColumn: true,
+                url         : "/corporation/list/all.json",
+                //save        : "myproxy->/corporation/list/all.json",
+                columns     : [
+                    {
+                        id       : "id",
+                        header   : webix.i18n.datatable.id,
+                        footer   : webix.i18n.datatable.id,
+                        sort     :"server"
                     },
-                    onAfterLoad:function(){
-                        this.hideOverlay();
-                        if (!this.count()) this.showOverlay( localizator.loading_no_data );                        
+                    {
+                        id       : "name",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "text",
+                        header   : webix.i18n.datatable.name,
+                        footer   : webix.i18n.datatable.name,
+                        
+                    },
+                    {
+                        id       : "valid_since",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_since,
+                        footer   : webix.i18n.datatable.valid_since,
+                    },
+                    {
+                        id       : "valid_till",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_till,
+                        footer   : webix.i18n.datatable.valid_till,
                     }
-                },
-                pager:"datatable_pager"
+                ],
+                pager: "datatable_pager"
             },
+            // toolbar corporations
             toolbar: {
                 view: {
-                    id  :"datatable_toolbar",
-                    view:"toolbar",
-                    cols:[
-                        //{ view:"button", id:"LoadBut1", value:"PNG", width:100, align:"left" },
-                        //{ view:"button", id:"LoadBut2", value:"PDF", width:100, align:"left" },
-                        { view:"button", value:"CVS", width:100, align:"center" },
-                        { view:"button", value:"Print", width:100, align:"right" },
-                        { gravity: 4},
-                        { view:"button", id:"LoadBut3", value:"Active", width:100, align:"left" },
-                        { view:"button", value:"Archived", width:100, align:"center" },
-                        { view:"button", value:"All", width:100, align:"right" }
+                    id  : "datatable_toolbar",
+                    view: "toolbar",
+                    cols: [
+                        {
+                            view : "button",
+                            id   : "add",
+                            type : "icon",
+                            icon : "plus",
+                            label: webix.i18n.add,
+                            width: 100,
+                            align: "left"
+                        },                        
+                        {
+                            view      : "menu",
+                            id        : "datatable_actions",
+                            autowidth : true, 
+                            autoheight: true,
+                            type      : {
+                                subsign:true
+                            },                            
+                            data       :[
+                                {
+                                    id      : "сommunication",
+                                    value   : webix.i18n.communication,
+                                    submenu:[
+                                        {
+                                            id   : 'provisioning_agreement',
+                                            value: webix.i18n.provisioning_agreements,
+                                            url  : '/provisioning_agreement/list/related_to/corporation/{{id}}'
+                                        },
+                                        {
+                                            id   : 'partnership_agreement',
+                                            value: webix.i18n.partnership_agreements,
+                                            url  : '/partnership_agreement/list/related_to/corporation/{{id}}',
+                                        },
+                                        {
+                                            id   : 'person',
+                                            value: webix.i18n.person,
+                                            url  : '/person/list/related_to/corporation/{{id}}',
+                                        },
+                                        {
+                                            id   : 'corporations',
+                                            value: webix.i18n.corporations,
+                                            url  : '/contractor/list/related_to/corporation/{{id}}',
+                                        },
+                                    ]
+                                }
+                            ]
+                        },
+                        { gravity: 2},
+                        { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
+                        { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
+                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
+                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { gravity: 2},
+                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
+                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
+                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
                     ]
                 }
             }          
             
+        },
+        /*
+            provisioning_agreement
+        */
+        provisioning_agreement: {
+            view : {
+                view        : "datatable",
+                id          : "datatable",
+                editable    : false,
+                autoConfig  : true,
+                footer      : true,  
+                resizeColumn: true,
+                url         : "/provisioning_agreement/list/all.json",
+                //save        : "myproxy->/provisioning_agreement/list/all.json",
+                columns     : [
+                    {
+                        id       : "id",
+                        header   : webix.i18n.datatable.id,
+                        footer   : webix.i18n.datatable.id,
+                        sort     :"server"
+                    },
+                    {
+                        id       : "number",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "text",
+                        header   : webix.i18n.datatable.number,
+                        footer   : webix.i18n.datatable.number,
+                        
+                    },
+                    {
+                        id       : "valid_since",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_since,
+                        footer   : webix.i18n.datatable.valid_since,
+                    },
+                    {
+                        id       : "valid_till",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_till,
+                        footer   : webix.i18n.datatable.valid_till,
+                    },
+                    {
+                        id       : "client",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.client,
+                        footer   : webix.i18n.datatable.client,
+                    },
+                    {
+                        id       : "provider",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.provider,
+                        footer   : webix.i18n.datatable.provider,
+                    }                                        
+                ],
+                pager: "datatable_pager"                
+            },
+            // toolbar provisioning_agreement
+            toolbar: {
+                view: {
+                    id  : "datatable_toolbar",
+                    view: "toolbar",
+                    cols: [
+                        {
+                            view : "button",
+                            id   : "add",
+                            type : "icon",
+                            icon : "plus",
+                            label: webix.i18n.add,
+                            width: 100,
+                            align: "left"
+                        },                        
+                        {
+                            view      : "menu",
+                            id        : "datatable_actions",
+                            autowidth : true, 
+                            autoheight: true,
+                            type      : {
+                                subsign:true
+                            },                            
+                            data       :[
+                                {
+                                    id      : "сommunication",
+                                    value   : webix.i18n.communication,
+                                    submenu:[
+                                        {
+                                            id   : 'person',
+                                            value: webix.i18n.person,
+                                            url  : '/person/list/related_to/provisioning_agreement/{{id}}',
+                                        },
+                                        {
+                                            id   : 'provisioning_obligation',
+                                            value: webix.i18n.provisioning_obligation,
+                                            url  : '/provisioning_obligation/list/related_to/provisioning_agreement/{{id}}',
+                                        },
+                                        {
+                                            id   : 'resource_piece',
+                                            value: webix.i18n.resource_piece,
+                                            url  : '/resource_piece/list/related_to/provisioning_agreement/{{id}}',
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        { gravity: 2},
+                        { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
+                        { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
+                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
+                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { gravity: 2},
+                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
+                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
+                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
+                    ]
+                }
+            } // toolbar
+        },
+        /*
+            provisioning_obligation
+        */
+        provisioning_obligation: {
+            view: {
+                view        : "datatable",
+                id          : "datatable",
+                editable    : false,
+                autoConfig  : true,
+                footer      : true,  
+                resizeColumn: true,
+                url         : "/provisioning_obligation/list/all.json",
+                //save        : "myproxy->/provisioning_obligation/list/all.json",
+                columns     : [
+                    {
+                        id       : "id",
+                        header   : webix.i18n.datatable.id,
+                        footer   : webix.i18n.datatable.id,
+                        sort     :"server"
+                    },
+                    {
+                        id       : "valid_since",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_since,
+                        footer   : webix.i18n.datatable.valid_since,
+                    },
+                    {
+                        id       : "valid_till",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_till,
+                        footer   : webix.i18n.datatable.valid_till,
+                    },                    
+                    {
+                        id       : "provisioning_agreements",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "text",
+                        header   : webix.i18n.provisioning_agreements,
+                        footer   : webix.i18n.provisioning_agreements,
+                    },
+                    {
+                        id       : "service",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "text",
+                        header   : webix.i18n.datatable.service,
+                        footer   : webix.i18n.datatable.service,
+                    },
+                    {
+                        id       : "quantity",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "text",
+                        header   : webix.i18n.datatable.quantity,
+                        footer   : webix.i18n.datatable.quantity
+                    }
+                ]
+                
+            },
+            // toolbar provisioning_obligation
+            toolbar: {
+                view: {
+                    id  : "datatable_toolbar",
+                    view: "toolbar",
+                    cols: [
+                        {
+                            view : "button",
+                            id   : "add",
+                            type : "icon",
+                            icon : "plus",
+                            label: webix.i18n.add,
+                            width: 100,
+                            align: "left"
+                        },                        
+                        {
+                            view      : "menu",
+                            id        : "datatable_actions",
+                            autowidth : true, 
+                            autoheight: true,
+                            type      : {
+                                subsign:true
+                            },                            
+                            data       :[
+                                {
+                                    id      : "сommunication",
+                                    value   : webix.i18n.communication,
+                                    submenu:[
+                                        {
+                                            id   : 'provisioning_agreement',
+                                            value: webix.i18n.provisioning_agreements,
+                                            url  : '/provisioning_agreement/list/related_to/provisioning_obligation/{{id}}',
+                                        },
+                                        {
+                                            id   : 'resource_piece',
+                                            value: webix.i18n.resource_piece,
+                                            url  : '/resource_piece/list/related_to/provisioning_obligation/{{id}}',
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        { gravity: 2},
+                        { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
+                        { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
+                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
+                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { gravity: 2},
+                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
+                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
+                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
+                    ]
+                }
+            } // toolbar           
+        },
+        /*
+            resource_piece
+        */
+        resource_piece: {
+            view: {
+                view        : "datatable",
+                id          : "datatable",
+                editable    : false,
+                autoConfig  : true,
+                footer      : true,  
+                datafetch   : global_setting.datatable.rows,
+                resizeColumn: true,
+                url         : "/resource_piece/list/all.json",
+                //save        : "myproxy->/resource_piece/list/all.json",
+                columns     : [
+                    {
+                        id       : "id",
+                        header   : webix.i18n.datatable.id,
+                        footer   : webix.i18n.datatable.id,
+                        sort     :"server"
+                    },
+                    {
+                        id       : "valid_since",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_since,
+                        footer   : webix.i18n.datatable.valid_since,
+                    },
+                    {
+                        id       : "valid_till",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "date",
+                        header   : webix.i18n.datatable.valid_till,
+                        footer   : webix.i18n.datatable.valid_till,
+                    },
+                    {
+                        id       : "resource_type",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "text",
+                        header   : webix.i18n.datatable.resource_type,
+                        footer   : webix.i18n.datatable.resource_type,
+                    },
+                    {
+                        id       : "resource_handle",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "text",
+                        header   : webix.i18n.datatable.resource_handle,
+                        footer   : webix.i18n.datatable.resource_handle,
+                    },
+                    {
+                        id       : "resource_host",
+                        sort     : "server",
+                        fillspace: true,
+                        editor   : "text",
+                        header   : webix.i18n.datatable.resource_host,
+                        footer   : webix.i18n.datatable.resource_host,
+                    },
+                ]                
+            },
+            // toolbar
+            toolbar: {
+                view: {
+                    id  : "datatable_toolbar",
+                    view: "toolbar",
+                    cols: [
+                        {
+                            view : "button",
+                            id   : "add",
+                            type : "icon",
+                            icon : "plus",
+                            label: webix.i18n.add,
+                            width: 100,
+                            align: "left"
+                        },                        
+                        {
+                            view      : "menu",
+                            id        : "datatable_actions",
+                            autowidth : true, 
+                            autoheight: true,
+                            type      : {
+                                subsign:true
+                            },                            
+                            data       :[
+                                {
+                                    id      : "сommunication",
+                                    value   : webix.i18n.communication,
+                                    submenu:[
+                                        {
+                                            id   : 'provisioning_agreement',
+                                            value: webix.i18n.provisioning_agreements,
+                                            url  : '/provisioning_agreement/list/related_to/resource_piece/{{id}}',
+                                        },
+                                        {
+                                            id   : 'provisioning_obligation',
+                                            value: webix.i18n.provisioning_obligation,
+                                            url  : '/provisioning_obligation/list/related_to/resource_piece/{{id}}',
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        { gravity: 2},
+                        { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
+                        { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
+                        { view: "button", value: "CVS"  , id: "datatable_export_cvs"  , width:100, align:"center" },
+                        { view: "button", value: "Print", id: "datatable_export_print", width:100, align:"right" },
+                        { gravity: 2},
+                        { view:"button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left"   },
+                        { view:"button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center" },
+                        { view:"button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right"  }
+                    ]
+                }                
+            } // toolbar resource_piece           
         }
+        
     };
     /*
         Form

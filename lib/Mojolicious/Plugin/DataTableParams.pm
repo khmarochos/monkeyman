@@ -12,7 +12,7 @@ use Data::Dumper;
 my $merger = Hash::Merge->new( 'RIGHT_PRECEDENT' );
 our $list  = {
     page => 0,
-    rows => 25,
+    rows => 50,
 };
 
 method register (
@@ -43,45 +43,23 @@ method datatable_params (
 
     $controller->{'args'} = $data;
     $data->{'start'}  ||= $list->{'page'};
-    $data->{'length'} ||= $list->{'rows'};
+    $res->{'start'}   = $data->{'start'} == 1 ? $data->{'start'} - 1 : $data->{'start'};
+    $data->{'count'}  ||= $list->{'rows'};
     
-    $res->{'page'}    = ($data->{'start'} / $data->{'length'}) + 1;
-    $res->{'rows'}    = $data->{'length'};
+    $res->{'page'}    = ($data->{'start'} / $data->{'count'}) + 1;
+    $res->{'rows'}    = $data->{'count'};
     
-    # парсим данные таблицы
+    
+    # парсим данные таблицы  
     for my $key ( keys %{$data} ){
-        $key =~ /(\w+)\[(\d+)\]\[(\w+)\]\[*(\w*)\]*/o;
-        
-        if( defined $1 && $1 eq 'columns' ){
-            if ( defined $2 && $3 && !$4 ){
-                $table_params->[$2]->{$1}->{$3} = $data->{$key};
-            }
-            elsif ( defined $2 && $3 && $4 ) {
-                $table_params->[$2]->{$1}->{$3}->{$4} = $data->{$key};
-            }
+        if( $key =~ /sort\[(\w+)\]/i ){
+            $res->{'order'} = { "-" . $data->{ $key } => $1 };
         }
-        elsif( defined $1 && $1 eq 'order' ){
-            if ( defined $2 && $3 && $data->{$key} ){
-                $order->[$2]->{$3} = $data->{$key};
-            }
-        }        
     }
-    
-    # order by
-    map {
-        $table_params->[ $_->{'column'} ]->{'order'} = $_->{'dir'};
-        
-        $_->{'dir'} ||= 'asc';
-        
-        push @{ $res->{'order'}->{ "-" . $_->{'dir'} } },
-            $table_params->[ $_->{'column'} ]->{'columns'}->{'data'}
-                if $table_params->[ $_->{'column'} ]->{'columns'}->{'data'};
-    }
-    @{$order};
     
     $res->{'table'}        = $table_params;
     $res->{'origin_data'}  = $data;
-    #print Dumper( $res );
+    print Dumper( $res );
 
     return $res;    
 }

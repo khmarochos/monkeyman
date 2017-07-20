@@ -3,7 +3,9 @@ var global_setting = {
         key:'global_setting'
     },    
     datatable: {
-        id:'person'
+        id  : 'person',
+        page: 0,
+        rows: 50
     },
     i18n:{
         locale:'en-US'

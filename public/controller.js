@@ -31,6 +31,7 @@ function Datatable( components ){
         var me        = this;
         var obj       = $$("main");
         var datatable = this.components.datatable[id];
+        me.rows.data  = {};
         
         if ( isNaN( datatable  ) ){
             console.log('datatable '+ id +' start ... ');
@@ -60,24 +61,63 @@ function Datatable( components ){
                 // refresh component
                 $$( datatable.view.id ).attachEvent("onSelectChange", function(){
                     me.rows.data = this.getSelectedItem();
-                    console.log( me.rows.data );
+                    //console.log( me.rows.data );
+                });
+
+                $$( datatable.view.id ).attachEvent("onBeforeLoad", function(){
+                    this.showOverlay( webix.i18n.loading );
+                });
+
+                $$( datatable.view.id ).attachEvent("onAfterLoad", function(){
+                    this.hideOverlay();
+                    if (!this.count()) this.showOverlay( webix.i18n.loading_no_data );   
                 });
                 
                 $$( datatable.view.id ).refresh();
-            }            
+            }
+            
             // pager
             if ( this.components.datatable.datatable_pager.view ){
                 obj.addView( this.components.datatable.datatable_pager.view );
                 $$( this.components.datatable.datatable_pager.view.id ).refresh();
             }
             
+            // menu communication
             if( $$('datatable_actions') ){
                 $$('datatable_actions').attachEvent('onMenuItemClick', function(id){
-                    webix.message("Global click: "+this.getMenuItem(id).value);
-                    webix.message("Global click: "+this.getMenuItem(id).url  );
+
+                    var related_id   = me.rows.data.id;
+                    var url          = this.getMenuItem(id).url;
+                    var datatable_id = this.getMenuItem(id).id;
+                    //console.log( related_id, url, datatable_id );
+
+                    if( related_id ){
+                        if( url ){
+                            var datatable = me.components.datatable[ datatable_id ];
+                            if( datatable ){
+                                url = url.replace('{{id}}', related_id );
+                                datatable.view.url = url + '.json';
+                                var obj = new Datatable( me.components );
+                                obj.create( datatable_id );
+                            }
+                        }
+                    }
+                    else{
+                        webix.message( webix.i18n.datatable.do_row_select );
+                    }
                 });
             }
-                        
+            
+            // sort active ...
+            $$("datatable_load_active").attachEvent("onItemClick", function(id){
+                console.log( 'onItemClick', id, datatable );
+                var url = datatable.view.url;
+                url = url.replace();
+                if( id == '' ){
+                    //
+                }
+            });
+                                    
             console.log('datatable '+ id +' is created');
         }
     };

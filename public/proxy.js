@@ -5,13 +5,12 @@ webix.ready(function(){
     webix.proxy.myproxy = {
         $proxy:true,
         
-        load:function(view, callback){
-            //console.log( 'proxy', view, callback );
-            webix.ajax(
-                this.source,
-                callback,
-                view
-            );
+        load:function(view, callback, params){
+            console.log( 'proxy', view, callback, params  );
+            webix.ajax().bind(view).get(this.source, params, function( text, data, xmlHttpRequest ){
+                //console.log( view, data, xmlHttpRequest );
+                view.parse( data.json() );
+            });
         },
         
         save:function(view, update, dp, callback){

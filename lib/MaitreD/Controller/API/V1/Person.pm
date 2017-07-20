@@ -27,6 +27,8 @@ method list {
     my $json             = {};
     my $tmpl_rs;
     
+    #print Dumper( $datatable_params );
+    
     switch($self->stash->{'filter'}) {
         case('all') {
             $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
@@ -114,7 +116,7 @@ method list {
             }
         )->all
     ];
-    $json->{'recordsFiltered'} = $json->{'recordsTotal'} = $tmpl_rs->count;    
+    #$json->{'recordsFiltered'} = $json->{'recordsTotal'} = $tmpl_rs->count;    
     
     my $columns = $settings->{'person'}->{'table'}->{'columns'};
     @{ $json->{'data'} } = map({
@@ -135,6 +137,9 @@ method list {
         }
         $hash;
     } @{ $json->{'data'} });
+    
+    #$json->{'pos'}         = $datatable_params->{'start'};
+    $json->{'total_count'} = $tmpl_rs->count;
             
     $self->render(json => $json);
 
