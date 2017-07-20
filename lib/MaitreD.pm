@@ -112,6 +112,31 @@ method startup {
                 city        => '*'
             );
 
+        $routes
+            ->any('/person/login' => [ format => ['json'] ] )
+            ->name('person.login_json')
+            ->to  ('person#login_json');
+    
+        $routes
+            ->any('/person/login')
+            ->name('person.login')
+            ->to  ('person#login');
+            
+        $routes
+            ->any('/person/signup')
+            ->to(
+                controller      => 'person',
+                action          => 'signup'
+            );
+        $routes
+            ->any('/person/confirm/:token')
+            ->name('person.confirm')
+            ->to(
+                controller      => 'person',
+                action          => 'confirm',
+                token           => undef
+            );
+
     # api
     my  $routes_api = $routes->any('/api/v1');
     my  $routes_api_web_messages = $routes_api->any('/web-messages');
@@ -133,35 +158,23 @@ method startup {
             
     # // api
     
-        $routes
-            ->any('/person/login')
-            ->name('person.login')
-            ->to  ('person#login');
-
-        $routes
-            ->any('/person/signup')
-            ->to(
-                controller      => 'person',
-                action          => 'signup'
-            );
-        $routes
-            ->any('/person/confirm/:token')
-            ->name('person.confirm')
-            ->to(
-                controller      => 'person',
-                action          => 'confirm',
-                token           => undef
-            );
-
     my  $routes_authenticated = $routes->under->to('person#is_authenticated')
                                        ->under->to('person#load_settings')
                                        ->under->to('navigation#build_menu');
+        $routes_authenticated
+            ->any('/person/logout' => [ format => ['json'] ] )
+            ->to(
+                controller  => 'person',
+                action      => 'logout_json'
+            );
+
         $routes_authenticated
             ->get('/person/logout')
             ->to(
                 controller  => 'person',
                 action      => 'logout'
             );
+
         $routes_authenticated
             ->get('/')
             ->to('dashboard#welcome');

@@ -4,7 +4,72 @@
 */
 function Components (){
     this.args = [].slice.call(arguments);
-
+    
+    this.login = function () {
+        webix.ui({
+            rows:[
+                { template:"Welcome!", type:"header" },
+                {},
+                {
+                    cols:[
+                        {},
+                        {
+                            view    : "form",
+                            id      : "login_form",
+                            elements:[
+                                {
+                                    view : "text",
+                                    name : 'person_email',
+                                    label: "Email"
+                                },
+                                {
+                                    view : "text",
+                                    name : 'person_password',
+                                    type : "password",
+                                    label : "Password"
+                                },
+                                {
+                                    cols:[
+                                        {
+                                            view : "button",
+                                            value: "Login",
+                                            id   : "login_btn",
+                                            type : "form",
+                                            click:function(){
+                                                var form = $$('login_form');            
+                                                if( form.validate() ){
+                                                    webix.ajax().post(
+                                                        "/person/login.json",
+                                                        form.getValues(),
+                                                        function(text,data,http) {
+                                                            var res = data.json();
+                                                            if( res.success == 1 ){
+                                                                webix.send( "/main.html" , null, "GET");
+                                                            }
+                                                            else{
+                                                                webix.message( res.message );
+                                                            }
+                                                        }
+                                                    );
+                                                } // validate()
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            rules:{
+                                "person_email"   :webix.rules.isEmail,
+                                "person_password":webix.rules.isNotEmpty
+                            },                            
+                        },
+                        {}
+                    ]
+                },
+                {}
+            ]
+        }); //  webix.ui       
+    };
+    
     this.init = function () {
         var me = this;
         
@@ -70,7 +135,6 @@ function Components (){
                         { id: "user", value: "Volodymyr Melnyk",
                             submenu:[
                                 { id: 'profile', value: 'Profile' },
-                                { id: 'logout',  value: 'LogOut' },
                             ]
                         }
                     ]
@@ -89,12 +153,29 @@ function Components (){
                     ]
                 },					
                 {
-                    view :"button",
-                    type :"icon",
-                    icon :"sign-out",
-                    label:"Logout",
-                    width:100,
-                    align:"right"
+                    view : "button",
+                    id   : "logout_btn",
+                    type : "icon",
+                    icon : "sign-out",
+                    label: "Logout",
+                    width: 100,
+                    align: "right",
+                    click:function(){
+                        webix.ajax().post(
+                            "/person/logout.json",
+                            {},
+                            function(text,data,http) {
+                                var res = data.json();
+                                if( res.success == 1 ){
+                                    webix.send( res.redirect , null, "GET");                                    
+                                }
+                                else{
+                                    webix.message( res.message );
+                                }
+                            }
+                        );
+                    } // click
+                    
                 }
             ]            
         }

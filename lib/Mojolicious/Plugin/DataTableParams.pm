@@ -49,7 +49,6 @@ method datatable_params (
     $res->{'page'}    = ($data->{'start'} / $data->{'count'}) + 1;
     $res->{'rows'}    = $data->{'count'};
     
-    
     # парсим данные таблицы  
     for my $key ( keys %{$data} ){
         if( $key =~ /sort\[(\w+)\]/i ){
@@ -59,7 +58,6 @@ method datatable_params (
     
     $res->{'table'}        = $table_params;
     $res->{'origin_data'}  = $data;
-    print Dumper( $res );
 
     return $res;    
 }

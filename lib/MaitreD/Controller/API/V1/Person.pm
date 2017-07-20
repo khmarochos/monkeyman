@@ -138,7 +138,7 @@ method list {
         $hash;
     } @{ $json->{'data'} });
     
-    #$json->{'pos'}         = $datatable_params->{'start'};
+    $json->{'pos'}         = $datatable_params->{'start'};
     $json->{'total_count'} = $tmpl_rs->count;
             
     $self->render(json => $json);

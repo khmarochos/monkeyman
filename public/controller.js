@@ -9,6 +9,32 @@ function Controller (arg){
     this.tree      = new Tree( this.args );
     this.datatable = new Datatable( this.args );
     
+    this.auth    = function( params, callback ){
+        var res = false;
+        webix.ajax().post(
+            "/person/login.json",
+            params,
+            function( text, data, http ) {
+                var res = data.json();
+                
+                if( res.success == 1 ){
+                    //webix.send( res.redirect , null, "GET");
+                    res = true;
+                }
+                else{
+                    webix.message( res.message );
+                    res = false;
+                }
+                
+                if ( callback ){
+                    callback.call( this, res );
+                }                
+            }
+        );
+        
+        return res;
+    };
+    
     this.onChange = function( obj, callback ) {
         if ( !obj ) return false;
         obj.attachEvent('onChange', function(){

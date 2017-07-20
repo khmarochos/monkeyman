@@ -4,7 +4,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>test</title>
+        <title>Maitre d&#39;Tucha | Welcome!</title>
         
         <link rel="stylesheet" href="http://cdn.webix.com/edge/webix.css" />
         <!--<link rel="stylesheet" href="http://cdn.webix.com/site/skins/aircompact.css">-->
@@ -36,7 +36,14 @@
             /*
                 init
             */
-            components.init();
+            controller.auth({}, function(auth){
+                if(auth){
+                    components.init();
+                }
+                else{
+                    components.login();
+                }
+            });
             /*
                 end init
             */
