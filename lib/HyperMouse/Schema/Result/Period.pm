@@ -161,21 +161,6 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 service_family
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::ServiceFamily>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "service_family",
-  "HyperMouse::Schema::Result::ServiceFamily",
-  { id => "service_family_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
-);
-
 =head2 service_prices
 
 Type: has_many
@@ -192,8 +177,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-06-26 15:58:15
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Qge1joo8Njd8nnvzqDYcYA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-15 12:20:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Uz4qVt6DTY5beS3Jqbpbvw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

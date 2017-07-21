@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ResourceGroup;
+package HyperMouse::Schema::Result::ResourceSet;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ResourceGroup
+HyperMouse::Schema::Result::ResourceSet
 
 =cut
 
@@ -47,11 +47,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<resource_group>
+=head1 TABLE: C<resource_set>
 
 =cut
 
-__PACKAGE__->table("resource_group");
+__PACKAGE__->table("resource_set");
 
 =head1 ACCESSORS
 
@@ -143,13 +143,13 @@ Related object: L<HyperMouse::Schema::Result::ResourcePiece>
 __PACKAGE__->has_many(
   "resource_pieces",
   "HyperMouse::Schema::Result::ResourcePiece",
-  { "foreign.resource_group_id" => "self.id" },
+  { "foreign.resource_set_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-07 16:10:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PyI4LyCyHfG+vVFS2eqRvw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-15 12:20:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:drUi6UFr+dh82ZSVLFJGXw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

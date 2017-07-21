@@ -4,8 +4,15 @@ Things To Do
 Bugs
 ----
 
- - [ ] Make `HyperMouse` see the exceptions of `MonkeyMan`.
+ - [ ] Make sure that `$now` is being passed everywhere over the `HyperMouse`
+       methods, especially with `filter_validated` and `filter_permitted`.
+        - suggested on `2017.07.14` by `melnik13`
+ - [x] Make `HyperMouse` see the exceptions of `MonkeyMan`.
         - suggested on `2017.05.31` by `melnik13`
+        - cancelled on `2017.07.14` by `melnik13`: `HyperMouse` has become
+          a plugin of `MonkeyMan`, so it doesn't try to initialize
+          `MonkeyMan` anymore, as it's being initialized by `MonkeyMan`
+          itself
  - [x] Fix `MonkeyMan::CloudStack::API::Vocabulary::interpret_response`.
         - suggested on `2016.07.25` by `melnik13`
         - completed on `2016.07.25`

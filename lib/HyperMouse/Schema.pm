@@ -298,6 +298,39 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
                 ]
             },
 
+            #
+            # FROM ResourcePiece TO ...
+            #
+
+            '@ResourcePiece->-@ProvisioningObligation' => {
+                resultset_class => 'ProvisioningObligation',
+                search => [
+                    'provisioning_obligation_x_resource_pieces'  => {
+                        validations => -1,
+                        search => [
+                            'provisioning_obligation' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            #
+            # FROM ProvisioningObligation TO ...
+            #
+
+            '@ProvisioningObligation->-@ProvisioningAgreement' => {
+                resultset_class => 'ProvisioningAgreement',
+                search => [
+                    'provisioning_agreement' => {
+                        validations => -1,
+                        fetch       =>  1
+                    }
+                ]
+            },
+
         };
 
         sub _show_stack {
