@@ -1,12 +1,12 @@
 use utf8;
-package HyperMouse::Schema::Result::ServiceFamily;
+package HyperMouse::Schema::Result::ResourceSet;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-HyperMouse::Schema::Result::ServiceFamily
+HyperMouse::Schema::Result::ResourceSet
 
 =cut
 
@@ -47,11 +47,11 @@ __PACKAGE__->load_components(
   "EncodedColumn",
 );
 
-=head1 TABLE: C<service_family>
+=head1 TABLE: C<resource_set>
 
 =cut
 
-__PACKAGE__->table("service_family");
+__PACKAGE__->table("resource_set");
 
 =head1 ACCESSORS
 
@@ -80,7 +80,7 @@ __PACKAGE__->table("service_family");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 short_name
+=head2 name
 
   data_type: 'varchar'
   is_nullable: 0
@@ -114,7 +114,7 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "short_name",
+  "name",
   { data_type => "varchar", is_nullable => 0, size => 255 },
 );
 
@@ -132,54 +132,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 periods
+=head2 resource_pieces
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::Period>
+Related object: L<HyperMouse::Schema::Result::ResourcePiece>
 
 =cut
 
 __PACKAGE__->has_many(
-  "periods",
-  "HyperMouse::Schema::Result::Period",
-  { "foreign.service_family_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 service_family_i18ns
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ServiceFamilyI18n>
-
-=cut
-
-__PACKAGE__->has_many(
-  "service_family_i18ns",
-  "HyperMouse::Schema::Result::ServiceFamilyI18n",
-  { "foreign.service_family_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 service_groups
-
-Type: has_many
-
-Related object: L<HyperMouse::Schema::Result::ServiceGroup>
-
-=cut
-
-__PACKAGE__->has_many(
-  "service_groups",
-  "HyperMouse::Schema::Result::ServiceGroup",
-  { "foreign.service_family_id" => "self.id" },
+  "resource_pieces",
+  "HyperMouse::Schema::Result::ResourcePiece",
+  { "foreign.resource_set_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-11 13:17:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:uWDcE3k2UA9YuxJLC3yxag
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-15 12:20:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:drUi6UFr+dh82ZSVLFJGXw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

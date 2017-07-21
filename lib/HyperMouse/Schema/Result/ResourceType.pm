@@ -80,6 +80,13 @@ __PACKAGE__->table("resource_type");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
+=head2 parent_resource_type_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
 =head2 short_name
 
   data_type: 'varchar'
@@ -114,6 +121,13 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "parent_resource_type_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "short_name",
   { data_type => "varchar", is_nullable => 1, size => 255 },
 );
@@ -131,6 +145,26 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
+
+=head2 parent_resource_type
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::ResourceType>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "parent_resource_type",
+  "HyperMouse::Schema::Result::ResourceType",
+  { id => "parent_resource_type_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
 
 =head2 resource_pieces
 
@@ -162,9 +196,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 resource_types
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-12 13:30:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pXb6+N+q3Xlun1bK5s89iQ
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::ResourceType>
+
+=cut
+
+__PACKAGE__->has_many(
+  "resource_types",
+  "HyperMouse::Schema::Result::ResourceType",
+  { "foreign.parent_resource_type_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-15 12:20:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:as6ybWrdqQt9EYez0YJQmg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -80,12 +80,12 @@ __PACKAGE__->table("service_type");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 service_group_id
+=head2 parent_service_type_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 short_name
 
@@ -121,12 +121,12 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "service_group_id",
+  "parent_service_type_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "short_name",
   { data_type => "varchar", is_nullable => 0, size => 255 },
@@ -146,6 +146,26 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
+=head2 parent_service_type
+
+Type: belongs_to
+
+Related object: L<HyperMouse::Schema::Result::ServiceType>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "parent_service_type",
+  "HyperMouse::Schema::Result::ServiceType",
+  { id => "parent_service_type_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
 =head2 provisioning_obligations
 
 Type: has_many
@@ -159,21 +179,6 @@ __PACKAGE__->has_many(
   "HyperMouse::Schema::Result::ProvisioningObligation",
   { "foreign.service_type_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 service_group
-
-Type: belongs_to
-
-Related object: L<HyperMouse::Schema::Result::ServiceGroup>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "service_group",
-  "HyperMouse::Schema::Result::ServiceGroup",
-  { id => "service_group_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 =head2 service_prices
@@ -206,9 +211,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 service_types
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-11 13:17:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JEq4wwSatUu4o9oPbMdp+A
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::ServiceType>
+
+=cut
+
+__PACKAGE__->has_many(
+  "service_types",
+  "HyperMouse::Schema::Result::ServiceType",
+  { "foreign.parent_service_type_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-15 12:20:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lDD9eaz7baVXoGTb9GmGWQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

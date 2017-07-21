@@ -75,12 +75,12 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
         my $cloudstack      = $monkeyman->get_cloudstack($cloudstack_handle);
         my $cloudstack_api  = $cloudstack->get_api;
 
-        my $resource_group = $db_schema
-            ->resultset('ResourceGroup')
+        my $resource_set = $db_schema
+            ->resultset('ResourceSet')
             ->search({ name => sprintf("CloudStack %s", $cloudstack_handle) })
-            ->filter_validated(mask => 0b000111)
+            ->filter_validated(mask => 0b000111, now => $now)
             ->single;
-        unless(defined($resource_group)) {
+        unless(defined($resource_set)) {
             $logger->warnf(
                 "The %s CloudStack couldn't be recognized as a resource group",
                 $cloudstack
@@ -90,7 +90,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
 
         $logger->debugf("Processing the %s CloudStack as the %s resource group",
             $cloudstack_handle,
-            $resource_group
+            $resource_set
         );
 
         my @parent_domains_found;
@@ -172,7 +172,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
             my $provisioning_agreement = $db_schema
                 ->resultset('ProvisioningAgreement')
                 ->search({ name => $provisioning_agreement_name })
-                ->filter_validated(mask => 0b000111)
+                ->filter_validated(mask => 0b000111, now => $now)
                 ->single;
             unless(defined($provisioning_agreement)) {
                 $logger->infof("Creating the %s provisioning agreement", $provisioning_agreement_name);
@@ -180,7 +180,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                 my $contractor = $db_schema
                     ->resultset('Contractor')
                     ->search({ name => $contractor_name })
-                    ->filter_validated(mask => 0b000111)
+                    ->filter_validated(mask => 0b000111, now => $now)
                     ->single;
                 unless(defined($contractor)) {
                     $logger->infof("Creating the %s contractor", $contractor_name);
@@ -226,10 +226,10 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                     resource_type_id
                         => $db_schema
                             ->resultset('ResourceType')
-                            ->find({ short_name => 'domain'})
+                            ->find_by_full_name(resource_type_full_name => 'domain') #FIXME
                             ->id,
-                    resource_group_id
-                        => $resource_group->id,
+                    resource_set_id
+                        => $resource_set->id,
                     resource_handle
                         => $domain->get_id,
                     provisioning_obligation_update
@@ -244,7 +244,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                             service_level_id
                                 => $db_schema
                                     ->resultset('ServiceLevel')
-                                    ->filter_validated(mask => 0b000111)
+                                    ->filter_validated(mask => 0b000111, now => $now)
                                     ->find({ short_name => 'basic' })
                                     ->id,
                             quantity
@@ -271,11 +271,10 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                         resource_type_id
                             => $db_schema
                                 ->resultset('ResourceType')
-                                ->filter_validated(mask => 0b000111)
-                                ->find({ short_name => 'account'})
+                                ->find_by_full_name(resource_type_full_name => 'account') #FIXME
                                 ->id,
-                        resource_group_id
-                            => $resource_group->id,
+                        resource_set_id
+                            => $resource_set->id,
                         resource_handle
                             => $account->get_id,
                         provisioning_obligation_update
@@ -290,7 +289,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                                 service_level_id
                                     => $db_schema
                                         ->resultset('ServiceLevel')
-                                        ->filter_validated(mask => 0b000111)
+                                        ->filter_validated(mask => 0b000111, now => $now)
                                         ->find({ short_name => 'basic' })
                                         ->id,
                                 quantity
@@ -307,16 +306,6 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
             $db_schema->storage->dbh->trace(0);
 
             $db_schema->txn_commit;
-
-   #                service_type
-   #                    => $db_schema
-   #                        ->resultset('ServiceType')
-   #                        ->find_by_full_name(service_type_full_name => 'vdc.group.domain'),
-   #                service_level
-   #                    => $db_schema
-   #                        ->resultset('ResourceType')
-   #                        ->find({ short_name => 'domain'});
-   #            )
 
    #        foreach my $virtual_machine ($cloudstack_api->perform_action(
    #            type        => 'VirtualMachine',

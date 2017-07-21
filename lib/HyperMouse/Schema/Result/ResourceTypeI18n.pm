@@ -172,7 +172,7 @@ __PACKAGE__->belongs_to(
   "language",
   "HyperMouse::Schema::Result::Language",
   { id => "language_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 =head2 resource_type
@@ -191,8 +191,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-06-26 15:58:15
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ff0A0Vq6PUPvoH1vUxE8Rg
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-15 12:20:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RM+drDI3tgR9ceXh61bK5g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

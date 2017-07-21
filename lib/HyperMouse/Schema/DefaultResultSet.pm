@@ -68,18 +68,17 @@ method search_related_deep(
     Bool        :$union?                        = 1,
     Maybe[Int]  :$permissions,
     Maybe[Int]  :$validations,
+    DateTime    :$now?                          = DateTime->now
 ) {
-
-    my $logger = $self->get_logger;
-    $logger->tracef(
-        "Searching the %s records related to %s (%s)",
-        $resultset_class, $self, { (@_) }
-    );
 
     my $search_parmeters_base = {
         resultset_class             => $resultset_class,
+        fetch_permissions_default   => $fetch_permissions_default,
+        fetch_validations_default   => $fetch_validations_default,
         search_permissions_default  => $search_permissions_default,
         search_validations_default  => $search_validations_default,
+        prepare_permissions_default => $prepare_permissions_default,
+        prepare_validations_default => $prepare_validations_default
     };
 
     my @resultsets;
@@ -88,8 +87,6 @@ method search_related_deep(
 
         my @callout_local = @{ $callout };
         while(my($callout_key, $callout_val) = splice(@callout_local, 0, 2)) {
-
-            $logger->tracef("Calling out the %s search pattern", $callout_key);
 
             my $search_parameters_more = $self->_search_related_deep_pattern_translate($callout_key);
             (__PACKAGE__ . '::Exception::PatternAbsent')->throwf(
@@ -152,16 +149,17 @@ method search_related_deep(
             my $search_validations = $search_val->{'validations'};
 
             $resultset = $resultset->filter_validated(
-                mask => $search_validations >= 0
-                      ? $search_validations
-                      : ($search_val->{'fetch'} ? $fetch_validations_default : $search_validations_default)
+                now     => $now,
+                mask    => $search_validations >= 0
+                        ?  $search_validations
+                        : ($search_val->{'fetch'} ? $fetch_validations_default : $search_validations_default)
             )
                 if(defined($search_validations));
 
             $resultset = $resultset->filter_permitted(
-                mask => $search_permissions >= 0
-                      ? $search_permissions
-                      : ($search_val->{'fetch'} ? $fetch_permissions_default : $search_permissions_default)
+                mask    => $search_permissions >= 0
+                        ?  $search_permissions
+                        : ($search_val->{'fetch'} ? $fetch_permissions_default : $search_permissions_default)
             )
                 if(defined($search_permissions));
 
@@ -228,16 +226,10 @@ method _build_search_related_deep_grammar_parser {
 
 method _search_related_deep_pattern_translate(Str $exp!) {
 
-    my $logger = $self->get_logger;
-
-    $logger->tracef("Translating the %s search pattern", $exp);
-
     my $parse_result = $self->_get_search_related_deep_grammar_parser->parse($exp, 1);
     unless(defined($parse_result)) {
         # TODO: raise an exception
     }
-    
-    $logger->tracef("The translation result is: %s", $parse_result);
 
     return($parse_result);
 
@@ -254,8 +246,8 @@ method _search_related_deep_pattern_translate(Str $exp!) {
             field3 => 3
         },
         update_include => {
-            search_conditions => [ qw(field1 field2) ],
-            search_conditions => [ { field9 => 9 } ]
+            fields_match    => [ qw(field1 field2) ],
+            condition_match => [ { field9 => 9 } ]
         },
         update_exclude => {
             conditions_match => [ { field0 => 0 } ]
@@ -324,11 +316,13 @@ method update_smart(
         ? []
         : [ map({ $_->id } $resultset->search($record)->all) ];
 
+    $self->get_schema->txn_begin;
+
     $resultset
         ->search({ id           => { -not_in => $ids_ok } })
         ->update({ valid_till   => $now });
 
-    return(
+    my @results =
         scalar(@{ $ids_ok }) == 0
             ?
                 $self->create({
@@ -341,8 +335,11 @@ method update_smart(
                 $self->search({
                     id          => { -in => $ids_ok }
                 })
-                ->all
-    );
+                ->all;
+
+    $self->get_schema->txn_commit;
+
+    return(@results);
 
 }
 

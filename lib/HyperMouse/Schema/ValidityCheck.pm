@@ -70,7 +70,7 @@ method _get_validity_checks(Int $mask!, Str $source_alias!, DateTime $now!) {
 
 method filter_validated (
     Str         :$source_alias?     = $self->current_source_alias,
-       DateTime :$now?              = DateTime->now(time_zone => $LocalTZ),
+    DateTime :   $now?              = DateTime->now(time_zone => $LocalTZ),
     Bool        :$removed?          = 0,
     Bool        :$premature?        = 0,
     Bool        :$expired?          = 0,
