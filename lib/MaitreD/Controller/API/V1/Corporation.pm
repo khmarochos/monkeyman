@@ -12,6 +12,7 @@ use HyperMouse::Schema::ValidityCheck::Constants ':ALL';
 use Method::Signatures;
 use TryCatch;
 use Switch;
+use Data::Dumper;
 use MaitreD::Extra::API::V1::TemplateSettings;
 
 method list {
@@ -158,6 +159,65 @@ method list {
     $json->{'total_count'} = $tmpl_rs->count;
             
     $self->render( json => $json );    
+}
+
+method form_load {
+    my $data = $self->datatable_params();
+    
+    my $json = {};
+    
+    $json =
+        $self
+            ->hm_schema
+            ->resultset('Corporation')
+            ->find({
+                'me.id' => $self->stash->{'id'}
+            },{
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            });
+    
+    $json->{'person_x_corporation'} = [
+        $self
+            ->hm_schema
+            ->resultset('PersonXContractor')
+            ->search({
+                'me.contractor_id' => $self->stash->{'id'}
+            },{
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            })->all
+    ];
+    
+    $self->render(json => $json);    
+}
+
+method form_add {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        success  => \1,
+        redirect => "/corporation/list/all"
+    };
+    $self->render(json => $json);
+}
+
+method form_update {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        success  => \1,
+        redirect => "/corporation/list/all"
+    };
+    $self->render(json => $json);
+}
+
+method form_remove {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        success  => \1,
+        redirect => "/corporation/list/all"
+    };
+    $self->render(json => $json);
 }
 
 

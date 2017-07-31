@@ -1248,7 +1248,8 @@ function Components (){
                                                 },
                                                 {
                                                     view   :"richselect", 
-                                                    label  : webix.i18n.form.contractor.type_id, 
+                                                    label  : webix.i18n.form.contractor.type_id,
+                                                    name   : 'contractor_type_id',
                                                     options:[
                                                         { "id":1, "value":"1" },
                                                         { "id":2, "value":"2" },
@@ -1287,16 +1288,16 @@ function Components (){
                             },
                             {
                                 view : "fieldset",                                
-                                label: "person_x_corporation",                                
+                                label: "person_x_contractor",                                
                                 body : {
-                                    id  : "person_x_corporation",
+                                    id  : "person_x_contractor",
                                     rows:[
                                         {
                                             view : "button",
                                             value: webix.i18n.add,
                                             click: function(){
-                                                var obj = $$("person_x_corporation");
-                                                if(obj) obj.addView(  webix.copy( components.form.person_x_corporation ) );
+                                                var obj = $$("person_x_contractor");
+                                                if(obj) obj.addView(  webix.copy( components.form.person_x_contractor ) );
                                             }
                                         }
                                     ]
@@ -1307,14 +1308,14 @@ function Components (){
                                 value: webix.i18n.form.send,
                                 type : "form",
                                 click: function(){
-                                    var obj      = $$("person_x_corporation");
+                                    var obj      = $$("person_x_contractor");
                                     var form     = $$("contractor_add");
                                     var action   = $$("form").config.action;
                                     var formData = {};
                                     
                                     if( form.validate() ){
                                         formData                 = form.getValues();
-                                        var person_x_corporation = [];
+                                        var person_x_contractor  = [];
                                         var views                = obj.getChildViews();
                                         views.forEach( function(item1){
                                             var data  = {};
@@ -1324,13 +1325,13 @@ function Components (){
                                                     data[ item2.config.name ] = item2.config.value;
                                                 }
                                             } );
-                                            if (data && data.person_id) person_x_corporation.push( data );
+                                            if (data && data.person_id) person_x_contractor.push( data );
                                         });
-                                        formData.person_x_corporation = person_x_corporation;
+                                        formData.person_x_corporation = person_x_contractor;
                                         console.log( formData );
                                         
                                         webix.ajax().post(
-                                            "/corporation/form/" + action + ".json",
+                                            "/contractor/form/" + action + ".json",
                                             formData,
                                             function(text,data,http) {
                                                 var res = data.json();
@@ -1491,6 +1492,7 @@ function Components (){
         
         /* snippets*/
         'person_x_corporation':{
+            view    : "form",
             cols:[
                 {
                     view   :"richselect", 
@@ -1530,6 +1532,48 @@ function Components (){
                     }                    
                 }
             ]            
+        },
+        'person_x_contractor' : {
+            view    : "form",
+            cols:[
+                {
+                    view   :"richselect", 
+                    label  : webix.i18n.person,
+                    options: "/person/list/all.json",
+                    name   : "person_id",
+                    labelPosition:"top"
+                },
+                {},
+                {
+                    view  : "checkbox",
+                    labelPosition:"top",
+                    name  : "admin",
+                    label : "Admin", 
+                    value : "0"
+                },        
+                {
+                    view  : "checkbox",
+                    labelPosition:"top",
+                    name  : "bill",
+                    label : "Bill", 
+                    value : "0"
+                },                       
+                {
+                    view  : "checkbox",
+                    labelPosition:"top",
+                    name  : "tech",
+                    label : "tech", 
+                    value : "0"
+                },
+                {
+                    view : "button",
+                    value: webix.i18n.delete,
+                    click: function(){
+                        var obj = $$("person_x_contractor");
+                        if(obj) obj.removeView( this.getParentView().config.id );
+                    }                    
+                }
+            ]             
         }
     };
     

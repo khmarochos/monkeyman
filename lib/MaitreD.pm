@@ -222,7 +222,13 @@ method startup {
                 action          => 'form_add'
             );
 
-
+        $routes_authenticated_person
+            ->post('/form/remove/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_remove',
+            );
+            
             
     my  $routes_authenticated_contractor = $routes_authenticated->under('/contractor');
 
@@ -234,6 +240,34 @@ method startup {
                 filter          => 'active',
                 related_element => 'person',
                 related_id      => '@'
+            );
+
+        $routes_authenticated_contractor
+            ->get('/form/load/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'form_load',
+            );
+            
+        $routes_authenticated_contractor
+            ->post('/form/load' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'form_update',
+            );            
+
+        $routes_authenticated_contractor
+            ->post('/form/add' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'form_add',
+            );            
+            
+        $routes_authenticated_contractor
+            ->post('/form/remove/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_remove',
             );
 
         $routes_authenticated_contractor
@@ -268,6 +302,34 @@ method startup {
                 related_id      => '@'
             );
 
+        $routes_authenticated_corporation
+            ->get('/form/load/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_load',
+            );
+            
+        $routes_authenticated_corporation
+            ->post('/form/load' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_update',
+            );            
+
+        $routes_authenticated_corporation
+            ->post('/form/add' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_add',
+            ); 
+
+        $routes_authenticated_corporation
+            ->post('/form/remove/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_remove',
+            );
+            
     my  $routes_authenticated_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
 
         $routes_authenticated_provisioning_agreement

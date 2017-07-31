@@ -116,9 +116,7 @@ method list {
                 }
             )->all
     ];
-    
-    #$json->{'recordsTotal'} = $tmpl_rs->count;
-    
+        
     my $columns = $settings->{'contractor'}->{'table'}->{'columns'};
                 
     @{$json->{'data'}} = map {
@@ -143,11 +141,70 @@ method list {
     }
     @{ $json->{'data'} };
     
-    #$json->{'recordsFiltered'} = $json->{'recordsTotal'};
     $json->{'pos'}         = $datatable_params->{'start'};
     $json->{'total_count'} = $tmpl_rs->count;
     
     $self->render( json => $json );
+}
+
+method form_load {
+    my $data = $self->datatable_params();
+
+    my $json = {};
+
+    $json =
+        $self
+            ->hm_schema
+            ->resultset('Contractor')
+            ->find({
+                'me.id' => $self->stash->{'id'}
+            },{
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            });
+    
+    $json->{'person_x_contractor'} = [
+        $self
+            ->hm_schema
+            ->resultset('PersonXContractor')
+            ->search({
+                'me.contractor_id' => $self->stash->{'id'}
+            },{
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            })->all
+    ];
+    
+    $self->render(json => $json);
+}
+
+
+method form_add {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        success  => \1,
+        redirect => "/contractor/list/all"
+    };
+    $self->render(json => $json);
+}
+
+method form_update {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        success  => \1,
+        redirect => "/contractor/list/all"
+    };
+    $self->render(json => $json);
+}
+
+method form_remove {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        success  => \1,
+        redirect => "/contractor/list/all"
+    };
+    $self->render(json => $json);
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);    

@@ -148,9 +148,7 @@ method list {
 method form_load {
     my $data = $self->datatable_params();
 
-    my $json = {
-        first_name => 'Andrey'
-    };
+    my $json = {};
 
     $json =
         $self
