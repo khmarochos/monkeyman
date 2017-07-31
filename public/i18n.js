@@ -37,8 +37,8 @@ var locales = {
             'name'       : 'Name',
             'first_name' : 'First Name',
             'last_name'  : 'Last Name',
-            'valid_since': 'valid_since',
-            'valid_till' : 'valid_till',
+            'valid_since': 'Valid Since',
+            'valid_till' : 'Valid Till',
             'number'     : 'Number',
             'client'     : 'Client',
             'provider'   : 'Provider',
@@ -48,6 +48,23 @@ var locales = {
             'resource_handle': 'Resource Handle',
             'resource_host'  : 'Resource Host',
             'do_row_select'  : 'Select row',
+            'phone'      : 'Phone', 
+        },
+        'form':{
+            'password': 'Password',
+            'email'   : 'E-mail',
+            'send'    : 'Send',
+            'person': {
+                'header': 'Person form'
+            },
+            'contractor': {
+                'header' : 'Contractor form',
+                'type_id': 'Contractor type',
+            },
+            'corporation' : {
+                'header'  : 'Сorporation form',
+            }            
+            
         }
     },
     /*
@@ -97,7 +114,29 @@ var locales = {
             'resource_handle': 'Resource Handle',
             'resource_host'  : 'Resource Host',
             'do_row_select'  : 'Select row',
-        }
+            'phone'      : 'Телефон', 
+        },
+        'form':{
+            'password': 'Пароль',
+            'email'   : 'E-mail',
+            'send'    : 'Отправить',
+            'person': {
+                'add':{
+                    'header': 'Новая персона'
+                }
+            },
+            'person': {
+                'header': 'Форма персоны'
+            },
+            'contractor': {
+                'header'  : 'Форма контрактора',
+                'type_id' : 'Тип контрактора',
+            },
+            'corporation' : {
+                'header'  : 'Форма корпарации',
+            }            
+        },
+        
     }
 };
 

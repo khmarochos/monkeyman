@@ -145,6 +145,82 @@ method list {
 
 }
 
+method form_load {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        first_name => 'Andrey'
+    };
+
+    $json =
+        $self
+            ->hm_schema
+            ->resultset('Person')
+            ->find({
+                'me.id' => $self->stash->{id}
+            },{
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            });
+    
+    $json->{'phone'} = [
+        $self
+            ->hm_schema
+            ->resultset('PersonPhone')
+            ->search({
+                'me.person_id' => $self->stash->{id}
+            },{
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            })->all        
+    ];
+    
+    $json->{'phone'} = join(",", map{ $_->{'phone'} } @{ $json->{'phone'} } );
+    
+    $json->{'email'} = [
+        $self
+            ->hm_schema
+            ->resultset('PersonEmail')
+            ->search({
+                'me.person_id' => $self->stash->{id}
+            },{
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            })->all        
+    ];
+    
+    $json->{'email'} = join(",", map{ $_->{'email'} } @{ $json->{'email'} } );
+                    
+    $self->render(json => $json);
+}
+
+method form_add {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        success  => \1,
+        redirect => "/person/list/all"
+    };
+    $self->render(json => $json);
+}
+
+method form_update {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        success  => \1,
+        redirect => "/person/list/all"
+    };
+    $self->render(json => $json);
+}
+
+method form_remove {
+    my $data = $self->datatable_params();
+
+    my $json = {
+        success  => \1,
+        redirect => "/person/list/all"
+    };
+    $self->render(json => $json);
+}
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;

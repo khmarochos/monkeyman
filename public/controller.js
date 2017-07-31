@@ -49,45 +49,58 @@ function Controller (arg){
  */
 function Datatable( components ){
     this.components = components;
+    
     this.rows = {
         data : {},  
     };
     
-    this.create = function( id ){
-        var me        = this;
-        var obj       = $$("main");
-        var datatable = this.components.datatable[id];
-        me.rows.data  = {};
-        
-        if ( isNaN( datatable  ) ){
-            console.log('datatable '+ id +' start ... ');
-                        
-            if( !datatable  ) {
-                webix.message('component ' + id + ' not exists');
-                return false;
-            }
-
+    this.remove = function( o ) {
+        var obj = o ? o : $$('main');
+        if( obj ){
+            //var views = obj.getChildViews();
+            /*views.forEach( function(item, i, arr){
+                obj.removeView( item.config.id );
+                console.log( "views", item.config.id );
+            });*/
             if( $$('datatable_actions') && $$('datatable_actions').hasEvent("onMenuItemClick") ){
                 $$('datatable_actions').detachEvent("onMenuItemClick");
             }
-            
+            obj.removeView("form");
             obj.removeView("datatable_pager");
             obj.removeView("datatable_toolbar");
             obj.removeView("datatable");
-            
+            console.log("remove datatable...");
+        }
+    };
+        
+    this.create = function( id ){
+        //route.navigate("login", {trigger: true, replace: true});
+        //console.log( route );
+        var name_id   = id;
+        var me        = this;
+        var obj       = $$("main");
+        var datatable = this.components.datatable[name_id];
+        me.rows.data  = {};
+        this.remove( obj );
+        
+        if ( obj && isNaN( datatable  ) ){
+            console.log('datatable '+ id +' start ... ');
+                                    
             //toolbar
-            if ( datatable.toolbar){
-                obj.addView( datatable .toolbar.view );
+            if ( datatable.toolbar && datatable.toolbar.view ){
+                obj.addView( datatable.toolbar.view );
             }            
+            
             //datatable
             if ( datatable.view ){
                 obj.addView( datatable.view  );
+
                 //contextmenu
                 webix.ui( this.components.datatable.contextmenu.view ).attachTo( $$( datatable.view.id ) );
+
                 // refresh component
                 $$( datatable.view.id ).attachEvent("onSelectChange", function(){
                     me.rows.data = this.getSelectedItem();
-                    //console.log( me.rows.data );
                 });
 
                 $$( datatable.view.id ).attachEvent("onBeforeLoad", function(){
@@ -115,16 +128,16 @@ function Datatable( components ){
                     var related_id   = me.rows.data.id;
                     var url          = this.getMenuItem(id).url;
                     var datatable_id = this.getMenuItem(id).id;
-                    //console.log( related_id, url, datatable_id );
 
                     if( related_id ){
                         if( url ){
                             var datatable = me.components.datatable[ datatable_id ];
                             if( datatable ){
                                 url = url.replace('{{id}}', related_id );
-                                datatable.view.url = url + '.json';
-                                var obj = new Datatable( me.components );
-                                obj.create( datatable_id );
+                                //datatable.view.url = url + '.json';
+                                //var obj = new Datatable( me.components );
+                                //obj.create( datatable_id );
+                                route.navigate( url, { trigger: true });
                             }
                         }
                     }
@@ -135,7 +148,8 @@ function Datatable( components ){
             }
             // button add
             $$("datatable_add").attachEvent("onItemClick", function(){
-                console.log("datatable_add click ", datatable, id );
+                //console.log("datatable_add click ", datatable, id );
+                route.navigate( "/" + id + "/form/add", { trigger: true });
             });
             // export
             $$("datatable_export_pdf").attachEvent("onItemClick", function(){
@@ -161,7 +175,23 @@ function Datatable( components ){
                 });
                 console.log("export to Excel");
             });
-                                                
+            
+            // contextmenu datatable ( edit, delete )
+            $$("contextmenu").attachEvent("onItemClick", function(id){
+                var obj    = this.getItem(id);
+                var action = obj ? obj.action : false;
+                
+                if( me.rows.data.id && obj ){
+                    action = obj.action;                    
+                    var url = name_id + "/form/" + action + "/" + me.rows.data.id;
+                    route.navigate( url , { trigger: true });
+                    console.log( me.rows.data.id , datatable, name_id);
+                }
+                else{
+                    webix.message( webix.i18n.datatable.do_row_select );    
+                }
+            });
+            
             console.log('datatable '+ id +' is created');
         }
     };
@@ -170,8 +200,8 @@ function Datatable( components ){
 /*
     tree  
  */
-function Tree(){
-    
+function Tree( components ){
+    this.components = components;
     this.onSelectChange = function( obj, callback ){
         if ( !obj ) return false;            
         obj.attachEvent('onSelectChange', function(){
@@ -182,6 +212,14 @@ function Tree(){
                 }
             }
         });            
+    };
+    
+    this.select = function( id ){
+        var tree = $$("tree");
+        if( tree ){
+            tree.select(id);
+        }
+        
     };
     
 }
@@ -195,9 +233,9 @@ function LocalStorage() {
             return webix.storage.local.get(key);
         }
         else{
-            webix.message( 'not param key' );
+            webix.message( 'not parce');
+            return false;
         }
-        return false;
     };
 
     this.set = function( key, data ){

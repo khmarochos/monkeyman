@@ -93,6 +93,7 @@ function Components (){
         });
         
         controller.datatable.create( global_setting.datatable.id );
+        controller.tree.select( global_setting.datatable.id );
         /*
             Tree
         */
@@ -103,15 +104,18 @@ function Components (){
 
         controller.tree.onSelectChange( $$( me.tree.view.id ), function( id ){
             global_setting.datatable.id = id;
-            //console.log( controller.datatable );
-            return controller.datatable.create(id);
+            if( me.datatable[id] ){
+                route.navigate( me.datatable[id].view.urlBase , { trigger: true });
+            }
+            else{
+                webix.message("datatable " + id + " not exists");
+            }
         });
         /*
             end Tree
         */
         $$('changeLocale').setValue( global_setting.i18n.locale );
         controller.onChange( $$('changeLocale'), function( locale ){
-            console.log('locale ' + locale );
             global_setting.i18n.locale = locale;
             location.reload();
         } );        
@@ -205,8 +209,8 @@ function Components (){
                 { id:"2", value: webix.i18n.clients,
                     data: [
                         { id: "person",       value: webix.i18n.person       },
-                        { id: "contractors",  value: webix.i18n.contractors  },
-                        { id: "corporations", value: webix.i18n.corporations },
+                        { id: "contractor",  value: webix.i18n.contractors  },
+                        { id: "corporation", value: webix.i18n.corporations },
                     ]
                 },
                 { id:"3", value: "Service Provisioning",
@@ -251,8 +255,14 @@ function Components (){
                 view :"contextmenu",
                 id   :"contextmenu",
                 data:[
-                    { value: webix.i18n.edit    },
-                    { value: webix.i18n.delete  },
+                    {
+                        value : webix.i18n.edit,
+                        action: "load"
+                    },
+                    {
+                        value : webix.i18n.delete,
+                        action: "remove"
+                    }
                 ]
             }            
         },
@@ -264,10 +274,10 @@ function Components (){
                 view        : "datatable",
                 id          : "datatable",
                 select      : "row",
-                //datafetch   : global_setting.datatable.rows,                
                 autoConfig  : true, 
                 footer      : true,
                 resizeColumn: true,
+                urlBase     : "/person/list/all",
                 url         : "/person/list/all.json",
                 //save        : "myproxy->/person/list/all.json",           
                 columns     :[
@@ -368,12 +378,12 @@ function Components (){
                                             url  : '/partnership_agreement/list/related_to/person/{{id}}',
                                         },
                                         {
-                                            id   : 'contractors',
+                                            id   : 'contractor',
                                             value: webix.i18n.contractors,
                                             url  : '/contractor/list/related_to/person/{{id}}',
                                         },
                                         {
-                                            id   : 'corporations',
+                                            id   : 'corporation',
                                             value: webix.i18n.corporations,
                                             url  : '/corporation/list/related_to/person/{{id}}',
                                         },
@@ -389,22 +399,19 @@ function Components (){
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
-                                controller.args.datatable.person.view.url = "/person/list/active.json";
-                                controller.datatable.create('person');
+                                route.navigate( "/person/list/active", { trigger: true });
                             }
                         },
                         {
                             view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
                             click: function(){
-                                controller.args.datatable.person.view.url = "/person/list/archived.json";
-                                controller.datatable.create('person');
+                                route.navigate( "/person/list/archived", { trigger: true });
                             }
                         },
                         {
                             view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
                             click: function(){
-                                controller.args.datatable.person.view.url = "/person/list/all.json";
-                                controller.datatable.create('person');
+                                route.navigate( "/person/list/all", { trigger: true });
                             }
                         }
                     ]
@@ -414,7 +421,7 @@ function Components (){
         /*
             contractors
         */
-        contractors : {
+        contractor : {
             view: {
                 view        : "datatable",
                 id          : "datatable",
@@ -423,6 +430,7 @@ function Components (){
                 autoConfig  : true,
                 footer      : true,
                 resizeColumn: true,
+                urlBase     : "/contractor/list/all",
                 url         : "/contractor/list/all.json",
                 //save        : "myproxy->/contractor/list/all.json",
                 columns     : [
@@ -493,7 +501,7 @@ function Components (){
                                             url  : '/provisioning_agreement/list/related_to/contractor/{{id}}'
                                         },
                                         {
-                                            id   : 'partnership_agreements',
+                                            id   : 'partnership_agreement',
                                             value: webix.i18n.partnership_agreements,
                                             url  : '/partnership_agreement/list/related_to/contractor/{{id}}',
                                         },
@@ -503,7 +511,7 @@ function Components (){
                                             url  : '/person/list/related_to/contractor/{{id}}',
                                         },
                                         {
-                                            id   : 'corporations',
+                                            id   : 'corporation',
                                             value: webix.i18n.corporations,
                                             url  : '/corporation/list/related_to/person/{{id}}',
                                         },
@@ -519,22 +527,19 @@ function Components (){
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
-                                controller.args.datatable.contractors.view.url = "/contractor/list/active.json";
-                                controller.datatable.create('contractors');
+                                route.navigate( "/contractor/list/active", { trigger: true });                                
                             }
                         },
                         {
                             view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
                             click: function(){
-                                controller.args.datatable.contractors.view.url = "/contractor/list/archived.json";
-                                controller.datatable.create('contractors');
+                                route.navigate( "/contractor/list/archived", { trigger: true });                                
                             }
                         },
                         {
                             view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
                             click: function(){
-                                controller.args.datatable.contractors.view.url = "/contractor/list/all.json";
-                                controller.datatable.create('contractors');
+                                route.navigate( "/contractor/list/all", { trigger: true });                                
                             }
                         }
                     ]
@@ -545,7 +550,7 @@ function Components (){
         /*
             corporations
         */
-        corporations: {
+        corporation: {
             view: {            
                 view        : "datatable",
                 id          : "datatable",
@@ -553,6 +558,7 @@ function Components (){
                 autoConfig  : true,
                 footer      : true,  
                 resizeColumn: true,
+                urlBase     : "/corporation/list/all",
                 url         : "/corporation/list/all.json",
                 //save        : "myproxy->/corporation/list/all.json",
                 columns     : [
@@ -634,7 +640,7 @@ function Components (){
                                             url  : '/person/list/related_to/corporation/{{id}}',
                                         },
                                         {
-                                            id   : 'corporations',
+                                            id   : 'corporation',
                                             value: webix.i18n.corporations,
                                             url  : '/contractor/list/related_to/corporation/{{id}}',
                                         },
@@ -650,22 +656,19 @@ function Components (){
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
-                                controller.args.datatable.corporations.view.url = "/corporation/list/active.json";
-                                controller.datatable.create('corporations');
+                                route.navigate( "/corporation/list/active", { trigger: true });                                
                             }
                         },
                         {
                             view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
                             click: function(){
-                                controller.args.datatable.corporations.view.url = "/corporation/list/archived.json";
-                                controller.datatable.create('corporations');
+                                route.navigate( "/corporation/list/archived", { trigger: true });                                
                             }
                         },
                         {
                             view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
                             click: function(){
-                                controller.args.datatable.corporations.view.url = "/corporation/list/all.json";
-                                controller.datatable.create('corporations');
+                                route.navigate( "/corporation/list/all", { trigger: true });                                
                             }
                         }
                     ]
@@ -684,6 +687,7 @@ function Components (){
                 autoConfig  : true,
                 footer      : true,  
                 resizeColumn: true,
+                urlBase     : "/provisioning_agreement/list/all",
                 url         : "/provisioning_agreement/list/all.json",
                 //save        : "myproxy->/provisioning_agreement/list/all.json",
                 columns     : [
@@ -792,22 +796,19 @@ function Components (){
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
-                                controller.args.datatable.provisioning_agreement.view.url = "/provisioning_agreement/list/active.json";
-                                controller.datatable.create('provisioning_agreement');
+                                route.navigate( "/provisioning_agreement/list/active", { trigger: true });
                             }
                         },
                         {
                             view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
                             click: function(){
-                                controller.args.datatable.provisioning_agreement.view.url = "/provisioning_agreement/list/archived.json";
-                                controller.datatable.create('provisioning_agreement');
+                                route.navigate( "/provisioning_agreement/list/archived", { trigger: true });
                             }
                         },
                         {
                             view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
                             click: function(){
-                                controller.args.datatable.provisioning_agreement.view.url = "/provisioning_agreement/list/all.json";
-                                controller.datatable.create('provisioning_agreement');
+                                route.navigate( "/provisioning_agreement/list/all", { trigger: true });
                             }
                         }
                     ]
@@ -825,6 +826,7 @@ function Components (){
                 autoConfig  : true,
                 footer      : true,  
                 resizeColumn: true,
+                urlBase     : "/provisioning_obligation/list/all",
                 url         : "/provisioning_obligation/list/all.json",
                 //save        : "myproxy->/provisioning_obligation/list/all.json",
                 columns     : [
@@ -927,22 +929,19 @@ function Components (){
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
-                                controller.args.datatable.provisioning_obligation.view.url = "/provisioning_obligation/list/active.json";
-                                controller.datatable.create('provisioning_obligation');
+                                route.navigate( "/provisioning_obligation/list/active", { trigger: true });
                             }
                         },
                         {
                             view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
                             click: function(){
-                                controller.args.datatable.provisioning_obligation.view.url = "/provisioning_obligation/list/archived.json";
-                                controller.datatable.create('provisioning_obligation');
+                                route.navigate( "/provisioning_obligation/list/archived", { trigger: true });
                             }
                         },
                         {
                             view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
                             click: function(){
-                                controller.args.datatable.provisioning_obligation.view.url = "/provisioning_obligation/list/all.json";
-                                controller.datatable.create('provisioning_obligation');
+                                route.navigate( "/provisioning_obligation/list/all", { trigger: true });
                             }
                         }
                     ]
@@ -961,6 +960,7 @@ function Components (){
                 footer      : true,  
                 datafetch   : global_setting.datatable.rows,
                 resizeColumn: true,
+                urlBase     : "/resource_piece/list/all",
                 url         : "/resource_piece/list/all.json",
                 //save        : "myproxy->/resource_piece/list/all.json",
                 columns     : [
@@ -1062,22 +1062,19 @@ function Components (){
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
-                                controller.args.datatable.resource_piece.view.url = "/resource_piece/list/active.json";
-                                controller.datatable.create('resource_piece');
+                                route.navigate( "/resource_piece/list/active", { trigger: true });
                             }
                         },
                         {
                             view: "button", value: webix.i18n.archived, id: "datatable_load_archived", width:100, align:"center",
                             click: function(){
-                                controller.args.datatable.resource_piece.view.url = "/resource_piece/list/archived.json";
-                                controller.datatable.create('resource_piece');
+                                route.navigate( "/resource_piece/list/archived", { trigger: true });
                             }
                         },
                         {
                             view: "button", value: webix.i18n.all     , id: "datatable_load_all"     , width:100, align:"right",
                             click: function(){
-                                controller.args.datatable.resource_piece.view.url = "/resource_piece/list/all.json";
-                                controller.datatable.create('resource_piece');
+                                route.navigate( "/resource_piece/list/all", { trigger: true });
                             }
                         }
                     ]
@@ -1099,18 +1096,302 @@ function Components (){
         //
         'person': {
             form : {
-                
+                id     : "form",
+                action : "add",
+                rows   :[
+                    {
+                        template : webix.i18n.form.person.header,
+                        type     : "header"
+                    },
+                    //{},
+                    {
+                        view    : "form",
+                        id      : "person_add",
+                        elements:[
+                            {
+                                cols:[
+                                    {
+                                        view : "text",
+                                        label: webix.i18n.datatable.first_name,
+                                        name : 'first_name',
+                                        labelPosition:"top"
+                                    },
+                                    {
+                                        view : "text",
+                                        label: webix.i18n.datatable.last_name,
+                                        name : 'last_name',
+                                        labelPosition:"top"
+                                    },
+                                ]                                
+                            },
+                            {
+                                cols:[
+                                    {
+                                        view : "text",
+                                        label: webix.i18n.form.email,
+                                        type : "email",
+                                        name : 'email',
+                                        labelPosition:"top"
+                                    },
+                                    {
+                                        view : "text",
+                                        label: webix.i18n.form.password,
+                                        type : "password",
+                                        name : 'password',
+                                        labelPosition:"top"
+                                    },
+                                ]                                
+                            },
+                            {
+                                cols:[
+                                    {
+                                        view : "datepicker",
+                                        label: webix.i18n.datatable.valid_since,
+                                        timepicker: false,
+                                        name : 'valid_since',
+                                        labelPosition:"top"
+                                    },
+                                    {
+                                        view : "datepicker",
+                                        label: webix.i18n.datatable.valid_till,
+                                        timepicker: false,
+                                        name : 'valid_till',
+                                        labelPosition:"top"
+                                    },
+                                ]                                
+                            },                            
+                            {
+                                cols:[
+                                    {
+                                        view : "text",
+                                        label: webix.i18n.datatable.phone,
+                                        name : 'phone',
+                                        labelPosition:"top"
+                                    }
+                                ]                                
+                            },
+                            {
+                                view : "button",
+                                value: webix.i18n.form.send,
+                                type : "form",
+                                click: function(){
+                                    var form   = $$("person_add");
+                                    var action = $$("form").config.action;
+                                
+                                    if( form.validate() ){
+                                        webix.ajax().post(
+                                            "/person/form/" + action + ".json",
+                                            form.getValues(),
+                                            function(text,data,http) {
+                                                var res = data.json();
+                                                if( res.success == 1 ){
+                                                    route.navigate( res.redirect, { trigger: true });
+                                                }
+                                                else{
+                                                    webix.message( res.message );
+                                                }
+                                            }
+                                        );                                        
+                                    }
+                                    else{
+                                        webix.message("form is not validate");
+                                    }
+                                }
+                            }
+                        ],
+                        rules:{
+                            "email"      :webix.rules.isEmail,
+                            //"password"   :webix.rules.isNotEmpty,
+                            //"valid_since":webix.rules.isNotEmpty,
+                            "first_name" :webix.rules.isNotEmpty,
+                            "last_name"  :webix.rules.isNotEmpty
+                        },                          
+                    },
+                    {}
+                ]
             }
         },
         //
-        'contractors': {
+        'contractor': {
             form : {
-                
+                id     : "form",
+                action : "add",
+                rows   :[
+                    {
+                        template : webix.i18n.form.contractor.header,
+                        type     : "header"
+                    },
+                    //{},
+                    {
+                        view    : "form",
+                        id      : "contractor_add",
+                        elements:[
+                            {
+                                cols:[
+                                    {
+                                        view : "text",
+                                        label: webix.i18n.datatable.name,
+                                        name : 'name',
+                                        labelPosition:"top"
+                                    },
+                                    {
+                                        view   :"richselect", 
+                                        label  : webix.i18n.form.contractor.type_id, 
+                                        options:[
+                                            { "id":1, "value":"1" },
+                                            { "id":2, "value":"2" },
+                                            { "id":3, "value":"3" },
+                                        ],
+                                        labelPosition:"top"
+                                    },                                    
+                                    {
+                                        view : "text",
+                                        label: webix.i18n.datatable.provider,
+                                        name : 'provider',
+                                        labelPosition:"top"
+                                    },
+                                ]                                
+                            },
+                            {
+                                cols:[
+                                    {
+                                        view : "datepicker",
+                                        label: webix.i18n.datatable.valid_since,
+                                        timepicker: false,
+                                        name : 'valid_since',
+                                        labelPosition:"top"
+                                    },
+                                    {
+                                        view : "datepicker",
+                                        label: webix.i18n.datatable.valid_till,
+                                        timepicker: false,
+                                        name : 'valid_till',
+                                        labelPosition:"top"
+                                    },
+                                ]                                
+                            },                             
+                            {
+                                view : "button",
+                                value: webix.i18n.form.send,
+                                type : "form",
+                                click: function(){
+                                    var form   = $$("contractor_add");
+                                    var action = $$("form").config.action;
+                                
+                                    if( form.validate() ){
+                                        webix.ajax().post(
+                                            "/contractor/form/" + action + ".json",
+                                            form.getValues(),
+                                            function(text,data,http) {
+                                                var res = data.json();
+                                                if( res.success == 1 ){
+                                                    route.navigate( res.redirect, { trigger: true });
+                                                }
+                                                else{
+                                                    webix.message( res.message );
+                                                }
+                                            }
+                                        );                                        
+                                    }
+                                    else{
+                                        webix.message("form is not validate");
+                                    }
+                                }
+                            }
+                        ],
+                        rules:{
+                            //"valid_since":webix.rules.isNotEmpty,
+                            "name" :webix.rules.isNotEmpty
+                        },                          
+                    },
+                    {}
+                ]
             }
         },
-        'corporations': {
+        'corporation': {
             form : {
-                
+                id     : "form",
+                action : "add",
+                rows   :[
+                    {
+                        template : webix.i18n.form.corporation.header,
+                        type     : "header"
+                    },
+                    //{},
+                    {
+                        view    : "form",
+                        id      : "corporation_add",
+                        elements:[
+                            {
+                                cols:[
+                                    {
+                                        view : "text",
+                                        label: webix.i18n.datatable.name,
+                                        name : 'name',
+                                        labelPosition:"top"
+                                    },                                  
+                                    {
+                                        view : "text",
+                                        label: webix.i18n.datatable.provider,
+                                        name : 'provider',
+                                        labelPosition:"top"
+                                    },
+                                ]                                
+                            },
+                            {
+                                cols:[
+                                    {
+                                        view : "datepicker",
+                                        label: webix.i18n.datatable.valid_since,
+                                        timepicker: false,
+                                        name : 'valid_since',
+                                        labelPosition:"top"
+                                    },
+                                    {
+                                        view : "datepicker",
+                                        label: webix.i18n.datatable.valid_till,
+                                        timepicker: false,
+                                        name : 'valid_till',
+                                        labelPosition:"top"
+                                    },
+                                ]                                
+                            },                             
+                            {
+                                view : "button",
+                                value: webix.i18n.form.send,
+                                type : "form",
+                                click: function(){
+                                    var form   = $$("corporation_add");
+                                    var action = $$("form").config.action;
+                                
+                                    if( form.validate() ){
+                                        webix.ajax().post(
+                                            "/corporation/form/" + action + ".json",
+                                            form.getValues(),
+                                            function(text,data,http) {
+                                                var res = data.json();
+                                                if( res.success == 1 ){
+                                                    route.navigate( res.redirect, { trigger: true });
+                                                }
+                                                else{
+                                                    webix.message( res.message );
+                                                }
+                                            }
+                                        );                                        
+                                    }
+                                    else{
+                                        webix.message("form is not validate");
+                                    }
+                                }
+                            }
+                        ],
+                        rules:{
+                            //"valid_since":webix.rules.isNotEmpty,
+                            "name" :webix.rules.isNotEmpty
+                        },                          
+                    },
+                    {}
+                ]
             }
         }
     };

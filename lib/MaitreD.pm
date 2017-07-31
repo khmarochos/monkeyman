@@ -199,8 +199,31 @@ method startup {
                 related_element => '',
                 related_id      => ''
             );
+        
+        $routes_authenticated_person
+            ->get('/form/load/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'form_load',
+            );
+
+        $routes_authenticated_person
+            ->post('/form/load' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'form_update'
+            );
+
+            
+        $routes_authenticated_person
+            ->post('/form/add' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'form_add'
+            );
 
 
+            
     my  $routes_authenticated_contractor = $routes_authenticated->under('/contractor');
 
         $routes_authenticated_contractor
