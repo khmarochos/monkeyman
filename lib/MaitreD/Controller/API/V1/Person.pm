@@ -132,9 +132,9 @@ method list {
             } else {
                 # TODO: Something should happen here
                 next;
-            }
-            
+            }        
         }
+        $hash->{"value"} = $_->first_name . " " . $_->last_name;
         $hash;
     } @{ $json->{'data'} });
     

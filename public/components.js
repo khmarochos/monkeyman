@@ -79,14 +79,20 @@ function Components (){
                 me.header.view,
                 {
                     id   :'body',
-                    cols :[
-                        me.tree.view,
-                        { view: "resizer" },
-                        {
-                            id  : 'main',
-                            rows: []
-                        }
-                    ]
+                    body : {
+                        view :"layout",
+                        cols :[
+                            me.tree.view,
+                            { view: "resizer" },
+                            {
+                                view   :"scrollview",
+                                body   : {
+                                    id     : 'main',
+                                    rows   : []                                    
+                                }
+                            }
+                        ]
+                    }
                 },
                 me.footer.view
             ]
@@ -1097,6 +1103,7 @@ function Components (){
         'person': {
             form : {
                 id     : "form",
+                scroll : "y",
                 action : "add",
                 rows   :[
                     {
@@ -1227,61 +1234,104 @@ function Components (){
                         id      : "contractor_add",
                         elements:[
                             {
-                                cols:[
-                                    {
-                                        view : "text",
-                                        label: webix.i18n.datatable.name,
-                                        name : 'name',
-                                        labelPosition:"top"
-                                    },
-                                    {
-                                        view   :"richselect", 
-                                        label  : webix.i18n.form.contractor.type_id, 
-                                        options:[
-                                            { "id":1, "value":"1" },
-                                            { "id":2, "value":"2" },
-                                            { "id":3, "value":"3" },
-                                        ],
-                                        labelPosition:"top"
-                                    },                                    
-                                    {
-                                        view : "text",
-                                        label: webix.i18n.datatable.provider,
-                                        name : 'provider',
-                                        labelPosition:"top"
-                                    },
-                                ]                                
+                                view :"fieldset", 
+                                label: webix.i18n.form.basic,
+                                body : {
+                                    rows: [
+                                        {
+                                            cols:[
+                                                {
+                                                    view : "text",
+                                                    label: webix.i18n.datatable.name,
+                                                    name : 'name',
+                                                    labelPosition:"top"
+                                                },
+                                                {
+                                                    view   :"richselect", 
+                                                    label  : webix.i18n.form.contractor.type_id, 
+                                                    options:[
+                                                        { "id":1, "value":"1" },
+                                                        { "id":2, "value":"2" },
+                                                        { "id":3, "value":"3" },
+                                                    ],
+                                                    labelPosition:"top"
+                                                },                                    
+                                                {
+                                                    view : "text",
+                                                    label: webix.i18n.datatable.provider,
+                                                    name : 'provider',
+                                                    labelPosition:"top"
+                                                },
+                                            ]
+                                        },
+                                        {
+                                            cols:[
+                                                {
+                                                    view : "datepicker",
+                                                    label: webix.i18n.datatable.valid_since,
+                                                    timepicker: false,
+                                                    name : 'valid_since',
+                                                    labelPosition:"top"
+                                                },
+                                                {
+                                                    view : "datepicker",
+                                                    label: webix.i18n.datatable.valid_till,
+                                                    timepicker: false,
+                                                    name : 'valid_till',
+                                                    labelPosition:"top"
+                                                },
+                                            ]                                
+                                        },                                        
+                                    ] //  rows
+                                } // body 
                             },
                             {
-                                cols:[
-                                    {
-                                        view : "datepicker",
-                                        label: webix.i18n.datatable.valid_since,
-                                        timepicker: false,
-                                        name : 'valid_since',
-                                        labelPosition:"top"
-                                    },
-                                    {
-                                        view : "datepicker",
-                                        label: webix.i18n.datatable.valid_till,
-                                        timepicker: false,
-                                        name : 'valid_till',
-                                        labelPosition:"top"
-                                    },
-                                ]                                
-                            },                             
+                                view : "fieldset",                                
+                                label: "person_x_corporation",                                
+                                body : {
+                                    id  : "person_x_corporation",
+                                    rows:[
+                                        {
+                                            view : "button",
+                                            value: webix.i18n.add,
+                                            click: function(){
+                                                var obj = $$("person_x_corporation");
+                                                if(obj) obj.addView(  webix.copy( components.form.person_x_corporation ) );
+                                            }
+                                        }
+                                    ]
+                                }
+                            },                            
                             {
                                 view : "button",
                                 value: webix.i18n.form.send,
                                 type : "form",
                                 click: function(){
-                                    var form   = $$("contractor_add");
-                                    var action = $$("form").config.action;
-                                
+                                    var obj      = $$("person_x_corporation");
+                                    var form     = $$("contractor_add");
+                                    var action   = $$("form").config.action;
+                                    var formData = {};
+                                    
                                     if( form.validate() ){
+                                        formData                 = form.getValues();
+                                        var person_x_corporation = [];
+                                        var views                = obj.getChildViews();
+                                        views.forEach( function(item1){
+                                            var data  = {};
+                                            var param = item1.getChildViews();
+                                            param.forEach( function( item2 ) {
+                                                if( item2.config && item2.config.name && item2.config.value ){
+                                                    data[ item2.config.name ] = item2.config.value;
+                                                }
+                                            } );
+                                            if (data && data.person_id) person_x_corporation.push( data );
+                                        });
+                                        formData.person_x_corporation = person_x_corporation;
+                                        console.log( formData );
+                                        
                                         webix.ajax().post(
-                                            "/contractor/form/" + action + ".json",
-                                            form.getValues(),
+                                            "/corporation/form/" + action + ".json",
+                                            formData,
                                             function(text,data,http) {
                                                 var res = data.json();
                                                 if( res.success == 1 ){
@@ -1297,7 +1347,7 @@ function Components (){
                                         webix.message("form is not validate");
                                     }
                                 }
-                            }
+                            }                            
                         ],
                         rules:{
                             //"valid_since":webix.rules.isNotEmpty,
@@ -1308,6 +1358,7 @@ function Components (){
                 ]
             }
         },
+        
         'corporation': {
             form : {
                 id     : "form",
@@ -1323,51 +1374,94 @@ function Components (){
                         id      : "corporation_add",
                         elements:[
                             {
-                                cols:[
-                                    {
-                                        view : "text",
-                                        label: webix.i18n.datatable.name,
-                                        name : 'name',
-                                        labelPosition:"top"
-                                    },                                  
-                                    {
-                                        view : "text",
-                                        label: webix.i18n.datatable.provider,
-                                        name : 'provider',
-                                        labelPosition:"top"
-                                    },
-                                ]                                
+                                view :"fieldset", 
+                                label: webix.i18n.form.basic,
+                                body : {
+                                    rows: [
+                                        {
+                                            cols:[
+                                                {
+                                                    view : "text",
+                                                    label: webix.i18n.datatable.name,
+                                                    name : 'name',
+                                                    labelPosition:"top"
+                                                },                                  
+                                                {
+                                                    view : "text",
+                                                    label: webix.i18n.datatable.provider,
+                                                    name : 'provider',
+                                                    labelPosition:"top"
+                                                },
+                                            ]
+                                        },
+                                        {
+                                            cols:[
+                                                {
+                                                    view : "datepicker",
+                                                    label: webix.i18n.datatable.valid_since,
+                                                    timepicker: false,
+                                                    name : 'valid_since',
+                                                    labelPosition:"top"
+                                                },
+                                                {
+                                                    view : "datepicker",
+                                                    label: webix.i18n.datatable.valid_till,
+                                                    timepicker: false,
+                                                    name : 'valid_till',
+                                                    labelPosition:"top"
+                                                },
+                                            ]                                
+                                        },                                        
+                                    ] // body rows
+                                }
                             },
                             {
-                                cols:[
-                                    {
-                                        view : "datepicker",
-                                        label: webix.i18n.datatable.valid_since,
-                                        timepicker: false,
-                                        name : 'valid_since',
-                                        labelPosition:"top"
-                                    },
-                                    {
-                                        view : "datepicker",
-                                        label: webix.i18n.datatable.valid_till,
-                                        timepicker: false,
-                                        name : 'valid_till',
-                                        labelPosition:"top"
-                                    },
-                                ]                                
-                            },                             
+                                view : "fieldset",                                
+                                label: "person_x_corporation",                                
+                                body : {
+                                    id  : "person_x_corporation",
+                                    rows:[
+                                        {
+                                            view : "button",
+                                            value: webix.i18n.add,
+                                            click: function(){
+                                                var obj = $$("person_x_corporation");
+                                                if(obj) obj.addView(  webix.copy( components.form.person_x_corporation ) );
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
                             {
                                 view : "button",
                                 value: webix.i18n.form.send,
                                 type : "form",
                                 click: function(){
-                                    var form   = $$("corporation_add");
-                                    var action = $$("form").config.action;
-                                
+                                    var obj      = $$("person_x_corporation");
+                                    var form     = $$("corporation_add");
+                                    var action   = $$("form").config.action;
+                                    var formData = {};
+                                    
                                     if( form.validate() ){
+                                        formData                 = form.getValues();
+                                        var person_x_corporation = [];
+                                        var views                = obj.getChildViews();
+                                        views.forEach( function(item1){
+                                            var data  = {};
+                                            var param = item1.getChildViews();
+                                            param.forEach( function( item2 ) {
+                                                if( item2.config && item2.config.name && item2.config.value ){
+                                                    data[ item2.config.name ] = item2.config.value;
+                                                }
+                                            } );
+                                            if (data && data.person_id) person_x_corporation.push( data );
+                                        });
+                                        formData.person_x_corporation = person_x_corporation;
+                                        console.log( formData );
+                                        
                                         webix.ajax().post(
                                             "/corporation/form/" + action + ".json",
-                                            form.getValues(),
+                                            formData,
                                             function(text,data,http) {
                                                 var res = data.json();
                                                 if( res.success == 1 ){
@@ -1383,16 +1477,59 @@ function Components (){
                                         webix.message("form is not validate");
                                     }
                                 }
-                            }
+                            },
                         ],
                         rules:{
                             //"valid_since":webix.rules.isNotEmpty,
                             "name" :webix.rules.isNotEmpty
-                        },                          
-                    },
+                        } 
+                    },  
                     {}
                 ]
             }
+        },
+        
+        /* snippets*/
+        'person_x_corporation':{
+            cols:[
+                {
+                    view   :"richselect", 
+                    label  : webix.i18n.person,
+                    options: "/person/list/all.json",
+                    name   : "person_id",
+                    labelPosition:"top"
+                },
+                {},
+                {
+                    view  : "checkbox",
+                    labelPosition:"top",
+                    name  : "admin",
+                    label : "Admin", 
+                    value : "0"
+                },        
+                {
+                    view  : "checkbox",
+                    labelPosition:"top",
+                    name  : "bill",
+                    label : "Bill", 
+                    value : "0"
+                },                       
+                {
+                    view  : "checkbox",
+                    labelPosition:"top",
+                    name  : "tech",
+                    label : "tech", 
+                    value : "0"
+                },
+                {
+                    view : "button",
+                    value: webix.i18n.delete,
+                    click: function(){
+                        var obj = $$("person_x_corporation");
+                        if(obj) obj.removeView( this.getParentView().config.id );
+                    }                    
+                }
+            ]            
         }
     };
     

@@ -54,6 +54,7 @@ var locales = {
             'password': 'Password',
             'email'   : 'E-mail',
             'send'    : 'Send',
+            'basic'   : 'Basic',
             'person': {
                 'header': 'Person form'
             },
@@ -120,6 +121,7 @@ var locales = {
             'password': 'Пароль',
             'email'   : 'E-mail',
             'send'    : 'Отправить',
+            'basic'   : 'Основные',
             'person': {
                 'add':{
                     'header': 'Новая персона'
