@@ -179,6 +179,16 @@ method startup {
             ->get('/')
             ->to('dashboard#welcome');
 
+    my  $routes_authenticated_snippent_component = $routes_authenticated->under('/snippet-component');
+    
+    $routes_authenticated_snippent_component
+        ->get("/person/:id/:action" => [ format => ["json"] ] )
+        ->to(
+            controller  => 'Controller::API::V1::SnippetComponent::Base',
+            action      => 'email',
+            id          => 0,
+        );
+    
     my  $routes_authenticated_person = $routes_authenticated->under('/person');
         $routes_authenticated_person
             ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
@@ -207,19 +217,19 @@ method startup {
                 action          => 'form_load',
             );
 
-        $routes_authenticated_person
-            ->post('/form/load' => [ format => ['json'] ] )
-            ->to(
-                controller      => 'Controller::API::V1::Person',
-                action          => 'form_update'
-            );
-
             
         $routes_authenticated_person
             ->post('/form/add' => [ format => ['json'] ] )
             ->to(
                 controller      => 'Controller::API::V1::Person',
                 action          => 'form_add'
+            );
+
+        $routes_authenticated_person
+            ->post('/form/update' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'form_update'
             );
 
         $routes_authenticated_person
@@ -250,17 +260,17 @@ method startup {
             );
             
         $routes_authenticated_contractor
-            ->post('/form/load' => [ format => ['json'] ] )
-            ->to(
-                controller      => 'Controller::API::V1::Contractor',
-                action          => 'form_update',
-            );            
-
-        $routes_authenticated_contractor
             ->post('/form/add' => [ format => ['json'] ] )
             ->to(
                 controller      => 'Controller::API::V1::Contractor',
                 action          => 'form_add',
+            );            
+
+        $routes_authenticated_contractor
+            ->post('/form/update' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'form_update',
             );            
             
         $routes_authenticated_contractor
@@ -310,12 +320,12 @@ method startup {
             );
             
         $routes_authenticated_corporation
-            ->post('/form/load' => [ format => ['json'] ] )
+            ->post('/form/update' => [ format => ['json'] ] )
             ->to(
                 controller      => 'Controller::API::V1::Corporation',
                 action          => 'form_update',
             );            
-
+            
         $routes_authenticated_corporation
             ->post('/form/add' => [ format => ['json'] ] )
             ->to(

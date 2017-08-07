@@ -15,6 +15,9 @@ use Switch;
 use DateTime;
 use Data::Dumper;
 use MaitreD::Extra::API::V1::TemplateSettings;
+use JSON::XS;
+use Try::Tiny;
+
 
 method list {
 
@@ -116,7 +119,6 @@ method list {
             }
         )->all
     ];
-    #$json->{'recordsFiltered'} = $json->{'recordsTotal'} = $tmpl_rs->count;    
     
     my $columns = $settings->{'person'}->{'table'}->{'columns'};
     @{ $json->{'data'} } = map({
@@ -148,9 +150,9 @@ method list {
 method form_load {
     my $data = $self->datatable_params();
 
-    my $json = {};
+    my $json = { success => 1 };
 
-    $json =
+    $json->{'data'} =
         $self
             ->hm_schema
             ->resultset('Person')
@@ -159,53 +161,287 @@ method form_load {
             },{
                 result_class => 'DBIx::Class::ResultClass::HashRefInflator'
             });
-    
-    $json->{'phone'} = [
-        $self
-            ->hm_schema
-            ->resultset('PersonPhone')
-            ->search({
-                'me.person_id' => $self->stash->{id}
-            },{
-                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
-            })->all        
-    ];
-    
-    $json->{'phone'} = join(",", map{ $_->{'phone'} } @{ $json->{'phone'} } );
-    
-    $json->{'email'} = [
-        $self
-            ->hm_schema
-            ->resultset('PersonEmail')
-            ->search({
-                'me.person_id' => $self->stash->{id}
-            },{
-                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
-            })->all        
-    ];
-    
-    $json->{'email'} = join(",", map{ $_->{'email'} } @{ $json->{'email'} } );
                     
     $self->render(json => $json);
 }
 
 method form_add {
-    my $data = $self->datatable_params();
+    my $data          = $self->datatable_params()->{'origin_data'};
+    my $snippet       = {};
+    my $snippet_link  = {
+        'person_x_email' => 'PersonEmail',
+        'person_x_phone' => 'PersonPhone',
+    };
 
     my $json = {
         success  => \1,
         redirect => "/person/list/all"
     };
+    
+    for my $key ( keys %{ $snippet_link }) {
+        if ( $data->{ $key } ) {
+            $snippet->{ $key } = decode_json( $data->{ $key } );
+            delete $data->{ $key };
+        }
+        
+        if( ref $data->{ $key } eq "ARRAY" && @{ $data->{ $key } } ) {
+            $snippet->{ $key } = $data->{ $key };
+        }
+        
+    }
+    
+    if( ref $snippet->{'person_x_email'} eq "ARRAY"  ){
+        my $find = $self
+                ->hm_schema
+                ->resultset( $snippet_link->{'person_x_email'} )
+                ->search({
+                    email => {
+                        -in => [ map {$_->{'email'}} @{$snippet->{'person_x_email'}} ]
+                    }
+                })->all;
+        
+        if( $find > 0 ){
+            $json = {
+                success  => \0,
+                message  => "email exists"
+            };              
+        }
+        else{
+            
+            try {
+                
+                $data->{'language_id'}        = 1;
+                $data->{'datetime_format_id'} = 1;
+                $data->{'timezone'}           = 'Europe/Kiev';
+                                
+                $self->hm_schema->txn_do( sub {
+                    my $rs_data =
+                        $self
+                            ->hm_schema
+                            ->resultset('Person')
+                            ->create( {
+                                first_name         => $data->{'first_name'},
+                                last_name          => $data->{'last_name'},
+                                valid_till         => $data->{'valid_till'}  || undef,
+                                valid_since        => $data->{'valid_since'} || \'NOW()',
+                                language_id        => $data->{'language_id'},
+                                datetime_format_id => $data->{'datetime_format_id'},
+                                timezone           => $data->{'timezone'},
+                            } );
+                    
+                    for my $item ( @{ $snippet->{'person_x_email'} } ){
+                        $self
+                            ->hm_schema
+                            ->resultset( $snippet_link->{'person_x_email'} )
+                            ->create({
+                                person_id   => $rs_data->id,
+                                email       => $item->{'email'},
+                                valid_till  => $item->{'valid_till'}  || undef,
+                                valid_since => $item->{'valid_since'} || \'NOW()',
+                            });
+                        
+                    }
+
+                    for my $item ( @{ $snippet->{'person_x_phone'} } ){
+                        $self
+                            ->hm_schema
+                            ->resultset( $snippet_link->{'person_x_phone'} )
+                            ->create({
+                                person_id   => $rs_data->id,
+                                phone       => $item->{'phone'},
+                                valid_till  => $item->{'valid_till'}  || undef,
+                                valid_since => $item->{'valid_since'} || \'NOW()',
+                            });
+                        
+                    }
+                    
+                    $self
+                        ->hm_schema
+                        ->resultset('PersonPassword')
+                        ->create({
+                            valid_since => \'NOW()',
+                            valid_till  => undef,
+                            removed     => undef,
+                            password    => $data->{'password'},
+                            person_id   => $rs_data->id
+                        });                    
+
+                });
+                
+            }
+            catch {
+                my $err = $_;
+                $json = {
+                    success  => \0,
+                    message => $err
+                };                
+            };            
+            
+        }
+    }
+    else{
+        $json = {
+            success  => \0,
+            message  => "not param email"
+        };        
+    }
+        
     $self->render(json => $json);
 }
 
 method form_update {
-    my $data = $self->datatable_params();
+    my $data = $self->datatable_params()->{'origin_data'};
+    my $snippet       = {};
+    my $snippet_link  = {
+        'person_x_email' => 'PersonEmail',
+        'person_x_phone' => 'PersonPhone',
+    };    
 
     my $json = {
         success  => \1,
         redirect => "/person/list/all"
     };
+    
+    for my $key ( keys %{ $snippet_link }) {
+        if ( $data->{ $key } ) {
+            $snippet->{ $key } = decode_json( $data->{ $key } );
+            delete $data->{ $key };
+        }
+        
+        if( ref $data->{ $key } eq "ARRAY" && @{ $data->{ $key } } ) {
+            $snippet->{ $key } = $data->{ $key };
+        }
+        
+    }    
+    
+    if( $data->{'id'} ){
+        
+        try {
+            $data->{'language_id'}        = 1;
+            $data->{'datetime_format_id'} = 1;
+            $data->{'timezone'}           = 'Europe/Kiev';        
+
+            $self->hm_schema->txn_do( sub {
+                #
+                # Person
+                #
+                my $rs_find =
+                    $self
+                        ->hm_schema
+                        ->resultset('Person')
+                        ->find( { 'me.id' => $data->{'id'} } );
+                
+                if( $rs_find ){
+                    $rs_find->update( {
+                        first_name         => $data->{'first_name'}  || $rs_find->first_name,
+                        last_name          => $data->{'last_name'}   || $rs_find->last_name,
+                        valid_till         => $data->{'valid_till'}  || $rs_find->valid_till,
+                        valid_since        => $data->{'valid_since'} || $rs_find->valid_since,
+                        language_id        => $data->{'language_id'},
+                        datetime_format_id => $data->{'datetime_format_id'},
+                        timezone           => $data->{'timezone'},
+                    } );
+                }
+                #
+                # Password
+                #
+                $rs_find = 
+                    $self
+                        ->hm_schema
+                        ->resultset('PersonPassword')
+                        ->find({'me.person_id' => $data->{'id'} });
+
+                if( $rs_find && $data->{'password'} ){
+                    $rs_find->update({
+                        valid_since => $data->{'valid_since'} || $rs_find->valid_since,,
+                        valid_till  => $data->{'valid_till'}  || $rs_find->valid_till,
+                        removed     => undef,
+                        password    => $data->{'password'},
+                        person_id   => $data->{'id'}
+                    });
+                }
+                elsif( !$rs_find && $data->{'password'} ){
+                    $self
+                        ->hm_schema
+                        ->resultset('PersonPassword')
+                        ->create({
+                            valid_since => \'NOW()',
+                            valid_till  => undef,
+                            removed     => undef,
+                            password    => $data->{'password'},
+                            person_id   => $data->{'id'}
+                        });                    
+                }
+                #
+                # Phone
+                #
+                $rs_find = 
+                    $self
+                        ->hm_schema
+                        ->resultset( $snippet_link->{'person_x_phone'} )
+                        ->search({'me.person_id' => $data->{'id'} });
+                
+                if( $rs_find ){
+                    $rs_find->delete();
+                    
+                    for my $item ( @{ $snippet->{'person_x_phone'} } ){
+                        $self
+                            ->hm_schema
+                            ->resultset( $snippet_link->{'person_x_phone'} )
+                            ->create({
+                                person_id   => $data->{'id'},
+                                phone       => $item->{'phone'},
+                                valid_till  => $item->{'valid_till'}  || undef,
+                                valid_since => $item->{'valid_since'} || \'NOW()',
+                            });
+                        
+                    }
+                }
+                #
+                # Email
+                #
+                $rs_find = 
+                    $self
+                        ->hm_schema
+                        ->resultset( $snippet_link->{'person_x_email'} )
+                        ->search({'me.person_id' => $data->{'id'} });
+                
+                if( $rs_find ){
+                    $rs_find->delete();
+                    
+                    for my $item ( @{ $snippet->{'person_x_email'} } ){
+                        $self
+                            ->hm_schema
+                            ->resultset( $snippet_link->{'person_x_email'} )
+                            ->create({
+                                person_id   => $data->{'id'},
+                                email       => $item->{'email'},
+                                valid_till  => $item->{'valid_till'}  || undef,
+                                valid_since => $item->{'valid_since'} || \'NOW()',
+                            });
+                        
+                    }
+                }
+                
+            });
+            
+        }
+        catch {
+            my $err = $_;
+            $json = {
+                success  => \0,
+                message => $err
+            };                
+        };     
+        
+    }
+    else{
+        $json = {
+            success => \0,
+            message => 'Server error'
+        };
+    }
+    
     $self->render(json => $json);
 }
 

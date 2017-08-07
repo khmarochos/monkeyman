@@ -75,6 +75,7 @@ function Components (){
         
         webix.ui({
             id   :'root',
+            type :"wide",
             rows :[
                 me.header.view,
                 {
@@ -1102,118 +1103,88 @@ function Components (){
         //
         'person': {
             form : {
-                id     : "form",
-                scroll : "y",
-                action : "add",
-                rows   :[
+                id        : "form",
+                scroll    : "y",
+                action    : "add",
+                rows      :[
                     {
                         template : webix.i18n.form.person.header,
                         type     : "header"
                     },
-                    //{},
                     {
-                        view    : "form",
-                        id      : "person_add",
-                        elements:[
+                        view     : "form",
+                        id       : "person_add",
+                        child_obj: ['person_x_email', 'person_x_phone'],
+                        baseURL  : "/person/form",
+                        elements :[
                             {
-                                cols:[
-                                    {
-                                        view : "text",
-                                        label: webix.i18n.datatable.first_name,
-                                        name : 'first_name',
-                                        labelPosition:"top"
-                                    },
-                                    {
-                                        view : "text",
-                                        label: webix.i18n.datatable.last_name,
-                                        name : 'last_name',
-                                        labelPosition:"top"
-                                    },
-                                ]                                
-                            },
-                            {
-                                cols:[
-                                    {
-                                        view : "text",
-                                        label: webix.i18n.form.email,
-                                        type : "email",
-                                        name : 'email',
-                                        labelPosition:"top"
-                                    },
-                                    {
-                                        view : "text",
-                                        label: webix.i18n.form.password,
-                                        type : "password",
-                                        name : 'password',
-                                        labelPosition:"top"
-                                    },
-                                ]                                
-                            },
-                            {
-                                cols:[
-                                    {
-                                        view : "datepicker",
-                                        label: webix.i18n.datatable.valid_since,
-                                        timepicker: false,
-                                        name : 'valid_since',
-                                        labelPosition:"top"
-                                    },
-                                    {
-                                        view : "datepicker",
-                                        label: webix.i18n.datatable.valid_till,
-                                        timepicker: false,
-                                        name : 'valid_till',
-                                        labelPosition:"top"
-                                    },
-                                ]                                
-                            },                            
-                            {
-                                cols:[
-                                    {
-                                        view : "text",
-                                        label: webix.i18n.datatable.phone,
-                                        name : 'phone',
-                                        labelPosition:"top"
-                                    }
-                                ]                                
+                                view :"fieldset", 
+                                label: webix.i18n.form.basic,
+                                body : {
+                                    rows : [
+                                        {
+                                            cols : [
+                                                {
+                                                    view : "text",
+                                                    label: webix.i18n.datatable.first_name,
+                                                    name : 'first_name',
+                                                    labelPosition:"top"
+                                                },
+                                                {
+                                                    view : "text",
+                                                    label: webix.i18n.datatable.last_name,
+                                                    name : 'last_name',
+                                                    labelPosition:"top"
+                                                }                                                                        
+                                            ]                                        
+                                        },
+                                        {
+                                            cols:[
+                                                {
+                                                    view : "datepicker",
+                                                    label: webix.i18n.datatable.valid_since,
+                                                    timepicker: false,
+                                                    name : 'valid_since',
+                                                    labelPosition:"top"
+                                                },
+                                                {
+                                                    view : "datepicker",
+                                                    label: webix.i18n.datatable.valid_till,
+                                                    timepicker: false,
+                                                    name : 'valid_till',
+                                                    labelPosition:"top"
+                                                },
+                                            ]                                                                        
+                                        },
+                                        {
+                                            cols:[
+                                                {
+                                                    view : "text",
+                                                    label: webix.i18n.form.password,
+                                                    type : "password",
+                                                    name : 'password',
+                                                    labelPosition:"top"
+                                                },
+                                                {}
+                                            ]                                                                       
+                                        }                                    
+                                    ] // rows
+                                }// body                            
                             },
                             {
                                 view : "button",
                                 value: webix.i18n.form.send,
-                                type : "form",
-                                click: function(){
-                                    var form   = $$("person_add");
-                                    var action = $$("form").config.action;
-                                
-                                    if( form.validate() ){
-                                        webix.ajax().post(
-                                            "/person/form/" + action + ".json",
-                                            form.getValues(),
-                                            function(text,data,http) {
-                                                var res = data.json();
-                                                if( res.success == 1 ){
-                                                    route.navigate( res.redirect, { trigger: true });
-                                                }
-                                                else{
-                                                    webix.message( res.message );
-                                                }
-                                            }
-                                        );                                        
-                                    }
-                                    else{
-                                        webix.message("form is not validate");
-                                    }
-                                }
-                            }
-                        ],
+                                id   : "send_form",
+                                type : "form"
+                            }                        
+    
+                        ], // elements
                         rules:{
-                            "email"      :webix.rules.isEmail,
                             //"password"   :webix.rules.isNotEmpty,
-                            //"valid_since":webix.rules.isNotEmpty,
                             "first_name" :webix.rules.isNotEmpty,
                             "last_name"  :webix.rules.isNotEmpty
-                        },                          
-                    },
+                        } 
+                    }, // form
                     {}
                 ]
             }
@@ -1228,11 +1199,12 @@ function Components (){
                         template : webix.i18n.form.contractor.header,
                         type     : "header"
                     },
-                    //{},
                     {
-                        view    : "form",
-                        id      : "contractor_add",
-                        elements:[
+                        view     : "form",
+                        id       : "contractor_add",
+                        child_obj: ['person_x_contractor'],
+                        baseURL  : "/contractor/form",
+                        elements : [
                             {
                                 view :"fieldset", 
                                 label: webix.i18n.form.basic,
@@ -1285,69 +1257,12 @@ function Components (){
                                         },                                        
                                     ] //  rows
                                 } // body 
-                            },
-                            {
-                                view : "fieldset",                                
-                                label: "person_x_contractor",                                
-                                body : {
-                                    id  : "person_x_contractor",
-                                    rows:[
-                                        {
-                                            view : "button",
-                                            value: webix.i18n.add,
-                                            click: function(){
-                                                var obj = $$("person_x_contractor");
-                                                if(obj) obj.addView(  webix.copy( components.form.person_x_contractor ) );
-                                            }
-                                        }
-                                    ]
-                                }
-                            },                            
+                            },                          
                             {
                                 view : "button",
                                 value: webix.i18n.form.send,
-                                type : "form",
-                                click: function(){
-                                    var obj      = $$("person_x_contractor");
-                                    var form     = $$("contractor_add");
-                                    var action   = $$("form").config.action;
-                                    var formData = {};
-                                    
-                                    if( form.validate() ){
-                                        formData                 = form.getValues();
-                                        var person_x_contractor  = [];
-                                        var views                = obj.getChildViews();
-                                        views.forEach( function(item1){
-                                            var data  = {};
-                                            var param = item1.getChildViews();
-                                            param.forEach( function( item2 ) {
-                                                if( item2.config && item2.config.name && item2.config.value ){
-                                                    data[ item2.config.name ] = item2.config.value;
-                                                }
-                                            } );
-                                            if (data && data.person_id) person_x_contractor.push( data );
-                                        });
-                                        formData.person_x_corporation = person_x_contractor;
-                                        console.log( formData );
-                                        
-                                        webix.ajax().post(
-                                            "/contractor/form/" + action + ".json",
-                                            formData,
-                                            function(text,data,http) {
-                                                var res = data.json();
-                                                if( res.success == 1 ){
-                                                    route.navigate( res.redirect, { trigger: true });
-                                                }
-                                                else{
-                                                    webix.message( res.message );
-                                                }
-                                            }
-                                        );                                        
-                                    }
-                                    else{
-                                        webix.message("form is not validate");
-                                    }
-                                }
+                                id   : "send_form",
+                                type : "form"
                             }                            
                         ],
                         rules:{
@@ -1369,11 +1284,12 @@ function Components (){
                         template : webix.i18n.form.corporation.header,
                         type     : "header"
                     },
-                    //{},
                     {
-                        view    : "form",
-                        id      : "corporation_add",
-                        elements:[
+                        view     : "form",
+                        id       : "corporation_add",
+                        child_obj: ['person_x_corporation','corporation_x_contractor'],
+                        baseURL  : "/corporation/form",
+                        elements :[
                             {
                                 view :"fieldset", 
                                 label: webix.i18n.form.basic,
@@ -1417,67 +1333,10 @@ function Components (){
                                 }
                             },
                             {
-                                view : "fieldset",                                
-                                label: "person_x_corporation",                                
-                                body : {
-                                    id  : "person_x_corporation",
-                                    rows:[
-                                        {
-                                            view : "button",
-                                            value: webix.i18n.add,
-                                            click: function(){
-                                                var obj = $$("person_x_corporation");
-                                                if(obj) obj.addView(  webix.copy( components.form.person_x_corporation ) );
-                                            }
-                                        }
-                                    ]
-                                }
-                            },
-                            {
                                 view : "button",
+                                id   : "send_form",
                                 value: webix.i18n.form.send,
-                                type : "form",
-                                click: function(){
-                                    var obj      = $$("person_x_corporation");
-                                    var form     = $$("corporation_add");
-                                    var action   = $$("form").config.action;
-                                    var formData = {};
-                                    
-                                    if( form.validate() ){
-                                        formData                 = form.getValues();
-                                        var person_x_corporation = [];
-                                        var views                = obj.getChildViews();
-                                        views.forEach( function(item1){
-                                            var data  = {};
-                                            var param = item1.getChildViews();
-                                            param.forEach( function( item2 ) {
-                                                if( item2.config && item2.config.name && item2.config.value ){
-                                                    data[ item2.config.name ] = item2.config.value;
-                                                }
-                                            } );
-                                            if (data && data.person_id) person_x_corporation.push( data );
-                                        });
-                                        formData.person_x_corporation = person_x_corporation;
-                                        console.log( formData );
-                                        
-                                        webix.ajax().post(
-                                            "/corporation/form/" + action + ".json",
-                                            formData,
-                                            function(text,data,http) {
-                                                var res = data.json();
-                                                if( res.success == 1 ){
-                                                    route.navigate( res.redirect, { trigger: true });
-                                                }
-                                                else{
-                                                    webix.message( res.message );
-                                                }
-                                            }
-                                        );                                        
-                                    }
-                                    else{
-                                        webix.message("form is not validate");
-                                    }
-                                }
+                                type : "form"
                             },
                         ],
                         rules:{
@@ -1491,8 +1350,33 @@ function Components (){
         },
         
         /* snippets*/
+        /*
+            person_x_corporation
+        */
+        'corporation_x_contractor': {
+            view    : "form",
+            baseURL : "/snippet-component/person/{{id}}/corporation_x_contractor.json",
+            cols    : [
+                {
+                    view   :"richselect", 
+                    label  : webix.i18n.contractors,
+                    options: "/contractor/list/all.json",
+                    name   : "contractor_id",
+                    labelPosition:"top"
+                },                
+                {
+                    view : "datepicker",
+                    label: webix.i18n.datatable.valid_till,
+                    timepicker: false,
+                    name : 'valid_till',
+                    labelPosition:"top"
+                }
+            ]
+        },
+        
         'person_x_corporation':{
             view    : "form",
+            baseURL : "/snippet-component/person/{{id}}/corporation.json",
             cols:[
                 {
                     view   :"richselect", 
@@ -1501,7 +1385,13 @@ function Components (){
                     name   : "person_id",
                     labelPosition:"top"
                 },
-                {},
+                {
+                    view : "datepicker",
+                    label: webix.i18n.datatable.valid_till,
+                    timepicker: false,
+                    name : 'valid_till',
+                    labelPosition:"top"
+                },
                 {
                     view  : "checkbox",
                     labelPosition:"top",
@@ -1512,7 +1402,7 @@ function Components (){
                 {
                     view  : "checkbox",
                     labelPosition:"top",
-                    name  : "bill",
+                    name  : "billing",
                     label : "Bill", 
                     value : "0"
                 },                       
@@ -1533,9 +1423,13 @@ function Components (){
                 }
             ]            
         },
+        /*
+            person_x_contractor
+        */
         'person_x_contractor' : {
             view    : "form",
-            cols:[
+            baseURL : "/snippet-component/person/{{id}}/person_x_contractor.json",
+            cols    :[
                 {
                     view   :"richselect", 
                     label  : webix.i18n.person,
@@ -1543,7 +1437,14 @@ function Components (){
                     name   : "person_id",
                     labelPosition:"top"
                 },
-                {},
+                {
+                    view : "datepicker",
+                    label: webix.i18n.datatable.valid_till,
+                    timepicker: false,
+                    name : 'valid_till',
+                    labelPosition:"top"
+                },
+
                 {
                     view  : "checkbox",
                     labelPosition:"top",
@@ -1554,7 +1455,7 @@ function Components (){
                 {
                     view  : "checkbox",
                     labelPosition:"top",
-                    name  : "bill",
+                    name  : "billing",
                     label : "Bill", 
                     value : "0"
                 },                       
@@ -1574,6 +1475,68 @@ function Components (){
                     }                    
                 }
             ]             
+        },
+        /*
+            person email
+        */
+        'person_x_email' : {
+            view    : "form",
+            baseURL : "/snippet-component/person/{{id}}/email.json",
+            cols:[
+                {
+                    view   : "text", 
+                    label  : webix.i18n.form.email,
+                    name   : "email",
+                    labelPosition:"top"
+                },
+                {
+                    view : "datepicker",
+                    label: webix.i18n.datatable.valid_till,
+                    timepicker: false,
+                    name : 'valid_till',
+                    labelPosition:"top"
+                },                
+                {
+                    view : "button",
+                    value: webix.i18n.delete,
+                    click: function(){
+                        var obj = $$("person_x_email");
+                        if(obj) obj.removeView( this.getParentView().config.id );
+                    }                    
+                }                
+            ]
+        },  
+        /*
+            person phone
+        */
+        'person_x_phone' : {
+            view    : "form",
+            baseURL : "/snippet-component/person/{{id}}/phone.json",
+            cols    :[
+                {
+                    view   : "text", 
+                    label  : webix.i18n.datatable.phone,
+                    name   : "phone",
+                    placeholder  :"380 XXX-XX-XX",
+                    labelPosition:"top"
+                },
+                {
+                    view : "datepicker",
+                    label: webix.i18n.datatable.valid_till,
+                    timepicker: false,
+                    name : 'valid_till',
+                    labelPosition:"top"
+                },
+                
+                {
+                    view : "button",
+                    value: webix.i18n.delete,
+                    click: function(){
+                        var obj = $$("person_x_phone");
+                        if(obj) obj.removeView( this.getParentView().config.id );
+                    }                    
+                }                
+            ]
         }
     };
     

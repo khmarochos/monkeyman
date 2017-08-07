@@ -8,8 +8,9 @@ function Controller (arg){
     this.args      = arg;
     this.tree      = new Tree( this.args );
     this.datatable = new Datatable( this.args );
+    this.form      = new Form ( this.args );
     
-    this.auth    = function( params, callback ){
+    this.auth      = function( params, callback ){
         var res = false;
         webix.ajax().post(
             "/person/login.json",
@@ -148,7 +149,7 @@ function Datatable( components ){
             }
             // button add
             $$("datatable_add").attachEvent("onItemClick", function(){
-                //console.log("datatable_add click ", datatable, id );
+                $$("tree").unselectAll();
                 route.navigate( "/" + id + "/form/add", { trigger: true });
             });
             // export
@@ -182,10 +183,10 @@ function Datatable( components ){
                 var action = obj ? obj.action : false;
                 
                 if( me.rows.data.id && obj ){
+                    $$("tree").unselectAll();
                     action = obj.action;                    
                     var url = name_id + "/form/" + action + "/" + me.rows.data.id;
                     route.navigate( url , { trigger: true });
-                    console.log( me.rows.data.id , datatable, name_id);
                 }
                 else{
                     webix.message( webix.i18n.datatable.do_row_select );    
@@ -207,7 +208,7 @@ function Tree( components ){
         obj.attachEvent('onSelectChange', function(){
             selected = this.getSelectedId();
             if (isNaN(selected)) {
-                if ( callback ){
+                if ( isNaN(callback) ){
                     callback.call( this, selected );
                 }
             }
@@ -272,5 +273,204 @@ function my_i18n (){
         return this.localizator;
     };
 }
-
+/*
+    i18n
+*/
+function Form ( components ){
+    this.components = components;
+    
+    this.start = function( view ) {
+        var obj = $$("main");
+        if( obj && view ) {
+            obj.addView( view );
+            return true;
+        }
+        else{
+            return false;
+        }
+    };
+    
+    this.end = function ( form_name ) {
+        var me            = this;
+        var form          = $$( form_name );
+        var send_form_btn = $$("send_form");
+        var url           = form.config.baseURL;
+        
+        if( url && form && send_form_btn ){
+            /*
+                Отправка формы ма сервер
+            */
+            send_form_btn.attachEvent("onItemClick", function(){
+                var action    = $$("form").config.action;
+                var formData  = form.getValues();
+                var child_obj = me.getSnippet( form_name );
+                
+                if( $$( form_name ).validate() ) {
+                    child_obj.forEach( function( item, i ){
+                        var obj = $$( item );
+                        if( obj ) {
+                            var data = [];
+                            var view = obj.getChildViews();
+                            if( view ){
+                                view.forEach( function( item2, i ){
+                                    if( item2.config.view == 'form' ){
+                                        data.push( item2.getValues() );
+                                    }           
+                                });
+                                if ( data.length ) formData[ item ] = data;
+                            }
+                        }
+                    });
+                    
+                    if( formData ){
+                        webix.ajax().post(
+                            url + '/' + action + ".json",
+                            formData,
+                            function(text,data,http) {
+                                var res = data.json();
+                                if( res.success == 1 ){
+                                    route.navigate( res.redirect, { trigger: true });
+                                }
+                                else{
+                                    webix.message( res.message );
+                                }
+                            }
+                        );
+                    }                
+                }
+            });
+        }
+        else{
+            webix.message("controller Form->getChild form or send_form_btn not found " + form_name);
+        }
+    };
+    /*
+        Загрузка данных формы 
+    */    
+    this.load = function( form_name, url, callback ){
+        var form = $$(form_name);
+        if ( form && url ) {            
+            form.load( url, "json", {
+                error: function(text, data, http_request){
+                    webix.message("Server error. See console.log");
+                    console.log( http_request );
+                },
+                success: function(text, data, http_request){                    
+                    if ( callback ){
+                        var data = JSON.parse(text);
+                        if( data.success ){
+                            callback.call( this, JSON.parse(text) );
+                        }
+                        else{
+                            webix.message( "error load data:" + data.message );
+                        }
+                    }
+                    else{
+                        return JSON.parse(text);
+                    }
+                }
+            });
+        }
+        else{
+            webix.message("controller Form->load do not all params: " + form_name);
+        }
+        return false;
+    };
+    
+    this.getSnippet = function( form_name ){
+        var form = $$(form_name);
+        if( form ){
+            return form.config['child_obj'] ? form.config['child_obj'] : [];
+        }
+        else{
+            webix.message("controller Form->getChild form not found " + form_name);
+        }
+        return false;
+    };
+    
+    this.setSnippet = function( form_name, snippent_name ) {
+        var me   = this;
+        var form = $$( form_name );
+        
+        var add = {
+            view :"fieldset", 
+            label: snippent_name,
+            body : {
+                id  : snippent_name,
+                rows:[
+                    {
+                        view : "button",
+                        id   : snippent_name + "_add",
+                        value: webix.i18n.add
+                    }
+                ]
+            }
+        };
+        
+        var child = me.getChild( form_name );
+        
+        if( child ){
+            var index = child.length - 1;
+            form.addView( add, index );
+        
+            $$( snippent_name + "_add" ).attachEvent("onItemClick", function(){
+                var obj = $$( snippent_name );
+                if(obj) obj.addView(  webix.copy( components.form[ snippent_name ] ) );
+            });
+        }
+        
+        return false;  
+    };
+    
+    this.setSnippetItem = function( snippent_name, data, index ){
+        var me   = this;
+        var obj  = $$( snippent_name );
+        if( obj ){
+            data.forEach( function( item, i ){
+                var copy  = webix.copy( components.form[ snippent_name ] );
+                var form  = "form_" + snippent_name + "_" + index;
+                copy.form = form;
+                copy.id   = form;
+                if(obj) {
+                    obj.addView( copy );
+                    $$(form).setValues( item );
+                }
+            });            
+        }
+        return false;
+    };
+    
+    this.getChild = function( form_name ){
+        var form = $$(form_name);
+        if( isNaN(form) ){
+            return form.getChildViews() ? form.getChildViews() : [];
+        }
+        else{
+            webix.message("controller Form->getChild form not found " + form_name);
+        }
+        return false;
+    };
+    
+    this.getValues = function (){
+        
+    };
+    
+/*    
+    this.setChild = function( form_name, snippet_name, id ){
+        var me      = this;
+        var form    = $$(form_name);
+        var snippet = components.form[snippet_name];
+        
+        if( isNaN(form) && isNaN(snippet) ){
+            form.addView( snippet );
+        }
+        else{
+            webix.message("controller Form->setChild form or snippet not found " + form_name);
+        }
+        
+        return false;
+    };
+*/    
+    
+}
 console.log('controller.js OK');
