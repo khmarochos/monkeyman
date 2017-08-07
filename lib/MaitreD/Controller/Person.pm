@@ -107,6 +107,7 @@ method login {
 
     my $person_email    = $self->param('person_email');
     my $person_password = $self->param('person_password');
+    
 
     if(defined($self->session('authorized_person_email'))) {
         $self->redirect_to('/');
@@ -124,6 +125,38 @@ method login {
 
 }
 
+method login_json {
+    my $res             = { success => \1, redirect => '/main.html' };
+    my $person_email    = $self->param('person_email');
+    my $person_password = $self->param('person_password');
+    
+    if(defined($self->session('authorized_person_email'))) {
+        #$self->redirect_to('/');
+    }
+    elsif(defined($person_email) && $self->authenticate($person_email, $person_password)) {
+        #$res->{'redirect'}
+        #    = defined($self->session->{'was_heading_to'})
+        #    ? $self->session->{'was_heading_to'}
+        #    : '/main.html';
+
+    }
+    elsif(defined($person_email)) {
+        $res = {
+            'message' => 'unsuccessful',
+            'success' => \0
+        };
+    }
+    else {
+        $res = {
+            'message' => 'welcome',
+            'success' => \0
+        };
+    }
+    
+    $self->render( json => $res );
+
+}
+
 
 
 method logout {
@@ -136,7 +169,13 @@ method logout {
     );
 
     $self->redirect_to('/');
+}
 
+method logout_json {
+
+    $self->session(authorized_person_email => undef);
+    $self->render( json => { success => \1, redirect => "/main.html" } );
+    
 }
 
 
