@@ -87,6 +87,13 @@ __PACKAGE__->table("provisioning_obligation");
   is_foreign_key: 1
   is_nullable: 0
 
+=head2 resource_piece_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
 =head2 service_type_id
 
   data_type: 'integer'
@@ -106,6 +113,18 @@ __PACKAGE__->table("provisioning_obligation");
   data_type: 'bigint'
   extra: {unsigned => 1}
   is_nullable: 0
+
+=head2 applied_since
+
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
+  is_nullable: 1
+
+=head2 applied_till
+
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
+  is_nullable: 1
 
 =cut
 
@@ -142,6 +161,13 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
+  "resource_piece_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "service_type_id",
   {
     data_type => "integer",
@@ -158,6 +184,18 @@ __PACKAGE__->add_columns(
   },
   "quantity",
   { data_type => "bigint", extra => { unsigned => 1 }, is_nullable => 0 },
+  "applied_since",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
+  "applied_till",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -204,19 +242,24 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
-=head2 provisioning_obligation_x_resource_pieces
+=head2 resource_piece
 
-Type: has_many
+Type: belongs_to
 
-Related object: L<HyperMouse::Schema::Result::ProvisioningObligationXResourcePiece>
+Related object: L<HyperMouse::Schema::Result::ResourcePiece>
 
 =cut
 
-__PACKAGE__->has_many(
-  "provisioning_obligation_x_resource_pieces",
-  "HyperMouse::Schema::Result::ProvisioningObligationXResourcePiece",
-  { "foreign.provisioning_obligation_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
+__PACKAGE__->belongs_to(
+  "resource_piece",
+  "HyperMouse::Schema::Result::ResourcePiece",
+  { id => "resource_piece_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 =head2 service_level
@@ -265,15 +308,13 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-11 13:17:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kVop8UpsvAD+U0IA2fLzsQ
-
-__PACKAGE__->many_to_many(
-  "resource_pieces" => "provisioning_obligation_x_resource_pieces", "resource_piece"
-);
-
-
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-28 02:37:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/HPldy6w45OC/wrIc4vtsA
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+
+
+
 __PACKAGE__->meta->make_immutable;
+
 1;

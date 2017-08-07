@@ -62,8 +62,8 @@ method update_when_needed (
             ->update_when_needed_multi(
                 records
                     => $provisioning_obligation_records,
-                resource_pieces
-                    => $provisioning_obligation_bind ? [ @resource_pieces ] : [],
+                resource_piece_id
+                    => $provisioning_obligation_bind ? $resource_pieces[$[]->id : undef,
                 now
                     => $now
             );

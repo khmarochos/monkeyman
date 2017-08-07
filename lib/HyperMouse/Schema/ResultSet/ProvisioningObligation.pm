@@ -15,48 +15,47 @@ use DateTime;
 
 
 method update_when_needed (
-    DateTime    :$valid_since?,
-    Int         :$provisioning_agreement_id!,
-    Int         :$service_type_id!,
-    Int         :$service_level_id!,
-    Int         :$quantity!,
-    ArrayRef    :$resource_pieces?  = [],
-    DateTime    :$now?              = DateTime->now
+    DateTime        :$valid_since?,
+    Int             :$provisioning_agreement_id!,
+    Maybe[Int]      :$resource_piece_id?,
+    Int             :$service_type_id!,
+    Int             :$service_level_id!,
+    Int             :$quantity!,
+    Maybe[DateTime] :$applied_since?,
+    Maybe[DateTime] :$applied_till?,
+    DateTime        :$now?              = DateTime->now
 ) {
 
-    $self->get_schema->txn_begin;
 
-    my $allowed_ids = [
-        map({ $_->id }
-            map({ $_->search_related_deep(
-                resultset_class
-                    => 'ProvisioningObligation',
-                callout
-                    => [ '@ResourcePiece > @ProvisioningObligation', { } ],
-                now
-                    => $now,
-            )->all } @{ $resource_pieces })
-        )
-    ];
+    my $dtp = $self->get_schema->storage->datetime_parser;
 
     my @provisioning_obligations = $self
         ->update_smart(
             record => {
                 provisioning_agreement_id
                     => $provisioning_agreement_id,
+                resource_piece_id
+                    => $resource_piece_id,
                 service_type_id
                     => $service_type_id,
                 service_level_id
                     => $service_level_id,
                 quantity
-                    => $quantity
+                    => $quantity,
+                applied_since
+                    => $dtp->format_datetime($applied_since),
+                applied_till
+                    => $dtp->format_datetime($applied_till)
             },
             update_include => {
-                fields_match
-                    => [ qw(provisioning_agreement_id service_type_id service_level_id) ],
-                scalar(@{ $allowed_ids })
-                    ? (conditions_match => [ { id => { -in => $allowed_ids } } ])
-                    : (                                                         )
+                fields_match => [ qw(
+                    provisioning_agreement_id
+                    resource_piece_id
+                    service_type_id
+                    service_level_id
+                    applied_since
+                    applied_till
+                ) ]
             },
             now
                 => defined($valid_since) ? $valid_since : $now
@@ -69,92 +68,73 @@ method update_when_needed (
         );
     }
 
-    foreach my $provisioning_obligation (@provisioning_obligations) {
-        foreach my $resource_piece (@{ $resource_pieces }) {
-            $self
-                ->get_schema
-                ->resultset('ProvisioningObligationXResourcePiece')
-                ->update_smart(
-                    record => {
-                        provisioning_obligation_id
-                            => $provisioning_obligation->id,
-                        resource_piece_id
-                            => $resource_piece->id
-                    },
-                    update_include => {
-                        fields_match => [ qw(provisioning_obligation_id resource_piece_id) ],
-                    }
-                );
-        }
-    }
-
-    $self->get_schema->txn_commit;
-
     return(@provisioning_obligations);
 
 }
 
 method update_when_needed_multi(
     ArrayRef    :$records,
-    ArrayRef    :$resource_pieces?  = [],
-    DateTime    :$now?              = DateTime->now
+    Maybe[Int]  :$resource_piece_id?,
+    DateTime    :$now? = DateTime->now
 ) {
 
     my @provisioning_obligations;
-    my $valid_since = $now->clone->truncate(to => 'day');
+    my $applied_since = $now->clone->truncate(to => 'day');
+    my $applied_till;
 
-    my $allowed_ids = [
-        map({ $_->id }
-            map({ $_->search_related_deep(
-                resultset_class
-                    => 'ProvisioningObligation',
-                callout
-                    => [ '@ResourcePiece > @ProvisioningObligation', { } ],
-                now
-                    => $now
-            )->all } @{ $resource_pieces })
-        )
-    ];
+    # As the first step, we need to find the list of the valid provisioning
+    # obligations for each resource piece
 
+    my $dtp = $self->get_schema->storage->datetime_parser;
     my $i = 0;
     foreach my $record (
+        # The record that already has the same values goest the first, because
+        # it should be added as a piece of the previous record.
         sort({
             if($self
                 ->filter_validated(now => $now)
-                ->search(
-                    id
-                        => { -in => $allowed_ids },
+                ->search({
                     provisioning_agreement_id
                         => $a->{'provisioning_agreement_id'},
+                    resource_piece_id
+                        => $a->{'resource_piece_id'},
                     service_type_id
                         => $a->{'service_type_id'},
                     service_level_id
                         => $a->{'service_level_id'},
                     quantity
                         => $a->{'quantity'},
-                )
+                    applied_since
+                        => { '<=' => $dtp->format_datetime($applied_since) }
+                })
                 ->count
             ) { -1 } else { 1 };
         } @{ $records })
     ) {
+        $applied_till = $applied_since->clone;
+        $applied_till->add(seconds => $record->{'duration'})
+            if(defined($record->{'duration'}));
         push(@provisioning_obligations, $self->update_when_needed(
-            valid_since
-                => $valid_since,
             provisioning_agreement_id
                 => $record->{'provisioning_agreement_id'},
+            resource_piece_id
+                => $record->{'resource_piece_id'},
             service_type_id
                 => $record->{'service_type_id'},
             service_level_id
                 => $record->{'service_level_id'},
             quantity
                 => $record->{'quantity'},
-            resource_pieces
-                => $resource_pieces,
+            resource_piece_id
+                => $resource_piece_id,
+            applied_since
+                => $applied_since,
+            applied_till
+                => $applied_till,
             now
-                => $now
+                => $now,
         ));
-        $valid_since->add(seconds => $record->{'duration'})
-            if(defined($record->{'duration'}));
+        $applied_since = $applied_till;
     }
 
     return(@provisioning_obligations);
