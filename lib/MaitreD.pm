@@ -235,7 +235,7 @@ method startup {
         $routes_authenticated_person
             ->post('/form/remove/:id' => [ format => ['json'] ] )
             ->to(
-                controller      => 'Controller::API::V1::Corporation',
+                controller      => 'Controller::API::V1::Person',
                 action          => 'form_remove',
             );
             
@@ -276,7 +276,7 @@ method startup {
         $routes_authenticated_contractor
             ->post('/form/remove/:id' => [ format => ['json'] ] )
             ->to(
-                controller      => 'Controller::API::V1::Corporation',
+                controller      => 'Controller::API::V1::Contractor',
                 action          => 'form_remove',
             );
 

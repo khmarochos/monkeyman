@@ -206,7 +206,7 @@ method form_add {
         
     }
     
-    #try {
+    try {
         
         $self->hm_schema->txn_do( sub {
             my $rs_data =
@@ -249,14 +249,14 @@ method form_add {
 
         });
 
-    #}
-    #catch {
-    #    my $err = $_;
-    #    $json = {
-    #        success  => \0,
-    #        message => $err
-    #    };          
-    #};
+    }
+    catch {
+        my $err = $_;
+        $json = {
+            success  => \0,
+            message => $err
+        };          
+    };
     
     $self->render(json => $json);
 }
@@ -366,12 +366,35 @@ method form_update {
 }
 
 method form_remove {
-    my $data = $self->datatable_params();
+    my $data = $self->datatable_params()->{'origin_data'};
+    my $id   = $self->{stash}->{'id'};
 
     my $json = {
         success  => \1,
         redirect => "/corporation/list/all"
     };
+    
+    try {
+        my $rs_find =
+            $self
+                ->hm_schema
+                ->resultset('Corporation')
+                ->find({ 'me.id' => $id });        
+        
+        if( $rs_find ){
+            $rs_find->update( {
+                removed => \'NOW()',
+            } );
+        }
+    }
+    catch {
+        my $err = $_;
+        $json = {
+            success  => \0,
+            message => $err
+        };                
+    };
+    
     $self->render(json => $json);
 }
 

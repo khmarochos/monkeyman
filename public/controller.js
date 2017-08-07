@@ -344,6 +344,23 @@ function Form ( components ){
             webix.message("controller Form->getChild form or send_form_btn not found " + form_name);
         }
     };
+    
+    this.ajax = function ( url, callback ){
+        webix.ajax().post( url ,{
+            error:function(text, data, XmlHttpRequest){
+                alert("error");
+            },
+            success:function(text, data, XmlHttpRequest){
+                var data = JSON.parse(text);
+                if( data.success ){
+                    callback.call( this, data );
+                }
+                else{
+                    webix.message( "error load data:" + data.message );
+                }
+            }
+        });
+    };
     /*
         Загрузка данных формы 
     */    
@@ -359,7 +376,7 @@ function Form ( components ){
                     if ( callback ){
                         var data = JSON.parse(text);
                         if( data.success ){
-                            callback.call( this, JSON.parse(text) );
+                            callback.call( this, data );
                         }
                         else{
                             webix.message( "error load data:" + data.message );

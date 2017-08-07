@@ -320,12 +320,34 @@ method form_update {
 }
 
 method form_remove {
-    my $data = $self->datatable_params();
+    my $data = $self->datatable_params()->{'origin_data'};
+    my $id   = $self->{stash}->{'id'};
 
     my $json = {
         success  => \1,
         redirect => "/contractor/list/all"
     };
+    
+    try {
+        my $rs_find =
+            $self
+                ->hm_schema
+                ->resultset('Contractor')
+                ->find({ 'me.id' => $id });        
+        
+        if( $rs_find ){
+            $rs_find->update( {
+                removed => \'NOW()',
+            } );
+        }
+    }
+    catch {
+        my $err = $_;
+        $json = {
+            success  => \0,
+            message => $err
+        };                
+    };    
     
     $self->render(json => $json);
 }
