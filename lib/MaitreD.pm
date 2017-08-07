@@ -112,6 +112,31 @@ method startup {
                 city        => '*'
             );
 
+        $routes
+            ->any('/person/login' => [ format => ['json'] ] )
+            ->name('person.login_json')
+            ->to  ('person#login_json');
+    
+        $routes
+            ->any('/person/login')
+            ->name('person.login')
+            ->to  ('person#login');
+            
+        $routes
+            ->any('/person/signup')
+            ->to(
+                controller      => 'person',
+                action          => 'signup'
+            );
+        $routes
+            ->any('/person/confirm/:token')
+            ->name('person.confirm')
+            ->to(
+                controller      => 'person',
+                action          => 'confirm',
+                token           => undef
+            );
+
     # api
     my  $routes_api = $routes->any('/api/v1');
     my  $routes_api_web_messages = $routes_api->any('/web-messages');
@@ -133,39 +158,37 @@ method startup {
             
     # // api
     
-        $routes
-            ->any('/person/login')
-            ->name('person.login')
-            ->to  ('person#login');
-
-        $routes
-            ->any('/person/signup')
-            ->to(
-                controller      => 'person',
-                action          => 'signup'
-            );
-        $routes
-            ->any('/person/confirm/:token')
-            ->name('person.confirm')
-            ->to(
-                controller      => 'person',
-                action          => 'confirm',
-                token           => undef
-            );
-
     my  $routes_authenticated = $routes->under->to('person#is_authenticated')
                                        ->under->to('person#load_settings')
                                        ->under->to('navigation#build_menu');
+        $routes_authenticated
+            ->any('/person/logout' => [ format => ['json'] ] )
+            ->to(
+                controller  => 'person',
+                action      => 'logout_json'
+            );
+
         $routes_authenticated
             ->get('/person/logout')
             ->to(
                 controller  => 'person',
                 action      => 'logout'
             );
+
         $routes_authenticated
             ->get('/')
             ->to('dashboard#welcome');
 
+    my  $routes_authenticated_snippent_component = $routes_authenticated->under('/snippet-component');
+    
+    $routes_authenticated_snippent_component
+        ->get("/person/:id/:action" => [ format => ["json"] ] )
+        ->to(
+            controller  => 'Controller::API::V1::SnippetComponent::Base',
+            action      => 'email',
+            id          => 0,
+        );
+    
     my  $routes_authenticated_person = $routes_authenticated->under('/person');
         $routes_authenticated_person
             ->get('/list/:filter/:related_element/:related_id' => [ format => ['json'] ] )
@@ -186,8 +209,37 @@ method startup {
                 related_element => '',
                 related_id      => ''
             );
+        
+        $routes_authenticated_person
+            ->get('/form/load/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'form_load',
+            );
 
+            
+        $routes_authenticated_person
+            ->post('/form/add' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'form_add'
+            );
 
+        $routes_authenticated_person
+            ->post('/form/update' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'form_update'
+            );
+
+        $routes_authenticated_person
+            ->post('/form/remove/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Person',
+                action          => 'form_remove',
+            );
+            
+            
     my  $routes_authenticated_contractor = $routes_authenticated->under('/contractor');
 
         $routes_authenticated_contractor
@@ -198,6 +250,34 @@ method startup {
                 filter          => 'active',
                 related_element => 'person',
                 related_id      => '@'
+            );
+
+        $routes_authenticated_contractor
+            ->get('/form/load/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'form_load',
+            );
+            
+        $routes_authenticated_contractor
+            ->post('/form/add' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'form_add',
+            );            
+
+        $routes_authenticated_contractor
+            ->post('/form/update' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'form_update',
+            );            
+            
+        $routes_authenticated_contractor
+            ->post('/form/remove/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Contractor',
+                action          => 'form_remove',
             );
 
         $routes_authenticated_contractor
@@ -232,6 +312,34 @@ method startup {
                 related_id      => '@'
             );
 
+        $routes_authenticated_corporation
+            ->get('/form/load/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_load',
+            );
+            
+        $routes_authenticated_corporation
+            ->post('/form/update' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_update',
+            );            
+            
+        $routes_authenticated_corporation
+            ->post('/form/add' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_add',
+            ); 
+
+        $routes_authenticated_corporation
+            ->post('/form/remove/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::Corporation',
+                action          => 'form_remove',
+            );
+            
     my  $routes_authenticated_provisioning_agreement = $routes_authenticated->under('/provisioning_agreement');
 
         $routes_authenticated_provisioning_agreement

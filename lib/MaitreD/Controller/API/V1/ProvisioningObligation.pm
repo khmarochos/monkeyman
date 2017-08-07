@@ -107,7 +107,8 @@ method list {
     }
     @{ $json->{'data'} };
     
-    $json->{'recordsFiltered'} = $json->{'recordsTotal'}; 
+    $json->{'pos'}         = $datatable_params->{'start'};
+    $json->{'total_count'} = $tmpl_rs->count;
             
     $self->render( json => $json );      
 }

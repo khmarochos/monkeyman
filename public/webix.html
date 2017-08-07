@@ -1,0 +1,281 @@
+<link rel="stylesheet" href="http://cdn.webix.com/edge/webix.css" />
+<!--<link rel="stylesheet" href="http://cdn.webix.com/site/skins/aircompact.css">-->
+<script src="http://cdn.webix.com/edge/webix.js"></script>
+
+<script>
+	
+var translations = {
+	"en-US": {
+		'localeName': "en-US",
+		'person': "Person",
+		'dateFormat': '%d/%m/%Y',
+	},
+	"ru-RU": {
+		'localeName': "ru-RU",
+		'person': "Персона",
+		'dateFormat': '%d-%m-%Y',
+	}
+};
+
+var defaultLocale = "en-US";
+
+// object from translations.js
+var localizator = translations[defaultLocale];
+
+webix.i18n.setLocale(defaultLocale);
+
+var recordsData = [  
+	{ id:"1", value:"Dashboard" },
+	{ id:"2", value:"Clients",
+		data: [
+			{ id:"person",       value:"Person", 
+				data : [
+					{ id:"add_1", value: "Add" },
+					{ id:"list_active_1", value: "List Active" },
+					{ id:"list_archived_1", value: "List Archived" },
+					{ id:"list_all_1", value: "List All" },
+				]
+			},
+			{ id:"contractors",  value:"Contractors",
+				data : [
+					{ id:"add_2", value: "Add" },
+					{ id:"list_active_2", value: "List Active" },
+					{ id:"list_archived_2", value: "List Archived" },
+					{ id:"list_all_2", value: "List All" },
+				]
+			},
+			{ id:"corporations", value:"Corporations",
+				data : [
+					{ id:"add_3", value: "Add" },
+					{ id:"list_active_3", value: "List Active" },
+					{ id:"list_archived_3", value: "List Archived" },
+					{ id:"list_all_3", value: "List All" },
+				]
+			},
+		]
+	},
+	{ id:"3", value: "Service Provisioning",
+		data:[
+			{ id:"agreements_1",  value:"Agreements"  },
+			{ id:"obligations",   value:"Obligations" },
+			{ id:"resourses",     value:"Resourses"   },
+		]
+	},
+	{ id:"4", value: "Partnership",
+		data:[
+			{ id:"agreements_2",  value:"Agreements"  },
+		]
+	},
+	{ id:"5", value: "Billing",
+		data:[
+			{ id:"invoces", value:"Invoces" },
+			{ id:"invoces", value:"Top-ups & Write-offs" },
+		]
+	}
+];
+    
+
+var tree = {
+		view: "tree",
+		data: recordsData,
+		select: recordsData,
+		id: "myTree",
+		on: {
+			onSelectChange: function(){
+				selected = $$("myTree").getSelectedId();
+				console.log( selected );
+
+				webix.message( selected );
+
+				if (isNaN(selected)) {
+					$$("datatable").clearAll();
+					$$("datatable").refresh();										
+				}
+			}
+		}							
+	};
+
+
+var datatable =	{
+		view: "datatable",
+		id: "datatable",
+		editable:true,
+		autoConfig: true, 
+		datafetch: 2,
+		//footer:true,
+		resizeColumn:true,
+		columns:[
+			{ id: "id", sort:"server" },
+			{ id: "first_name", sort:"server" , fillspace:true, editor:"text" },
+			{ id: "last_name", sort:"server" , fillspace:true, editor:"text" },
+			{ id: "valid_since", sort:"server", startdate: new Date(), fillspace:true, editor:"date"  },
+			{ id: "valid_till", sort:"server", startdate: new Date(), fillspace:true, editor:"date" },
+			{ id: "actions" }
+		],
+		url : "myproxy->/person/list/all.json",
+		save:"myproxy->/person/list/all.json",
+	};
+	
+var datatable2 =	{
+		view: "datatable",
+		id: "datatable",
+		editable:true,
+		autoConfig: true, 
+		datafetch: 2,
+		resizeColumn:true,
+		columns:[
+			{ id: "id", sort:"server" },
+			{ id: "name", sort:"server" , fillspace:true, editor:"text" },
+			{ id: "valid_since", sort:"server", fillspace:true, editor:"date", format:webix.Date.dateToStr("%d-%m-%Y") },
+			{ id: "valid_till", sort:"server", fillspace:true, editor:"date", format:webix.Date.dateToStr("%d-%m-%Y")  },
+			{ id: "actions" }
+		],
+		url : "myproxy->/contractor/list/all.json",
+		save:"myproxy->/contractor/list/all.json",
+	};
+
+webix.ready(function(){
+	
+	webix.proxy.myproxy = {
+		$proxy:true,
+		load:function(view, callback){
+			webix.ajax(this.source, callback, view); 
+		},
+		save:function(view, update, dp, callback){
+			webix.ajax().post(this.source, update,
+				{
+					error: function(text, data, http_request){
+					  webix.alert("error" + text);
+					},
+					success:function(text, data, http_request){
+					  webix.message("success");
+					}
+				}
+			);
+		},
+		result:function(state, view, dp, text, data, loader){
+			webix.message(state);
+			dp.processResult(state, data, details);
+		}
+	};	
+	
+    root = webix.ui(
+	{
+		id:"root",
+        rows: [
+			{
+				view:"toolbar",
+				id:"myToolbar",
+				cols:[
+					{ view: "menu", autoheight:true, 
+						data:[
+							{ id: "user", value: "Volodymyr Melnyk",
+								submenu:[
+									{ id: 'profile', value: 'Profile' },
+									{ id: 'logout',  value: 'LogOut' },
+								]
+							}
+						]
+					},
+					{
+						view: "combo", 
+						id: "changeLocale",
+						label: 'Change locale:',
+						labelWidth: 130,
+						width: 230,
+						align: "right",
+						value: "en-US",
+						options: [
+							"ru-RU",
+							"en-US"
+						],
+						on: {
+							"onChange": function(newv, oldv) {
+								//console.log( newv, oldv );
+								changeLocale(newv);
+							}
+						}
+					},					
+					{ view:"button", type:"icon", icon:"sign-out", label:"Logout", width:100, align:"right" }
+				]
+			},			
+            {
+				cols : [
+					{
+						gravity: 0.2,
+						rows: [
+							tree,
+							{ view: "calendar", css: "rounded_bottom" }                        
+						]
+					},
+					{ view: "resizer" },
+					{
+						rows:[
+							{ id:"person2", type:"header", template:"Person"  },
+							{
+								view:"toolbar",
+								cols:[
+									{ view:"button", id:"LoadBut1", value:"PNG", width:100, align:"left" },
+									{ view:"button", id:"LoadBut2", value:"PDF", width:100, align:"left" },
+									{ view:"button", value:"CVS", width:100, align:"center" },
+									{ view:"button", value:"Print", width:100, align:"right" },
+									{ gravity: 4},
+									{ view:"button", id:"LoadBut3", value:"Active", width:100, align:"left" },
+									{ view:"button", value:"Archived", width:100, align:"center" },
+									{ view:"button", value:"All", width:100, align:"right" }
+								]
+							},
+							datatable
+						]
+					}
+				]				
+			} // end cols
+        ]
+    });
+
+	tree = $$("root").getChildViews()[1].getChildViews()[0].getChildViews()[0];
+	
+	function changeLocale(locale) {
+		localizator = translations[locale];
+		
+		$$("person2").define("template", localizator.person);
+		$$("person2").refresh();
+
+		
+		person = tree.getItem("person");
+		person.value = localizator.person;
+		tree.refresh();
+		
+		panel = $$("root").getChildViews()[1].getChildViews()[2];
+		dtable = $$("root").getChildViews()[1].getChildViews()[2].getChildViews()[2];
+		
+		panel.removeView("datatable");
+		if( locale == 'en-US'){
+			panel.addView(datatable);
+		}
+		else{
+			panel.addView(datatable2);
+		}
+		//dtable.clearAll();		
+		//dtable.define('columns', datatable2.columns);
+		//dtable.define('url', datatable2.url);
+		//dtable.load( datatable2.url );
+		//dtable = new webix.ui( datatable2 );
+		//dtable.refresh();		
+		//console.log(  dtable,  datatable2.columns );
+	
+		webix.i18n.setLocale(locale);		
+	}
+
+	webix.attachEvent('unload', function(){
+		webix.storage.local.put("tree_setting", tree.getState());
+	});		
+	
+	var tree_setting = webix.storage.local.get("tree_setting");
+	if (tree_setting)
+		tree.setState(tree_setting);
+	
+	console.log( tree_setting );
+
+});
+</script>
