@@ -194,17 +194,17 @@ __PACKAGE__->belongs_to(
   },
 );
 
-=head2 provisioning_obligation_x_resource_pieces
+=head2 provisioning_obligations
 
 Type: has_many
 
-Related object: L<HyperMouse::Schema::Result::ProvisioningObligationXResourcePiece>
+Related object: L<HyperMouse::Schema::Result::ProvisioningObligation>
 
 =cut
 
 __PACKAGE__->has_many(
-  "provisioning_obligation_x_resource_pieces",
-  "HyperMouse::Schema::Result::ProvisioningObligationXResourcePiece",
+  "provisioning_obligations",
+  "HyperMouse::Schema::Result::ProvisioningObligation",
   { "foreign.resource_piece_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -255,12 +255,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-15 12:20:24
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1wWyNM7IDpJop6Z9PouBpw
-
-__PACKAGE__->many_to_many(
-  "provisioning_obligations" => "provisioning_obligation_x_resource_pieces", "provisioning_obligation"
-);
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-28 02:37:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Y5DgqHHjzm5YWpjz0xJ9JQ
 
 
 
