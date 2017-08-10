@@ -289,6 +289,36 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 person_x_person_child_people
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::PersonXPerson>
+
+=cut
+
+__PACKAGE__->has_many(
+  "person_x_person_child_people",
+  "HyperMouse::Schema::Result::PersonXPerson",
+  { "foreign.child_person_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 person_x_person_parent_people
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::PersonXPerson>
+
+=cut
+
+__PACKAGE__->has_many(
+  "person_x_person_parent_people",
+  "HyperMouse::Schema::Result::PersonXPerson",
+  { "foreign.parent_person_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 person_x_provisioning_agreements
 
 Type: has_many
@@ -305,8 +335,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-06-26 15:58:15
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7FKvJRSzGgSQwb/b+BWHhA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-10 17:21:38
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Xul6gmk1g3Qxr9iDl5pOlg
 
 
 
