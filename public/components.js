@@ -1112,10 +1112,19 @@ function Components (){
                         type     : "header"
                     },
                     {
-                        view     : "form",
-                        id       : "person_add",
-                        child_obj: ['person_x_email', 'person_x_phone'],
-                        baseURL  : "/person/form",
+                        view        : "form",
+                        id          : "person_add",
+                        child_obj   : ['person_x_email', 'person_x_phone'],
+                        afterRender : [
+                            {
+                                'timezone.area': {
+                                    'fn'     : 'controller.timezone.getArea',
+                                    'context': 'controller.timezone',
+                                    'data'   : 'options'
+                                }                                
+                            }
+                        ],
+                        baseURL     : "/person/form",
                         elements :[
                             {
                                 view :"fieldset", 
@@ -1167,7 +1176,30 @@ function Components (){
                                                 },
                                                 {}
                                             ]                                                                       
-                                        }                                    
+                                        },
+                                        {
+                                            rows:[
+                                                { template: webix.i18n.timezone, type:"section" },
+                                                {
+                                                    cols   : [
+                                                        {
+                                                            view   :"richselect",
+                                                            id     : "timezone.area",
+                                                            label  : webix.i18n.area,
+                                                            name   : "timezone",
+                                                            labelPosition:"top"
+                                                        },
+                                                        {
+                                                            view   :"richselect",
+                                                            id     : "timezone.city",
+                                                            label  : webix.i18n.city,
+                                                            name   : "timezone",
+                                                            labelPosition:"top"
+                                                        }
+                                                    ]
+                                                },
+                                            ]
+                                        }
                                     ] // rows
                                 }// body                            
                             },
@@ -1537,7 +1569,10 @@ function Components (){
                     }                    
                 }                
             ]
-        }
+        },
+        /*
+            timezone
+        */
     };
     
 }

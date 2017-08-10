@@ -8,7 +8,9 @@ function Controller (arg){
     this.args      = arg;
     this.tree      = new Tree( this.args );
     this.datatable = new Datatable( this.args );
-    this.form      = new Form ( this.args );
+    this.form      = new Form( this.args );
+    this.ajax      = new Ajax();
+    this.timezone  = new Timezone();
     
     this.auth      = function( params, callback ){
         var res = false;
@@ -44,6 +46,159 @@ function Controller (arg){
             }
         });
     };    
+}
+/*
+    Timezone
+*/
+function Timezone(){
+    this.data    = {};
+    this.ajax    = new Ajax(); 
+    this.getData = function( callback ){
+        var me = this;
+        if( !me.data.origin ){
+            this.ajax.get("/ajax/timezone", function( data, error ){
+                me.data = data.timezones;
+                console.log("Timezone->getData->load", data.timezones );
+                if( callback ) callback.call( this, data.timezones );
+                return data.timezones;
+            });
+        }
+        else {
+            console.log("Timezone->getData->cache", me.data );
+            if( callback ) callback.call( this, me.data );
+            return me.data;            
+        }
+    };
+    
+    this.getArea = function( id, callback ){        
+        var me = this;
+        me.getData( function( data ){
+            if( callback ) callback.call( this, Object.keys( data.timezones ) );
+            return Object.keys( data.timezones );
+        });
+    };
+    
+    this.getCity = function( area_id, callback ){
+        var me = this;
+        if( me.data && me.data.timezone[ area_id ] ){
+            if( callback ) callback.call( this, Object.keys( me.data.timezone[ area_id ] ) );
+            return Object.keys( me.data.timezone[ area_id ] );
+        }
+    };
+    
+    this.onSelect = function( callback ){
+        var me = this;
+        return true;
+    };
+};
+/*
+    Ajax
+*/
+function Ajax() {
+    
+    this.post   = function( url, callback ) {
+        var me  = this;
+        if( callback ) me.fh = callback;
+        
+        webix.ajax().post( url ,{
+            error:function(text, data, XmlHttpRequest){
+                alert("error");
+                if( callback ) me.callback( false, XmlHttpRequest );
+            },
+            success:function(text, data, XmlHttpRequest){
+                var data = JSON.parse(text);
+                if( data.success ){
+                    me.callback( data );                    
+                }
+                else{
+                    webix.message( "error load data:" + data.message );
+                    me.callback( false,  data.message );
+                }
+            }
+        });        
+    };
+
+    this.get   = function( url, callback ) {
+        var me  = this;
+        if( callback ) me.fh = callback;
+        
+        webix.ajax().get( url ,{
+            error:function(text, data, XmlHttpRequest){
+                webix.message("Server error. See to console.log");
+                console.log( XmlHttpRequest );
+                webix.message( "Server error. See to console.log: " + JSON.stringify( XmlHttpRequest) );
+                
+                if(callback) {
+                    me.callback( callback, false, XmlHttpRequest );
+                }
+                else{
+                    return false, XmlHttpRequest;
+                }
+            },
+            success:function(text, data, XmlHttpRequest){
+                var data = JSON.parse(text);
+                if( data.success ){
+                    if(callback) {
+                        me.callback( callback, data, false );
+                    }
+                    else{
+                        return data, false;
+                    }
+                }
+                else{
+                    webix.message( "Error load data:" + JSON.stringify(data) );
+                    if(callback) {
+                        me.callback( callback, false, data );
+                    }
+                    else{
+                        return false, data;
+                    }
+                }
+            }
+        });        
+    };
+
+    this.put   = function( url, callback ) {
+        var me  = this;
+        if( callback ) me.fh = callback;
+        
+        webix.ajax().put( url ,{
+            error:function(text, data, XmlHttpRequest){
+                alert("error");
+            },
+            success:function(text, data, XmlHttpRequest){
+                var data = JSON.parse(text);
+                if( data.success ){
+                    me.callback( data );
+                }
+                else{
+                    webix.message( "error load data:" + data.message );
+                }
+            }
+        });        
+    };
+
+    this.patch   = function( url, callback ) {
+        var me  = this;        
+        webix.ajax().patch( url ,{
+            error:function(text, data, XmlHttpRequest){
+                alert("error");
+            },
+            success:function(text, data, XmlHttpRequest){
+                var data = JSON.parse(text);
+                if( data.success ){
+                    me.callback( callback, data );
+                }
+                else{
+                    webix.message( "error load data:" + data.message );
+                }
+            }
+        });        
+    };
+    
+    this.callback = function(callback, data, error){
+        callback.call( this, data, error );
+    };
 }
 /*
     Datatable  
@@ -295,6 +450,18 @@ function Form ( components ){
         var form          = $$( form_name );
         var send_form_btn = $$("send_form");
         var url           = form.config.baseURL;
+        var after         = form.config.afterRender;
+        
+        if( after ){
+            after.forEach( function( item, i ){                
+                for ( key in item ) {
+                    eval( item[key].fn ).call( eval(item[key].context) , "id", function( data ) {
+                        if(item[key].data) $$(key).define( item[key].data, data );
+                        console.log( "getCity", conrtoller.timezone.getCity("Europe") );
+                    });
+                }
+            });
+        }
         
         if( url && form && send_form_btn ){
             /*
@@ -341,11 +508,14 @@ function Form ( components ){
             });
         }
         else{
-            webix.message("controller Form->getChild form or send_form_btn not found " + form_name);
+            webix.message("Error: controller Form->getChild form or send_form_btn not found " + form_name);
+            console.log("Error: controller Form->getChild form or send_form_btn not found " + form_name );
         }
     };
     
-    this.ajax = function ( url, callback ){
+    this.ajax = function ( url, callback, method ){
+        var w = method ? method : 'post';
+        
         webix.ajax().post( url ,{
             error:function(text, data, XmlHttpRequest){
                 alert("error");
@@ -356,7 +526,8 @@ function Form ( components ){
                     callback.call( this, data );
                 }
                 else{
-                    webix.message( "error load data:" + data.message );
+                    webix.message( "Error load data:" + data.message );
+                    console.log( "Error load data:" + data.message );
                 }
             }
         });

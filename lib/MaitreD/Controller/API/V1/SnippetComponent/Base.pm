@@ -10,6 +10,12 @@ extends 'Mojolicious::Controller';
 
 use Method::Signatures;
 
+method list_timezones {
+    my $json = { 'success' => \1 };
+    
+    $self->render(json => $json);        
+}
+
 method corporation_x_contractor {
     my $json = { 'success' => \1 };
 
@@ -24,8 +30,7 @@ method corporation_x_contractor {
             })->all        
     ];
         
-    $self->render(json => $json);
-    
+    $self->render(json => $json);    
 }
 
 method phone {

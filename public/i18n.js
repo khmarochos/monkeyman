@@ -14,6 +14,9 @@ var locales = {
         'fullDateFormat' : "%m/%d/%Y %h:%i %A",
         'dateFormatStr'  : "%d/%m/%Y",
         
+        'timezone'       : "Timezone",
+        'area'           : "Area",
+        'city'           : "City",
         'person'         : "Person",
         'dashboard'      : "Dashboard",
         'add'            : "ADD",
@@ -80,7 +83,10 @@ var locales = {
         'longDateFormat' : "%d %F %Y",
         'fullDateFormat' : "%d-%m-%Y %h:%i %A",
         'dateFormatStr'  : "%d-%m-%Y",
-        
+
+        'timezone'       : "Timezone",
+        'area'           : "Area",
+        'city'           : "City",
         'person'         : "Персона",
         'dashboard'      : "Панель управления",
         'add'            : "Добавить",

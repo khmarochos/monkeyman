@@ -11,4 +11,5 @@ var global_setting = {
         locale:'en-US'
     }
 };
+
 console.log( 'settings.js OK' );

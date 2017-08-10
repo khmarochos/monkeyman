@@ -54,8 +54,8 @@ var Route = Backbone.Router.extend({
                         var child_obj = [];
                         if( filter != "remove"){
                             controller.datatable.remove();
-                            child_obj = controller.form.getSnippet( form_name );
                             controller.form.start( comp.form )
+                            child_obj = controller.form.getSnippet( form_name );
                         }                        
                         
                         if( filter == "load" ){        
@@ -80,6 +80,8 @@ var Route = Backbone.Router.extend({
                                 }
                                 
                             });
+                            
+                            filter = "update";
 
                         }
                         else if( filter == "remove" ){

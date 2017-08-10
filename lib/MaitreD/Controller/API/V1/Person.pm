@@ -16,7 +16,7 @@ use DateTime;
 use Data::Dumper;
 use MaitreD::Extra::API::V1::TemplateSettings;
 use JSON::XS;
-use Try::Tiny;
+#use Try::Tiny;
 
 
 method list {
@@ -269,11 +269,11 @@ method form_add {
                 });
                 
             }
-            catch {
+            catch ($e) {
                 my $err = $_;
                 $json = {
-                    success  => \0,
-                    message => $err
+                    success => \0,
+                    message => $e
                 };                
             };            
             
@@ -426,11 +426,10 @@ method form_update {
             });
             
         }
-        catch {
-            my $err = $_;
+        catch ($e) {
             $json = {
-                success  => \0,
-                message => $err
+                success => \0,
+                message => $e
             };                
         };     
         
@@ -467,11 +466,10 @@ method form_remove {
             } );
         }
     }
-    catch {
-        my $err = $_;
+    catch ($e) {
         $json = {
-            success  => \0,
-            message => $err
+            success => \0,
+            message => $e
         };                
     };        
     

@@ -40,7 +40,7 @@ method list_timezones {
             $timezones->{ $area }->{ $city } = 1;
         }
     }
-    $self->render(json => { timezones => $timezones });
+    $self->render(json => { success => \1, timezones => $timezones });
 }
 
 

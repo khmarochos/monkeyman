@@ -25,6 +25,7 @@
     <script>    
         webix.ready(function(){            
             // load Local Storage setting
+			timezone      = {};
             route         = new Route();
             local_storage = new LocalStorage ();
             global_setting_ls = local_storage.get( global_setting.localStorage.key );
@@ -38,7 +39,7 @@
             components = new Components();
             //
             controller = new Controller(components);
-            /*
+			/*
                 init
             */
             controller.auth({}, function(auth){
