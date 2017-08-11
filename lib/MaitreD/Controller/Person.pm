@@ -26,7 +26,13 @@ method is_authenticated {
     if(defined(my $email = $self->session('authorized_person_email'))) {
         delete($self->session->{'was_heading_to'}) if(exists($self->session->{'was_heading_to'}));
         $self->stash->{'authorized_person_result'} = $self->hm_schema->resultset("Person")->find_by_email(email => $email);
-        $self->stash->{'authorized_person_result'}->id;
+        
+        if( $self->stash->{'authorized_person_result'} ){
+            $self->stash->{'authorized_person_result'}->id;
+        }
+        else{
+            return(0);
+        }
     } else {
         $self->session->{'was_heading_to'} = $self->req->url->path;
         $self->redirect_to('/person/login');

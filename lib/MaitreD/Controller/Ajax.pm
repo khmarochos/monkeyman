@@ -18,12 +18,12 @@ method i18n {
     if(defined(my $language_code = $self->param('language_code'))) {
         $self->session->{'language_code'} = $language_code;
         $self->render(
-            json    => { language_code => $language_code },
+            json    => { success => \1, language_code => $language_code },
             status  => 200
         );
     } else {
         $self->render(
-            json    => { error => 'Zaloopa' },
+            json    => { success => \0, message => 'Zaloopa', error => 'Zaloopa' },
             status  => 500
         );
     }

@@ -100,7 +100,7 @@ method startup {
             ->to('client#sesh');
 
         $routes
-            ->post('/ajax/i18n')
+            ->any('/ajax/i18n')
             ->to   ('ajax#i18n');
 
         $routes
@@ -182,7 +182,7 @@ method startup {
     my  $routes_authenticated_snippent_component = $routes_authenticated->under('/snippet-component');
     
     $routes_authenticated_snippent_component
-        ->get("/person/:id/:action" => [ format => ["json"] ] )
+        ->get("/:id/:action" => [ format => ["json"] ] )
         ->to(
             controller  => 'Controller::API::V1::SnippetComponent::Base',
             action      => 'email',

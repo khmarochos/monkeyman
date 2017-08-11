@@ -121,10 +121,11 @@ function Components (){
         /*
             end Tree
         */
+        // locale
         $$('changeLocale').setValue( global_setting.i18n.locale );
         controller.onChange( $$('changeLocale'), function( locale ){
             global_setting.i18n.locale = locale;
-            location.reload();
+            route.navigate( "ajax/i18n",  { trigger: true });
         } );        
         // save Local Sorage
         webix.attachEvent('unload', function(){
@@ -141,11 +142,17 @@ function Components (){
             cols:[
                 {
                     view      : "menu",
-                    autoheight:true, 
-                    data      :[
-                        { id: "user", value: "Volodymyr Melnyk",
+                    id        : "top.menu",
+                    autoheight: true, 
+                    data      : [
+                        {
+                            id     : "header.user",
+                            value  : "",
                             submenu:[
-                                { id: 'profile', value: 'Profile' },
+                                {
+                                    id    : 'profile',
+                                    value : 'Profile'
+                                }
                             ]
                         }
                     ]
@@ -1117,11 +1124,22 @@ function Components (){
                         child_obj   : ['person_x_email', 'person_x_phone'],
                         afterRender : [
                             {
-                                'timezone.area': {
-                                    'fn'     : 'controller.timezone.getArea',
-                                    'context': 'controller.timezone',
-                                    'data'   : 'options'
-                                }                                
+                                'timezone.area': [
+                                    {
+                                        'fn'     : 'controller.timezone.getArea',
+                                        'context': 'controller.timezone',
+                                        'data'   : 'options'
+                                    },
+                                    {
+                                        'fn'     : 'controller.timezone.onSelect',
+                                        'context': 'controller.timezone',
+                                        'id'     : 'timezone.area',
+                                        'bind'   : {
+                                            'id'   : 'timezone.city',
+                                            'data' : 'options'
+                                        }
+                                    },
+                                ]               
                             }
                         ],
                         baseURL     : "/person/form",
@@ -1174,8 +1192,14 @@ function Components (){
                                                     name : 'password',
                                                     labelPosition:"top"
                                                 },
-                                                {}
-                                            ]                                                                       
+                                                {
+                                                    view   : "richselect",
+                                                    id     : "language_id",
+                                                    label  : webix.i18n.language,
+                                                    name   : "language_id",
+                                                    options: "/snippet-component/0/language.json",
+                                                    labelPosition:"top"
+                                                }                                            ]                                                                       
                                         },
                                         {
                                             rows:[
@@ -1186,14 +1210,14 @@ function Components (){
                                                             view   :"richselect",
                                                             id     : "timezone.area",
                                                             label  : webix.i18n.area,
-                                                            name   : "timezone",
+                                                            name   : "timezone.area",
                                                             labelPosition:"top"
                                                         },
                                                         {
                                                             view   :"richselect",
                                                             id     : "timezone.city",
                                                             label  : webix.i18n.city,
-                                                            name   : "timezone",
+                                                            name   : "timezone.city",
                                                             labelPosition:"top"
                                                         }
                                                     ]
@@ -1212,9 +1236,10 @@ function Components (){
     
                         ], // elements
                         rules:{
-                            //"password"   :webix.rules.isNotEmpty,
-                            "first_name" :webix.rules.isNotEmpty,
-                            "last_name"  :webix.rules.isNotEmpty
+                            "first_name"   : webix.rules.isNotEmpty,
+                            "last_name"    : webix.rules.isNotEmpty,
+                            "timezone.area": webix.rules.isNotEmpty,
+                            "timezone.city": webix.rules.isNotEmpty,
                         } 
                     }, // form
                     {}
@@ -1387,7 +1412,7 @@ function Components (){
         */
         'corporation_x_contractor': {
             view    : "form",
-            baseURL : "/snippet-component/person/{{id}}/corporation_x_contractor.json",
+            baseURL : "/snippet-component/{{id}}/corporation_x_contractor.json",
             cols    : [
                 {
                     view   :"richselect", 
@@ -1408,7 +1433,7 @@ function Components (){
         
         'person_x_corporation':{
             view    : "form",
-            baseURL : "/snippet-component/person/{{id}}/corporation.json",
+            baseURL : "/snippet-component/{{id}}/corporation.json",
             cols:[
                 {
                     view   :"richselect", 
@@ -1460,7 +1485,7 @@ function Components (){
         */
         'person_x_contractor' : {
             view    : "form",
-            baseURL : "/snippet-component/person/{{id}}/person_x_contractor.json",
+            baseURL : "/snippet-component/{{id}}/person_x_contractor.json",
             cols    :[
                 {
                     view   :"richselect", 
@@ -1513,7 +1538,7 @@ function Components (){
         */
         'person_x_email' : {
             view    : "form",
-            baseURL : "/snippet-component/person/{{id}}/email.json",
+            baseURL : "/snippet-component/{{id}}/email.json",
             cols:[
                 {
                     view   : "text", 
@@ -1543,7 +1568,7 @@ function Components (){
         */
         'person_x_phone' : {
             view    : "form",
-            baseURL : "/snippet-component/person/{{id}}/phone.json",
+            baseURL : "/snippet-component/{{id}}/phone.json",
             cols    :[
                 {
                     view   : "text", 

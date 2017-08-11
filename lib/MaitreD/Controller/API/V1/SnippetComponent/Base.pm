@@ -9,9 +9,42 @@ use namespace::autoclean;
 extends 'Mojolicious::Controller';
 
 use Method::Signatures;
+use Data::Dumper;
 
-method list_timezones {
+method user_info {
     my $json = { 'success' => \1 };
+    
+    my $rs = $self->stash->{'authorized_person_result'};
+    
+    #print Dumper( ref $rs );
+    $json->{'data'} = {
+        first_name  => $rs->first_name,
+        last_name   => $rs->last_name,
+        valid_till  => $rs->valid_till,
+        valid_since => $rs->valid_since,
+        removed     => $rs->removed,
+        id          => $rs->id,
+    };
+                    
+    $self->render(json => $json);    
+};
+
+method language {
+    my $json = { 'success' => \1 };
+    $json->{'data'} = [
+        $self
+            ->hm_schema
+            ->resultset('Language')
+            ->search(undef,{
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            })->all        
+    ];
+    
+    @{ $json->{'data'} } =
+    map {
+        $_->{'value'} = $_->{'name'};
+        $_;
+    } @{ $json->{'data'} };
     
     $self->render(json => $json);        
 }

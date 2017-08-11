@@ -44,10 +44,27 @@
             */
             controller.auth({}, function(auth){
                 if(auth){
-                    if (components.datatable[global_setting.datatable.id]) {
-                        route.navigate( components.datatable[global_setting.datatable.id].view.urlBase , { trigger: true });
-                    }
-                    components.init();
+					// user info
+					controller.ajax.get("/snippet-component/0/user_info.json", function(data){
+						global_setting.user = data.data;
+						
+						if (components.datatable[global_setting.datatable.id]) {
+							route.navigate( components.datatable[global_setting.datatable.id].view.urlBase , { trigger: true });
+						}
+
+						components.init();
+						
+						// user top menu
+						var top_menu = $$("top.menu");						
+						if( top_menu ){
+							var header_user = top_menu.getMenuItem("header.user");
+							if( header_user ){
+								header_user.value = global_setting.user.last_name + " " + global_setting.user.first_name;
+								top_menu.refresh();
+							}							
+						}
+
+					});
                 }
                 else{
                     route.navigate( "login", { trigger: true });

@@ -61,8 +61,7 @@ function Timezone(){
         
         this.ajax.get( url , function( data, error ){
             var res = area_id ? data.timezones[area_id] : data.timezones;
-            //me.data = data.timezones;
-            console.log("Timezone->getData->load", res );
+            //console.log("Timezone->getData->load", res );
             if( callback ) callback.call( this, res );
             return res;
         });
@@ -84,11 +83,24 @@ function Timezone(){
         });
     };
     
-    this.onSelect = function( id, callback ){
-        var me = this;
-        $$( id ).attachEvent("onChange", function(newv, oldv){
-            webix.message("Value changed from: "+oldv+" to: "+newv);
-        });        
+    this.onSelect = function( callback, id ){
+        var me  = this;
+        var obj = id ? $$( id ) : false;
+        if( obj ){
+            obj.attachEvent("onChange", function(newv, oldv){
+                //webix.message("Value changed from: "+oldv+" to: "+newv);
+                if( newv ) {
+                    me.getCity( newv, function( data ){
+                        if(callback) callback.call( this, data );
+                        return data;
+                    });
+                }
+            });
+        }
+        else{
+            webix.message("Error. Timezone->onSelect id do not find.");
+            console.log("Error. Timezone->onSelect id do not find. id:", id);
+        }
         return true;
     };
 };
@@ -102,18 +114,36 @@ function Ajax() {
         if( callback ) me.fh = callback;
         
         webix.ajax().post( url ,{
-            error:function(text, data, XmlHttpRequest){
-                alert("error");
-                if( callback ) me.callback( false, XmlHttpRequest );
+          error:function(text, data, XmlHttpRequest){
+                webix.message("Server error. See to console.log");
+                console.log( XmlHttpRequest );
+                webix.message( "Server error. See to console.log: " + JSON.stringify( XmlHttpRequest) );
+                
+                if(callback) {
+                    me.callback( callback, false, XmlHttpRequest );
+                }
+                else{
+                    return false, XmlHttpRequest;
+                }
             },
             success:function(text, data, XmlHttpRequest){
                 var data = JSON.parse(text);
                 if( data.success ){
-                    me.callback( data );                    
+                    if(callback) {
+                        me.callback( callback, data, false );
+                    }
+                    else{
+                        return data, false;
+                    }
                 }
                 else{
-                    webix.message( "error load data:" + data.message );
-                    me.callback( false,  data.message );
+                    webix.message( "Error load data:" + JSON.stringify(data) );
+                    if(callback) {
+                        me.callback( callback, false, data );
+                    }
+                    else{
+                        return false, data;
+                    }
                 }
             }
         });        
@@ -164,16 +194,36 @@ function Ajax() {
         if( callback ) me.fh = callback;
         
         webix.ajax().put( url ,{
-            error:function(text, data, XmlHttpRequest){
-                alert("error");
+          error:function(text, data, XmlHttpRequest){
+                webix.message("Server error. See to console.log");
+                console.log( XmlHttpRequest );
+                webix.message( "Server error. See to console.log: " + JSON.stringify( XmlHttpRequest) );
+                
+                if(callback) {
+                    me.callback( callback, false, XmlHttpRequest );
+                }
+                else{
+                    return false, XmlHttpRequest;
+                }
             },
             success:function(text, data, XmlHttpRequest){
                 var data = JSON.parse(text);
                 if( data.success ){
-                    me.callback( data );
+                    if(callback) {
+                        me.callback( callback, data, false );
+                    }
+                    else{
+                        return data, false;
+                    }
                 }
                 else{
-                    webix.message( "error load data:" + data.message );
+                    webix.message( "Error load data:" + JSON.stringify(data) );
+                    if(callback) {
+                        me.callback( callback, false, data );
+                    }
+                    else{
+                        return false, data;
+                    }
                 }
             }
         });        
@@ -182,16 +232,36 @@ function Ajax() {
     this.patch   = function( url, callback ) {
         var me  = this;        
         webix.ajax().patch( url ,{
-            error:function(text, data, XmlHttpRequest){
-                alert("error");
+          error:function(text, data, XmlHttpRequest){
+                webix.message("Server error. See to console.log");
+                console.log( XmlHttpRequest );
+                webix.message( "Server error. See to console.log: " + JSON.stringify( XmlHttpRequest) );
+                
+                if(callback) {
+                    me.callback( callback, false, XmlHttpRequest );
+                }
+                else{
+                    return false, XmlHttpRequest;
+                }
             },
             success:function(text, data, XmlHttpRequest){
                 var data = JSON.parse(text);
                 if( data.success ){
-                    me.callback( callback, data );
+                    if(callback) {
+                        me.callback( callback, data, false );
+                    }
+                    else{
+                        return data, false;
+                    }
                 }
                 else{
-                    webix.message( "error load data:" + data.message );
+                    webix.message( "Error load data:" + JSON.stringify(data) );
+                    if(callback) {
+                        me.callback( callback, false, data );
+                    }
+                    else{
+                        return false, data;
+                    }
                 }
             }
         });        
@@ -456,14 +526,39 @@ function Form ( components ){
         if( after ){
             after.forEach( function( item, i ){                
                 for ( key in item ) {
-                    eval( item[key].fn ).call( eval(item[key].context) , function( data ) {
-                        if(item[key].data) $$(key).define( item[key].data, data );
-                        
-                        controller.timezone.onSelect( 'timezone.area' );
-                        console.log( "getCity", controller.timezone.getCity("Europe") );
-                    });
-                }
-            });
+                    var arr = item[key];
+
+                    if( Array.isArray( arr ) ){
+                        arr.forEach( function( item2, i2 ){
+                            if( item2.fn ){
+
+                                eval( item2.fn ).call( eval(item2.context) , function( data ) {
+                                    
+                                    if( item2.bind ){
+                                        $$( item2.bind.id ).define( item2.bind.data, data );
+                                    }
+                                    else{
+                                        if( item2.data && !item2.id ) {
+                                            $$(key).define( item2.data, data );
+                                        }
+                                        else if( item2.data && item2.id ) {
+                                            $$(item2.id).define( item2.data, data );
+                                        }
+                                    }
+                                    
+                                }, item2.id );
+                                
+                            }
+                            else{
+                                webix.message("Error.  Form->end components->" + form_name + ' parse afterRender.');
+                                console.log("Error.  Form->end components->" + form_name + ' parse afterRender.');
+                            }
+                        }); // arr.forEach
+                    } // Array.isArray
+
+                } // for
+            
+            }); // after.forEach(
         }
         
         if( url && form && send_form_btn ){
@@ -533,6 +628,7 @@ function Form ( components ){
                     console.log( "Error load data:" + data.message );
                 }
             }
+            
         });
     };
     /*

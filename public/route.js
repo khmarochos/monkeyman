@@ -2,7 +2,20 @@ var Route = Backbone.Router.extend({
     routes: {
         ""                                               : "index",
         "login"                                          : "login",
+        "ajax/i18n"                                      : "i18n",
         ":datatable/:action/:filter(/:related_to)(/:id)" : "main"
+    },
+    
+    i18n: function () {
+        var url = "/ajax/i18n?language_code=" + global_setting.i18n.locale;
+        controller.ajax.get( url , function( data ) {
+            if( data.success ){
+                console.log("route i18n");
+                data.redirect = data.redirect ? data.redirect : "/person/list/all";
+                route.navigate( data.redirect, { trigger: true });
+                location.reload();
+            }
+        });
     },
 
     index: function () {
@@ -15,6 +28,7 @@ var Route = Backbone.Router.extend({
     },
 
     main: function ( datatable, action, filter, related_to, id ) {
+        console.log("route main");
         var url = '/' +datatable + '/' + action + '/' + filter;
         if( related_to ){
             url += "/" + related_to;
