@@ -64,7 +64,7 @@ method check_element (
     my $cloudstack_element_key = $self->compose_element_key($cloudstack_element_type, $cloudstack_element_id);
     my $cloudstack_element_dom = $self->renew_if_needed($cloudstack_element_type => $cloudstack_element_id);
     unless(defined($self->get_resources->{ $cloudstack_element_key })) {
-        if($cloudstack_element_dom->findvalue('/virtualmachine/tags[key="billing-legacy"]/value')) {
+        if(defined($cloudstack_element_dom) && $cloudstack_element_dom->findvalue('/virtualmachine/tags[key="billing-legacy"]/value')) {
             $self->get_resources->{ $cloudstack_element_key } = {
                 cloudstack_element_type
                     => $cloudstack_element_type,
@@ -101,6 +101,7 @@ method detect_service_package (
     Str     :$cloudstack_element_type!,
     Str     :$cloudstack_element_id!,
     HashRef :$resources!,
+    Bool    :$exceed?,
     Int     :$from!,
     Int     :$till!
 ) {
@@ -144,12 +145,14 @@ method detect_service_package (
         $self->get_resources->{ $cloudstack_element_key }->{'service_package_id'} = $service_package_id = $service_package->id;
 
         foreach (
-            $service_package
+            map({ [ $_->resource_type_id => $_->quantity ] } $service_package
                 ->service_package_sets
                 ->all
+            ),
+            [ '_packages' => 1 ]
         ) {
             $self->get_resource_counter->add_resources(
-                { $_->resource_type_id => $_->quantity },
+                { $_->[0] => $_->[1] },
                 $from_datetime,
                 $till_datetime
             );
@@ -157,24 +160,26 @@ method detect_service_package (
 
     } else {
 
+        AVAILABLE:
         while(my($resource_type_id, $quantity) = each(%{ $resources })) {
             foreach my $period ($self->get_resource_counter->find_periods($from_datetime, $till_datetime, 0)) {
                 my $available = $self->get_resource_counter->get_resources($period->[0], $period->[1], 1);
-                if(
-                    defined($available->{ $resource_type_id }) &&
-                           ($available->{ $resource_type_id } >= $quantity)
-                ) {
-                    $service_package_id = -1;
-                } else {
-                    $service_package_id = undef;
-                    last;
+                if(defined($available) && $available->{'_packages'} > 0) {
+                    $resources->{ $resource_type_id } -= $available->{ $resource_type_id }
+                        if(defined($available->{ $resource_type_id }));
+                    $service_package_id = -1
+                        if($exceed || $resources->{ $resource_type_id } <= 0);
+                    next;
                 }
+                $service_package_id = undef;
+                last(AVAILABLE)
             }
-            return(undef)
-                unless(defined($service_package_id));
         }
 
     }
+
+    return(undef)
+        unless(defined($service_package_id));
 
     while(my($resource_type_id, $quantity) = each(%{ $resources })) {
         $self->get_resource_counter->sub_resources(
@@ -608,6 +613,8 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
 
             my $spf = $account_data->{'service_package_finder'};
 
+            # Processing virtual machines' usage records
+
             while(my($virtual_machine_id, $virtual_machine_data) = each(%{ $account_data->{'usage_records'}->{ &UR_T_VIRTUALMACHINE } })) {
 
                 $db_schema->storage->txn_begin;
@@ -815,6 +822,8 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                 $db_schema->storage->txn_commit;
             }
 
+            # Processing volume's usage records
+
             while(my($volume_id, $volume_data) = each(%{ $account_data->{'usage_records'}->{ &UR_T_VOLUME } })) {
 
                 $db_schema->storage->txn_begin;
@@ -840,21 +849,20 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                     
                     $duration_total += my $duration = sprintf('%.0f', $usage_record->get_value('/rawusage') * 3600);
 
-                    my $size = $usage_record->get_value('/size');
-
+                    my $resource_type_id = $db_schema
+                        ->resultset('ResourceType')
+                        ->find_by_full_name(resource_type_full_name => 'volume-a')
+                        ->id;
+                    my $resources = { $resource_type_id => $usage_record->get_value('/size') };
                     if(defined(my $detected = $spf->detect_service_package(
                         cloudstack_element_type
                             => 'Volume',
                         cloudstack_element_id
                             => $volume_id,
                         resources
-                            => {
-                                $db_schema
-                                    ->resultset('ResourceType')
-                                    ->find_by_full_name(resource_type_full_name => 'volume-a')
-                                    ->id
-                                        => $size,
-                            },
+                            => $resources,
+                        exceed
+                            => 1,
                         from
                             => $datetime_base->epoch + $duration_total - $duration,
                         till
@@ -865,7 +873,8 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                             $spf->get_resources,
                             $spf->get_resource_counter->dump_collection
                         );
-                    } else {
+                    }
+                    if(scalar(grep({ $_ > 0 } values(%{ $resources })))) {
                         push(@{ $vol_obligations }, {
                             provisioning_agreement_id
                                 => $volume_data->{'provisioning_agreement_account'}->id,
@@ -881,7 +890,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                                     ->find({ short_name => 'basic' })
                                     ->id,
                             quantity
-                                => $size,
+                                => $resources->{ $resource_type_id },
                             duration
                                 => $duration
                         });
@@ -913,6 +922,8 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                 $db_schema->storage->txn_commit;
             }
 
+            # Processing IP-addresses' usage records
+
             while(my($ipaddress_id, $ipaddress_data) = each(%{ $account_data->{'usage_records'}->{ &UR_T_IPADDRESS } })) {
 
                 $db_schema->storage->txn_begin;
@@ -938,19 +949,20 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                     
                     $duration_total += my $duration = sprintf('%.0f', $usage_record->get_value('/rawusage') * 3600);
 
+                    my $resource_type_id = $db_schema
+                        ->resultset('ResourceType')
+                        ->find_by_full_name(resource_type_full_name => 'ipv4-a')
+                        ->id;
+                    my $resources = { $resource_type_id => 1 };
                     if(defined(my $detected = $spf->detect_service_package(
                         cloudstack_element_type
                             => 'Ipaddress',
                         cloudstack_element_id
                             => $ipaddress_id,
                         resources
-                            => {
-                                $db_schema
-                                    ->resultset('ResourceType')
-                                    ->find_by_full_name(resource_type_full_name => 'ipv4-a')
-                                    ->id
-                                        => 1,
-                            },
+                            => $resources,
+                        exceed
+                            => 1,
                         from
                             => $datetime_base->epoch + $duration_total - $duration,
                         till
@@ -961,7 +973,8 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                             $spf->get_resources,
                             $spf->get_resource_counter->dump_collection
                         );
-                    } else {
+                    }
+                    if(scalar(grep({ $_ > 0 } values(%{ $resources })))) {
                         push(@{ $ipv4_obligations }, {
                             provisioning_agreement_id
                                 => $ipaddress_data->{'provisioning_agreement_account'}->id,
@@ -977,7 +990,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                                     ->find({ short_name => 'basic' })
                                     ->id,
                             quantity
-                                => 1,
+                                => $resources->{ $resource_type_id },
                             duration
                                 => $duration
                         });
