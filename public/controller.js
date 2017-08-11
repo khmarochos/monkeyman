@@ -53,41 +53,42 @@ function Controller (arg){
 function Timezone(){
     this.data    = {};
     this.ajax    = new Ajax(); 
-    this.getData = function( callback ){
-        var me = this;
-        if( !me.data.origin ){
-            this.ajax.get("/ajax/timezone", function( data, error ){
-                me.data = data.timezones;
-                console.log("Timezone->getData->load", data.timezones );
-                if( callback ) callback.call( this, data.timezones );
-                return data.timezones;
-            });
-        }
-        else {
-            console.log("Timezone->getData->cache", me.data );
-            if( callback ) callback.call( this, me.data );
-            return me.data;            
-        }
+    this.getData = function( area_id, callback ){
+        var me  = this;
+        var url = "/ajax/timezone";
+        var key = area_id ? 'timezones.'+area_id : 'timezones';
+        if( area_id ) url += "/" + area_id;
+        
+        this.ajax.get( url , function( data, error ){
+            var res = area_id ? data.timezones[area_id] : data.timezones;
+            //me.data = data.timezones;
+            console.log("Timezone->getData->load", res );
+            if( callback ) callback.call( this, res );
+            return res;
+        });
     };
     
-    this.getArea = function( id, callback ){        
+    this.getArea = function( callback ){        
         var me = this;
-        me.getData( function( data ){
-            if( callback ) callback.call( this, Object.keys( data.timezones ) );
-            return Object.keys( data.timezones );
+        me.getData( false, function( data ){
+            if( callback ) callback.call( this, Object.keys( data ) );
+            return Object.keys( data );
         });
     };
     
     this.getCity = function( area_id, callback ){
         var me = this;
-        if( me.data && me.data.timezone[ area_id ] ){
-            if( callback ) callback.call( this, Object.keys( me.data.timezone[ area_id ] ) );
-            return Object.keys( me.data.timezone[ area_id ] );
-        }
+        me.getData( area_id , function( data ){
+            if( callback ) callback.call( this, Object.keys( data ) );
+            return Object.keys( data );
+        });
     };
     
-    this.onSelect = function( callback ){
+    this.onSelect = function( id, callback ){
         var me = this;
+        $$( id ).attachEvent("onChange", function(newv, oldv){
+            webix.message("Value changed from: "+oldv+" to: "+newv);
+        });        
         return true;
     };
 };
@@ -455,9 +456,11 @@ function Form ( components ){
         if( after ){
             after.forEach( function( item, i ){                
                 for ( key in item ) {
-                    eval( item[key].fn ).call( eval(item[key].context) , "id", function( data ) {
+                    eval( item[key].fn ).call( eval(item[key].context) , function( data ) {
                         if(item[key].data) $$(key).define( item[key].data, data );
-                        console.log( "getCity", conrtoller.timezone.getCity("Europe") );
+                        
+                        controller.timezone.onSelect( 'timezone.area' );
+                        console.log( "getCity", controller.timezone.getCity("Europe") );
                     });
                 }
             });
