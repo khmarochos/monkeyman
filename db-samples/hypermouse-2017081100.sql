@@ -59,7 +59,7 @@ CREATE TABLE `contractor` (
   KEY `name` (`name`) USING BTREE,
   KEY `contractor_type_id` (`contractor_type_id`),
   CONSTRAINT `contractor_ibfk_1` FOREIGN KEY (`contractor_type_id`) REFERENCES `contractor_type` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=530 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=773 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -68,7 +68,7 @@ CREATE TABLE `contractor` (
 
 LOCK TABLES `contractor` WRITE;
 /*!40000 ALTER TABLE `contractor` DISABLE KEYS */;
-INSERT INTO `contractor` VALUES (1,'2017-01-24 07:08:12',NULL,NULL,'ХМАРА',3,1),(2,'2017-01-24 07:08:12',NULL,NULL,'АПТАЙМ',3,1),(3,'2017-01-24 07:08:12',NULL,NULL,'Сухобок Катерина Володимирівна',2,1),(101,'2017-01-24 06:27:19',NULL,NULL,'ЖУЙСТРОЙІНВЄСТЖЛОБ',3,0),(102,'2017-01-24 06:27:47',NULL,NULL,'Іванов Іван Іванович',1,0),(103,'2017-01-24 06:27:47',NULL,NULL,'АЙНЕНЕ-ТЕЛЕКОМ',3,0),(306,'2017-07-06 10:39:33',NULL,NULL,'Default Contractor (201304)',1,0),(307,'2017-07-06 10:39:33',NULL,NULL,'Default Contractor (201213)',1,0),(308,'2017-07-06 10:39:33',NULL,NULL,'Default Contractor (201310)',1,0),(309,'2017-07-06 10:39:33',NULL,NULL,'Default Contractor (201312)',1,0),(310,'2017-07-06 10:39:33',NULL,NULL,'Default Contractor (201324)',1,0),(311,'2017-07-06 10:39:33',NULL,NULL,'Default Contractor (201333)',1,0),(312,'2017-07-06 10:39:34',NULL,NULL,'Default Contractor (201313)',1,0),(313,'2017-07-06 10:39:34',NULL,NULL,'Default Contractor (201223)',1,0),(314,'2017-07-06 10:39:34',NULL,NULL,'Default Contractor (201227)',1,0),(315,'2017-07-06 10:39:34',NULL,NULL,'Default Contractor (201322)',1,0),(316,'2017-07-06 10:39:34',NULL,NULL,'Default Contractor (201222)',1,0),(317,'2017-07-06 10:39:35',NULL,NULL,'Default Contractor (201305)',1,0),(318,'2017-07-06 10:39:35',NULL,NULL,'Default Contractor (201325)',1,0),(319,'2017-07-06 10:39:35',NULL,NULL,'Default Contractor (201409)',1,0),(320,'2017-07-06 10:39:35',NULL,NULL,'Default Contractor (201408)',1,0),(321,'2017-07-06 10:39:35',NULL,NULL,'Default Contractor (201432)',1,0),(322,'2017-07-06 10:39:35',NULL,NULL,'Default Contractor (201441)',1,0),(323,'2017-07-06 10:39:35',NULL,NULL,'Default Contractor (201457)',1,0),(324,'2017-07-06 10:39:35',NULL,NULL,'Default Contractor (201459)',1,0),(325,'2017-07-06 10:39:35',NULL,NULL,'Default Contractor (201461)',1,0),(326,'2017-07-06 10:39:36',NULL,NULL,'Default Contractor (201460)',1,0),(327,'2017-07-06 10:39:36',NULL,NULL,'Default Contractor (201467)',1,0),(328,'2017-07-06 10:39:36',NULL,NULL,'Default Contractor (201475)',1,0),(329,'2017-07-06 10:39:36',NULL,NULL,'Default Contractor (201484)',1,0),(330,'2017-07-06 10:39:36',NULL,NULL,'Default Contractor (201482)',1,0),(331,'2017-07-06 10:39:36',NULL,NULL,'Default Contractor (20150003)',1,0),(332,'2017-07-06 10:39:36',NULL,NULL,'Default Contractor (20150027)',1,0),(333,'2017-07-06 10:39:37',NULL,NULL,'Default Contractor (20150020)',1,0),(334,'2017-07-06 10:39:37',NULL,NULL,'Default Contractor (20150026)',1,0),(335,'2017-07-06 10:39:37',NULL,NULL,'Default Contractor (20150025)',1,0),(336,'2017-07-06 10:39:37',NULL,NULL,'Default Contractor (20150037)',1,0),(337,'2017-07-06 10:39:37',NULL,NULL,'Default Contractor (20150029)',1,0),(338,'2017-07-06 10:39:37',NULL,NULL,'Default Contractor (20150041)',1,0),(339,'2017-07-06 10:39:37',NULL,NULL,'Default Contractor (20150042)',1,0),(340,'2017-07-06 10:39:37',NULL,NULL,'Default Contractor (20150048)',1,0),(341,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150046)',1,0),(342,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150050)',1,0),(343,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150052)',1,0),(344,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150053)',1,0),(345,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150057)',1,0),(346,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150067)',1,0),(347,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150058)',1,0),(348,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150065)',1,0),(349,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150073)',1,0),(350,'2017-07-06 10:39:38',NULL,NULL,'Default Contractor (20150075)',1,0),(351,'2017-07-06 10:39:39',NULL,NULL,'Default Contractor (20150076)',1,0),(352,'2017-07-06 10:39:39',NULL,NULL,'Default Contractor (20150086)',1,0),(353,'2017-07-06 10:39:39',NULL,NULL,'Default Contractor (20150088)',1,0),(354,'2017-07-06 10:39:39',NULL,NULL,'Default Contractor (20150091)',1,0),(355,'2017-07-06 10:39:39',NULL,NULL,'Default Contractor (20150093)',1,0),(356,'2017-07-06 10:39:39',NULL,NULL,'Default Contractor (20150095)',1,0),(357,'2017-07-06 10:39:39',NULL,NULL,'Default Contractor (20160003)',1,0),(358,'2017-07-06 10:39:40',NULL,NULL,'Default Contractor (20160016)',1,0),(359,'2017-07-06 10:39:40',NULL,NULL,'Default Contractor (20160022)',1,0),(360,'2017-07-06 10:39:40',NULL,NULL,'Default Contractor (20160023)',1,0),(361,'2017-07-06 10:39:40',NULL,NULL,'Default Contractor (20160026)',1,0),(362,'2017-07-06 10:39:40',NULL,NULL,'Default Contractor (20160036)',1,0),(363,'2017-07-06 10:39:40',NULL,NULL,'Default Contractor (20160029)',1,0),(364,'2017-07-06 10:39:40',NULL,NULL,'Default Contractor (20150079)',1,0),(365,'2017-07-06 10:39:40',NULL,NULL,'Default Contractor (20160031)',1,0),(366,'2017-07-06 10:39:40',NULL,NULL,'Default Contractor (20160044)',1,0),(367,'2017-07-06 10:39:41',NULL,NULL,'Default Contractor (20160047)',1,0),(368,'2017-07-06 10:39:41',NULL,NULL,'Default Contractor (20160040)',1,0),(369,'2017-07-06 10:39:41',NULL,NULL,'Default Contractor (20160046)',1,0),(370,'2017-07-06 10:39:41',NULL,NULL,'Default Contractor (20160048)',1,0),(371,'2017-07-06 10:39:41',NULL,NULL,'Default Contractor (20160087)',1,0),(372,'2017-07-06 10:39:41',NULL,NULL,'Default Contractor (20160067)',1,0),(373,'2017-07-06 10:39:41',NULL,NULL,'Default Contractor (20160075)',1,0),(374,'2017-07-06 10:39:41',NULL,NULL,'Default Contractor (20160074)',1,0),(375,'2017-07-06 10:39:41',NULL,NULL,'Default Contractor (20160079)',1,0),(376,'2017-07-06 10:39:42',NULL,NULL,'Default Contractor (20160093)',1,0),(377,'2017-07-06 10:39:42',NULL,NULL,'Default Contractor (20150104)',1,0),(378,'2017-07-06 10:39:42',NULL,NULL,'Default Contractor (20160090)',1,0),(379,'2017-07-06 10:39:42',NULL,NULL,'Default Contractor (20160089)',1,0),(380,'2017-07-06 10:39:42',NULL,NULL,'Default Contractor (20160104)',1,0),(381,'2017-07-06 10:39:42',NULL,NULL,'Default Contractor (20160112)',1,0),(382,'2017-07-06 10:39:42',NULL,NULL,'Default Contractor (20160134)',1,0),(383,'2017-07-06 10:39:42',NULL,NULL,'Default Contractor (20160154)',1,0),(384,'2017-07-06 10:39:42',NULL,NULL,'Default Contractor (20160160)',1,0),(385,'2017-07-06 10:39:43',NULL,NULL,'Default Contractor (20160169)',1,0),(386,'2017-07-06 10:39:43',NULL,NULL,'Default Contractor (20160192)',1,0),(387,'2017-07-06 10:39:43',NULL,NULL,'Default Contractor (20170005)',1,0),(388,'2017-07-06 10:39:43',NULL,NULL,'Default Contractor (20170015)',1,0),(389,'2017-07-06 10:39:43',NULL,NULL,'Default Contractor (20170028)',1,0),(390,'2017-07-06 10:39:43',NULL,NULL,'Default Contractor (20170021)',1,0),(391,'2017-07-06 10:39:43',NULL,NULL,'Default Contractor (20170038)',1,0),(392,'2017-07-06 10:39:43',NULL,NULL,'Default Contractor (20170037)',1,0),(393,'2017-07-06 10:39:44',NULL,NULL,'Default Contractor (20170036)',1,0),(394,'2017-07-06 10:39:44',NULL,NULL,'Default Contractor (20170045)',1,0),(395,'2017-07-06 10:39:44',NULL,NULL,'Default Contractor (20170053)',1,0),(396,'2017-07-06 10:39:44',NULL,NULL,'Default Contractor (20170055)',1,0),(397,'2017-07-06 10:39:44',NULL,NULL,'Default Contractor (20160049)',1,0),(398,'2017-07-06 10:39:44',NULL,NULL,'Default Contractor (20170060)',1,0),(399,'2017-07-06 10:39:44',NULL,NULL,'Default Contractor (20170070)',1,0),(400,'2017-07-06 10:39:44',NULL,NULL,'Default Contractor (20170073)',1,0),(401,'2017-07-06 10:39:45',NULL,NULL,'Default Contractor (20170075)',1,0),(402,'2017-07-06 10:39:45',NULL,NULL,'Default Contractor (20170079)',1,0),(403,'2017-07-06 10:39:45',NULL,NULL,'Default Contractor (20170080)',1,0),(404,'2017-07-06 10:39:45',NULL,NULL,'Default Contractor (20170093)',1,0),(405,'2017-07-06 20:50:41',NULL,NULL,'Default Contractor (20160035)',1,0),(406,'2017-07-06 20:50:46',NULL,NULL,'Default Contractor (20150101)',1,0),(407,'2017-07-06 20:50:54',NULL,NULL,'Default Contractor (20160068)',1,0),(408,'2017-07-06 20:50:55',NULL,NULL,'Default Contractor (201403)',1,0),(409,'2017-07-06 20:50:57',NULL,NULL,'Default Contractor (20160145)',1,0),(410,'2017-07-06 20:50:58',NULL,NULL,'Default Contractor (20160146)',1,0),(411,'2017-07-06 20:51:00',NULL,NULL,'Default Contractor (20160149)',1,0),(412,'2017-07-06 20:51:01',NULL,NULL,'Default Contractor (20160141)',1,0),(413,'2017-07-06 20:51:02',NULL,NULL,'Default Contractor (20160193)',1,0),(414,'2017-07-06 20:51:04',NULL,NULL,'Default Contractor (20160173)',1,0),(415,'2017-07-06 20:51:05',NULL,NULL,'Default Contractor (20160184)',1,0),(416,'2017-07-06 20:51:06',NULL,NULL,'Default Contractor (20160116)',1,0),(417,'2017-07-06 20:51:08',NULL,NULL,'Default Contractor (20160110)',1,0),(418,'2017-07-06 20:51:09',NULL,NULL,'Default Contractor (20160034)',1,0),(419,'2017-07-06 20:51:11',NULL,NULL,'Default Contractor (20160082)',1,0),(420,'2017-07-06 20:51:12',NULL,NULL,'Default Contractor (20160097)',1,0),(421,'2017-07-06 20:51:14',NULL,NULL,'Default Contractor (20160073)',1,0),(422,'2017-07-06 20:51:15',NULL,NULL,'Default Contractor (20160102)',1,0),(423,'2017-07-06 20:51:16',NULL,NULL,'Default Contractor (201446)',1,0),(424,'2017-07-06 20:51:18',NULL,NULL,'Default Contractor (20160148)',1,0),(425,'2017-07-06 20:51:19',NULL,NULL,'Default Contractor (20160151)',1,0),(426,'2017-07-06 20:51:22',NULL,NULL,'Default Contractor (20160152)',1,0),(427,'2017-07-06 20:51:23',NULL,NULL,'Default Contractor (20160118)',1,0),(428,'2017-07-06 20:51:24',NULL,NULL,'Default Contractor (20160080)',1,0),(429,'2017-07-06 20:51:26',NULL,NULL,'Default Contractor (20150051)',1,0),(430,'2017-07-06 20:51:28',NULL,NULL,'Default Contractor (20160099)',1,0),(431,'2017-07-06 20:51:30',NULL,NULL,'Default Contractor (20150038)',1,0),(432,'2017-07-06 20:51:32',NULL,NULL,'Default Contractor (20170001)',1,0),(433,'2017-07-06 20:51:33',NULL,NULL,'Default Contractor (20160195)',1,0),(434,'2017-07-06 20:51:35',NULL,NULL,'Default Contractor (20170004)',1,0),(435,'2017-07-06 20:51:36',NULL,NULL,'Default Contractor (20170002)',1,0),(436,'2017-07-06 20:51:38',NULL,NULL,'Default Contractor (20170003)',1,0),(437,'2017-07-06 20:51:41',NULL,NULL,'Default Contractor (20160178)',1,0),(438,'2017-07-06 20:51:44',NULL,NULL,'Default Contractor (20160139)',1,0),(439,'2017-07-06 20:51:46',NULL,NULL,'Default Contractor (20170007)',1,0),(440,'2017-07-06 20:51:48',NULL,NULL,'Default Contractor (20170008)',1,0),(441,'2017-07-06 20:51:50',NULL,NULL,'Default Contractor (201224)',1,0),(442,'2017-07-06 20:51:51',NULL,NULL,'Default Contractor (20160028)',1,0),(443,'2017-07-06 20:51:53',NULL,NULL,'Default Contractor (20160108)',1,0),(444,'2017-07-06 20:51:54',NULL,NULL,'Default Contractor (20160128)',1,0),(445,'2017-07-06 20:51:56',NULL,NULL,'Default Contractor (20160130)',1,0),(446,'2017-07-06 20:51:58',NULL,NULL,'Default Contractor (20160135)',1,0),(447,'2017-07-06 20:52:01',NULL,NULL,'Default Contractor (20160137)',1,0),(448,'2017-07-06 20:52:04',NULL,NULL,'Default Contractor (20160142)',1,0),(449,'2017-07-06 20:52:05',NULL,NULL,'Default Contractor (20160174)',1,0),(450,'2017-07-06 20:52:09',NULL,NULL,'Default Contractor (20170020)',1,0),(451,'2017-07-06 20:52:11',NULL,NULL,'Default Contractor (20170014)',1,0),(452,'2017-07-06 20:52:13',NULL,NULL,'Default Contractor (20160157)',1,0),(453,'2017-07-06 20:52:16',NULL,NULL,'Default Contractor (20170025)',1,0),(454,'2017-07-06 20:52:18',NULL,NULL,'Default Contractor (20160119)',1,0),(455,'2017-07-06 20:52:20',NULL,NULL,'Default Contractor (20170016)',1,0),(456,'2017-07-06 20:52:22',NULL,NULL,'Default Contractor (20170017)',1,0),(457,'2017-07-06 20:52:24',NULL,NULL,'Default Contractor (20170009)',1,0),(458,'2017-07-06 20:52:26',NULL,NULL,'Default Contractor (20160175)',1,0),(459,'2017-07-06 20:52:27',NULL,NULL,'Default Contractor (201483)',1,0),(460,'2017-07-06 20:52:29',NULL,NULL,'Default Contractor (201435)',1,0),(461,'2017-07-06 20:52:30',NULL,NULL,'Default Contractor (20160053)',1,0),(462,'2017-07-06 20:52:32',NULL,NULL,'Default Contractor (20160072)',1,0),(463,'2017-07-06 20:52:34',NULL,NULL,'Default Contractor (20160041)',1,0),(464,'2017-07-06 20:52:35',NULL,NULL,'Default Contractor (20170029)',1,0),(465,'2017-07-06 20:52:37',NULL,NULL,'Default Contractor (20170031)',1,0),(466,'2017-07-06 20:52:37',NULL,NULL,'Default Contractor (20160155)',1,0),(467,'2017-07-06 20:52:38',NULL,NULL,'Default Contractor (20160159)',1,0),(468,'2017-07-06 20:52:40',NULL,NULL,'Default Contractor (20160136)',1,0),(469,'2017-07-06 20:52:41',NULL,NULL,'Default Contractor (20160156)',1,0),(470,'2017-07-06 20:52:43',NULL,NULL,'Default Contractor (20160165)',1,0),(471,'2017-07-06 20:52:44',NULL,NULL,'Default Contractor (20160172)',1,0),(472,'2017-07-06 20:52:45',NULL,NULL,'Default Contractor (20160177)',1,0),(473,'2017-07-06 20:52:47',NULL,NULL,'Default Contractor (20160179)',1,0),(474,'2017-07-06 20:52:48',NULL,NULL,'Default Contractor (20160170)',1,0),(475,'2017-07-06 20:52:49',NULL,NULL,'Default Contractor (20160176)',1,0),(476,'2017-07-06 20:52:51',NULL,NULL,'Default Contractor (201315)',1,0),(477,'2017-07-06 20:52:52',NULL,NULL,'Default Contractor (20160183)',1,0),(478,'2017-07-06 20:52:53',NULL,NULL,'Default Contractor (201330)',1,0),(479,'2017-07-06 20:52:54',NULL,NULL,'Default Contractor (20160171)',1,0),(480,'2017-07-06 20:52:56',NULL,NULL,'Default Contractor (20160013)',1,0),(481,'2017-07-06 20:52:57',NULL,NULL,'Default Contractor (20160164)',1,0),(482,'2017-07-06 20:52:59',NULL,NULL,'Default Contractor (20150089)',1,0),(483,'2017-07-06 20:53:01',NULL,NULL,'Default Contractor (201466)',1,0),(484,'2017-07-06 20:53:02',NULL,NULL,'Default Contractor (201404)',1,0),(485,'2017-07-06 20:53:08',NULL,NULL,'Default Contractor (20170039)',1,0),(486,'2017-07-06 20:53:10',NULL,NULL,'Default Contractor (20150085)',1,0),(487,'2017-07-06 20:53:13',NULL,NULL,'Default Contractor (20170034)',1,0),(488,'2017-07-06 20:53:15',NULL,NULL,'Default Contractor (20170035)',1,0),(489,'2017-07-06 20:53:16',NULL,NULL,'Default Contractor (20170032)',1,0),(490,'2017-07-06 20:53:17',NULL,NULL,'Default Contractor (20170041)',1,0),(491,'2017-07-06 20:53:18',NULL,NULL,'Default Contractor (20170048)',1,0),(492,'2017-07-06 20:53:23',NULL,NULL,'Default Contractor (20170061)',1,0),(493,'2017-07-06 20:53:25',NULL,NULL,'Default Contractor (20160015)',1,0),(494,'2017-07-06 20:53:26',NULL,NULL,'Default Contractor (20170049)',1,0),(495,'2017-07-06 20:53:27',NULL,NULL,'Default Contractor (20170046)',1,0),(496,'2017-07-06 20:53:28',NULL,NULL,'Default Contractor (20170050)',1,0),(497,'2017-07-06 20:53:30',NULL,NULL,'Default Contractor (20170058)',1,0),(498,'2017-07-06 20:53:32',NULL,NULL,'Default Contractor (20150055)',1,0),(499,'2017-07-06 20:53:33',NULL,NULL,'Default Contractor (20170068)',1,0),(500,'2017-07-06 20:53:34',NULL,NULL,'Default Contractor (20170064)',1,0),(501,'2017-07-06 20:53:36',NULL,NULL,'Default Contractor (20170062)',1,0),(502,'2017-07-06 20:53:41',NULL,NULL,'Default Contractor (20170063)',1,0),(503,'2017-07-06 20:53:42',NULL,NULL,'Default Contractor (20170067)',1,0),(504,'2017-07-06 20:53:46',NULL,NULL,'Default Contractor (20170069)',1,0),(505,'2017-07-06 20:53:48',NULL,NULL,'Default Contractor (20170059)',1,0),(506,'2017-07-06 20:53:49',NULL,NULL,'Default Contractor (20170071)',1,0),(507,'2017-07-06 20:53:50',NULL,NULL,'Default Contractor (20170065)',1,0),(508,'2017-07-06 20:54:32',NULL,NULL,'Default Contractor (20170085)',1,0),(509,'2017-07-06 20:54:34',NULL,NULL,'Default Contractor (20170088)',1,0),(510,'2017-07-06 20:54:36',NULL,NULL,'Default Contractor (20170091)',1,0),(511,'2017-07-06 20:55:13',NULL,NULL,'Default Contractor (20170087)',1,0),(512,'2017-07-06 20:55:14',NULL,NULL,'Default Contractor (20170094)',1,0),(513,'2017-07-06 20:55:38',NULL,NULL,'Default Contractor (20170090)',1,0),(514,'2017-07-06 20:55:41',NULL,NULL,'Default Contractor (20170092)',1,0),(515,'2017-07-06 20:55:44',NULL,NULL,'Default Contractor (20170084)',1,0),(516,'2017-07-06 20:55:49',NULL,NULL,'Default Contractor (20170097)',1,0),(517,'2017-07-06 20:55:54',NULL,NULL,'Default Contractor (20170101)',1,0),(518,'2017-07-06 20:56:14',NULL,NULL,'Default Contractor (20170107)',1,0),(519,'2017-07-06 20:56:16',NULL,NULL,'Default Contractor (20170110)',1,0),(520,'2017-07-06 20:56:18',NULL,NULL,'Default Contractor (20170098)',1,0),(521,'2017-07-06 20:56:22',NULL,NULL,'Default Contractor (20170102)',1,0),(522,'2017-07-06 20:56:24',NULL,NULL,'Default Contractor (20170108)',1,0),(523,'2017-07-06 20:56:49',NULL,NULL,'Default Contractor (20170112)',1,0),(524,'2017-07-06 20:56:53',NULL,NULL,'Default Contractor (20170113)',1,0),(525,'2017-07-06 20:56:56',NULL,NULL,'Default Contractor (20170114)',1,0),(526,'2017-07-06 20:56:58',NULL,NULL,'Default Contractor (20170115)',1,0),(527,'2017-07-06 20:57:00',NULL,NULL,'Default Contractor (20170117)',1,0),(528,'2017-07-06 20:57:02',NULL,NULL,'Default Contractor (20170109)',1,0),(529,'2017-07-08 07:56:29',NULL,NULL,'Default Contractor (20170119)',1,0);
+INSERT INTO `contractor` VALUES (1,'2017-01-24 07:08:12',NULL,NULL,'ХМАРА',3,1),(2,'2017-01-24 07:08:12',NULL,NULL,'АПТАЙМ',3,1),(3,'2017-01-24 07:08:12',NULL,NULL,'Сухобок Катерина Володимирівна',2,1),(101,'2017-01-24 06:27:19',NULL,NULL,'ЖУЙСТРОЙІНВЄСТЖЛОБ',3,0),(102,'2017-01-24 06:27:47',NULL,NULL,'Іванов Іван Іванович',1,0),(103,'2017-01-24 06:27:47',NULL,NULL,'АЙНЕНЕ-ТЕЛЕКОМ',3,0),(530,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201304)',1,0),(531,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201213)',1,0),(532,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201310)',1,0),(533,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201312)',1,0),(534,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201324)',1,0),(535,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201333)',1,0),(536,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201313)',1,0),(537,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201223)',1,0),(538,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201227)',1,0),(539,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201322)',1,0),(540,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201222)',1,0),(541,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201305)',1,0),(542,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201325)',1,0),(543,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201409)',1,0),(544,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201408)',1,0),(545,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201432)',1,0),(546,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201441)',1,0),(547,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201457)',1,0),(548,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201459)',1,0),(549,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201461)',1,0),(550,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201460)',1,0),(551,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201467)',1,0),(552,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201475)',1,0),(553,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201484)',1,0),(554,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201482)',1,0),(555,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150003)',1,0),(556,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150027)',1,0),(557,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150020)',1,0),(558,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150026)',1,0),(559,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150025)',1,0),(560,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150037)',1,0),(561,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150029)',1,0),(562,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150041)',1,0),(563,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150042)',1,0),(564,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150048)',1,0),(565,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150046)',1,0),(566,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150050)',1,0),(567,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150052)',1,0),(568,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150053)',1,0),(569,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150057)',1,0),(570,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150067)',1,0),(571,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150058)',1,0),(572,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150065)',1,0),(573,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150073)',1,0),(574,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150075)',1,0),(575,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150076)',1,0),(576,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150086)',1,0),(577,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150088)',1,0),(578,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150091)',1,0),(579,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150093)',1,0),(580,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150095)',1,0),(581,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160003)',1,0),(582,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160016)',1,0),(583,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160022)',1,0),(584,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160023)',1,0),(585,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160026)',1,0),(586,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160036)',1,0),(587,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160029)',1,0),(588,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150079)',1,0),(589,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160031)',1,0),(590,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160044)',1,0),(591,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160047)',1,0),(592,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160040)',1,0),(593,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160046)',1,0),(594,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160048)',1,0),(595,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160087)',1,0),(596,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160067)',1,0),(597,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160075)',1,0),(598,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160074)',1,0),(599,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160079)',1,0),(600,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160093)',1,0),(601,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150104)',1,0),(602,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160090)',1,0),(603,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160089)',1,0),(604,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160104)',1,0),(605,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160112)',1,0),(606,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160134)',1,0),(607,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160154)',1,0),(608,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160160)',1,0),(609,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160169)',1,0),(610,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160192)',1,0),(611,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170005)',1,0),(612,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170015)',1,0),(613,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170028)',1,0),(614,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170021)',1,0),(615,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170038)',1,0),(616,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170037)',1,0),(617,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170036)',1,0),(618,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170045)',1,0),(619,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170053)',1,0),(620,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170055)',1,0),(621,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160049)',1,0),(622,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170060)',1,0),(623,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170070)',1,0),(624,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170073)',1,0),(625,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170075)',1,0),(626,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170079)',1,0),(627,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170080)',1,0),(628,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170093)',1,0),(629,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160035)',1,0),(630,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150101)',1,0),(631,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160068)',1,0),(632,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201403)',1,0),(633,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160145)',1,0),(634,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160146)',1,0),(635,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160149)',1,0),(636,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160141)',1,0),(637,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160193)',1,0),(638,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160173)',1,0),(639,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160184)',1,0),(640,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160116)',1,0),(641,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160110)',1,0),(642,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160034)',1,0),(643,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160082)',1,0),(644,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160097)',1,0),(645,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160073)',1,0),(646,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160102)',1,0),(647,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201446)',1,0),(648,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160148)',1,0),(649,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160151)',1,0),(650,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160152)',1,0),(651,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160118)',1,0),(652,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160080)',1,0),(653,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150051)',1,0),(654,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160099)',1,0),(655,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150038)',1,0),(656,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170001)',1,0),(657,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160195)',1,0),(658,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170004)',1,0),(659,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170002)',1,0),(660,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170003)',1,0),(661,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160178)',1,0),(662,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160139)',1,0),(663,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170007)',1,0),(664,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170008)',1,0),(665,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201224)',1,0),(666,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160028)',1,0),(667,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160108)',1,0),(668,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160128)',1,0),(669,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160130)',1,0),(670,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160135)',1,0),(671,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160137)',1,0),(672,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160142)',1,0),(673,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160174)',1,0),(674,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170020)',1,0),(675,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170014)',1,0),(676,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160157)',1,0),(677,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170025)',1,0),(678,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160119)',1,0),(679,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170016)',1,0),(680,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170017)',1,0),(681,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170009)',1,0),(682,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160175)',1,0),(683,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201483)',1,0),(684,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201435)',1,0),(685,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160053)',1,0),(686,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160072)',1,0),(687,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160041)',1,0),(688,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170029)',1,0),(689,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170031)',1,0),(690,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160155)',1,0),(691,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160159)',1,0),(692,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160136)',1,0),(693,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160156)',1,0),(694,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160165)',1,0),(695,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160172)',1,0),(696,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160177)',1,0),(697,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160179)',1,0),(698,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160170)',1,0),(699,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160176)',1,0),(700,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201315)',1,0),(701,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160183)',1,0),(702,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201330)',1,0),(703,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160171)',1,0),(704,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160013)',1,0),(705,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150089)',1,0),(706,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (201404)',1,0),(707,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170039)',1,0),(708,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150085)',1,0),(709,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170034)',1,0),(710,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170032)',1,0),(711,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170041)',1,0),(712,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170048)',1,0),(713,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170061)',1,0),(714,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20160015)',1,0),(715,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170049)',1,0),(716,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170046)',1,0),(717,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170050)',1,0),(718,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170058)',1,0),(719,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20150055)',1,0),(720,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170068)',1,0),(721,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170064)',1,0),(722,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170062)',1,0),(723,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170063)',1,0),(724,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170067)',1,0),(725,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170059)',1,0),(726,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170071)',1,0),(727,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170065)',1,0),(728,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170085)',1,0),(729,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170088)',1,0),(730,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170091)',1,0),(731,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170087)',1,0),(732,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170094)',1,0),(733,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170090)',1,0),(734,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170092)',1,0),(735,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170084)',1,0),(736,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170097)',1,0),(737,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170101)',1,0),(738,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170107)',1,0),(739,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170110)',1,0),(740,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170098)',1,0),(741,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170102)',1,0),(742,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170108)',1,0),(743,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170112)',1,0),(744,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170113)',1,0),(745,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170114)',1,0),(746,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170115)',1,0),(747,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170117)',1,0),(748,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170109)',1,0),(749,'2017-07-12 12:33:00',NULL,NULL,'Default Contractor (20170119)',1,0),(750,'2017-07-24 10:08:29',NULL,NULL,'Default Contractor (20170124)',1,0),(751,'2017-07-24 10:08:29',NULL,NULL,'Default Contractor (20170122)',1,0),(752,'2017-07-24 10:08:29',NULL,NULL,'Default Contractor (20170131)',1,0),(753,'2017-07-24 10:08:29',NULL,NULL,'Default Contractor (20170121)',1,0),(754,'2017-07-24 10:08:29',NULL,NULL,'Default Contractor (20170129)',1,0),(755,'2017-07-25 08:36:33',NULL,NULL,'Default Contractor (20170133)',1,0),(756,'2017-07-25 08:36:33',NULL,NULL,'Default Contractor (20170134)',1,0),(757,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170111)',1,0),(758,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170141)',1,0),(759,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170142)',1,0),(760,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170144)',1,0),(761,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170140)',1,0),(762,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170136)',1,0),(763,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170135)',1,0),(764,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170150)',1,0),(765,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170138)',1,0),(766,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170139)',1,0),(767,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170147)',1,0),(768,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170146)',1,0),(769,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170145)',1,0),(770,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170148)',1,0),(771,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170103)',1,0),(772,'2017-08-09 23:49:42',NULL,NULL,'Default Contractor (20170157)',1,0);
 /*!40000 ALTER TABLE `contractor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -881,6 +881,37 @@ LOCK TABLES `person_x_partnership_agreement` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `person_x_person`
+--
+
+DROP TABLE IF EXISTS `person_x_person`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `person_x_person` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `valid_since` datetime DEFAULT NULL,
+  `valid_till` datetime DEFAULT NULL,
+  `removed` datetime DEFAULT NULL,
+  `parent_person_id` int(10) unsigned NOT NULL,
+  `child_person_id` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `parent_person_id` (`parent_person_id`),
+  KEY `child_person_id` (`child_person_id`),
+  CONSTRAINT `person_x_person_ibfk_2` FOREIGN KEY (`child_person_id`) REFERENCES `person` (`id`),
+  CONSTRAINT `person_x_person_ibfk_1` FOREIGN KEY (`parent_person_id`) REFERENCES `person` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `person_x_person`
+--
+
+LOCK TABLES `person_x_person` WRITE;
+/*!40000 ALTER TABLE `person_x_person` DISABLE KEYS */;
+/*!40000 ALTER TABLE `person_x_person` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `person_x_provisioning_agreement`
 --
 
@@ -936,7 +967,7 @@ CREATE TABLE `provisioning_agreement` (
   KEY `provider_contractor_id` (`provider_contractor_id`) USING BTREE,
   CONSTRAINT `provisioning_agreement_ibfk_1` FOREIGN KEY (`provider_contractor_id`) REFERENCES `contractor` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `provisioning_agreement_ibfk_2` FOREIGN KEY (`client_contractor_id`) REFERENCES `contractor` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=430 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2280 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -962,17 +993,22 @@ CREATE TABLE `provisioning_obligation` (
   `valid_till` datetime DEFAULT NULL,
   `removed` datetime DEFAULT NULL,
   `provisioning_agreement_id` int(10) unsigned NOT NULL,
+  `resource_piece_id` int(10) unsigned DEFAULT NULL,
   `service_type_id` int(10) unsigned NOT NULL,
   `service_level_id` int(10) unsigned NOT NULL,
   `quantity` bigint(20) unsigned NOT NULL,
+  `applied_since` datetime DEFAULT NULL,
+  `applied_till` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `provisioning_agreement_id` (`provisioning_agreement_id`),
   KEY `service_type_id` (`service_type_id`),
   KEY `service_level_id` (`service_level_id`),
+  KEY `resource_piece_id` (`resource_piece_id`),
   CONSTRAINT `provisioning_obligation_ibfk_1` FOREIGN KEY (`provisioning_agreement_id`) REFERENCES `provisioning_agreement` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `provisioning_obligation_ibfk_2` FOREIGN KEY (`service_type_id`) REFERENCES `service_type` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `provisioning_obligation_ibfk_3` FOREIGN KEY (`service_level_id`) REFERENCES `service_level` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1889 DEFAULT CHARSET=utf8;
+  CONSTRAINT `provisioning_obligation_ibfk_3` FOREIGN KEY (`service_level_id`) REFERENCES `service_level` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `provisioning_obligation_ibfk_4` FOREIGN KEY (`resource_piece_id`) REFERENCES `resource_piece` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=16455 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -981,67 +1017,7 @@ CREATE TABLE `provisioning_obligation` (
 
 LOCK TABLES `provisioning_obligation` WRITE;
 /*!40000 ALTER TABLE `provisioning_obligation` DISABLE KEYS */;
-INSERT INTO `provisioning_obligation` VALUES (1,'2017-01-24 08:46:41',NULL,NULL,1,1,1,2),(2,'2017-01-24 08:46:41',NULL,NULL,1,2,1,4),(3,'2017-01-24 08:46:41',NULL,NULL,1,3,1,100),(4,'2017-01-24 08:46:41',NULL,NULL,2,1,1,8),(5,'2017-01-24 08:46:41',NULL,NULL,2,2,1,32),(6,'2017-01-24 08:46:41',NULL,NULL,2,3,1,500),(7,'2017-01-24 08:46:41',NULL,NULL,2,4,1,1),(8,'2017-01-24 08:50:01',NULL,NULL,3,6,1,1),(9,'2017-01-24 08:50:01',NULL,NULL,3,5,1,1),(10,'2017-01-24 08:50:01',NULL,NULL,3,4,1,1);
 /*!40000 ALTER TABLE `provisioning_obligation` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `provisioning_obligation_x_resource_piece`
---
-
-DROP TABLE IF EXISTS `provisioning_obligation_x_resource_piece`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `provisioning_obligation_x_resource_piece` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `valid_since` datetime DEFAULT NULL,
-  `valid_till` datetime DEFAULT NULL,
-  `removed` datetime DEFAULT NULL,
-  `provisioning_obligation_id` int(10) unsigned NOT NULL,
-  `resource_piece_id` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `provisioning_obligation_id` (`provisioning_obligation_id`),
-  KEY `resource_piece_id` (`resource_piece_id`),
-  CONSTRAINT `provisioning_obligation_x_resource_piece_ibfk_1` FOREIGN KEY (`provisioning_obligation_id`) REFERENCES `provisioning_obligation` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `provisioning_obligation_x_resource_piece_ibfk_2` FOREIGN KEY (`resource_piece_id`) REFERENCES `resource_piece` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1885 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `provisioning_obligation_x_resource_piece`
---
-
-LOCK TABLES `provisioning_obligation_x_resource_piece` WRITE;
-/*!40000 ALTER TABLE `provisioning_obligation_x_resource_piece` DISABLE KEYS */;
-INSERT INTO `provisioning_obligation_x_resource_piece` VALUES (1,'2017-01-24 09:03:09',NULL,NULL,1,1),(2,'2017-01-24 09:03:09',NULL,NULL,2,1),(3,'2017-01-24 09:03:09',NULL,NULL,3,1),(4,'2017-01-24 09:03:09',NULL,NULL,4,2),(5,'2017-01-24 09:03:09',NULL,NULL,5,2),(6,'2017-01-24 09:03:09',NULL,NULL,6,2),(7,'2017-01-24 09:06:29',NULL,NULL,7,3),(8,'2017-01-24 09:06:29',NULL,NULL,8,4),(9,'2017-01-24 09:06:50',NULL,NULL,9,5),(10,'2017-01-24 09:07:06',NULL,NULL,10,6);
-/*!40000 ALTER TABLE `provisioning_obligation_x_resource_piece` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `resource_group`
---
-
-DROP TABLE IF EXISTS `resource_group`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `resource_group` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `valid_since` datetime DEFAULT NULL,
-  `valid_till` datetime DEFAULT NULL,
-  `removed` datetime DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `resource_group`
---
-
-LOCK TABLES `resource_group` WRITE;
-/*!40000 ALTER TABLE `resource_group` DISABLE KEYS */;
-INSERT INTO `resource_group` VALUES (1,'2017-01-24 08:52:28',NULL,NULL,'CloudStack Tucha.Z1'),(2,'2017-01-24 08:52:28',NULL,NULL,''),(4,'2017-07-07 16:06:51',NULL,NULL,'CloudStack Tucha.Z2');
-/*!40000 ALTER TABLE `resource_group` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1058,16 +1034,16 @@ CREATE TABLE `resource_piece` (
   `removed` datetime DEFAULT NULL,
   `parent_resource_piece_id` int(10) unsigned DEFAULT NULL,
   `resource_type_id` int(10) unsigned NOT NULL,
-  `resource_group_id` int(10) unsigned NOT NULL,
+  `resource_set_id` int(10) unsigned NOT NULL,
   `resource_handle` varchar(127) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `resource_type_id` (`resource_type_id`),
-  KEY `resource_host_id` (`resource_group_id`) USING BTREE,
+  KEY `resource_host_id` (`resource_set_id`) USING BTREE,
   KEY `parent_resource_piece_id` (`parent_resource_piece_id`),
-  CONSTRAINT `resource_piece_ibfk_3` FOREIGN KEY (`parent_resource_piece_id`) REFERENCES `resource_piece` (`id`),
   CONSTRAINT `resource_piece_ibfk_1` FOREIGN KEY (`resource_type_id`) REFERENCES `resource_type` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `resource_piece_ibfk_2` FOREIGN KEY (`resource_group_id`) REFERENCES `resource_group` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=331 DEFAULT CHARSET=utf8;
+  CONSTRAINT `resource_piece_ibfk_2` FOREIGN KEY (`resource_set_id`) REFERENCES `resource_set` (`id`),
+  CONSTRAINT `resource_piece_ibfk_3` FOREIGN KEY (`parent_resource_piece_id`) REFERENCES `resource_piece` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11151 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1076,8 +1052,34 @@ CREATE TABLE `resource_piece` (
 
 LOCK TABLES `resource_piece` WRITE;
 /*!40000 ALTER TABLE `resource_piece` DISABLE KEYS */;
-INSERT INTO `resource_piece` VALUES (1,'2017-01-24 08:55:46',NULL,NULL,NULL,1,1,'dddd8e83-ecdd-4834-9e6b-ad912bf48ef3'),(2,'2017-01-24 08:55:46',NULL,NULL,NULL,1,1,'44fd75f6-8a36-4b76-84f6-7eee403ad39e'),(3,'2017-01-24 08:57:19',NULL,NULL,NULL,2,2,'zaloopa'),(4,'2017-01-24 08:57:19',NULL,NULL,NULL,2,2,'poeben'),(5,'2017-01-24 08:57:19',NULL,NULL,NULL,2,2,'pizdotnya'),(6,'2017-01-24 08:57:19',NULL,NULL,NULL,2,2,'huerga');
 /*!40000 ALTER TABLE `resource_piece` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `resource_set`
+--
+
+DROP TABLE IF EXISTS `resource_set`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `resource_set` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `valid_since` datetime DEFAULT NULL,
+  `valid_till` datetime DEFAULT NULL,
+  `removed` datetime DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `resource_set`
+--
+
+LOCK TABLES `resource_set` WRITE;
+/*!40000 ALTER TABLE `resource_set` DISABLE KEYS */;
+INSERT INTO `resource_set` VALUES (1,'2017-01-24 08:52:28',NULL,NULL,'CloudStack Tucha.Z1'),(2,'2017-01-24 08:52:28',NULL,NULL,''),(4,'2017-07-07 16:06:51',NULL,NULL,'CloudStack Tucha.Z2');
+/*!40000 ALTER TABLE `resource_set` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1092,8 +1094,12 @@ CREATE TABLE `resource_type` (
   `valid_since` datetime DEFAULT NULL,
   `valid_till` datetime DEFAULT NULL,
   `removed` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+  `parent_resource_type_id` int(10) unsigned DEFAULT NULL,
+  `short_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `parent_resource_type_id` (`parent_resource_type_id`),
+  CONSTRAINT `resource_type_ibfk_1` FOREIGN KEY (`parent_resource_type_id`) REFERENCES `resource_type` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1102,7 +1108,7 @@ CREATE TABLE `resource_type` (
 
 LOCK TABLES `resource_type` WRITE;
 /*!40000 ALTER TABLE `resource_type` DISABLE KEYS */;
-INSERT INTO `resource_type` VALUES (1,'2017-01-24 08:52:48',NULL,NULL),(2,'2017-01-24 08:52:48',NULL,NULL),(3,'2017-07-11 12:58:12',NULL,NULL),(4,'2017-07-11 13:11:26',NULL,NULL);
+INSERT INTO `resource_type` VALUES (1,'2017-01-24 08:52:48',NULL,NULL,NULL,NULL),(2,'2017-01-24 08:52:48',NULL,NULL,NULL,NULL),(3,'2017-07-11 12:58:12',NULL,NULL,NULL,'domain'),(4,'2017-07-11 13:11:26',NULL,NULL,NULL,'account'),(5,'2017-07-15 14:50:00',NULL,NULL,NULL,'vm'),(6,'2017-07-15 17:02:24',NULL,NULL,5,'cpu'),(7,'2017-07-15 17:02:31',NULL,NULL,5,'ram'),(8,'2017-07-26 14:03:38',NULL,NULL,NULL,'volume-a'),(9,'2017-07-26 14:04:12',NULL,NULL,NULL,'ipv4-a');
 /*!40000 ALTER TABLE `resource_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1124,7 +1130,7 @@ CREATE TABLE `resource_type_i18n` (
   PRIMARY KEY (`id`),
   KEY `resource_type_id` (`resource_type_id`),
   KEY `language_id` (`language_id`),
-  CONSTRAINT `resource_type_i18n_ibfk_2` FOREIGN KEY (`language_id`) REFERENCES `language` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `resource_type_i18n_ibfk_2` FOREIGN KEY (`language_id`) REFERENCES `language` (`id`),
   CONSTRAINT `resource_type_i18n_ibfk_3` FOREIGN KEY (`resource_type_id`) REFERENCES `resource_type` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1140,130 +1146,6 @@ INSERT INTO `resource_type_i18n` VALUES (1,'2017-01-24 08:54:22',NULL,NULL,1,1,'
 UNLOCK TABLES;
 
 --
--- Table structure for table `service_family`
---
-
-DROP TABLE IF EXISTS `service_family`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `service_family` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `valid_since` datetime DEFAULT NULL,
-  `valid_till` datetime DEFAULT NULL,
-  `removed` datetime DEFAULT NULL,
-  `short_name` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `service_family`
---
-
-LOCK TABLES `service_family` WRITE;
-/*!40000 ALTER TABLE `service_family` DISABLE KEYS */;
-INSERT INTO `service_family` VALUES (1,'2017-01-24 08:05:37',NULL,NULL,'vdc'),(2,'2017-01-24 08:05:37',NULL,NULL,'hosting'),(3,'2017-07-07 16:32:19',NULL,NULL,'ip');
-/*!40000 ALTER TABLE `service_family` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `service_family_i18n`
---
-
-DROP TABLE IF EXISTS `service_family_i18n`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `service_family_i18n` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `valid_since` datetime DEFAULT NULL,
-  `valid_till` datetime DEFAULT NULL,
-  `removed` datetime DEFAULT NULL,
-  `service_family_id` int(10) unsigned NOT NULL,
-  `language_id` int(10) unsigned NOT NULL,
-  `name` varchar(127) NOT NULL,
-  `description` varchar(127) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `service_family_id` (`service_family_id`),
-  KEY `language_id` (`language_id`),
-  CONSTRAINT `service_family_i18n_ibfk_1` FOREIGN KEY (`service_family_id`) REFERENCES `service_family` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `service_family_i18n_ibfk_2` FOREIGN KEY (`language_id`) REFERENCES `language` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `service_family_i18n`
---
-
-LOCK TABLES `service_family_i18n` WRITE;
-/*!40000 ALTER TABLE `service_family_i18n` DISABLE KEYS */;
-INSERT INTO `service_family_i18n` VALUES (1,'2017-01-24 08:20:56',NULL,NULL,1,1,'TuchaFlex','Cloud Data Center'),(2,'2017-01-24 08:25:24',NULL,NULL,1,2,'TuchaFlex','Віртуальній центр обробки даних'),(3,'2017-01-24 08:27:35',NULL,NULL,2,1,'TuchaHosting','Shared Hosting'),(4,'2017-01-24 08:27:35',NULL,NULL,2,2,'TuchaHosting','Хостинг на сервері спільного користування'),(5,'2017-07-07 16:32:50',NULL,NULL,3,1,'IP','IP-addresses'),(6,'2017-07-07 16:33:00',NULL,NULL,3,2,'IP','IP-адреси');
-/*!40000 ALTER TABLE `service_family_i18n` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `service_group`
---
-
-DROP TABLE IF EXISTS `service_group`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `service_group` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `valid_since` datetime DEFAULT NULL,
-  `valid_till` datetime DEFAULT NULL,
-  `removed` datetime DEFAULT NULL,
-  `service_family_id` int(10) unsigned NOT NULL,
-  `short_name` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `service_family_id` (`service_family_id`),
-  CONSTRAINT `service_group_ibfk_1` FOREIGN KEY (`service_family_id`) REFERENCES `service_family` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `service_group`
---
-
-LOCK TABLES `service_group` WRITE;
-/*!40000 ALTER TABLE `service_group` DISABLE KEYS */;
-INSERT INTO `service_group` VALUES (1,'2017-01-24 08:28:18',NULL,NULL,1,'element'),(2,'2017-01-24 08:28:18',NULL,NULL,2,'plan'),(3,'2017-07-07 16:34:01',NULL,NULL,3,'ip');
-/*!40000 ALTER TABLE `service_group` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `service_group_i18n`
---
-
-DROP TABLE IF EXISTS `service_group_i18n`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `service_group_i18n` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `valid_since` datetime DEFAULT NULL,
-  `valid_till` datetime DEFAULT NULL,
-  `removed` datetime DEFAULT NULL,
-  `service_group_id` int(10) unsigned NOT NULL,
-  `language_id` int(10) unsigned NOT NULL,
-  `name` varchar(127) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `language_id` (`language_id`),
-  KEY `service_group_id` (`service_group_id`) USING BTREE,
-  CONSTRAINT `service_group_i18n_ibfk_1` FOREIGN KEY (`service_group_id`) REFERENCES `service_group` (`id`),
-  CONSTRAINT `service_group_i18n_ibfk_2` FOREIGN KEY (`language_id`) REFERENCES `language` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `service_group_i18n`
---
-
-LOCK TABLES `service_group_i18n` WRITE;
-/*!40000 ALTER TABLE `service_group_i18n` DISABLE KEYS */;
-INSERT INTO `service_group_i18n` VALUES (1,'2017-01-24 08:31:16',NULL,NULL,1,1,'Virtual Machine Element'),(2,'2017-01-24 08:31:16',NULL,NULL,1,2,'Елемент віртуального серверу'),(3,'2017-01-24 08:32:19',NULL,NULL,2,1,'Hosting Plan'),(4,'2017-01-24 08:32:19',NULL,NULL,2,2,'Хостинговий план'),(5,'2017-07-07 16:34:25',NULL,NULL,3,1,'IP-addresses'),(6,'2017-07-07 16:34:32',NULL,NULL,3,2,'IP-адреси');
-/*!40000 ALTER TABLE `service_group_i18n` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `service_level`
 --
 
@@ -1275,6 +1157,7 @@ CREATE TABLE `service_level` (
   `valid_since` datetime DEFAULT NULL,
   `valid_till` datetime DEFAULT NULL,
   `removed` datetime DEFAULT NULL,
+  `short_name` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1285,7 +1168,7 @@ CREATE TABLE `service_level` (
 
 LOCK TABLES `service_level` WRITE;
 /*!40000 ALTER TABLE `service_level` DISABLE KEYS */;
-INSERT INTO `service_level` VALUES (1,'2017-01-24 08:35:21',NULL,NULL);
+INSERT INTO `service_level` VALUES (1,'2017-01-24 08:35:21',NULL,NULL,'basic');
 /*!40000 ALTER TABLE `service_level` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1320,6 +1203,66 @@ LOCK TABLES `service_level_i18n` WRITE;
 /*!40000 ALTER TABLE `service_level_i18n` DISABLE KEYS */;
 INSERT INTO `service_level_i18n` VALUES (1,'2017-01-24 08:35:36',NULL,NULL,1,1,'Basic SLA'),(2,'2017-01-24 08:36:30',NULL,NULL,1,2,'Базовий рівень сервісу');
 /*!40000 ALTER TABLE `service_level_i18n` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `service_package`
+--
+
+DROP TABLE IF EXISTS `service_package`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `service_package` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `valid_since` datetime DEFAULT NULL,
+  `valid_till` datetime DEFAULT NULL,
+  `removed` datetime DEFAULT NULL,
+  `short_name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `service_package`
+--
+
+LOCK TABLES `service_package` WRITE;
+/*!40000 ALTER TABLE `service_package` DISABLE KEYS */;
+INSERT INTO `service_package` VALUES (1,'2017-07-26 13:03:20',NULL,NULL,'tuchaoffice-5'),(2,'2017-08-01 16:19:19',NULL,NULL,'tuchahost-4');
+/*!40000 ALTER TABLE `service_package` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `service_package_set`
+--
+
+DROP TABLE IF EXISTS `service_package_set`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `service_package_set` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `valid_since` datetime DEFAULT NULL,
+  `valid_till` datetime DEFAULT NULL,
+  `removed` datetime DEFAULT NULL,
+  `service_package_id` int(10) unsigned NOT NULL,
+  `resource_type_id` int(10) unsigned NOT NULL,
+  `quantity` bigint(20) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `service_package_id` (`service_package_id`),
+  KEY `resource_type_id` (`resource_type_id`),
+  CONSTRAINT `service_package_set_ibfk_1` FOREIGN KEY (`service_package_id`) REFERENCES `service_package` (`id`),
+  CONSTRAINT `service_package_set_ibfk_2` FOREIGN KEY (`resource_type_id`) REFERENCES `resource_type` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `service_package_set`
+--
+
+LOCK TABLES `service_package_set` WRITE;
+/*!40000 ALTER TABLE `service_package_set` DISABLE KEYS */;
+INSERT INTO `service_package_set` VALUES (1,'2017-07-26 13:38:06',NULL,NULL,1,7,8192),(2,'2017-07-26 14:01:15',NULL,NULL,1,6,2),(3,'2017-07-26 14:06:42',NULL,NULL,1,8,107374182400),(4,'2017-07-26 14:07:42',NULL,NULL,1,9,1),(6,'2017-08-01 16:19:22',NULL,NULL,2,7,8192),(7,'2017-08-01 16:19:30',NULL,NULL,2,6,4),(8,'2017-08-01 16:20:28',NULL,NULL,2,8,536870912000),(9,'2017-08-01 16:20:34',NULL,NULL,2,9,1);
+/*!40000 ALTER TABLE `service_package_set` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1370,12 +1313,12 @@ CREATE TABLE `service_type` (
   `valid_since` datetime DEFAULT NULL,
   `valid_till` datetime DEFAULT NULL,
   `removed` datetime DEFAULT NULL,
-  `service_group_id` int(10) unsigned NOT NULL,
+  `parent_service_type_id` int(10) unsigned DEFAULT NULL,
   `short_name` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `service_group_id` (`service_group_id`) USING BTREE,
-  CONSTRAINT `service_type_ibfk_1` FOREIGN KEY (`service_group_id`) REFERENCES `service_group` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
+  KEY `service_group_id` (`parent_service_type_id`) USING BTREE,
+  CONSTRAINT `service_type_ibfk_1` FOREIGN KEY (`parent_service_type_id`) REFERENCES `service_type` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1384,7 +1327,7 @@ CREATE TABLE `service_type` (
 
 LOCK TABLES `service_type` WRITE;
 /*!40000 ALTER TABLE `service_type` DISABLE KEYS */;
-INSERT INTO `service_type` VALUES (1,'2017-01-24 08:37:03',NULL,NULL,1,'cpu'),(2,'2017-01-24 08:37:03',NULL,NULL,1,'ram'),(3,'2017-01-24 08:37:03',NULL,NULL,1,'ssd'),(4,'2017-01-24 08:37:03',NULL,NULL,2,'tuchahosting-2'),(5,'2017-01-24 08:37:03',NULL,NULL,2,'tuchahosting-10'),(6,'2017-01-24 08:37:03',NULL,NULL,2,'tuchahosting-25'),(7,'2017-07-07 16:35:14',NULL,NULL,3,'ipv4');
+INSERT INTO `service_type` VALUES (1,'2017-01-01 00:00:00',NULL,NULL,14,'cpu'),(2,'2017-01-01 00:00:00',NULL,NULL,14,'ram'),(3,'2017-01-01 00:00:00',NULL,NULL,14,'vol-a'),(4,'2017-01-01 00:00:00',NULL,NULL,NULL,'tuchahosting-2'),(5,'2017-01-01 00:00:00',NULL,NULL,NULL,'tuchahosting-10'),(6,'2017-01-01 00:00:00',NULL,NULL,NULL,'tuchahosting-25'),(7,'2017-01-01 00:00:00',NULL,NULL,12,'ipv4-a'),(8,'2017-01-01 00:00:00',NULL,NULL,11,'domain'),(9,'2017-01-01 00:00:00',NULL,NULL,11,'account'),(10,'2017-01-01 00:00:00',NULL,NULL,NULL,'vdc'),(11,'2017-01-01 00:00:00',NULL,NULL,10,'group'),(12,'2017-01-01 00:00:00',NULL,NULL,10,'ip'),(13,'2017-01-01 00:00:00',NULL,NULL,10,'element'),(14,'2017-07-15 14:54:25',NULL,NULL,13,'vm');
 /*!40000 ALTER TABLE `service_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1408,7 +1351,7 @@ CREATE TABLE `service_type_i18n` (
   KEY `language_id` (`language_id`),
   CONSTRAINT `service_type_i18n_ibfk_1` FOREIGN KEY (`service_type_id`) REFERENCES `service_type` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `service_type_i18n_ibfk_2` FOREIGN KEY (`language_id`) REFERENCES `language` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1417,7 +1360,7 @@ CREATE TABLE `service_type_i18n` (
 
 LOCK TABLES `service_type_i18n` WRITE;
 /*!40000 ALTER TABLE `service_type_i18n` DISABLE KEYS */;
-INSERT INTO `service_type_i18n` VALUES (1,'2017-01-24 08:40:32',NULL,NULL,1,1,'CPU Cores'),(2,'2017-01-24 08:40:32',NULL,NULL,1,2,'Ядра центрального процессору'),(3,'2017-01-24 08:40:32',NULL,NULL,2,1,'RAM Size'),(4,'2017-01-24 08:40:32',NULL,NULL,2,2,'Обсяг оперативного запам\'ятовуючого пристрою'),(5,'2017-01-24 08:41:45',NULL,NULL,3,1,'SSD Size'),(6,'2017-01-24 08:41:45',NULL,NULL,3,2,'Обсяг постійного запам\'ятовуючого пристрою'),(7,'2017-01-24 08:43:56',NULL,NULL,4,1,'TuchaHosting-2'),(8,'2017-01-24 08:43:56',NULL,NULL,4,2,'TuchaHosting-2'),(9,'2017-01-24 08:43:56',NULL,NULL,5,1,'TuchaHosting-10'),(10,'2017-01-24 08:43:56',NULL,NULL,5,2,'TuchaHosting-10'),(11,'2017-01-24 08:43:56',NULL,NULL,6,1,'TuchaHosting-25'),(12,'2017-01-24 08:43:56',NULL,NULL,6,2,'TuchaHosting-25'),(13,'2017-07-07 16:35:32',NULL,NULL,7,1,'IPv4-addresses (regular)'),(14,'2017-07-07 16:36:09',NULL,NULL,7,2,'IPv4-адреси (звичайні)');
+INSERT INTO `service_type_i18n` VALUES (1,'2017-01-24 08:40:32',NULL,NULL,1,1,'CPU Cores'),(2,'2017-01-24 08:40:32',NULL,NULL,1,2,'Ядра центрального процессору'),(3,'2017-01-24 08:40:32',NULL,NULL,2,1,'RAM Size'),(4,'2017-01-24 08:40:32',NULL,NULL,2,2,'Обсяг оперативного запам\'ятовуючого пристрою'),(5,'2017-01-24 08:41:45',NULL,NULL,3,1,'SSD Size'),(6,'2017-01-24 08:41:45',NULL,NULL,3,2,'Обсяг постійного запам\'ятовуючого пристрою'),(7,'2017-01-24 08:43:56',NULL,NULL,4,1,'TuchaHosting-2'),(8,'2017-01-24 08:43:56',NULL,NULL,4,2,'TuchaHosting-2'),(9,'2017-01-24 08:43:56',NULL,NULL,5,1,'TuchaHosting-10'),(10,'2017-01-24 08:43:56',NULL,NULL,5,2,'TuchaHosting-10'),(11,'2017-01-24 08:43:56',NULL,NULL,6,1,'TuchaHosting-25'),(12,'2017-01-24 08:43:56',NULL,NULL,6,2,'TuchaHosting-25'),(13,'2017-07-07 16:35:32',NULL,NULL,7,1,'IPv4-addresses (regular)'),(14,'2017-07-07 16:36:09',NULL,NULL,7,2,'IPv4-адреси (звичайні)'),(15,'2017-07-12 13:27:13',NULL,NULL,8,1,'VDC Domain'),(16,'2017-07-12 13:27:13',NULL,NULL,8,2,'Домен у віртуальному центрі обробки даних'),(17,'2017-07-12 13:27:13',NULL,NULL,9,1,'VDC Account'),(18,'2017-07-12 13:27:13',NULL,NULL,9,2,'Обліковий запис у віртуальному центрі обробки даних');
 /*!40000 ALTER TABLE `service_type_i18n` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1468,4 +1411,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-07-11 13:17:39
+-- Dump completed on 2017-08-10 17:23:26
