@@ -1,236 +1,5 @@
 #!/usr/bin/env perl
 
-
-
-
-package ServicePackageFinder;
-
-use strict;
-use warnings;
-
-use Moose;
-use namespace::autoclean;
-
-use ResourceCounter;
-use Method::Signatures;
-
-
-
-has 'cache' => (
-    required    => 1,
-    is          => 'ro',
-    isa         => 'Cache::Memcached',
-    reader      => 'get_cache'
-);
-
-has 'hypermouse_schema' => (
-    required    => 1,
-    is          => 'ro',
-    isa         => 'HyperMouse::Schema',
-    reader      => 'get_hypermouse_schema'
-);
-
-has 'cloudstack_api' => (
-    required    => 1,
-    is          => 'ro',
-    isa         => 'MonkeyMan::CloudStack::API',
-    reader      => 'get_cloudstack_api'
-);
-
-has 'resources' => (
-    required    => 0,
-    init_arg    => undef,
-    is          => 'ro',
-    isa         => 'HashRef',
-    reader      => 'get_resources',
-    default     => sub { { } }
-);
-
-has 'resource_counter' => (
-    required    => 0,
-    init_arg    => undef,
-    is          => 'ro',
-    isa         => 'ResourceCounter',
-    reader      => 'get_resource_counter',
-    default     => sub { ResourceCounter->new; }
-);
-
-
-
-method check_element (
-    Str :$cloudstack_element_type!,
-    Str :$cloudstack_element_id!
-) {
-    my $cloudstack_element_key = $self->compose_element_key($cloudstack_element_type, $cloudstack_element_id);
-    my $cloudstack_element_dom = $self->renew_if_needed($cloudstack_element_type => $cloudstack_element_id);
-    unless(defined($self->get_resources->{ $cloudstack_element_key })) {
-        if(defined($cloudstack_element_dom) && $cloudstack_element_dom->findvalue('/virtualmachine/tags[key="billing-legacy"]/value')) {
-            $self->get_resources->{ $cloudstack_element_key } = {
-                cloudstack_element_type
-                    => $cloudstack_element_type,
-                cloudstack_element_id
-                    => $cloudstack_element_id,
-                service_package_id
-                    => undef,
-                service_package_hint
-                    => $cloudstack_element_dom->findvalue('/virtualmachine/tags[key="billing-plan"]/value'),
-            };
-            return(1);
-        }
-    }
-    return(0);
-}
-
-method consume_resources (
-    HashRef :$resources!,
-    Int     :$from!,
-    Int     :$till!
-) {
-    my $from_epoch = DateTime->from_epoch(epoch => $from);
-    my $till_epoch = DateTime->from_epoch(epoch => $till);
-    while(my($resource_type_id, $quantity) = each(%{ $resources })) {
-        $self->get_resource_counter->sub_resources(
-            { $resource_type_id => $quantity },
-            $from_epoch,
-            $till_epoch
-        );
-    }
-}
-
-method detect_service_package (
-    Str     :$cloudstack_element_type!,
-    Str     :$cloudstack_element_id!,
-    HashRef :$resources!,
-    Bool    :$exceed?,
-    Int     :$from!,
-    Int     :$till!
-) {
-    my $cloudstack_element_key = $self->compose_element_key($cloudstack_element_type, $cloudstack_element_id),
-    my $from_datetime = DateTime->from_epoch(epoch => $from);
-    my $till_datetime = DateTime->from_epoch(epoch => $till);
-    my $service_package_id;
-
-    if($cloudstack_element_type eq 'VirtualMachine') {
-
-        my $service_package_set_criterions = [];
-        while(my($resource_type_id, $quantity) = each(%{ $resources })) {
-            push(@{ $service_package_set_criterions }, {
-                service_package_id  => {
-                    -in =>
-                        $self->get_hypermouse_schema
-                            ->resultset('ServicePackageSet')
-                            ->search({
-                                resource_type_id    => $resource_type_id,
-                                quantity            => $quantity
-                            })
-                            ->get_column('service_package_id')
-                            ->as_query
-                }
-            });
-        }
-        my $service_package_set = $self->get_hypermouse_schema
-            ->resultset('ServicePackageSet')
-            ->search(
-                { -and      => $service_package_set_criterions },
-                { group_by  => 'service_package_id' }, 
-            )
-            ->single
-            // return(undef);
-
-        my $service_package = $service_package_set->service_package
-            // return(undef);
-
-        # OK, the package is detected!
-
-        $self->get_resources->{ $cloudstack_element_key }->{'service_package_id'} = $service_package_id = $service_package->id;
-
-        foreach (
-            map({ [ $_->resource_type_id => $_->quantity ] } $service_package
-                ->service_package_sets
-                ->all
-            ),
-            [ '_packages' => 1 ]
-        ) {
-            $self->get_resource_counter->add_resources(
-                { $_->[0] => $_->[1] },
-                $from_datetime,
-                $till_datetime
-            );
-        }
-
-    } else {
-
-        AVAILABLE:
-        while(my($resource_type_id, $quantity) = each(%{ $resources })) {
-            foreach my $period ($self->get_resource_counter->find_periods($from_datetime, $till_datetime, 0)) {
-                my $available = $self->get_resource_counter->get_resources($period->[0], $period->[1], 1);
-                if(defined($available) && $available->{'_packages'} > 0) {
-                    $resources->{ $resource_type_id } -= $available->{ $resource_type_id }
-                        if(defined($available->{ $resource_type_id }));
-                    $service_package_id = -1
-                        if($exceed || $resources->{ $resource_type_id } <= 0);
-                    next;
-                }
-                $service_package_id = undef;
-                last(AVAILABLE)
-            }
-        }
-
-    }
-
-    return(undef)
-        unless(defined($service_package_id));
-
-    while(my($resource_type_id, $quantity) = each(%{ $resources })) {
-        $self->get_resource_counter->sub_resources(
-            { $resource_type_id => $quantity },
-            $from_datetime,
-            $till_datetime
-        );
-    }
-
-    return($service_package_id);
-
-}
-
-method compose_element_key (
-    Str $element_type!,
-    Str $element_id!
-) {
-    return(sprintf('%s:%s', $element_type, $element_id));
-}
-
-method renew_if_needed (
-    Str $element_type!,
-    Str $element_id!,
-    Str $element_key?
-        = $self->compose_element_key($element_type, $element_id)
-) {
-    my $cache           = $self->get_cache;
-    my $cloudstack_api  = $self->get_cloudstack_api;
-    my $element_dom     = $cache->get($element_key);
-    unless(defined($element_dom)) {
-        $element_dom = ($cloudstack_api->perform_action(
-            action          => 'list',
-            type            => $element_type,
-            parameters      => { filter_by_id => $element_id, all => 1 },
-            requested       => { element => 'dom' }
-        ))[$[];
-        $cache->set($element_key, $element_dom, 86400);
-    }
-    return($element_dom);
-}
-
-
-
-__PACKAGE__->meta->make_immutable;
-
-1;
-
-
-
-package main;
-
 use strict;
 use warnings;
 
@@ -238,7 +7,7 @@ use constant UR_T_VIRTUALMACHINE    => 2;
 use constant UR_T_IPADDRESS         => 3;
 use constant UR_T_VOLUME            => 6;
 
-use ServicePackageFinder;
+use HyperMouse::ServicePackagePool;
 
 use MonkeyMan;
 use MonkeyMan::Exception qw(
@@ -277,7 +46,7 @@ This application recognizes the following parameters:
     --account-id <account ID>
         [opt] [mul] ... #TODO: describe
     --load-usage-records <file name>
-        [opt]       ... #TODO: describe
+        [opt] [mul] ... #TODO: describe
 __END_OF_USAGE_HELP__
     parameters_to_get_validated
         => <<'__END_OF_PARAMETERS_TO_GET_VALIDATED__'
@@ -295,7 +64,7 @@ domain-id=s@:
   domain_id:
 account-id=s@:
   account_id:
-load-usage-records=s:
+load-usage-records=s%:
   load_usage_records
 __END_OF_PARAMETERS_TO_GET_VALIDATED__
 );
@@ -360,7 +129,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
             my @usage_records;
             if($parameters->has_load_usage_records) {
                 my $usage_records_dom = XML::LibXML->load_xml(
-                    location => $parameters->get_load_usage_records
+                    location => $parameters->get_load_usage_records->{ $usage_record_type }
                 );
                 foreach my $usage_record_node (map({ $_->cloneNode(1) } $usage_records_dom->findnodes('//usagerecord'))) {
                     my $usage_record_dom = XML::LibXML::Document->createDocument; $usage_record_dom->setDocumentElement($usage_record_node);
@@ -546,8 +315,8 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                             => $provisioning_agreement_account, # ResultSet
                         resource_piece_account
                             => $resource_piece_account,         # ResultSet
-                        service_package_finder
-                            => ServicePackageFinder->new(
+                        service_package_pool
+                            => HyperMouse::ServicePackagePool->new(
                                 cache                   => $cache,
                                 hypermouse_schema       => $db_schema,
                                 cloudstack_api          => $cloudstack_api
@@ -611,7 +380,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                 $account_id
             );
 
-            my $spf = $account_data->{'service_package_finder'};
+            my $spp = $account_data->{'service_package_pool'};
 
             # Processing virtual machines' usage records
 
@@ -619,15 +388,8 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
 
                 $db_schema->storage->txn_begin;
 
-                $logger->debugf("Proceesing the usage records of the %s virtual machine",
+                $logger->debugf("Processing the usage records of the %s virtual machine",
                     $virtual_machine_id
-                );
-
-                my $billing_legacy = $spf->check_element(
-                    cloudstack_element_type
-                        => 'VirtualMachine',
-                    cloudstack_element_id
-                        => $virtual_machine_id,
                 );
 
                 my $cpu_obligations = [];
@@ -653,7 +415,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
 
                     # Try to detect a legacy (non-flexible) service package
 
-                    if($billing_legacy && (my $detected = $spf->detect_service_package(
+                    if(my $service_package_id = $spp->detect_service_package(
                         cloudstack_element_type
                             => 'VirtualMachine',
                         cloudstack_element_id
@@ -675,16 +437,12 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                             => $datetime_base->epoch + $duration_total - $duration,
                         till
                             => $datetime_base->epoch + $duration_total
-                    ))) {
-                        $logger->debugf("The %s service package has been detected",
+                    )) {
+                        $logger->debugf("The %s service package is detected",
                             $db_schema
                                 ->resultset('ServicePackage')
-                                ->find({ id => $detected })
+                                ->find($service_package_id)
                                 ->short_name
-                        );
-                        $logger->debugf("The resources consumed are: %s (%s)",
-                            $spf->get_resources,
-                            $spf->get_resource_counter->dump_collection
                         );
                     } else {
                         push(@{ $cpu_obligations }, {
@@ -835,6 +593,10 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                 my $vol_obligations = [];
                 my $duration_total = 0;
                 my $datetime_base;
+                my $resource_type_id = $db_schema
+                    ->resultset('ResourceType')
+                    ->find_by_full_name(resource_type_full_name => 'volume-a')
+                    ->id;
 
                 foreach my $usage_record (@{ $volume_data->{'usage_records'} }) {
 
@@ -849,12 +611,8 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                     
                     $duration_total += my $duration = sprintf('%.0f', $usage_record->get_value('/rawusage') * 3600);
 
-                    my $resource_type_id = $db_schema
-                        ->resultset('ResourceType')
-                        ->find_by_full_name(resource_type_full_name => 'volume-a')
-                        ->id;
                     my $resources = { $resource_type_id => $usage_record->get_value('/size') };
-                    if(defined(my $detected = $spf->detect_service_package(
+                    if(my $service_package_id = $spp->detect_service_package(
                         cloudstack_element_type
                             => 'Volume',
                         cloudstack_element_id
@@ -867,11 +625,12 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                             => $datetime_base->epoch + $duration_total - $duration,
                         till
                             => $datetime_base->epoch + $duration_total
-                    ))) {
-                        $logger->debug("An unknown service package has been detected"),
-                        $logger->debugf("The resources consumed are: %s (%s)",
-                            $spf->get_resources,
-                            $spf->get_resource_counter->dump_collection
+                    )) {
+                        $logger->debugf("The %s service package is detected",
+                            $db_schema
+                                ->resultset('ServicePackage')
+                                ->find($service_package_id)
+                                ->short_name
                         );
                     }
                     if(scalar(grep({ $_ > 0 } values(%{ $resources })))) {
@@ -903,10 +662,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                         parent_resource_piece_id
                             => $volume_data->{'resource_piece_account'}->id,
                         resource_type_id
-                            => $db_schema
-                                ->resultset('ResourceType')
-                                ->find_by_full_name(resource_type_full_name => 'volume-a')
-                                ->id,
+                            => $resource_type_id,
                         resource_set_id
                             => $resource_set_id,
                         resource_handle
@@ -935,6 +691,10 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                 my $ipv4_obligations = [];
                 my $duration_total = 0;
                 my $datetime_base;
+                my $resource_type_id = $db_schema
+                    ->resultset('ResourceType')
+                    ->find_by_full_name(resource_type_full_name => 'ipv4-a')
+                    ->id;
 
                 foreach my $usage_record (@{ $ipaddress_data->{'usage_records'} }) {
 
@@ -949,12 +709,8 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                     
                     $duration_total += my $duration = sprintf('%.0f', $usage_record->get_value('/rawusage') * 3600);
 
-                    my $resource_type_id = $db_schema
-                        ->resultset('ResourceType')
-                        ->find_by_full_name(resource_type_full_name => 'ipv4-a')
-                        ->id;
                     my $resources = { $resource_type_id => 1 };
-                    if(defined(my $detected = $spf->detect_service_package(
+                    if(my $service_package_id = $spp->detect_service_package(
                         cloudstack_element_type
                             => 'Ipaddress',
                         cloudstack_element_id
@@ -967,11 +723,12 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                             => $datetime_base->epoch + $duration_total - $duration,
                         till
                             => $datetime_base->epoch + $duration_total
-                    ))) {
-                        $logger->debug("An unknown service package has been detected"),
-                        $logger->debugf("The resources consumed are: %s (%s)",
-                            $spf->get_resources,
-                            $spf->get_resource_counter->dump_collection
+                    )) {
+                        $logger->debugf("The %s service package is detected",
+                            $db_schema
+                                ->resultset('ServicePackage')
+                                ->find($service_package_id)
+                                ->short_name
                         );
                     }
                     if(scalar(grep({ $_ > 0 } values(%{ $resources })))) {
@@ -1003,10 +760,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                         parent_resource_piece_id
                             => $ipaddress_data->{'resource_piece_account'}->id,
                         resource_type_id
-                            => $db_schema
-                                ->resultset('ResourceType')
-                                ->find_by_full_name(resource_type_full_name => 'ipv4-a')
-                                ->id,
+                            => $resource_type_id,
                         resource_set_id
                             => $resource_set_id,
                         resource_handle

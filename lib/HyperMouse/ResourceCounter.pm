@@ -1,4 +1,4 @@
-package ResourceCounter;
+package HyperMouse::ResourceCounter;
 
 use strict;
 use warnings;
