@@ -44,22 +44,6 @@ has 'resources' => (
 
 
 
-method consume_resources (
-    HashRef :$resources!,
-    Int     :$from!,
-    Int     :$till!
-) {
-    my $from_epoch = DateTime->from_epoch(epoch => $from);
-    my $till_epoch = DateTime->from_epoch(epoch => $till);
-    while(my($resource_type_id, $quantity) = each(%{ $resources })) {
-        $self->get_resource_counter->sub_resources(
-            { $resource_type_id => $quantity },
-            $from_epoch,
-            $till_epoch
-        );
-    }
-}
-
 method detect_service_package (
     Str     :$cloudstack_element_type!,
     Str     :$cloudstack_element_id!,
@@ -142,30 +126,30 @@ method detect_service_package (
 
     }
 
+    my @candidates = values(%{ $self->get_resources });
     CANDIDATE:
-    foreach my $candidate (values(%{ $self->get_resources })) {
+    for(my $i = 0; $i < scalar(@candidates); $i++) {
         while(my($resource_type_id, $quantity) = each(%{ $resources })) {
             $service_package_id = undef;
-            foreach my $period ($candidate->{'resource_counter'}->find_periods($from_datetime, $till_datetime, 0)) {
+            foreach my $period ($candidates[$i]->{'resource_counter'}->find_periods($from_datetime, $till_datetime, 0)) {
                 $service_package_id = undef;
                 # What is available in this time period?
-                my $available = $candidate->{'resource_counter'}->get_resources($period->[0], $period->[1], 1);
+                my $available = $candidates[$i]->{'resource_counter'}->get_resources($period->[0], $period->[1], 1);
                 # Are there any service packages available in this time period?
-                if(defined($available)) {
-                    $resources->{ $resource_type_id } -= $available->{ $resource_type_id }
-                        if(defined($available->{ $resource_type_id }));
-                    $service_package_id = $candidate->{'service_package_id'}
-                        if($resources->{ $resource_type_id } <= 0 || $exceed);
+                if(
+                    (defined($available))                                                           &&
+                    (defined($available->{ $resource_type_id }))                                    &&
+                          ((($resources->{ $resource_type_id } -= $available->{ $resource_type_id }) <= 0) || $exceed)
+                ) {
+                    $service_package_id = $candidates[$i]->{'service_package_id'}
                 }
-                next(CANDIDATE) unless($service_package_id);
             }
             next(CANDIDATE) unless($service_package_id);
-            $candidate->{'resource_counter'}->sub_resources(
+            $candidates[$i]->{'resource_counter'}->sub_resources(
                 { $resource_type_id => $quantity },
                 $from_datetime,
                 $till_datetime
             );
-            last(CANDIDATE)
         }
     }
 
