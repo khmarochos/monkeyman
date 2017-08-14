@@ -12,7 +12,7 @@ function Controller (arg){
     this.ajax      = new Ajax();
     this.timezone  = new Timezone();
     
-    this.auth      = function( params, callback ){
+    this.auth      = function( params, callback, spinner ){
         var res = false;
         webix.ajax().post(
             "/person/login.json",
@@ -36,6 +36,25 @@ function Controller (arg){
         );
         
         return res;
+    };
+    
+    this.ProgressShow = function( app ){
+        var obj = $$( app );
+        if( obj ){
+            webix.extend( obj, webix.ProgressBar);
+            obj.disable();
+            obj.showProgress({
+                type  :"icon",
+                hide  :true
+            });            
+        }        
+    };
+
+    this.ProgressHide = function( app ){
+        var obj = $$( app );
+        if( obj ){
+            obj.enable();
+        }
     };
     
     this.onChange = function( obj, callback ) {
@@ -109,12 +128,15 @@ function Timezone(){
 */
 function Ajax() {
     
-    this.post   = function( url, callback ) {
-        var me  = this;
+    this.post   = function( url, callback, spinner ) {
+        var me     = this;
+        var params = [];
+        
         if( callback ) me.fh = callback;
+        if ( spinner && $$(spinner) ) controller.ProgressShow( spinner );
         
         webix.ajax().post( url ,{
-          error:function(text, data, XmlHttpRequest){
+            error:function(text, data, XmlHttpRequest){
                 webix.message("Server error. See to console.log");
                 console.log( XmlHttpRequest );
                 webix.message( "Server error. See to console.log: " + JSON.stringify( XmlHttpRequest) );
@@ -122,9 +144,8 @@ function Ajax() {
                 if(callback) {
                     me.callback( callback, false, XmlHttpRequest );
                 }
-                else{
-                    return false, XmlHttpRequest;
-                }
+                
+                if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );
             },
             success:function(text, data, XmlHttpRequest){
                 var data = JSON.parse(text);
@@ -132,26 +153,22 @@ function Ajax() {
                     if(callback) {
                         me.callback( callback, data, false );
                     }
-                    else{
-                        return data, false;
-                    }
                 }
                 else{
                     webix.message( "Error load data:" + JSON.stringify(data) );
                     if(callback) {
                         me.callback( callback, false, data );
                     }
-                    else{
-                        return false, data;
-                    }
                 }
+                if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );                
             }
-        });        
+        }, params);        
     };
 
-    this.get   = function( url, callback ) {
+    this.get   = function( url, callback, spinner ) {
         var me  = this;
         if( callback ) me.fh = callback;
+        if ( spinner && $$(spinner) ) controller.ProgressShow( spinner );
         
         webix.ajax().get( url ,{
             error:function(text, data, XmlHttpRequest){
@@ -162,49 +179,8 @@ function Ajax() {
                 if(callback) {
                     me.callback( callback, false, XmlHttpRequest );
                 }
-                else{
-                    return false, XmlHttpRequest;
-                }
-            },
-            success:function(text, data, XmlHttpRequest){
-                var data = JSON.parse(text);
-                if( data.success ){
-                    if(callback) {
-                        me.callback( callback, data, false );
-                    }
-                    else{
-                        return data, false;
-                    }
-                }
-                else{
-                    webix.message( "Error load data:" + JSON.stringify(data) );
-                    if(callback) {
-                        me.callback( callback, false, data );
-                    }
-                    else{
-                        return false, data;
-                    }
-                }
-            }
-        });        
-    };
-
-    this.put   = function( url, callback ) {
-        var me  = this;
-        if( callback ) me.fh = callback;
-        
-        webix.ajax().put( url ,{
-          error:function(text, data, XmlHttpRequest){
-                webix.message("Server error. See to console.log");
-                console.log( XmlHttpRequest );
-                webix.message( "Server error. See to console.log: " + JSON.stringify( XmlHttpRequest) );
                 
-                if(callback) {
-                    me.callback( callback, false, XmlHttpRequest );
-                }
-                else{
-                    return false, XmlHttpRequest;
-                }
+                if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );
             },
             success:function(text, data, XmlHttpRequest){
                 var data = JSON.parse(text);
@@ -212,58 +188,16 @@ function Ajax() {
                     if(callback) {
                         me.callback( callback, data, false );
                     }
-                    else{
-                        return data, false;
-                    }
                 }
                 else{
                     webix.message( "Error load data:" + JSON.stringify(data) );
                     if(callback) {
                         me.callback( callback, false, data );
                     }
-                    else{
-                        return false, data;
-                    }
                 }
+                if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );                
             }
-        });        
-    };
 
-    this.patch   = function( url, callback ) {
-        var me  = this;        
-        webix.ajax().patch( url ,{
-          error:function(text, data, XmlHttpRequest){
-                webix.message("Server error. See to console.log");
-                console.log( XmlHttpRequest );
-                webix.message( "Server error. See to console.log: " + JSON.stringify( XmlHttpRequest) );
-                
-                if(callback) {
-                    me.callback( callback, false, XmlHttpRequest );
-                }
-                else{
-                    return false, XmlHttpRequest;
-                }
-            },
-            success:function(text, data, XmlHttpRequest){
-                var data = JSON.parse(text);
-                if( data.success ){
-                    if(callback) {
-                        me.callback( callback, data, false );
-                    }
-                    else{
-                        return data, false;
-                    }
-                }
-                else{
-                    webix.message( "Error load data:" + JSON.stringify(data) );
-                    if(callback) {
-                        me.callback( callback, false, data );
-                    }
-                    else{
-                        return false, data;
-                    }
-                }
-            }
         });        
     };
     
@@ -588,6 +522,7 @@ function Form ( components ){
                     });
                     
                     if( formData ){
+                        controller.ProgressShow( "form" );
                         webix.ajax().post(
                             url + '/' + action + ".json",
                             formData,
@@ -599,6 +534,7 @@ function Form ( components ){
                                 else{
                                     webix.message( res.message );
                                 }
+                                controller.ProgressHide( "form" );
                             }
                         );
                     }                
@@ -611,12 +547,12 @@ function Form ( components ){
         }
     };
     
-    this.ajax = function ( url, callback, method ){
-        var w = method ? method : 'post';
-        
+    this.ajax = function ( url, callback, spinner ){
+        if ( spinner && $$(spinner) ) controller.ProgressShow( spinner );
         webix.ajax().post( url ,{
             error:function(text, data, XmlHttpRequest){
                 alert("error");
+                if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );
             },
             success:function(text, data, XmlHttpRequest){
                 var data = JSON.parse(text);
@@ -627,6 +563,7 @@ function Form ( components ){
                     webix.message( "Error load data:" + data.message );
                     console.log( "Error load data:" + data.message );
                 }
+                if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );
             }
             
         });
@@ -634,15 +571,20 @@ function Form ( components ){
     /*
         Загрузка данных формы 
     */    
-    this.load = function( form_name, url, callback ){
+    this.load = function( form_name, url, callback, spinner ){
         var form = $$(form_name);
-        if ( form && url ) {            
-            form.load( url, "json", {
+        if ( spinner && $$(spinner) ) controller.ProgressShow( spinner );
+
+        if ( form && url ) {
+
+            form.load( url, {
                 error: function(text, data, http_request){
                     webix.message("Server error. See console.log");
+                    if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );
                     console.log( http_request );
                 },
-                success: function(text, data, http_request){                    
+                success: function(text, data, http_request){
+
                     if ( callback ){
                         var data = JSON.parse(text);
                         if( data.success ){
@@ -651,14 +593,19 @@ function Form ( components ){
                         else{
                             webix.message( "error load data:" + data.message );
                         }
+                        if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );
                     }
                     else{
+                        if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );
                         return JSON.parse(text);
                     }
+                    
                 }
             });
+
         }
         else{
+            if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );
             webix.message("controller Form->load do not all params: " + form_name);
         }
         return false;
@@ -740,24 +687,7 @@ function Form ( components ){
     
     this.getValues = function (){
         
-    };
-    
-/*    
-    this.setChild = function( form_name, snippet_name, id ){
-        var me      = this;
-        var form    = $$(form_name);
-        var snippet = components.form[snippet_name];
-        
-        if( isNaN(form) && isNaN(snippet) ){
-            form.addView( snippet );
-        }
-        else{
-            webix.message("controller Form->setChild form or snippet not found " + form_name);
-        }
-        
-        return false;
-    };
-*/    
+    };   
     
 }
 console.log('controller.js OK');

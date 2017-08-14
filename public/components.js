@@ -7,6 +7,7 @@ function Components (){
     
     this.login = function () {
         webix.ui({
+            id  : "body",
             rows:[
                 { template:"Welcome!", type:"header" },
                 {},
@@ -292,7 +293,7 @@ function Components (){
                 footer      : true,
                 resizeColumn: true,
                 urlBase     : "/person/list/all",
-                url         : "/person/list/all.json",
+                url         : "myproxy->/person/list/all.json",
                 //save        : "myproxy->/person/list/all.json",           
                 columns     :[
                     {

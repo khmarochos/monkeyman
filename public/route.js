@@ -13,9 +13,9 @@ var Route = Backbone.Router.extend({
                 console.log("route i18n");
                 data.redirect = data.redirect ? data.redirect : "/person/list/all";
                 route.navigate( data.redirect, { trigger: true });
-                location.reload();
-            }
-        });
+                location.reload();                
+            }            
+        }, 'root' );
     },
 
     index: function () {
@@ -29,6 +29,7 @@ var Route = Backbone.Router.extend({
 
     main: function ( datatable, action, filter, related_to, id ) {
         console.log("route main");
+        
         var url = '/' +datatable + '/' + action + '/' + filter;
         if( related_to ){
             url += "/" + related_to;
@@ -43,8 +44,7 @@ var Route = Backbone.Router.extend({
             
             if( comp && comp.view ){
                 comp.view.urlBase = url;
-                comp.view.url = url + '.json';
-                console.log( "route 1", comp.view.url );
+                comp.view.url = 'myproxy->'+ url + '.json';
             }
             
             controller.datatable.create( datatable );
@@ -55,7 +55,7 @@ var Route = Backbone.Router.extend({
             var comp      = components.form[datatable];
             var obj       = $$("main");
             var form_name = datatable + "_add";            
-            url += ".json";
+            url = url +".json";
                         
             if( obj && comp ){                
                 
@@ -77,23 +77,25 @@ var Route = Backbone.Router.extend({
                             $$("form").define("action", "update");
                             
                             controller.form.load( form_name, url, function( data1 ){
-
+                                                            
                                 if( child_obj ) {                                    
-                                    child_obj.forEach( function( item, i ){
+                                    child_obj.forEach( function( item, i ){                                        
                                         var url_snippet = components.form[ item ].baseURL;
-                                        controller.form.setSnippet( form_name, item );                                        
+                                        controller.form.setSnippet( form_name, item );
+
                                         if( url_snippet ) {                                            
                                             url_snippet = url_snippet.replace('{{id}}', id || related_to );
 
                                             controller.form.load( form_name, url_snippet, function( data2 ){
                                                 controller.form.setSnippetItem( item, data2.data );
                                                 $$( form_name ).setValues( data1.data );
-                                            });
+                                                
+                                            }, "form");
                                         }
                                     });                                    
                                 }
                                 
-                            });
+                            }, "form");
                             
                             filter = "update";
 
@@ -106,12 +108,12 @@ var Route = Backbone.Router.extend({
                                 text    : "Are you sure?",                                
                                 callback: function( e ){
                                     if( e ){
-                                        console.log( "data1", url );
+
                                         controller.form.ajax( url, function( data ){
                                             if( data.redirect ){
                                                 route.navigate( data.redirect , { trigger: true });
                                             }
-                                        });
+                                        }, 'root');
                                     }
                                 }
                             });                            
@@ -133,11 +135,12 @@ var Route = Backbone.Router.extend({
                 
                 if( $$("form") ) $$("form").define("action", filter);
                 
-                return false;
+                //return false;
             }
             //console.log( "form", url );
-        }        
-        console.log("route", datatable, action, filter, related_to, id);        
+        }
+        
+        //console.log("route", datatable, action, filter, related_to, id);        
     }
     
 });
