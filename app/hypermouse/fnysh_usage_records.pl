@@ -586,7 +586,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
 
                 $db_schema->storage->txn_begin;
 
-                $logger->debugf("Proceesing the usage records of the %s volume",
+                $logger->debugf("Processing the usage records of the %s volume",
                     $volume_id
                 );
 
@@ -684,7 +684,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
 
                 $db_schema->storage->txn_begin;
 
-                $logger->debugf("Proceesing the usage records of the %s IP-address",
+                $logger->debugf("Processing the usage records of the %s IP-address",
                     $ipaddress_id
                 );
 

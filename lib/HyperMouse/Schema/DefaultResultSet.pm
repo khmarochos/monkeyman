@@ -68,7 +68,7 @@ method search_related_deep(
     Bool        :$union?                        = 1,
     Maybe[Int]  :$permissions,
     Maybe[Int]  :$validations,
-    DateTime    :$now?                          = DateTime->now
+       DateTime :$now?                          = DateTime->now
 ) {
 
     my $search_parmeters_base = {
@@ -285,8 +285,8 @@ method update_smart(
     my $fields_match;
     my $conditions_match;
     if(
-        defined($fields_match = $update_include->{'fields_match'})
-        && (ref($fields_match) eq 'ARRAY')
+        defined($fields_match = $update_include->{'fields_match'}) &&
+            ref($fields_match) eq 'ARRAY'
     ) {
         foreach my $field_match (@{ $fields_match }) {
             $search_pattern->{ $field_match } = $record->{ $field_match };
@@ -294,8 +294,8 @@ method update_smart(
         $resultset = $resultset->search($search_pattern);
     }
     if(
-        defined($conditions_match = $update_include->{'conditions_match'})
-        && (ref($conditions_match) eq 'ARRAY')
+        defined($conditions_match = $update_include->{'conditions_match'}) &&
+            ref($conditions_match) eq 'ARRAY'
     ) {
         foreach my $condition_match ((@{ $conditions_match })) {
             $resultset = $resultset->search($condition_match);
@@ -303,8 +303,8 @@ method update_smart(
     }
     $resultset = $resultset->filter_validated(mask => $mask, now => $now);
     if(
-        defined($conditions_match = $update_exclude->{'conditions_match'})
-        && (ref($conditions_match) eq 'ARRAY')
+        defined($conditions_match = $update_exclude->{'conditions_match'}) &&
+            ref($conditions_match) eq 'ARRAY'
     ) {
         foreach my $condition_match ((@{ $conditions_match })) {
             $resultset = $resultset->search({ -not => $condition_match });

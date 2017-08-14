@@ -85,8 +85,25 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
                                 @ > @Person
                             )
                         )
+                    ) & (
+                        @Person [children]> @Person
                     )
                 } => { } ]
+            },
+
+            '@Person-[children]>-@Person' => {
+                resultset_class => 'Person',
+                search => [
+                    'person_x_person_parent_people' => {
+                        validations => -1,
+                        search => [
+                            'child_person' => {
+                                validations => -1,
+                                fetch       =>  1
+                            }
+                        ]
+                    }
+                ]
             },
 
             '@Person->-@Corporation' => {

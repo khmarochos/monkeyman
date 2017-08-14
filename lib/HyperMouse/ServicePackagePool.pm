@@ -106,7 +106,7 @@ method detect_service_package (
                     group_by    => 'service_package_id'
                 }
             )
-            ->single
+            ->first
             // return(undef);
 
         my $service_package = $service_package_set->service_package
