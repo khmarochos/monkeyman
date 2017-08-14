@@ -29,9 +29,7 @@ method list {
     my $datatable_params = $self->datatable_params;    
     my $json             = {};
     my $tmpl_rs;
-    
-    #print Dumper( $datatable_params );
-    
+        
     switch($self->stash->{'filter'}) {
         case('all') {
             $mask_validated_d = VC_NOT_REMOVED & VC_NOT_PREMATURE;
@@ -243,44 +241,59 @@ method form_add {
                                 language_id        => $data->{'language_id'},
                                 datetime_format_id => $data->{'datetime_format_id'},
                                 timezone           => $data->{'timezone'},
-                            } );
+                            });
                     
-                    for my $item ( @{ $snippet->{'person_x_email'} } ){
+                    if( $rs_data ){
+                    
+                        for my $item ( @{ $snippet->{'person_x_email'} } ){
+                            $self
+                                ->hm_schema
+                                ->resultset( $snippet_link->{'person_x_email'} )
+                                ->create({
+                                    person_id   => $rs_data->id,
+                                    email       => $item->{'email'},
+                                    valid_till  => $item->{'valid_till'}  || undef,
+                                    valid_since => $item->{'valid_since'} || \'NOW()',
+                                });
+                            
+                        }
+    
+                        for my $item ( @{ $snippet->{'person_x_phone'} } ){
+                            $self
+                                ->hm_schema
+                                ->resultset( $snippet_link->{'person_x_phone'} )
+                                ->create({
+                                    person_id   => $rs_data->id,
+                                    phone       => $item->{'phone'},
+                                    valid_till  => $item->{'valid_till'}  || undef,
+                                    valid_since => $item->{'valid_since'} || \'NOW()',
+                                });
+                            
+                        }
+                        
                         $self
                             ->hm_schema
-                            ->resultset( $snippet_link->{'person_x_email'} )
+                            ->resultset('PersonPassword')
                             ->create({
-                                person_id   => $rs_data->id,
-                                email       => $item->{'email'},
-                                valid_till  => $item->{'valid_till'}  || undef,
-                                valid_since => $item->{'valid_since'} || \'NOW()',
+                                valid_since => \'NOW()',
+                                valid_till  => undef,
+                                removed     => undef,
+                                password    => $data->{'password'},
+                                person_id   => $rs_data->id
                             });
-                        
-                    }
 
-                    for my $item ( @{ $snippet->{'person_x_phone'} } ){
                         $self
                             ->hm_schema
-                            ->resultset( $snippet_link->{'person_x_phone'} )
+                            ->resultset('PersonXPerson')
                             ->create({
-                                person_id   => $rs_data->id,
-                                phone       => $item->{'phone'},
-                                valid_till  => $item->{'valid_till'}  || undef,
-                                valid_since => $item->{'valid_since'} || \'NOW()',
+                                valid_since      => \'NOW()',
+                                valid_till       => undef,
+                                removed          => undef,
+                                parent_person_id => $self->stash->{'authorized_person_result'}->id,
+                                child_person_id  => $rs_data->id
                             });
                         
-                    }
-                    
-                    $self
-                        ->hm_schema
-                        ->resultset('PersonPassword')
-                        ->create({
-                            valid_since => \'NOW()',
-                            valid_till  => undef,
-                            removed     => undef,
-                            password    => $data->{'password'},
-                            person_id   => $rs_data->id
-                        });                    
+                    } # if
 
                 });
                 
@@ -316,7 +329,7 @@ method form_update {
         success  => \1,
         redirect => "/person/list/all"
     };
-    
+        
     if( $data->{'timezone.area'} && $data->{'timezone.city'} ){
         $data->{'timezone'}
             = $data->{'timezone.area'}
@@ -367,52 +380,74 @@ method form_update {
                             timezone           => $data->{'timezone'},
                         });
                     }
-                    #
-                    # Password
-                    #
-                    $rs_find = 
-                        $self
-                            ->hm_schema
-                            ->resultset('PersonPassword')
-                            ->find({'me.person_id' => $data->{'id'} });
-    
-                    if( $rs_find && $data->{'password'} ){
-                        $rs_find->update({
-                            valid_since => $data->{'valid_since'} || undef,
-                            valid_till  => $data->{'valid_till'}  || undef,
-                            removed     => undef,
-                            password    => $data->{'password'},
-                            person_id   => $data->{'id'}
-                        });
+                    else{
+                        $json = {
+                            success => \0,
+                            message => "Person not exists. ID:" . $data->{'id'},
+                        };                        
                     }
-                    elsif( !$rs_find && $data->{'password'} ){
-                        $self
-                            ->hm_schema
-                            ->resultset('PersonPassword')
-                            ->create({
-                                valid_since => \'NOW()',
-                                valid_till  => undef,
+                    
+                    if( ${$json->{'success'}} ){
+                        #
+                        # Password
+                        #
+                        $rs_find = 
+                            $self
+                                ->hm_schema
+                                ->resultset('PersonPassword')
+                                ->find({'me.person_id' => $data->{'id'} });
+        
+                        if( $rs_find && $data->{'password'} ){
+                            $rs_find->update({
+                                valid_since => $data->{'valid_since'} || undef,
+                                valid_till  => $data->{'valid_till'}  || undef,
                                 removed     => undef,
                                 password    => $data->{'password'},
                                 person_id   => $data->{'id'}
-                            });                    
+                            });
+                        }
+                        elsif( !$rs_find && $data->{'password'} ){
+                            $self
+                                ->hm_schema
+                                ->resultset('PersonPassword')
+                                ->create({
+                                    valid_since => \'NOW()',
+                                    valid_till  => undef,
+                                    removed     => undef,
+                                    password    => $data->{'password'},
+                                    person_id   => $data->{'id'}
+                                });                    
+                        }
                     }
                     #
                     # Phone
                     #
                     if(
-                       ref $snippet->{'person_x_phone'} eq "ARRAY"
-                       && @{ $snippet->{'person_x_phone'} }
+                        ${$json->{'success'}}
+                        && ref $snippet->{'person_x_phone'} eq "ARRAY"
+                        && @{ $snippet->{'person_x_phone'} }
                     ){ 
                         # Удаляем старые номера
+                        my( @update_phone, @new_phone ) = ( (),() );
+                        
+                        for my $item ( @{ $snippet->{'person_x_phone'} } ) {
+                            if( $item->{'id'} ){
+                                push @update_phone, $item;
+                            }
+                            elsif( $item->{'phone'} ) {
+                                push @new_phone, $item;
+                            }
+                        }
+                        
                         $rs_find = 
                             $self
                                 ->hm_schema
                                 ->resultset( $snippet_link->{'person_x_phone'} )
                                 ->search({
-                                    id  => {
-                                         -not_in => [
-                                            map{ $_->{'id'} } @{ $snippet->{'person_x_phone'} }
+                                    person_id   => $data->{'id'},
+                                    id          => {
+                                        -not_in     => [                                            
+                                            map{ $_->{'id'} } @update_phone
                                         ]
                                     }
                                 });
@@ -422,12 +457,12 @@ method form_update {
                         }
                         
                         # Обновляем старые
-                        for my $item ( @{ $snippet->{'person_x_phone'} } ){
+                        for my $item ( @update_phone ){
                             $rs_find = 
                                 $self
                                     ->hm_schema
                                     ->resultset( $snippet_link->{'person_x_phone'} )
-                                    ->find({
+                                    ->find({                                        
                                         'me.id' => $item->{'id'}
                                     });
 
@@ -437,11 +472,45 @@ method form_update {
                                     valid_till  => $item->{'valid_till'}  || undef,
                                     phone       => $item->{'phone'},
                                 });
-                            }                            
+                            }     
+                        }
+                        # Добавляем новые
+                        for my $item ( @new_phone ){
+                            $rs_find = 
+                                $self
+                                    ->hm_schema
+                                    ->resultset( $snippet_link->{'person_x_phone'} )
+                                    ->search({
+                                        'me.person_id' => $data->{'id'},
+                                        'me.phone'     => $item->{'phone'}
+                                    })
+                                    ->first;
+                                                                
+                            if( $rs_find ){
+                                
+                                $json = {
+                                    success => \0,
+                                    message => 'phone exists: ' . $item->{'phone'},
+                                };
+                                last;
+                                
+                            }
+                            else {
+                                $self
+                                    ->hm_schema
+                                    ->resultset( $snippet_link->{'person_x_phone'} )
+                                    ->create({
+                                        valid_since => $item->{'valid_since'} || undef,
+                                        valid_till  => $item->{'valid_till'}  || undef,
+                                        phone       => $item->{'phone'},
+                                        person_id   => $data->{'id'},
+                                    });
+                                
+                            }
                         }
                         
                     }
-                    else {
+                    elsif( ${$json->{'success'}} ) {
                         # если список пустой удалем все телефоны
                         $rs_find = 
                             $self
@@ -450,6 +519,7 @@ method form_update {
                                 ->search({
                                     'me.person_id' => $data->{'id'},
                                 });
+                        
                         if( $rs_find ){
                             $rs_find->delete();
                         }
@@ -459,34 +529,63 @@ method form_update {
                     # Email
                     #
                     if(
-                       ref $snippet->{'person_x_email'} eq "ARRAY"
-                       && @{ $snippet->{'person_x_email'} }
+                        ${$json->{'success'}}
+                        && ref $snippet->{'person_x_email'} eq "ARRAY"
+                        && @{ $snippet->{'person_x_email'} }
                     ){
-                        # удаляем записи которых нет в $snippet->{'person_x_email'}
+                        my (@update_email, @new_email) = ( (),() );
+                        for my $item ( @{ $snippet->{'person_x_email'} } ){
+                            if( $item->{'id'} ){
+                                push @update_email, $item;
+                            }
+                            elsif( $item->{'email'} ) {
+                                push @new_email, $item;
+                            }
+                        }
+                        
                         $rs_find = 
                             $self
                                 ->hm_schema
                                 ->resultset( $snippet_link->{'person_x_email'} )
                                 ->search({
+                                    'me.person_id' => $data->{'id'},
                                     'me.id'        => {
                                         -not_in  => [
-                                            map { $_->{'id'} } @{ $snippet->{'person_x_email'} }
+                                            map { $_->{'id'} } @update_email
                                         ]
                                     }
                                 });
                         
+                        # удаляем записи которых нет в $snippet->{'person_x_email'}                                                
                         if( $rs_find ){
                             $rs_find->delete();
                         }
                         
                         # Обновляем старые
-                        for my $item ( @{ $snippet->{'person_x_email'} } ){
+                        for my $item ( @update_email ){
+                            # 
                             $rs_find = 
                                 $self
                                     ->hm_schema
                                     ->resultset( $snippet_link->{'person_x_email'} )
                                     ->find({
-                                        'me.id'=> $item->{'id'}
+                                        'me.email'=> $item->{'email'}
+                                    });
+                            
+                            if( $rs_find && $rs_find->id != $item->{'id'} ){
+                                $json = {
+                                    success => \0,
+                                    message => 'email exists: ' . $item->{'email'},
+                                };
+                                last;
+                            }
+                            #
+                            $rs_find = 
+                                $self
+                                    ->hm_schema
+                                    ->resultset( $snippet_link->{'person_x_email'} )
+                                    ->find({
+                                        'me.id' => $item->{'id'}
                                     });
 
                             if( $rs_find ){
@@ -497,8 +596,41 @@ method form_update {
                                 });
                             }                            
                         }
+                        
+                        # Добавляем новые
+                        for my $item ( @new_email ) {
+                            $rs_find = 
+                                $self
+                                    ->hm_schema
+                                    ->resultset( $snippet_link->{'person_x_email'} )
+                                    ->find({
+                                        'me.email'=> $item->{'email'}
+                                    });
+                            
+                            if( $rs_find ){
+                                $json = {
+                                    success => \0,
+                                    message => 'email exists: ' . $item->{'email'},
+                                };
+                                last;
+                            }
+                            else{
+                                $self
+                                    ->hm_schema
+                                    ->resultset( $snippet_link->{'person_x_email'} )
+                                    ->create({
+                                        email       => $item->{'email'},
+                                        person_id   => $data->{'id'},
+                                        valid_since => $item->{'valid_since'} || \'NOW()',
+                                        valid_till  => $item->{'valid_till'}  || undef,
+                                        removed     => undef,
+                                    });
+                                
+                            }
+                        }
+                        
                     }
-                    else {
+                    elsif( ${$json->{'success'}} ) {
                         $json = {
                             success => \0,
                             message => 'not param email'
