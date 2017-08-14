@@ -19,7 +19,7 @@ my $hypermouse  = $monkeyman->get_hypermouse;
 my $logger      = $monkeyman->get_logger;
 my $db_schema   = $hypermouse->get_schema;
 
-my $person_r = $db_schema->resultset('Person')->find(1);
+my $person_r = $db_schema->resultset('Person')->find(100);
 
 $logger->debugf("The person is %s", $person_r);
 

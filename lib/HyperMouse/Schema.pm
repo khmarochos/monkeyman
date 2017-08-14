@@ -56,7 +56,7 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
             # FROM Person TO ...
             #
 
-            '@Person-[everything]>-@Person' => {
+            '@Person-[everything][myself]>-@Person' => {
                 resultset_class => 'Person',
                 callout => [ q{
                     @Person > (
@@ -87,6 +87,8 @@ our $DeepRelationshipsGrammarParser = Parse::RecDescent->new(<<'__END_OF_GRAMMAR
                         )
                     ) & (
                         @Person [children]> @Person
+                    ) & (
+                        @Person
                     )
                 } => { } ]
             },

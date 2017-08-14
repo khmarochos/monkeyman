@@ -64,7 +64,7 @@ method list {
                         fetch_validations_default  => $mask_validated_f,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ '@Person [everything]> @Person' => { } ]
+                        callout => [ '@Person [everything][myself]> @Person' => { } ]
                     );
             
         }
