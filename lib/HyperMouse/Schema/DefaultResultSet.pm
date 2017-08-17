@@ -143,7 +143,7 @@ method search_related_deep(
         my @search_local = @{ $search };
         while(my($search_key, $search_val) = splice(@search_local, 0, 2)) {
         
-            my $resultset = $self->search_related_rs($search_key);
+            my $resultset = $self->search_related_rs($search_key, {}, { group_by => [ 'id' ] });
 
             my $search_permissions = $search_val->{'permissions'};
             my $search_validations = $search_val->{'validations'};
@@ -193,7 +193,7 @@ method search_related_deep(
     }
 
     if($union) {
-        # $logger->tracef("Uniting %s", join(', ', map({ ref($_) . '(' . join (', ', map({ $_->id } $_->all)) . ')' } @resultsets)));
+        #warn(sprintf("Uniting %s", join(', ', map({ ref($_) . '(' . join (', ', map({ $_->id } $_->all)) . ')' } @resultsets))));
         my $resultset = shift(@resultsets);
         return(
             scalar(@resultsets) > 0
@@ -266,7 +266,7 @@ be marked as outdated (by updating its C<valid_till> field) and a new record
 will be created with C<valid_since> field equal to the current time. Other
 fields of the new record will be filled according to the C<record> parameter.
 
-You might need also set C<mask> and C<now>, these parameters' names are
+You might also need to set C<mask> and C<now>, these parameters' names are
 pretty self-descriptive. :-)
 
 =cut
@@ -312,6 +312,8 @@ method update_smart(
     }
     $resultset = $resultset->filter_validated(mask => $mask, now => $now);
 
+    # If $forced is true, we won't update the records that already have the
+    # desired values, so they'll be skipped.
     my $ids_ok = $forced
         ? []
         : [ map({ $_->id } $resultset->search($record)->all) ];

@@ -62,7 +62,7 @@ __PACKAGE__->table("service_level");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 valid_since
+=head2 valid_from
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
@@ -96,7 +96,7 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "valid_since",
+  "valid_from",
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
@@ -178,8 +178,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-07-12 13:30:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zcGFJCB4MgsqNUJQKhOV/w
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-17 21:37:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WbNn/qio0oI8AMz1ACKdhw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

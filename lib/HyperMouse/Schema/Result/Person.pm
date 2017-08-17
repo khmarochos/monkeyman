@@ -62,7 +62,7 @@ __PACKAGE__->table("person");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 valid_since
+=head2 valid_from
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
@@ -128,7 +128,7 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "valid_since",
+  "valid_from",
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
@@ -335,8 +335,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-10 17:21:38
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Xul6gmk1g3Qxr9iDl5pOlg
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-17 21:37:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YKz0ZchlYVh1BebXyg+oJQ
 
 
 

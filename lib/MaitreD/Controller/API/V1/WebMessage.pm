@@ -34,7 +34,7 @@ method list {
             $result_code = 200;
             $result_data = {
                 message     => {
-                    date        => $r_message->valid_since,
+                    date        => $r_message->valid_from,
                     type        => $r_message->type,
                     subject     => $r_message->subject,
                     text        => $r_message->text
@@ -64,7 +64,7 @@ method list {
         ) {
             push(@messages, {
                 id      => $r_message->id,
-                date    => $r_message->valid_since
+                date    => $r_message->valid_from
             });
         }
         $result_code = 200;

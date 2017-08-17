@@ -235,7 +235,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                             callout
                                 => [ '@ResourcePiece > @ProvisioningObligation > @ProvisioningAgreement', { } ],
                             now
-                                => $now
+                                => $now,
                         )
                         ->single;
                     $domain_data = $all_domains->{ $domain_id } = {

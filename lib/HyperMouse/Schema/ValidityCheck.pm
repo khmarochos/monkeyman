@@ -30,8 +30,8 @@ method _get_validity_check(Int $check!, Str $source_alias!, DateTime $now!) {
         } case(VC_B_NOT_PREMATURE) {
             return(
                 -or => [
-                     { "$source_alias.valid_since"   => { '!=' => undef                        } },
-                     { "$source_alias.valid_since"   => { '<=' => $self->format_datetime($now) } }
+                     { "$source_alias.valid_from"    => { '!=' => undef                        } },
+                     { "$source_alias.valid_from"    => { '<=' => $self->format_datetime($now) } }
                 ]
             );
         } case(VC_B_NOT_REMOVED) {
@@ -45,8 +45,8 @@ method _get_validity_check(Int $check!, Str $source_alias!, DateTime $now!) {
         } case(VC_B_PREMATURE) {
             return(
                 -or => [
-                     { "$source_alias.valid_since"   => { '='  => undef                        } },
-                     { "$source_alias.valid_since"   => { '>'  => $self->format_datetime($now) } }
+                     { "$source_alias.valid_from"    => { '='  => undef                        } },
+                     { "$source_alias.valid_from"    => { '>'  => $self->format_datetime($now) } }
                 ]
             );
         } case(VC_B_REMOVED) {

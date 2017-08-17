@@ -48,7 +48,7 @@ method register(
 method web_message_send(
     Object      :$controller!,
     Str         :$type?,
-    DateTime    :$valid_since?,
+    DateTime    :$valid_from?,
     DateTime    :$valid_till?,
     Str         :$subject?,
     Str         :$text!,
@@ -56,8 +56,8 @@ method web_message_send(
 ) {
     $type = 'INFO'
         unless(defined($type));
-    $valid_since = DateTime->now
-        unless(defined($valid_since));
+    $valid_from = DateTime->now
+        unless(defined($valid_from));
     $recipients = [ $controller->session('session_uuid') ]
         unless(defined($recipients) && @{ $recipients });
     $self
@@ -65,14 +65,14 @@ method web_message_send(
         ->resultset('Message')
         ->create({
             type        => $type,
-            valid_since => $valid_since,
+            valid_from  => $valid_from,
             valid_till  => $valid_till,
             subject     => $subject,
             text        => $text,
             message_x_sessions => [
                 map({
                     {
-                        valid_since => $valid_since,
+                        valid_from  => $valid_from,
                         valid_till  => $valid_till,
                         session_id  => $_
                     }

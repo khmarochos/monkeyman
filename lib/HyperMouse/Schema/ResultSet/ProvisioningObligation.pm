@@ -15,13 +15,13 @@ use DateTime;
 
 
 method update_when_needed (
-    DateTime        :$valid_since?,
+    DateTime        :$valid_from?,
     Int             :$provisioning_agreement_id!,
     Maybe[Int]      :$resource_piece_id?,
     Int             :$service_type_id!,
     Int             :$service_level_id!,
     Int             :$quantity!,
-    Maybe[DateTime] :$applied_since?,
+    Maybe[DateTime] :$applied_from?,
     Maybe[DateTime] :$applied_till?,
     DateTime        :$now?              = DateTime->now
 ) {
@@ -42,10 +42,10 @@ method update_when_needed (
                     => $service_level_id,
                 quantity
                     => $quantity,
-                applied_since
-                    => $dtp->format_datetime($applied_since),
+                applied_from
+                    => defined($applied_from) ? $dtp->format_datetime($applied_from) : undef,
                 applied_till
-                    => $dtp->format_datetime($applied_till)
+                    => defined($applied_till) ? $dtp->format_datetime($applied_till) : undef
             },
             update_include => {
                 fields_match => [ qw(
@@ -53,12 +53,12 @@ method update_when_needed (
                     resource_piece_id
                     service_type_id
                     service_level_id
-                    applied_since
+                    applied_from
                     applied_till
                 ) ]
             },
             now
-                => defined($valid_since) ? $valid_since : $now
+                => defined($valid_from) ? $valid_from : $now
         );
 
     if(scalar(@provisioning_obligations) > 1) {
@@ -79,20 +79,18 @@ method update_when_needed_multi(
 ) {
 
     my @provisioning_obligations;
-    my $applied_since = $now->clone->truncate(to => 'day');
+    my $applied_from = $now->clone->truncate(to => 'day');
     my $applied_till;
 
     # As the first step, we need to find the list of the valid provisioning
     # obligations for each resource piece
-
     my $dtp = $self->get_schema->storage->datetime_parser;
-    my $i = 0;
     foreach my $record (
         # The record that already has the same values goest the first, because
         # it should be added as a piece of the previous record.
         sort({
             if($self
-                ->filter_validated(now => $now)
+                ->filter_validated(now => $now, mask => VC_NOT_REMOVED)
                 ->search({
                     provisioning_agreement_id
                         => $a->{'provisioning_agreement_id'},
@@ -104,16 +102,15 @@ method update_when_needed_multi(
                         => $a->{'service_level_id'},
                     quantity
                         => $a->{'quantity'},
-                    applied_since
-                        => { '<=' => $dtp->format_datetime($applied_since) }
+                    applied_from
+                        => { '<=' => $dtp->format_datetime($applied_from) }
                 })
                 ->count
             ) { -1 } else { 1 };
         } @{ $records })
     ) {
-        $applied_till = $applied_since->clone;
-        $applied_till->add(seconds => $record->{'duration'})
-            if(defined($record->{'duration'}));
+        $applied_till = $applied_from->clone->add(seconds => $record->{'duration'})
+            if(defined($record->{'duration'}) && $record->{'duration'} >= 0);
         push(@provisioning_obligations, $self->update_when_needed(
             provisioning_agreement_id
                 => $record->{'provisioning_agreement_id'},
@@ -127,14 +124,14 @@ method update_when_needed_multi(
                 => $record->{'quantity'},
             resource_piece_id
                 => $resource_piece_id,
-            applied_since
-                => $applied_since,
+            applied_from
+                => $applied_from,
             applied_till
                 => $applied_till,
             now
                 => $now,
         ));
-        $applied_since = $applied_till;
+        $applied_from = $applied_till;
     }
 
     return(@provisioning_obligations);
@@ -183,7 +180,7 @@ method update_obligations (
         my $provisioning_obligation = $self->get_schema
             ->resultset('ProvisioningObligation')
             ->create({
-                valid_since                 => $now,
+                valid_from                 => $now,
                 valid_till                  => undef,
                 removed                     => undef,
                 provisioning_agreement_id   => $provisioning_agreement->id,
@@ -194,7 +191,7 @@ method update_obligations (
         $self->get_schema
             ->resultset('ProvisioningObligationXResourcePiece')
             ->create({
-                valid_since                 => $now,
+                valid_from                 => $now,
                 valid_till                  => undef,
                 removed                     => undef,
                 provisioning_obligation_id  => $provisioning_obligation->id,

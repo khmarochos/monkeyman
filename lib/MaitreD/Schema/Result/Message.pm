@@ -47,7 +47,7 @@ __PACKAGE__->table("message");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 valid_since
+=head2 valid_from
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
@@ -93,7 +93,7 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "valid_since",
+  "valid_from",
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
@@ -153,8 +153,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-02 04:04:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YzYsz6vZHvsir9RqJo7HPQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-17 22:18:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2Pk/JBSInPkzN8Mv8pMXOg
 
 __PACKAGE__->many_to_many(
   "sessions" => "message_x_sessions", "session"

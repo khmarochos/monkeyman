@@ -32,9 +32,9 @@ our $settings = {
                 },
                 'Valid Since' => {
                     'order'    => 4,
-                    'db_name'  => 'valid_since',
+                    'db_name'  => 'valid_from',
                     'db_value' => sub {
-                        shift->datetime_display( shift->valid_since, 2);
+                        shift->datetime_display( shift->valid_from, 2);
                     },
                 },
                 'Valid Till' => {
@@ -76,7 +76,7 @@ our $settings = {
                     { "data" => "id" },
                     { "data" => "first_name" },
                     { "data" => "last_name" },
-                    { "data" => "valid_since" },
+                    { "data" => "valid_from" },
                     { "data" => "valid_till" },
                 ],
                 'ajax' =>  '/person/list/all.json',
@@ -108,9 +108,9 @@ our $settings = {
                 },
                 'Valid Since' => {
                     'order'    => 3,
-                    'db_name'  => 'valid_since',
+                    'db_name'  => 'valid_from',
                     'db_value' => sub {
-                        shift->datetime_display( shift->valid_since, 2);
+                        shift->datetime_display( shift->valid_from, 2);
                     },
                 },
                 'Valid Till' => {
@@ -151,7 +151,7 @@ our $settings = {
                 'columns' =>  [
                     { "data" => "id" },
                     { "data" => "name" },
-                    { "data" => "valid_since" },
+                    { "data" => "valid_from" },
                     { "data" => "valid_till" },
                 ],
                 'ajax' =>  '/contractor/list/all.json',
@@ -183,9 +183,9 @@ our $settings = {
                 },
                 'Valid Since' => {
                     'order'    => 3,
-                    'db_name'  => 'valid_since',
+                    'db_name'  => 'valid_from',
                     'db_value' => sub {
-                        shift->datetime_display( shift->valid_since, 2);
+                        shift->datetime_display( shift->valid_from, 2);
                     },
                 },
                 'Valid Till' => {
@@ -226,7 +226,7 @@ our $settings = {
                 'columns' =>  [
                     { "data" => "id" },
                     { "data" => "name" },
-                    { "data" => "valid_since" },
+                    { "data" => "valid_from" },
                     { "data" => "valid_till" },
                 ],
                 'ajax' =>  '/corporation/list/all.json',
@@ -258,8 +258,8 @@ our $settings = {
                 },
                 'Valid Since' => {
                     'order'    => 3,
-                    'db_name'  => 'valid_since',
-                    'db_value' => sub { shift->datetime_display(shift->valid_since, 2); }
+                    'db_name'  => 'valid_from',
+                    'db_value' => sub { shift->datetime_display(shift->valid_from, 2); }
                 },
                 'Valid Till' => {
                     'order'    => 4,
@@ -316,7 +316,7 @@ our $settings = {
                 'columns' =>  [
                     { "data" => "id" },
                     { "data" => "number" },
-                    { "data" => "valid_since" },
+                    { "data" => "valid_from" },
                     { "data" => "valid_till" },
                     { "data" => "client" },
                     { "data" => "provider" },
@@ -343,8 +343,8 @@ our $settings = {
                 },
                 'Valid Since' => {
                     'order'    => 2,
-                    'db_name'  => 'valid_since',
-                    'db_value' => sub { shift->datetime_display(shift->valid_since, 2); }
+                    'db_name'  => 'valid_from',
+                    'db_value' => sub { shift->datetime_display(shift->valid_from, 2); }
                 },
                 'Valid Till' => {
                     'order'    => 3,
@@ -396,7 +396,7 @@ our $settings = {
             'datatable' => {
                 'columns' =>  [
                     { "data" => "id" },
-                    { "data" => "valid_since" },
+                    { "data" => "valid_from" },
                     { "data" => "valid_till" },
                     { "data" => "provisioning_agreement" },
                     { "data" => "service" },
@@ -424,8 +424,8 @@ our $settings = {
                 },
                 'Valid Since' => {
                     'order'    => 2,
-                    'db_name'  => 'valid_since',
-                    'db_value' => sub { shift->datetime_display(shift->valid_since, 2); }
+                    'db_name'  => 'valid_from',
+                    'db_value' => sub { shift->datetime_display(shift->valid_from, 2); }
                 },
                 'Valid Till' => {
                     'order'    => 3,
@@ -477,7 +477,7 @@ our $settings = {
             'datatable' => {
                 'columns' =>  [
                     { "data" => "id" },
-                    { "data" => "valid_since" },
+                    { "data" => "valid_from" },
                     { "data" => "valid_till" },
                     { "data" => "resource_type" },
                     { "data" => "resource_handle" },

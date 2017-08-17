@@ -62,7 +62,7 @@ __PACKAGE__->table("currency");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 valid_since
+=head2 valid_from
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
@@ -102,7 +102,7 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "valid_since",
+  "valid_from",
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
@@ -186,8 +186,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-06-26 15:58:15
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:O2BYbFP2oucP+1OmO7X7jw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-17 21:37:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EIJwioh7p0Wso50PlkSVJQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

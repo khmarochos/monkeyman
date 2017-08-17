@@ -28,7 +28,8 @@ method _let_collection { { } };
 method add_resources(
         HashRef $resources!,
        DateTime $from!,
-       DateTime $till!
+       DateTime $till!,
+           Bool $stay_positive? = 0
 ) {
     my @present_periods = $self->find_periods($from, $till);
     if(@present_periods) {
@@ -70,6 +71,8 @@ method add_resources(
                         $resources_target->{ $resource_key } = exists($resources_target->{ $resource_key })
                             ? $resource_value + $resources_target->{ $resource_key }
                             : $resource_value;
+                        $resources_target->{ $resource_key } = 0
+                            if($stay_positive && $resources_target->{ $resource_key } < 0);
                     }
                 } elsif($present_till > $desired_till) {
                     # .......[(++++++++++]...)...
@@ -107,13 +110,19 @@ method add_resources(
 method sub_resources(
         HashRef $resources!,
        DateTime $from!,
-       DateTime $till!
+       DateTime $till!,
+           Bool $stay_positive? = 0
 ) {
     my $i = 0;
-    $self->add_resources({
-        map({ $_ = ($i++ % 2) ? 0 - $_ : $_; } each(%{ $resources }))
-        # ^^^ Each second element (the value) is being reverted
-    }, $from, $till);
+    $self->add_resources(
+        {
+            map({ $_ = ($i++ % 2) ? 0 - $_ : $_; } each(%{ $resources }))
+            # ^^^ Each second element (the value) is being reverted
+        },
+        $from,
+        $till,
+        $stay_positive
+    );
 }
 
 method get_resources(

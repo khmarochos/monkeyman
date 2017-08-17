@@ -20,8 +20,8 @@ method user_info {
     $json->{'data'} = {
         first_name  => $rs->first_name,
         last_name   => $rs->last_name,
+        valid_from  => $rs->valid_from,
         valid_till  => $rs->valid_till,
-        valid_since => $rs->valid_since,
         removed     => $rs->removed,
         id          => $rs->id,
     };

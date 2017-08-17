@@ -131,7 +131,16 @@ method detect_service_package (
     for(my $i = 0; $i < scalar(@candidates); $i++) {
         while(my($resource_type_id, $quantity) = each(%{ $resources })) {
             $service_package_id = undef;
-            foreach my $period ($candidates[$i]->{'resource_counter'}->find_periods($from_datetime, $till_datetime, 0)) {
+            foreach my $period (
+                sort(
+                    {
+                        my $available_a = $candidates[$i]->{'resource_counter'}->get_resources($a->[0], $a->[1], 1) // return(-1);
+                        my $available_b = $candidates[$i]->{'resource_counter'}->get_resources($b->[0], $b->[1], 1) // return( 1);
+                        return($available_a->{ $resource_type_id } <=> $available_b->{ $resource_type_id });
+                    }
+                        $candidates[$i]->{'resource_counter'}->find_periods($from_datetime, $till_datetime, 0)
+                )
+            ) {
                 $service_package_id = undef;
                 # What is available in this time period?
                 my $available = $candidates[$i]->{'resource_counter'}->get_resources($period->[0], $period->[1], 1);
@@ -148,7 +157,8 @@ method detect_service_package (
             $candidates[$i]->{'resource_counter'}->sub_resources(
                 { $resource_type_id => $quantity },
                 $from_datetime,
-                $till_datetime
+                $till_datetime,
+                1
             );
         }
     }
