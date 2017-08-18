@@ -10,9 +10,9 @@ var Route = Backbone.Router.extend({
         var url = "/ajax/i18n?language_code=" + global_setting.i18n.locale;
         controller.ajax.get( url , function( data ) {
             if( data.success ){
-                console.log("route i18n");
-                data.redirect = data.redirect ? data.redirect : "/person/list/all";
-                route.navigate( data.redirect, { trigger: true });
+                //console.log("route i18n");
+                //data.redirect = data.redirect ? data.redirect : "/person/list/all";
+                //route.navigate( data.redirect, { trigger: true });
                 location.reload();                
             }            
         }, 'root' );
@@ -44,7 +44,7 @@ var Route = Backbone.Router.extend({
             
             if( comp && comp.view ){
                 comp.view.urlBase = url;
-                comp.view.url = 'myproxy->'+ url + '.json';
+                comp.view.url = url + '.json';
             }
             
             controller.datatable.create( datatable );
@@ -74,7 +74,7 @@ var Route = Backbone.Router.extend({
                         
                         if( filter == "load" ){        
 
-                            $$("form").define("action", "update");
+                            $$("form").define("action", "update"); //
                             
                             controller.form.load( form_name, url, function( data1 ){
                                                             

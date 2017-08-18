@@ -217,21 +217,18 @@ function Datatable( components ){
     
     this.remove = function( o ) {
         var obj = o ? o : $$('main');
-        if( obj ){
-            //var views = obj.getChildViews();
-            /*views.forEach( function(item, i, arr){
-                obj.removeView( item.config.id );
-                console.log( "views", item.config.id );
-            });*/
-            if( $$('datatable_actions') && $$('datatable_actions').hasEvent("onMenuItemClick") ){
-                $$('datatable_actions').detachEvent("onMenuItemClick");
-            }
-            obj.removeView("form");
-            obj.removeView("datatable_pager");
-            obj.removeView("datatable_toolbar");
-            obj.removeView("datatable");
-            console.log("remove datatable...");
+
+        if( $$('contextmenu') ) {
+            $$('contextmenu').clearAll();
+            $$('contextmenu').destructor();
         }
+        
+        if( $$('form') ) obj.removeView("form");
+        if( $$('datatable') ) obj.removeView("datatable");
+        if( $$('datatable_pager') ) obj.removeView("datatable_pager");
+        if( $$('datatable_toolbar') ) obj.removeView("datatable_toolbar");
+
+        console.log("remove datatable...");
     };
         
     this.create = function( id ){
@@ -244,7 +241,7 @@ function Datatable( components ){
         me.rows.data  = {};
         this.remove( obj );
         
-        if ( obj && isNaN( datatable  ) ){
+        if ( obj && datatable ){
             console.log('datatable '+ id +' start ... ');
                                     
             //toolbar
@@ -257,7 +254,19 @@ function Datatable( components ){
                 obj.addView( datatable.view  );
 
                 //contextmenu
-                webix.ui( this.components.datatable.contextmenu.view ).attachTo( $$( datatable.view.id ) );
+                var contextmenu = webix.copy( me.components.datatable.contextmenu.view );
+                
+                if( datatable.contextmenu ) {
+                    var arr = contextmenu.data;
+                    if( arr ){
+                        arr.push( { $template:"Separator" } );
+                        datatable.contextmenu.forEach( function( item, i ){
+                            arr.push( item );
+                        });
+                    }
+                }
+                
+                webix.ui( contextmenu ).attachTo( $$( datatable.view.id ) );
 
                 // refresh component
                 $$( datatable.view.id ).attachEvent("onSelectChange", function(){
@@ -265,12 +274,13 @@ function Datatable( components ){
                 });
 
                 $$( datatable.view.id ).attachEvent("onBeforeLoad", function(){
-                    this.showOverlay( webix.i18n.loading );
+                    controller.ProgressShow( datatable.view.id );
                 });
 
                 $$( datatable.view.id ).attachEvent("onAfterLoad", function(){
-                    this.hideOverlay();
-                    if (!this.count()) this.showOverlay( webix.i18n.loading_no_data );   
+                    controller.ProgressHide( datatable.view.id );
+                    if (!this.count()) this.showOverlay( webix.i18n.loading_no_data );
+                    
                 });
                 
                 $$( datatable.view.id ).refresh();
@@ -306,6 +316,7 @@ function Datatable( components ){
                         webix.message( webix.i18n.datatable.do_row_select );
                     }
                 });
+                $$('datatable_actions').refresh();
             }
             // button add
             $$("datatable_add").attachEvent("onItemClick", function(){
@@ -341,18 +352,29 @@ function Datatable( components ){
             $$("contextmenu").attachEvent("onItemClick", function(id){
                 var obj    = this.getItem(id);
                 var action = obj ? obj.action : false;
+                var url    = "";
+
+                if ($$("tree")) $$("tree").unselectAll();
                 
-                if( me.rows.data.id && obj ){
-                    $$("tree").unselectAll();
-                    action = obj.action;                    
-                    var url = name_id + "/form/" + action + "/" + me.rows.data.id;
-                    route.navigate( url , { trigger: true });
+                if( action == 'route' ) {
+                    url = obj.url;
+                    if( datatable ){
+                        url = url.replace('{{id}}', me.rows.data.id );
+                    }
+                    
                 }
                 else{
-                    webix.message( webix.i18n.datatable.do_row_select );    
+                    url = "/" + name_id + "/form/" + action + "/" + me.rows.data.id;
                 }
+                
+                if( url ) route.navigate( url , { trigger: true });
             });
-            
+
+            $$('datatable').attachEvent('onBeforeContextMenu', function(id, e, node){
+                this.select( id );
+                return true;
+            });            
+
             console.log('datatable '+ id +' is created');
         }
     };

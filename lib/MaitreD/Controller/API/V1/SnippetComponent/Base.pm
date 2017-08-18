@@ -13,7 +13,7 @@ use Data::Dumper;
 
 method user_info {
     my $json = { 'success' => \1 };
-    
+        
     my $rs = $self->stash->{'authorized_person_result'};
     
     #print Dumper( ref $rs );

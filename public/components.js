@@ -45,7 +45,7 @@ function Components (){
                                                         function(text,data,http) {
                                                             var res = data.json();
                                                             if( res.success == 1 ){
-                                                                webix.send( res.redirect , null, "GET");
+                                                                window.location.href =res.redirect;
                                                             }
                                                             else{
                                                                 webix.message( res.message );
@@ -76,7 +76,9 @@ function Components (){
         
         webix.ui({
             id   :'root',
-            type :"wide",
+            //type :"material",
+            //type :"wide",
+            type:"space",
             rows :[
                 me.header.view,
                 {
@@ -87,7 +89,7 @@ function Components (){
                             me.tree.view,
                             { view: "resizer" },
                             {
-                                view   :"scrollview",
+                                view   : "scrollview",
                                 body   : {
                                     id     : 'main',
                                     rows   : []                                    
@@ -138,32 +140,66 @@ function Components (){
     
     this.header = {
         view: {
-            view:"toolbar",
-            id  :"header",
-            cols:[
+            view: "toolbar",
+            id  : "header",
+            cols: [
                 {
                     view      : "menu",
                     id        : "top.menu",
-                    autoheight: true, 
+                    //width     : 230,
+                    autowidth : true,
                     data      : [
                         {
                             id     : "header.user",
                             value  : "",
+                            type   :"icon",
+                            icon   :"users",
                             submenu:[
                                 {
                                     id    : 'profile',
+                                    type  : "icon",
+                                    icon  : "cog",
                                     value : 'Profile'
                                 }
                             ]
                         }
-                    ]
+                    ],
+                    type:{
+                        subsign : true
+                    }                    
                 },
+                {},
+                {
+                    view  : "button",
+                    badge : 12,
+                    icon  : "envelope",
+                    type  : "icon",
+                    //label : "Message:",
+                    align : "right",
+                    width : 40
+                },
+                {
+                    view      : "combo", 
+                    id        : "changeThemes",
+                    label     : 'Themes:',
+                    //labelWidth: 130,
+                    //width     : 230,
+                    labelAlign: "right",
+                    align     : "right",
+                    value     : "en-US",
+                    options: [
+                        "air",
+                        "aircompact",
+                        "clouds"
+                    ]
+                },                
                 {
                     view      : "combo", 
                     id        : "changeLocale",
                     label     : 'Change locale:',
+                    labelAlign: "right",
                     labelWidth: 130,
-                    width     : 230,
+                    //width     : 230,
                     align     : "right",
                     value     : "en-US",
                     options: [
@@ -186,7 +222,7 @@ function Components (){
                             function(text,data,http) {
                                 var res = data.json();
                                 if( res.success == 1 ){
-                                    webix.send( res.redirect , null, "GET");                                    
+                                    window.location.href = res.redirect;
                                 }
                                 else{
                                     webix.message( res.message );
@@ -207,7 +243,7 @@ function Components (){
             cols:[
                 {
                     autoheight:true, 
-                    template  :'&copy 2017'
+                    template  :'&copy 2017. Tucha'
                 }
             ]
         }
@@ -267,9 +303,10 @@ function Components (){
         },
         contextmenu    : {
             view: {
-                view :"contextmenu",
-                id   :"contextmenu",
-                data:[
+                view     :"contextmenu",
+                id       :"contextmenu",
+                width    : 300,
+                data     : [
                     {
                         value : webix.i18n.edit,
                         action: "load"
@@ -289,12 +326,13 @@ function Components (){
                 view        : "datatable",
                 id          : "datatable",
                 select      : "row",
-                autoConfig  : true, 
+                editable    : true,
+                scrollY     : true,
+                scrollX     : false,
                 footer      : true,
                 resizeColumn: true,
                 urlBase     : "/person/list/all",
-                url         : "myproxy->/person/list/all.json",
-                //save        : "myproxy->/person/list/all.json",           
+                url         : "/person/list/all.json",
                 columns     :[
                     {
                         id       : "id",
@@ -334,32 +372,19 @@ function Components (){
                         header   : webix.i18n.datatable.valid_till,
                         footer   : webix.i18n.datatable.valid_till,
                         sort     : "server",
-                        startdate: new Date(),
-                        fillspace: true
-                    },
-                    /*{
-                        //id       : "actions",
                         fillspace: true,
-                        footer   : "actions",
-                        editor   : "combo",
-                        //value    : 1,
-                        options  : [
-                            {  value:'...' },
-                            {  value:'Provisioning Agreements' },
-                            {  value:'Partnership Agreements' },
-                            {  value:'Contractors' },
-                            {  value:'Corporations' },
-                        ]
-                    }*/
+                        format   : webix.i18n.dateFormatStr
+                    }
                 ],
                 pager:"datatable_pager"
             },
             // toolbar person
             toolbar: {
                 view: {
-                    id  : "datatable_toolbar",
-                    view: "toolbar",
-                    cols: [
+                    id   : "datatable_toolbar",
+                    view : "toolbar",
+                    //type : "clean",
+                    cols : [
                         {
                             view : "button",
                             id   : "datatable_add",
@@ -368,49 +393,14 @@ function Components (){
                             label: webix.i18n.add,
                             width: 100,
                             align: "left"
-                        },
-                        {
-                            view      : "menu",
-                            id        : "datatable_actions",
-                            autowidth : true, 
-                            autoheight: true,
-                            type      : {
-                                subsign:true
-                            },                            
-                            data       :[
-                                {
-                                    id      : "сommunication",
-                                    value   : webix.i18n.communication,
-                                    submenu:[
-                                        {
-                                            id   : 'provisioning_agreement',
-                                            value: webix.i18n.provisioning_agreements,
-                                            url  : '/provisioning_agreement/list/related_to/person/{{id}}'
-                                        },
-                                        {
-                                            id   : 'partnership_agreement',
-                                            value: webix.i18n.partnership_agreements,
-                                            url  : '/partnership_agreement/list/related_to/person/{{id}}',
-                                        },
-                                        {
-                                            id   : 'contractor',
-                                            value: webix.i18n.contractors,
-                                            url  : '/contractor/list/related_to/person/{{id}}',
-                                        },
-                                        {
-                                            id   : 'corporation',
-                                            value: webix.i18n.corporations,
-                                            url  : '/corporation/list/related_to/person/{{id}}',
-                                        },
-                                    ]
-                                }
-                            ]
-                        },             
-                        { gravity: 2},
+                        },            
+                        { gravity: 1},
+                        {},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
                         { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
-                        { gravity: 2},
+                        { gravity: 1},
+                        {},
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
@@ -431,7 +421,34 @@ function Components (){
                         }
                     ]
                 }
-            }          
+            },
+            //context person
+            'contextmenu': [
+                {
+                    id     : 'provisioning_agreement',
+                    value  : webix.i18n.provisioning_agreements,
+                    url    : '/provisioning_agreement/list/related_to/person/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'partnership_agreement',
+                    value  : webix.i18n.partnership_agreements,
+                    url    : '/partnership_agreement/list/related_to/person/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'contractor',
+                    value  : webix.i18n.contractors,
+                    url    : '/contractor/list/related_to/person/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'corporation',
+                    value  : webix.i18n.corporations,
+                    url    : '/corporation/list/related_to/person/{{id}}',
+                    action : 'route'
+                }
+            ]
         },
         /*
             contractors
@@ -496,49 +513,12 @@ function Components (){
                             label: webix.i18n.add,
                             width: 100,
                             align: "left"
-                        },                        
-                        {
-                            view      : "menu",
-                            id        : "datatable_actions",
-                            autowidth : true, 
-                            autoheight: true,
-                            type      : {
-                                subsign:true
-                            },                            
-                            data       :[
-                                {
-                                    id      : "сommunication",
-                                    value   : webix.i18n.communication,
-                                    submenu:[
-                                        {
-                                            id   : 'provisioning_agreement',
-                                            value: webix.i18n.provisioning_agreements,
-                                            url  : '/provisioning_agreement/list/related_to/contractor/{{id}}'
-                                        },
-                                        {
-                                            id   : 'partnership_agreement',
-                                            value: webix.i18n.partnership_agreements,
-                                            url  : '/partnership_agreement/list/related_to/contractor/{{id}}',
-                                        },
-                                        {
-                                            id   : 'person',
-                                            value: webix.i18n.person,
-                                            url  : '/person/list/related_to/contractor/{{id}}',
-                                        },
-                                        {
-                                            id   : 'corporation',
-                                            value: webix.i18n.corporations,
-                                            url  : '/corporation/list/related_to/person/{{id}}',
-                                        },
-                                    ]
-                                }
-                            ]
-                        },             
-                        { gravity: 2},                        
+                        },                                     
+                        { gravity: 1},                        
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
                         { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
-                        { gravity: 2},
+                        { gravity: 1},
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
@@ -559,7 +539,33 @@ function Components (){
                         }
                     ]
                 }
-            }          
+            },
+            contextmenu: [
+                {
+                    id     : 'provisioning_agreement',
+                    value  : webix.i18n.provisioning_agreements,
+                    url    : '/provisioning_agreement/list/related_to/contractor/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'partnership_agreement',
+                    value  : webix.i18n.partnership_agreements,
+                    url    : '/partnership_agreement/list/related_to/contractor/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'person',
+                    value  : webix.i18n.person,
+                    url    : '/person/list/related_to/contractor/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'corporation',
+                    value  : webix.i18n.corporations,
+                    url    : '/corporation/list/related_to/person/{{id}}',
+                    action : 'route'
+                }
+            ]
             
         },
         /*
@@ -575,7 +581,6 @@ function Components (){
                 resizeColumn: true,
                 urlBase     : "/corporation/list/all",
                 url         : "/corporation/list/all.json",
-                //save        : "myproxy->/corporation/list/all.json",
                 columns     : [
                     {
                         id       : "id",
@@ -626,48 +631,11 @@ function Components (){
                             width: 100,
                             align: "left"
                         },                        
-                        {
-                            view      : "menu",
-                            id        : "datatable_actions",
-                            autowidth : true, 
-                            autoheight: true,
-                            type      : {
-                                subsign:true
-                            },                            
-                            data       :[
-                                {
-                                    id      : "сommunication",
-                                    value   : webix.i18n.communication,
-                                    submenu:[
-                                        {
-                                            id   : 'provisioning_agreement',
-                                            value: webix.i18n.provisioning_agreements,
-                                            url  : '/provisioning_agreement/list/related_to/corporation/{{id}}'
-                                        },
-                                        {
-                                            id   : 'partnership_agreement',
-                                            value: webix.i18n.partnership_agreements,
-                                            url  : '/partnership_agreement/list/related_to/corporation/{{id}}',
-                                        },
-                                        {
-                                            id   : 'person',
-                                            value: webix.i18n.person,
-                                            url  : '/person/list/related_to/corporation/{{id}}',
-                                        },
-                                        {
-                                            id   : 'corporation',
-                                            value: webix.i18n.corporations,
-                                            url  : '/contractor/list/related_to/corporation/{{id}}',
-                                        },
-                                    ]
-                                }
-                            ]
-                        },
-                        { gravity: 2},
+                        { gravity: 1},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
                         { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
-                        { gravity: 2},
+                        { gravity: 1},
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
@@ -688,7 +656,33 @@ function Components (){
                         }
                     ]
                 }
-            }          
+            },
+            contextmenu: [
+                {
+                    id     : 'provisioning_agreement',
+                    value  : webix.i18n.provisioning_agreements,
+                    url    : '/provisioning_agreement/list/related_to/corporation/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'partnership_agreement',
+                    value  : webix.i18n.partnership_agreements,
+                    url    : '/partnership_agreement/list/related_to/corporation/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'person',
+                    value  : webix.i18n.person,
+                    url    : '/person/list/related_to/corporation/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'corporation',
+                    value  : webix.i18n.corporations,
+                    url    : '/contractor/list/related_to/corporation/{{id}}',
+                    action : 'route'
+                }
+            ]
             
         },
         /*
@@ -704,7 +698,6 @@ function Components (){
                 resizeColumn: true,
                 urlBase     : "/provisioning_agreement/list/all",
                 url         : "/provisioning_agreement/list/all.json",
-                //save        : "myproxy->/provisioning_agreement/list/all.json",
                 columns     : [
                     {
                         id       : "id",
@@ -771,43 +764,11 @@ function Components (){
                             width: 100,
                             align: "left"
                         },                        
-                        {
-                            view      : "menu",
-                            id        : "datatable_actions",
-                            autowidth : true, 
-                            autoheight: true,
-                            type      : {
-                                subsign:true
-                            },                            
-                            data       :[
-                                {
-                                    id      : "сommunication",
-                                    value   : webix.i18n.communication,
-                                    submenu:[
-                                        {
-                                            id   : 'person',
-                                            value: webix.i18n.person,
-                                            url  : '/person/list/related_to/provisioning_agreement/{{id}}',
-                                        },
-                                        {
-                                            id   : 'provisioning_obligation',
-                                            value: webix.i18n.provisioning_obligation,
-                                            url  : '/provisioning_obligation/list/related_to/provisioning_agreement/{{id}}',
-                                        },
-                                        {
-                                            id   : 'resource_piece',
-                                            value: webix.i18n.resource_piece,
-                                            url  : '/resource_piece/list/related_to/provisioning_agreement/{{id}}',
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        { gravity: 2},
+                        { gravity: 1},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
                         { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
-                        { gravity: 2},
+                        { gravity: 1},
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
@@ -828,7 +789,27 @@ function Components (){
                         }
                     ]
                 }
-            } // toolbar
+            }, // toolbar
+            contextmenu:[
+                {
+                    id     : 'person',
+                    value  : webix.i18n.person,
+                    url    : '/person/list/related_to/provisioning_agreement/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'provisioning_obligation',
+                    value  : webix.i18n.provisioning_obligation,
+                    url    : '/provisioning_obligation/list/related_to/provisioning_agreement/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'resource_piece',
+                    value  : webix.i18n.resource_piece,
+                    url    : '/resource_piece/list/related_to/provisioning_agreement/{{id}}',
+                    action : 'route'
+                }
+            ]
         },
         /*
             provisioning_obligation
@@ -909,38 +890,11 @@ function Components (){
                             width: 100,
                             align: "left"
                         },                        
-                        {
-                            view      : "menu",
-                            id        : "datatable_actions",
-                            autowidth : true, 
-                            autoheight: true,
-                            type      : {
-                                subsign:true
-                            },                            
-                            data       :[
-                                {
-                                    id      : "сommunication",
-                                    value   : webix.i18n.communication,
-                                    submenu:[
-                                        {
-                                            id   : 'provisioning_agreement',
-                                            value: webix.i18n.provisioning_agreements,
-                                            url  : '/provisioning_agreement/list/related_to/provisioning_obligation/{{id}}',
-                                        },
-                                        {
-                                            id   : 'resource_piece',
-                                            value: webix.i18n.resource_piece,
-                                            url  : '/resource_piece/list/related_to/provisioning_obligation/{{id}}',
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        { gravity: 2},
+                        { gravity: 1},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
                         { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
-                        { gravity: 2},
+                        { gravity: 1},
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
@@ -961,7 +915,21 @@ function Components (){
                         }
                     ]
                 }
-            } // toolbar           
+            }, // toolbar
+            contextmenu: [
+                {
+                    id     : 'provisioning_agreement',
+                    value  : webix.i18n.provisioning_agreements,
+                    url    : '/provisioning_agreement/list/related_to/provisioning_obligation/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'resource_piece',
+                    value  : webix.i18n.resource_piece,
+                    url    : '/resource_piece/list/related_to/provisioning_obligation/{{id}}',
+                    action : 'route'
+                }
+            ]
         },
         /*
             resource_piece
@@ -977,7 +945,6 @@ function Components (){
                 resizeColumn: true,
                 urlBase     : "/resource_piece/list/all",
                 url         : "/resource_piece/list/all.json",
-                //save        : "myproxy->/resource_piece/list/all.json",
                 columns     : [
                     {
                         id       : "id",
@@ -1042,38 +1009,11 @@ function Components (){
                             width: 100,
                             align: "left"
                         },                        
-                        {
-                            view      : "menu",
-                            id        : "datatable_actions",
-                            autowidth : true, 
-                            autoheight: true,
-                            type      : {
-                                subsign:true
-                            },                            
-                            data       :[
-                                {
-                                    id      : "сommunication",
-                                    value   : webix.i18n.communication,
-                                    submenu:[
-                                        {
-                                            id   : 'provisioning_agreement',
-                                            value: webix.i18n.provisioning_agreements,
-                                            url  : '/provisioning_agreement/list/related_to/resource_piece/{{id}}',
-                                        },
-                                        {
-                                            id   : 'provisioning_obligation',
-                                            value: webix.i18n.provisioning_obligation,
-                                            url  : '/provisioning_obligation/list/related_to/resource_piece/{{id}}',
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        { gravity: 2},
+                        { gravity: 1},
                         { view: "button", value: "PNG"  , id: "datatable_export_png"  , width:100, align:"left" },
                         { view: "button", value: "PDF"  , id: "datatable_export_pdf"  , width:100, align:"left" },
                         { view: "button", value: "Excel", id: "datatable_export_excel", width:100, align:"left" },
-                        { gravity: 2},
+                        { gravity: 1},
                         {
                             view: "button", value: webix.i18n.active  , id: "datatable_load_active"  , width:100, align:"left",
                             click: function(){
@@ -1094,7 +1034,21 @@ function Components (){
                         }
                     ]
                 }                
-            } // toolbar resource_piece           
+            }, // toolbar resource_piece
+            contextmenu: [
+                {
+                    id     : 'provisioning_agreement',
+                    value  : webix.i18n.provisioning_agreements,
+                    url    : '/provisioning_agreement/list/related_to/resource_piece/{{id}}',
+                    action : 'route'
+                },
+                {
+                    id     : 'provisioning_obligation',
+                    value  : webix.i18n.provisioning_obligation,
+                    url    : '/provisioning_obligation/list/related_to/resource_piece/{{id}}',
+                    action : 'route'
+                }
+            ]
         }
         
     };
