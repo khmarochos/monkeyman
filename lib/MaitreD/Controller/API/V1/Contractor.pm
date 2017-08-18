@@ -201,8 +201,8 @@ method form_add {
                     ->resultset('Contractor')
                     ->create( {
                         name               => $data->{'name'},
-                        valid_till         => $data->{'valid_till'}  || undef,
-                        valid_since        => $data->{'valid_since'} || \'NOW()',
+                        valid_till         => $data->{'valid_till'} || undef,
+                        valid_from         => $data->{'valid_from'} || \'NOW()',
                         contractor_type_id => $data->{'contractor_type_id'},
                         provider           => $data->{'provider'},
                     } );
@@ -214,8 +214,8 @@ method form_add {
                     ->create({
                         person_id      => $item->{'person_id'},
                         contractor_id  => $rs_data->id,
-                        valid_till     => $item->{'valid_till'}  || undef,
-                        valid_since    => $item->{'valid_since'} || \'NOW()',
+                        valid_till     => $item->{'valid_till'} || undef,
+                        valid_from     => $item->{'valid_from'} || \'NOW()',
                         admin          => $item->{'admin'},
                         billing        => $item->{'billing'},
                         tech           => $item->{'tech'}
@@ -274,7 +274,7 @@ method form_update {
                 $rs_data->update( {
                     name               => $data->{'name'}        || $rs_data->name,
                     valid_till         => $data->{'valid_till'}  || $rs_data->valid_till,
-                    valid_since        => $data->{'valid_since'} || $rs_data->valid_since,
+                    valid_from         => $data->{'valid_from'}  || $rs_data->valid_from,
                     contractor_type_id => $data->{'contractor_type_id'} || $rs_data->contractor_type_id,
                     provider           => $data->{'provider'}    || $rs_data->provider,
                 } );
@@ -296,8 +296,8 @@ method form_update {
                         ->create({
                             person_id      => $item->{'person_id'},
                             contractor_id  => $data->{'id'},
-                            valid_till     => $item->{'valid_till'}  || undef,
-                            valid_since    => $item->{'valid_since'} || \'NOW()',
+                            valid_from     => $item->{'valid_from'} || \'NOW()',
+                            valid_till     => $item->{'valid_till'} || undef,
                             admin          => $item->{'admin'},
                             billing        => $item->{'billing'},
                             tech           => $item->{'tech'}

@@ -236,8 +236,8 @@ method form_add {
                             ->create( {
                                 first_name         => $data->{'first_name'},
                                 last_name          => $data->{'last_name'},
-                                valid_till         => $data->{'valid_till'}  || undef,
-                                valid_since        => $data->{'valid_since'} || \'NOW()',
+                                valid_from         => $data->{'valid_from'} || \'NOW()',
+                                valid_till         => $data->{'valid_till'} || undef,
                                 language_id        => $data->{'language_id'},
                                 datetime_format_id => $data->{'datetime_format_id'},
                                 timezone           => $data->{'timezone'},
@@ -252,8 +252,8 @@ method form_add {
                                 ->create({
                                     person_id   => $rs_data->id,
                                     email       => $item->{'email'},
-                                    valid_till  => $item->{'valid_till'}  || undef,
-                                    valid_since => $item->{'valid_since'} || \'NOW()',
+                                    valid_from  => $item->{'valid_from'} || \'NOW()',
+                                    valid_till  => $item->{'valid_till'} || undef,
                                 });
                             
                         }
@@ -265,8 +265,8 @@ method form_add {
                                 ->create({
                                     person_id   => $rs_data->id,
                                     phone       => $item->{'phone'},
-                                    valid_till  => $item->{'valid_till'}  || undef,
-                                    valid_since => $item->{'valid_since'} || \'NOW()',
+                                    valid_from  => $item->{'valid_from'} || \'NOW()',
+                                    valid_till  => $item->{'valid_till'} || undef,
                                 });
                             
                         }
@@ -275,7 +275,7 @@ method form_add {
                             ->hm_schema
                             ->resultset('PersonPassword')
                             ->create({
-                                valid_since => \'NOW()',
+                                valid_from  => \'NOW()',
                                 valid_till  => undef,
                                 removed     => undef,
                                 password    => $data->{'password'},
@@ -286,7 +286,7 @@ method form_add {
                             ->hm_schema
                             ->resultset('PersonXPerson')
                             ->create({
-                                valid_since      => \'NOW()',
+                                valid_from       => \'NOW()',
                                 valid_till       => undef,
                                 removed          => undef,
                                 parent_person_id => $self->stash->{'authorized_person_result'}->id,
@@ -373,8 +373,8 @@ method form_update {
                         $rs_find->update( {
                             first_name         => $data->{'first_name'}  || $rs_find->first_name,
                             last_name          => $data->{'last_name'}   || $rs_find->last_name,
+                            valid_from         => $data->{'valid_from'}  || undef,
                             valid_till         => $data->{'valid_till'}  || undef,
-                            valid_since        => $data->{'valid_since'} || undef,
                             language_id        => $data->{'language_id'},
                             datetime_format_id => $data->{'datetime_format_id'},
                             timezone           => $data->{'timezone'},
@@ -399,8 +399,8 @@ method form_update {
         
                         if( $rs_find && $data->{'password'} ){
                             $rs_find->update({
-                                valid_since => $data->{'valid_since'} || undef,
-                                valid_till  => $data->{'valid_till'}  || undef,
+                                valid_from  => $data->{'valid_from'} || undef,
+                                valid_till  => $data->{'valid_till'} || undef,
                                 removed     => undef,
                                 password    => $data->{'password'},
                                 person_id   => $data->{'id'}
@@ -411,7 +411,7 @@ method form_update {
                                 ->hm_schema
                                 ->resultset('PersonPassword')
                                 ->create({
-                                    valid_since => \'NOW()',
+                                    valid_from  => \'NOW()',
                                     valid_till  => undef,
                                     removed     => undef,
                                     password    => $data->{'password'},
@@ -468,8 +468,8 @@ method form_update {
 
                             if( $rs_find ){
                                 $rs_find->update({
-                                    valid_since => $item->{'valid_since'} || undef,
-                                    valid_till  => $item->{'valid_till'}  || undef,
+                                    valid_from  => $item->{'valid_from'} || undef,
+                                    valid_till  => $item->{'valid_till'} || undef,
                                     phone       => $item->{'phone'},
                                 });
                             }     
@@ -500,8 +500,8 @@ method form_update {
                                     ->hm_schema
                                     ->resultset( $snippet_link->{'person_x_phone'} )
                                     ->create({
-                                        valid_since => $item->{'valid_since'} || undef,
-                                        valid_till  => $item->{'valid_till'}  || undef,
+                                        valid_from  => $item->{'valid_from'} || undef,
+                                        valid_till  => $item->{'valid_till'} || undef,
                                         phone       => $item->{'phone'},
                                         person_id   => $data->{'id'},
                                     });
@@ -590,8 +590,8 @@ method form_update {
 
                             if( $rs_find ){
                                 $rs_find->update({
-                                    valid_since => $item->{'valid_since'} || undef,
-                                    valid_till  => $item->{'valid_till'}  || undef,
+                                    valid_from  => $item->{'valid_from'} || undef,
+                                    valid_till  => $item->{'valid_till'} || undef,
                                     email       => $item->{'email'},
                                 });
                             }                            
@@ -621,8 +621,8 @@ method form_update {
                                     ->create({
                                         email       => $item->{'email'},
                                         person_id   => $data->{'id'},
-                                        valid_since => $item->{'valid_since'} || \'NOW()',
-                                        valid_till  => $item->{'valid_till'}  || undef,
+                                        valid_from  => $item->{'valid_from'} || \'NOW()',
+                                        valid_till  => $item->{'valid_till'} || undef,
                                         removed     => undef,
                                     });
                                 

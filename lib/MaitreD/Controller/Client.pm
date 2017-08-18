@@ -53,7 +53,7 @@ method sesh {
             ->md_schema
             ->resultset('Session')
             ->populate([ {
-                valid_since => $now,
+                valid_from  => $now,
                 valid_till  => $now->add(DateTime::Duration->new(hours => 12)), # FIXME: declare a constant!
                 uuid        => $session_uuid
             } ]);

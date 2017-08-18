@@ -162,7 +162,7 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) { #FIXME: Make a parameter
                 $contractor = $db_schema
                     ->resultset('Contractor')
                     ->create({
-                        valid_since             => $now, 
+                        valid_from              => $now, 
                         valid_till              => undef,
                         removed                 => undef,
                         name                    => $contractor_name,
@@ -172,7 +172,7 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) { #FIXME: Make a parameter
             $provisioning_agreement = $db_schema
                 ->resultset('ProvisioningAgreement')
                 ->create({
-                    valid_since             => $now, 
+                    valid_from              => $now, 
                     valid_till              => undef,
                     removed                 => undef,
                     name                    => $provisioning_agreement_name,
@@ -243,7 +243,7 @@ foreach my $cloudstack_handle (qw(Tucha.Z1 Tucha.Z2)) { #FIXME: Make a parameter
                 $resource_piece = $db_schema
                     ->resultset('ResourcePiece')
                     ->create({
-                        valid_since         => $now,
+                        valid_from          => $now,
                         valid_till          => undef,
                         removed             => undef,
                         resource_type_id    => 1, #FIXME

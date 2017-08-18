@@ -230,7 +230,7 @@ method signup {
             ->id;
 
         my $person_id = ($hm_schema->resultset('Person')->populate([ {
-            valid_since         => undef,
+            valid_from          => undef,
             valid_till          => undef,
             removed             => undef,
             first_name          => $person_name->{'first'},
@@ -293,7 +293,7 @@ method confirm {
                 $hm_schema->txn_begin;
 
                 $r_person->update({
-                    valid_since     => $now,
+                    valid_from      => $now,
                     first_name      => $v->param('first-name'),
                     middle_name     => $v->param('middle-name'),
                     last_name       => $v->param('last-name'),
@@ -336,7 +336,7 @@ method confirm {
                 $hm_schema
                     ->resultset('PersonPassword')
                     ->create({
-                        valid_since => $now,
+                        valid_from  => $now,
                         valid_till  => undef,
                         removed     => undef,
                         password    => $v->param('password'),
@@ -376,9 +376,9 @@ method confirm {
         return
             unless(defined($r_person));
 
-        unless(defined($r_person_email->valid_since)) {
+        unless(defined($r_person_email->valid_from)) {
             $r_person_email->update({
-                valid_since => $now
+                valid_from => $now
             });
             $self->web_message_send(
                 type        => 'INFO',
@@ -387,7 +387,7 @@ method confirm {
             );
         }
 
-        if(defined($r_person->valid_since)) {
+        if(defined($r_person->valid_from)) {
 
             # The person has been confirmed already
             $self->web_message_send(
@@ -498,7 +498,7 @@ method _add_email(
     my $hm_schema = $self->hm_schema;
 
     my $person_email_id = ($hm_schema->resultset('PersonEmail')->populate([ {
-        valid_since         => undef, 
+        valid_from          => undef, 
         valid_till          => undef,
         removed             => undef,
         email               => $email,
@@ -508,7 +508,7 @@ method _add_email(
     my $token = lc(Data::UUID->new->create_str());
 
     $hm_schema->resultset('PersonEmailConfirmation')->create({
-        valid_since         => $now,
+        valid_from          => $now,
         valid_till          => $now->add(DateTime::Duration->new(hours => 12)), # FIXME: declare a constant!
         removed             => undef,
         token               => $token,

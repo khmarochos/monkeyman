@@ -187,7 +187,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                     $contractor = $db_schema
                         ->resultset('Contractor')
                         ->create({
-                            valid_since             => $now, 
+                            valid_from              => $now, 
                             valid_till              => undef,
                             removed                 => undef,
                             name                    => $contractor_name,
@@ -201,7 +201,7 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
                 $provisioning_agreement = $db_schema
                     ->resultset('ProvisioningAgreement')
                     ->create({
-                        valid_since             => $now, 
+                        valid_from              => $now, 
                         valid_till              => undef,
                         removed                 => undef,
                         name                    => $provisioning_agreement_name,
@@ -307,94 +307,6 @@ if($parameters->get_mode =~ /^cloudstack$/i) {
 
             $db_schema->txn_commit;
 
-   #        foreach my $virtual_machine ($cloudstack_api->perform_action(
-   #            type        => 'VirtualMachine',
-   #            action      => 'list',
-   #            parameters  => {
-   #                filter_by_domain_id => $domain->get_id,
-   #                all                 => 1
-   #            },
-   #            requested   => { element => 'element' },
-   #            best_before => 0
-   #        )) {
-   #            my $resources = {
-   #                'vdc.element.cpu'   => $virtual_machine->get_value('/cpunumber'),
-   #                'vdc.element.ram'   => $virtual_machine->get_value('/memory'),
-   #                'vdc.element.ssd'   => 0,
-   #                'ip.ip.ipv4'        => 0
-   #            };
-   #            $logger->debugf("Found the %s virtual machine", $virtual_machine);
-   #            foreach my $volume ($cloudstack_api->perform_action(
-   #                type        => 'Volume',
-   #                action      => 'list',
-   #                parameters  => {
-   #                    filter_by_virtual_machine_id    => $virtual_machine->get_id,
-   #                    all                             => 1
-   #                },
-   #                requested   => { element => 'element' },
-   #                best_before => 0
-   #            )) {
-   #                $logger->debugf("Found the %s volume", $volume);
-   #                $resources->{'vdc.element.ssd'} += $volume->get_value('size');
-   #            }
-   #            foreach my $nic ($cloudstack_api->perform_action(
-   #                type        => 'Nic',
-   #                action      => 'list',
-   #                parameters  => {
-   #                    filter_by_virtual_machine_id    => $virtual_machine->get_id
-   #                },
-   #                requested   => { element => 'element' },
-   #                best_before => 0
-   #            )) {
-   #                my @ipv4_addresses = (
-   #                    $nic->get_values('/ipaddress'),
-   #                    $nic->get_values('/secondaryip/ipaddress')
-   #                ); 
-   #                $logger->debugf("Found the %s NIC (%s)", $nic, join(', ', @ipv4_addresses));
-   #                $resources->{'ip.ip.ipv4'} += scalar(@ipv4_addresses);
-   #            }
-   #            my $resource_piece = $db_schema
-   #                ->resultset('ResourcePiece')
-   #                ->search({
-   #                    resource_group_id   => $resource_group->id,
-   #                    resource_handle     => $virtual_machine->get_id
-   #                })
-   #                ->filter_validated(mask => 0b000111)
-   #                ->single;
-   #            unless(defined($resource_piece)) {
-   #                $logger->infof("Creating the %s resource piece", $virtual_machine->get_id);
-   #                $resource_piece = $db_schema
-   #                    ->resultset('ResourcePiece')
-   #                    ->create({
-   #                        valid_since         => $now,
-   #                        valid_till          => undef,
-   #                        removed             => undef,
-   #                        resource_type_id    => 1, #FIXME
-   #                        resource_group_id   => $resource_group->id,
-   #                        resource_handle     => $virtual_machine->get_id
-   #                    });
-   #            }
-   #            foreach my $service_type_full_name (keys(%{ $resources })) {
-   #                if(defined(my $service_type_id = $db_schema
-   #                    ->resultset('ServiceType')
-   #                    ->find_by_full_name(service_type_full_name => $service_type_full_name)
-   #                )) {
-   #                    $db_schema
-   #                        ->resultset('ProvisioningObligation')
-   #                        ->update_obligations(
-   #                            provisioning_agreement  => $provisioning_agreement,
-   #                            resource_piece          => $resource_piece,
-   #                            service_type_id         => $service_type_id,
-   #                            service_level_id        => 1, #FIXME
-   #                            quantity                => $resources->{ $service_type_full_name },
-   #                            now                     => $now
-   #                        );
-   #                } else {
-   #                    #TODO: send a warning
-   #                    next;
-   #                }
-   #            }
-   #        }
        }
     }
 
