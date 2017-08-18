@@ -190,7 +190,16 @@ function Components (){
                     options: [
                         "air",
                         "aircompact",
-                        "clouds"
+                        "clouds",
+                        "compact",
+                        "contrast",
+                        "glamour",
+                        "light",
+                        "material",
+                        "metro",
+                        "terrace",
+                        "touch",
+                        "web"
                     ]
                 },                
                 {
@@ -1068,6 +1077,7 @@ function Components (){
                 id        : "form",
                 scroll    : "y",
                 action    : "add",
+                padding   : 5,
                 rows      :[
                     {
                         template : webix.i18n.form.person.header,
@@ -1102,50 +1112,59 @@ function Components (){
                             {
                                 view :"fieldset", 
                                 label: webix.i18n.form.basic,
+                                //padding   : 5,
                                 body : {
                                     rows : [
                                         {
+                                            padding   : 7,
                                             cols : [
                                                 {
                                                     view : "text",
                                                     label: webix.i18n.datatable.first_name,
                                                     name : 'first_name',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left",
+                                                    labelAlign   :"right"
                                                 },
                                                 {
                                                     view : "text",
                                                     label: webix.i18n.datatable.last_name,
                                                     name : 'last_name',
-                                                    labelPosition:"top"
-                                                }                                                                        
+                                                    labelPosition:"left",
+                                                    labelAlign   :"right"
+                                                },
                                             ]                                        
                                         },
                                         {
+                                            padding   : 7,
                                             cols:[
                                                 {
                                                     view : "datepicker",
                                                     label: webix.i18n.datatable.valid_since,
                                                     timepicker: false,
                                                     name : 'valid_since',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left",
+                                                    labelAlign   :"right"
                                                 },
                                                 {
                                                     view : "datepicker",
                                                     label: webix.i18n.datatable.valid_till,
                                                     timepicker: false,
                                                     name : 'valid_till',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left",
+                                                    labelAlign   :"right"
                                                 },
                                             ]                                                                        
                                         },
                                         {
+                                            padding   : 7,
                                             cols:[
                                                 {
                                                     view : "text",
                                                     label: webix.i18n.form.password,
                                                     type : "password",
                                                     name : 'password',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left",
+                                                    labelAlign   :"right"
                                                 },
                                                 {
                                                     view   : "richselect",
@@ -1153,40 +1172,51 @@ function Components (){
                                                     label  : webix.i18n.language,
                                                     name   : "language_id",
                                                     options: "/snippet-component/0/language.json",
-                                                    labelPosition:"top"
-                                                }                                            ]                                                                       
+                                                    labelPosition:"left",
+                                                    labelAlign   :"right"
+                                                },
+                                            ]                                                                       
                                         },
                                         {
                                             rows:[
                                                 { template: webix.i18n.timezone, type:"section" },
                                                 {
+                                                    padding   : 7,
                                                     cols   : [
                                                         {
                                                             view   :"richselect",
                                                             id     : "timezone.area",
                                                             label  : webix.i18n.area,
                                                             name   : "timezone.area",
-                                                            labelPosition:"top"
+                                                            labelPosition:"left",
+                                                            labelAlign   :"right"
                                                         },
                                                         {
                                                             view   :"richselect",
                                                             id     : "timezone.city",
                                                             label  : webix.i18n.city,
                                                             name   : "timezone.city",
-                                                            labelPosition:"top"
-                                                        }
+                                                            labelPosition:"left",
+                                                            labelAlign   :"right"
+                                                        },
                                                     ]
-                                                },
+                                                }
                                             ]
                                         }
                                     ] // rows
                                 }// body                            
                             },
                             {
-                                view : "button",
-                                value: webix.i18n.form.send,
-                                id   : "send_form",
-                                type : "form"
+                                cols: [
+                                {},
+                                {
+                                    view : "button",
+                                    value: webix.i18n.form.send,
+                                    id   : "send_form",
+                                    type : "form"
+                                },
+                                {}
+                                ]
                             }                        
     
                         ], // elements
@@ -1228,7 +1258,7 @@ function Components (){
                                                     view : "text",
                                                     label: webix.i18n.datatable.name,
                                                     name : 'name',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left"
                                                 },
                                                 {
                                                     view   :"richselect", 
@@ -1239,13 +1269,13 @@ function Components (){
                                                         { "id":2, "value":"2" },
                                                         { "id":3, "value":"3" },
                                                     ],
-                                                    labelPosition:"top"
+                                                    labelPosition:"left"
                                                 },                                    
                                                 {
                                                     view : "text",
                                                     label: webix.i18n.datatable.provider,
                                                     name : 'provider',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left"
                                                 },
                                             ]
                                         },
@@ -1256,14 +1286,14 @@ function Components (){
                                                     label: webix.i18n.datatable.valid_since,
                                                     timepicker: false,
                                                     name : 'valid_since',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left"
                                                 },
                                                 {
                                                     view : "datepicker",
                                                     label: webix.i18n.datatable.valid_till,
                                                     timepicker: false,
                                                     name : 'valid_till',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left"
                                                 },
                                             ]                                
                                         },                                        
@@ -1313,13 +1343,13 @@ function Components (){
                                                     view : "text",
                                                     label: webix.i18n.datatable.name,
                                                     name : 'name',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left"
                                                 },                                  
                                                 {
                                                     view : "text",
                                                     label: webix.i18n.datatable.provider,
                                                     name : 'provider',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left"
                                                 },
                                             ]
                                         },
@@ -1330,14 +1360,14 @@ function Components (){
                                                     label: webix.i18n.datatable.valid_since,
                                                     timepicker: false,
                                                     name : 'valid_since',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left"
                                                 },
                                                 {
                                                     view : "datepicker",
                                                     label: webix.i18n.datatable.valid_till,
                                                     timepicker: false,
                                                     name : 'valid_till',
-                                                    labelPosition:"top"
+                                                    labelPosition:"left"
                                                 },
                                             ]                                
                                         },                                        
@@ -1374,14 +1404,14 @@ function Components (){
                     label  : webix.i18n.contractors,
                     options: "/contractor/list/all.json",
                     name   : "contractor_id",
-                    labelPosition:"top"
+                    labelPosition:"left"
                 },                
                 {
                     view : "datepicker",
                     label: webix.i18n.datatable.valid_till,
                     timepicker: false,
                     name : 'valid_till',
-                    labelPosition:"top"
+                    labelPosition:"left"
                 }
             ]
         },
@@ -1395,32 +1425,32 @@ function Components (){
                     label  : webix.i18n.person,
                     options: "/person/list/all.json",
                     name   : "person_id",
-                    labelPosition:"top"
+                    labelPosition:"left"
                 },
                 {
                     view : "datepicker",
                     label: webix.i18n.datatable.valid_till,
                     timepicker: false,
                     name : 'valid_till',
-                    labelPosition:"top"
+                    labelPosition:"left"
                 },
                 {
                     view  : "checkbox",
-                    labelPosition:"top",
+                    labelPosition:"left",
                     name  : "admin",
                     label : "Admin", 
                     value : "0"
                 },        
                 {
                     view  : "checkbox",
-                    labelPosition:"top",
+                    labelPosition:"left",
                     name  : "billing",
                     label : "Bill", 
                     value : "0"
                 },                       
                 {
                     view  : "checkbox",
-                    labelPosition:"top",
+                    labelPosition:"left",
                     name  : "tech",
                     label : "tech", 
                     value : "0"
@@ -1447,33 +1477,33 @@ function Components (){
                     label  : webix.i18n.person,
                     options: "/person/list/all.json",
                     name   : "person_id",
-                    labelPosition:"top"
+                    labelPosition:"left"
                 },
                 {
                     view : "datepicker",
                     label: webix.i18n.datatable.valid_till,
                     timepicker: false,
                     name : 'valid_till',
-                    labelPosition:"top"
+                    labelPosition:"left"
                 },
 
                 {
                     view  : "checkbox",
-                    labelPosition:"top",
+                    labelPosition:"left",
                     name  : "admin",
                     label : "Admin", 
                     value : "0"
                 },        
                 {
                     view  : "checkbox",
-                    labelPosition:"top",
+                    labelPosition:"left",
                     name  : "billing",
                     label : "Bill", 
                     value : "0"
                 },                       
                 {
                     view  : "checkbox",
-                    labelPosition:"top",
+                    labelPosition:"left",
                     name  : "tech",
                     label : "tech", 
                     value : "0"
@@ -1494,35 +1524,56 @@ function Components (){
         'person_x_email' : {
             view    : "form",
             baseURL : "/snippet-component/{{id}}/email.json",
+            borderless : true,
             cols:[
                 {
                     view   : "text", 
                     label  : webix.i18n.form.email,
                     name   : "email",
-                    labelPosition:"top"
+                    labelPosition:"left",
+                    labelAlign   :"right"
                 },
                 {
                     view : "datepicker",
                     label: webix.i18n.datatable.valid_till,
                     timepicker: false,
                     name : 'valid_till',
-                    labelPosition:"top"
+                    labelPosition:"left",
+                    labelAlign   :"right"
                 },                
                 {
-                    view : "button",
-                    value: webix.i18n.delete,
-                    click: function(){
+                    view  : "button",
+                    value : webix.i18n.add,
+                    width : 40,
+                    type  : "icon",
+                    icon  : "plus",
+                    height: 30,
+                    click : function(){
+                        var obj = $$("person_x_email");
+                        if(obj) obj.addView(  webix.copy( components.form[ "person_x_email" ] ) );
+                    }                    
+                },
+                {
+                    view  : "button",
+                    value : webix.i18n.delete,
+                    width : 40,
+                    type  : "icon",
+                    icon  : "times",
+                    height: 30,
+                    click : function(){
                         var obj = $$("person_x_email");
                         if(obj) obj.removeView( this.getParentView().config.id );
                     }                    
                 }                
+               
             ]
         },  
         /*
             person phone
         */
         'person_x_phone' : {
-            view    : "form",
+            view       : "form",
+            borderless : true,
             baseURL : "/snippet-component/{{id}}/phone.json",
             cols    :[
                 {
@@ -1530,20 +1581,37 @@ function Components (){
                     label  : webix.i18n.datatable.phone,
                     name   : "phone",
                     placeholder  :"380 XXX-XX-XX",
-                    labelPosition:"top"
+                    labelPosition:"left",
+                    labelAlign   :"right"
                 },
                 {
                     view : "datepicker",
                     label: webix.i18n.datatable.valid_till,
                     timepicker: false,
                     name : 'valid_till',
-                    labelPosition:"top"
+                    labelPosition:"left",
+                    labelAlign   :"right"
                 },
-                
                 {
-                    view : "button",
-                    value: webix.i18n.delete,
-                    click: function(){
+                    view  : "button",
+                    value : webix.i18n.add,
+                    width : 40,
+                    type  : "icon",
+                    icon  : "plus",
+                    height: 30,
+                    click : function(){
+                        var obj = $$("person_x_phone");
+                        if(obj) obj.addView(  webix.copy( components.form[ "person_x_phone" ] ) );                        
+                    }                    
+                },
+                {
+                    view  : "button",
+                    value : webix.i18n.delete,
+                    width : 40,
+                    type  : "icon",
+                    icon  : "times",
+                    height: 30,
+                    click : function(){
                         var obj = $$("person_x_phone");
                         if(obj) obj.removeView( this.getParentView().config.id );
                     }                    

@@ -490,8 +490,9 @@ function Form ( components ){
 
                                 eval( item2.fn ).call( eval(item2.context) , function( data ) {
                                     
-                                    if( item2.bind ){
+                                    if( item2.bind ){                                        
                                         $$( item2.bind.id ).define( item2.bind.data, data );
+                                        $$( item2.bind.id ).setValue('');
                                     }
                                     else{
                                         if( item2.data && !item2.id ) {
@@ -653,26 +654,32 @@ function Form ( components ){
             label: snippent_name,
             body : {
                 id  : snippent_name,
-                rows:[
-                    {
-                        view : "button",
-                        id   : snippent_name + "_add",
-                        value: webix.i18n.add
-                    }
-                ]
+                rows: [ ]
             }
-        };
+        };        
+/*        
+    {
+        view : "button",
+        id   : snippent_name + "_add",
+        value: webix.i18n.add
+    }
+*/                    
         
-        var child = me.getChild( form_name );
+        var child = me.getChild( form_name );        
         
         if( child ){
+            
             var index = child.length - 1;
             form.addView( add, index );
+    
+            var obj  = $$( snippent_name );
+            if(obj) obj.addView(  webix.copy( components.form[ snippent_name ] ) );
+
         
-            $$( snippent_name + "_add" ).attachEvent("onItemClick", function(){
-                var obj = $$( snippent_name );
-                if(obj) obj.addView(  webix.copy( components.form[ snippent_name ] ) );
-            });
+            //$$( snippent_name + "_add" ).attachEvent("onItemClick", function(){
+            //    var obj = $$( snippent_name );
+            //    if(obj) obj.addView(  webix.copy( components.form[ snippent_name ] ) );
+            //});
         }
         
         return false;  
