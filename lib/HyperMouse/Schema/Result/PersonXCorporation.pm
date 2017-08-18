@@ -200,12 +200,12 @@ __PACKAGE__->belongs_to(
   "person",
   "HyperMouse::Schema::Result::Person",
   { id => "person_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "NO ACTION" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-17 21:37:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CnN326dhHYmackdPfdXfVA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-18 13:15:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iRiC9eIEPtOJL6joz/wyVQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

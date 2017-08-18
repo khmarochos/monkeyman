@@ -164,7 +164,7 @@ __PACKAGE__->belongs_to(
   "child_person",
   "HyperMouse::Schema::Result::Person",
   { id => "child_person_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "NO ACTION" },
 );
 
 =head2 parent_person
@@ -179,12 +179,12 @@ __PACKAGE__->belongs_to(
   "parent_person",
   "HyperMouse::Schema::Result::Person",
   { id => "parent_person_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "NO ACTION" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-17 21:37:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8hqGzuk5X8FQnqFsYI63Dw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-18 13:15:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EEZ6B2S7e/t1QkC8epFzHw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

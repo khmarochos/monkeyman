@@ -158,12 +158,12 @@ __PACKAGE__->belongs_to(
   "person",
   "HyperMouse::Schema::Result::Person",
   { id => "person_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "NO ACTION" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-17 21:37:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QOA+tdUECLJJ+mIKPIP/Rw
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-18 13:15:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+OEKgd+7rMKOo5x+cIQ/CA
 
 __PACKAGE__->load_components(qw/EncodedColumn/);
 

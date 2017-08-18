@@ -263,7 +263,7 @@ All the found records are being analyzed. The records whose fields match the
 C<record> parameter won't be updated if C<force> is false. Any records
 mismatch (their C<field3> contain anything else but C<3>), the record will
 be marked as outdated (by updating its C<valid_till> field) and a new record
-will be created with C<valid_since> field equal to the current time. Other
+will be created with C<valid_from> field equal to the current time. Other
 fields of the new record will be filled according to the C<record> parameter.
 
 You might also need to set C<mask> and C<now>, these parameters' names are
@@ -328,7 +328,7 @@ method update_smart(
         scalar(@{ $ids_ok }) == 0
             ?
                 $self->create({
-                    valid_since => $now,
+                    valid_from  => $now,
                     valid_till  => undef,
                     removed     => undef,
                     %{ $record }

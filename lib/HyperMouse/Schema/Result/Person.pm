@@ -289,6 +289,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 person_x_partnership_agreements
+
+Type: has_many
+
+Related object: L<HyperMouse::Schema::Result::PersonXPartnershipAgreement>
+
+=cut
+
+__PACKAGE__->has_many(
+  "person_x_partnership_agreements",
+  "HyperMouse::Schema::Result::PersonXPartnershipAgreement",
+  { "foreign.person_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 person_x_person_child_people
 
 Type: has_many
@@ -335,8 +350,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-17 21:37:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YKz0ZchlYVh1BebXyg+oJQ
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-08-18 13:15:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ZdoOnqgjWrKiISRicfdIdA
 
 
 
