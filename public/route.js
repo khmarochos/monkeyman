@@ -75,6 +75,7 @@ var Route = Backbone.Router.extend({
                         if( filter == "load" ){        
 
                             $$("form").define("action", "update"); //
+                            //console.log("child_obj_1", form_name, url);
                             
                             controller.form.load( form_name, url, function( data1 ){
                                                             
@@ -82,7 +83,9 @@ var Route = Backbone.Router.extend({
                                     child_obj.forEach( function( item, i ){                                        
                                         var url_snippet = components.form[ item ].baseURL;
                                         controller.form.setSnippet( form_name, item );
-
+                                        
+                                        //console.log("child_obj_2", form_name, url_snippet, id || related_to);
+                                        
                                         if( url_snippet ) {                                            
                                             url_snippet = url_snippet.replace('{{id}}', id || related_to );
 

@@ -102,13 +102,17 @@ function Timezone(){
         });
     };
     
-    this.onSelect = function( callback, id ){
-        var me  = this;
-        var obj = id ? $$( id ) : false;
+    this.onSelect = function( callback, id, bind_id ){
+        var me       = this;
+        var obj      = id ? $$( id ) : false;
+        var obj_bind = bind_id ? $$( bind_id ) : false;
+        console.log( "onSelect:", id, bind_id );
+                
         if( obj ){
             obj.attachEvent("onChange", function(newv, oldv){
                 //webix.message("Value changed from: "+oldv+" to: "+newv);
                 if( newv ) {
+                    if( obj_bind ) obj_bind.setValue('');
                     me.getCity( newv, function( data ){
                         if(callback) callback.call( this, data );
                         return data;
@@ -492,7 +496,6 @@ function Form ( components ){
                                     
                                     if( item2.bind ){                                        
                                         $$( item2.bind.id ).define( item2.bind.data, data );
-                                        $$( item2.bind.id ).setValue('');
                                     }
                                     else{
                                         if( item2.data && !item2.id ) {
@@ -503,7 +506,10 @@ function Form ( components ){
                                         }
                                     }
                                     
-                                }, item2.id );
+                                },
+                                item2.id,
+                                item2.bind ? item2.bind.id : false
+                                );
                                 
                             }
                             else{

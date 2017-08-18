@@ -69,7 +69,10 @@ var locales = {
             },
             'corporation' : {
                 'header'  : 'Сorporation form',
-            }            
+            },
+            'provisioning_agreement' : {
+                'header'  : 'Provisioning Agreement'
+            }
             
         }
     },
@@ -145,9 +148,11 @@ var locales = {
             },
             'corporation' : {
                 'header'  : 'Форма корпарации',
-            }            
-        },
-        
+            },
+            'provisioning_agreement' : {
+                'header'  : 'Provisioning Agreement'
+            }
+        }        
     }
 };
 

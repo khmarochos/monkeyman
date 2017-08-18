@@ -53,7 +53,7 @@ method list {
                 $self
                     ->hm_schema
                     ->resultset('Person')
-                    ->search({ me.id => $person_id })
+                    ->search({ 'me.id' => $person_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
                         resultset_class            => 'ProvisioningAgreement',
@@ -76,7 +76,7 @@ method list {
                 $self
                     ->hm_schema
                     ->resultset('Person')
-                    ->search({ me.id => $person_id })
+                    ->search({ 'me.id' => $person_id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
                         resultset_class            => 'ProvisioningAgreement',
@@ -84,7 +84,8 @@ method list {
                         fetch_validations_default  => $mask_validated_f,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ '@Contractor-[client|provider] > @ProvisioningAgreement' => { } ]
+                        #callout => [ '@Contractor-[client|provider] > @ProvisioningAgreement' => { } ]
+                        callout => ['@ProvisioningAgreement-[client|provider]>-@Contractor' => { } ]
                     );
         
         }
@@ -133,9 +134,9 @@ method list {
 method form_load {
     my $data = $self->datatable_params();
 
-    my $json = {};
+    my $json = { success => \1 };
 
-    $json =
+    $json->{'data'} =
         $self
             ->hm_schema
             ->resultset('ProvisioningAgreement')
@@ -144,17 +145,6 @@ method form_load {
             },{
                 result_class => 'DBIx::Class::ResultClass::HashRefInflator'
             });
-    
-    $json->{'person_x_provisioning_agreement'} = [
-        $self
-            ->hm_schema
-            ->resultset('PersonXProvisioningAgreement')
-            ->search({
-                'me.provisioning_agreement_id' => $self->stash->{'id'}
-            },{
-                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
-            })->all
-    ];
     
     $self->render(json => $json);
 }

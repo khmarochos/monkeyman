@@ -361,6 +361,34 @@ method startup {
                 related_element => 'person',
                 related_id      => '@'
             );
+            
+        $routes_authenticated_provisioning_agreement
+            ->get('/form/load/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::ProvisioningAgreement',
+                action          => 'form_load',
+            );
+            
+        $routes_authenticated_provisioning_agreement
+            ->post('/form/update' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::ProvisioningAgreement',
+                action          => 'form_update',
+            );            
+            
+        $routes_authenticated_provisioning_agreement
+            ->post('/form/add' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::ProvisioningAgreement',
+                action          => 'form_add',
+            ); 
+
+        $routes_authenticated_provisioning_agreement
+            ->post('/form/remove/:id' => [ format => ['json'] ] )
+            ->to(
+                controller      => 'Controller::API::V1::ProvisioningAgreement',
+                action          => 'form_remove',
+            );            
 
     my  $routes_authenticated_provisioning_obligation = $routes_authenticated->under('/provisioning_obligation');
 

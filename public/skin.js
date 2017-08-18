@@ -12,8 +12,14 @@ function Skin () {
         name = name.replace(/[\[\]]/g, "\\$&");
         var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
             results = regex.exec(url);
+        var res = results && results[2] ? decodeURIComponent(results[2].replace(/\+/g, " ")) : null;
+        
+        url = url.replace(/[?&]*theme=\w+/ig,"");
+        console.log("skin", url, results);
+        window.history.replaceState( {} , '', url );
+        
         if (!results) return null;
         if (!results[2]) return '';
-        return decodeURIComponent(results[2].replace(/\+/g, " "));
+        return res;
     };			
 }

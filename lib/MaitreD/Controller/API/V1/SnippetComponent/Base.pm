@@ -20,8 +20,8 @@ method user_info {
     $json->{'data'} = {
         first_name  => $rs->first_name,
         last_name   => $rs->last_name,
-        valid_from  => $rs->valid_from,
         valid_till  => $rs->valid_till,
+        valid_from  => $rs->valid_from,
         removed     => $rs->removed,
         id          => $rs->id,
     };
@@ -119,9 +119,9 @@ method person_x_contractor {
 }
 
 method person_x_corporation {
-    my $json = {};
+    my $json = { 'success' => \1 };
     
-    $json->{'person_x_corporation'} = [
+    $json->{'data'} = [
         $self
             ->hm_schema
             ->resultset('PersonXCorporation')
@@ -133,6 +133,24 @@ method person_x_corporation {
     ];
     
     $self->render(json => $json);
+}
+
+method person_x_provisioning_agreement {
+    my $json = { 'success' => \1 };
+    
+    $json->{'data'} = [
+        $self
+            ->hm_schema
+            ->resultset('PersonXProvisioningAgreement')
+            ->search({
+                'me.provisioning_agreement_id' => $self->stash->{'id'}
+            },{
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            })->all
+    ];
+    
+    $self->render(json => $json);
+    
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

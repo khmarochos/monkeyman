@@ -15,7 +15,6 @@ use Switch;
 use Data::Dumper;
 use MaitreD::Extra::API::V1::TemplateSettings;
 use JSON::XS;
-use Try::Tiny;
 
 method list {
     my $settings         = $MaitreD::Extra::API::V1::TemplateSettings::settings;
@@ -114,12 +113,12 @@ method list {
         
         }
         else {
-            
+            print Dumper( $self->stash->{'authorized_person_result'}->id );
             $tmpl_rs = 
                 $self
                     ->hm_schema
                     ->resultset('Person')
-                    ->search({ id => $self->stash->{'authorized_person_result'}->id })
+                    ->search({ 'me.id' => $self->stash->{'authorized_person_result'}->id })
                     ->filter_validated(mask => VC_NOT_REMOVED)
                     ->search_related_deep(
                         resultset_class            => 'Corporation',
@@ -127,7 +126,8 @@ method list {
                         fetch_validations_default  => $mask_validated_d,
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
-                        callout => [ person_TO_corporation_FULL => { } ]
+                        #callout => [ person_TO_corporation_FULL => { } ]
+                        callout => [ '@Person->-@Corporation' => { } ]
                     );
         }
         
@@ -250,11 +250,10 @@ method form_add {
         });
 
     }
-    catch {
-        my $err = $_;
+    catch ( $e ) {
         $json = {
             success  => \0,
-            message => $err
+            message => $e
         };          
     };
     
@@ -354,11 +353,10 @@ method form_update {
         });
 
     }
-    catch {
-        my $err = $_;
+    catch ( $e ) {
         $json = {
             success  => \0,
-            message => $err
+            message => $e
         };          
     };     
     
@@ -387,11 +385,10 @@ method form_remove {
             } );
         }
     }
-    catch {
-        my $err = $_;
+    catch($e) {
         $json = {
             success  => \0,
-            message => $err
+            message => $e
         };                
     };
     
