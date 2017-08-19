@@ -12,7 +12,16 @@ use HyperMouse::Exception qw(EmailNotFound PersonNotFound PersonNotConfirmed);
 
 use Method::Signatures;
 use TryCatch;
+use Data::Dumper;
 
+method filter_permission (
+    Maybe[Int] : $person_id,
+    Maybe[Int] : $id?,
+    Str        : $action?,
+){
+    #print Dumper( "filter_permission", $action, $id, $person_id );
+    return $self;
+}
 
 
 method authenticate (

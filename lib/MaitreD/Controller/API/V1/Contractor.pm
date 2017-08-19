@@ -16,9 +16,6 @@ use DateTime;
 use Data::Dumper;
 use MaitreD::Extra::API::V1::TemplateSettings;
 
-use JSON::XS;
-use Try::Tiny;
-
 method list {
     my $settings         = $MaitreD::Extra::API::V1::TemplateSettings::settings;
     my $json             = {};
@@ -151,7 +148,7 @@ method list {
 }
 
 method form_load {
-    my $data = $self->datatable_params();
+    my $data = $self->datatable_params()->{'origin_data'};
 
     my $json = { success => \1 };
 
@@ -173,7 +170,10 @@ method form_add {
     my $data          = $self->datatable_params()->{'origin_data'};
     my $snippet       = {};
     my $snippet_link  = {
-        'person_x_contractor' => 'PersonXContractor',
+        'person_x_contractor' => {
+            table          => 'PersonXContractor',
+            col_not_empty  => ['person_id']
+        }
     };
 
     my $json = {
@@ -181,16 +181,7 @@ method form_add {
         redirect => "/contractor/list/all"
     };
     
-    for my $key ( keys %{ $snippet_link }) {
-        if ( $data->{ $key } ) {
-            $snippet->{ $key } = decode_json( $data->{ $key } );
-            delete $data->{ $key };
-        }
-        
-        if( ref $data->{ $key } eq "ARRAY" && @{ $data->{ $key } } ) {
-            $snippet->{ $key } = $data->{ $key };
-        }        
-    }
+    ($snippet, $data) = $self->snippet( $snippet_link, $data );
     
     try {
         
@@ -210,7 +201,7 @@ method form_add {
             for my $item ( @{ $snippet->{'person_x_contractor'} } ){
                 $self
                     ->hm_schema
-                    ->resultset( $snippet_link->{'person_x_contractor'} )
+                    ->resultset( $snippet_link->{'person_x_contractor'}->{'table'} )
                     ->create({
                         person_id      => $item->{'person_id'},
                         contractor_id  => $rs_data->id,
@@ -226,11 +217,10 @@ method form_add {
         });
 
     }
-    catch {
-        my $err = $_;
+    catch ($e) {
         $json = {
             success  => \0,
-            message => $err
+            message => $e
         };          
     };
     
@@ -241,7 +231,10 @@ method form_update {
     my $data          = $self->datatable_params()->{'origin_data'};
     my $snippet       = {};
     my $snippet_link  = {
-        'person_x_contractor' => 'PersonXContractor',
+        'person_x_contractor' => {
+            table          => 'PersonXContractor',
+            col_not_empty  => ['person_id']
+        }
     };
 
     my $json = {
@@ -249,16 +242,7 @@ method form_update {
         redirect => "/contractor/list/all"
     };
     
-    for my $key ( keys %{ $snippet_link }) {
-        if ( $data->{ $key } ) {
-            $snippet->{ $key } = decode_json( $data->{ $key } );
-            delete $data->{ $key };
-        }
-        
-        if( ref $data->{ $key } eq "ARRAY" && @{ $data->{ $key } } ) {
-            $snippet->{ $key } = $data->{ $key };
-        }        
-    }
+    ($snippet, $data) = $self->snippet( $snippet_link, $data );
     
     try {
         
@@ -282,7 +266,7 @@ method form_update {
                 my $rs_find =
                     $self
                         ->hm_schema
-                        ->resultset( $snippet_link->{'person_x_contractor'} )
+                        ->resultset( $snippet_link->{'person_x_contractor'}->{'table'} )
                         ->search({ 'me.contractor_id' => $data->{'id'} });
                 
                 if( $rs_find ){
@@ -292,7 +276,7 @@ method form_update {
                 for my $item ( @{ $snippet->{'person_x_contractor'} } ){
                     $self
                         ->hm_schema
-                        ->resultset( $snippet_link->{'person_x_contractor'} )
+                        ->resultset( $snippet_link->{'person_x_contractor'}->{'table'} )
                         ->create({
                             person_id      => $item->{'person_id'},
                             contractor_id  => $data->{'id'},
@@ -308,11 +292,10 @@ method form_update {
         });
 
     }
-    catch {
-        my $err = $_;
+    catch ($e) {
         $json = {
-            success  => \0,
-            message => $err
+            success => \0,
+            message => $e
         };          
     };        
     
@@ -341,11 +324,10 @@ method form_remove {
             } );
         }
     }
-    catch {
-        my $err = $_;
+    catch($e) {
         $json = {
             success  => \0,
-            message => $err
+            message => $e
         };                
     };    
     

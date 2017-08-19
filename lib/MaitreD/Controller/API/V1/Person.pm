@@ -15,9 +15,6 @@ use Switch;
 use DateTime;
 use Data::Dumper;
 use MaitreD::Extra::API::V1::TemplateSettings;
-use JSON::XS;
-#use Try::Tiny;
-
 
 method list {
 
@@ -155,12 +152,17 @@ method form_load {
         $self
             ->hm_schema
             ->resultset('Person')
+            ->filter_permission(
+                person_id => $self->stash->{'authorized_person_result'}->id,
+                action    => 'view',
+                id        => $self->stash->{'id'},
+            )
             ->find({
-                'me.id' => $self->stash->{id}
+                'me.id' => $self->stash->{'id'}
             },{
                 result_class => 'DBIx::Class::ResultClass::HashRefInflator'
             });
-    
+
     if( $json->{'data'}->{'timezone'} ) {
         (
             $json->{'data'}->{'timezone.area'},
@@ -176,9 +178,15 @@ method form_add {
     my $data          = $self->datatable_params()->{'origin_data'};
     my $snippet       = {};
     my $snippet_link  = {
-        'person_x_email' => 'PersonEmail',
-        'person_x_phone' => 'PersonPhone',
-    };
+        'person_x_email' => {
+            table          => 'PersonEmail',
+            col_not_empty  => ['email']
+        },
+        'person_x_phone' => {
+            table          => 'PersonPhone',
+            col_not_empty  => ['phone']
+        },
+    };    
 
     my $json = {
         success  => \1,
@@ -193,22 +201,12 @@ method form_add {
             ;
     }    
     
-    for my $key ( keys %{ $snippet_link }) {
-        if ( $data->{ $key } ) {
-            $snippet->{ $key } = decode_json( $data->{ $key } );
-            delete $data->{ $key };
-        }
-        
-        if( ref $data->{ $key } eq "ARRAY" && @{ $data->{ $key } } ) {
-            $snippet->{ $key } = $data->{ $key };
-        }
-        
-    }
+    ( $snippet, $data ) = $self->snippet( $snippet_link, $data );
     
-    if( ref $snippet->{'person_x_email'} eq "ARRAY"  ){
+    if( scalar @{ $snippet->{'person_x_email'} }  ){
         my $find = $self
                 ->hm_schema
-                ->resultset( $snippet_link->{'person_x_email'} )
+                ->resultset( $snippet_link->{'person_x_email'}->{'table'} )
                 ->search({
                     email => {
                         -in => [ map {$_->{'email'}} @{$snippet->{'person_x_email'}} ]
@@ -234,11 +232,15 @@ method form_add {
                         $self
                             ->hm_schema
                             ->resultset('Person')
+                            ->filter_permission(
+                                person_id => $self->stash->{'authorized_person_result'}->id,
+                                action    => 'create',
+                            )
                             ->create( {
                                 first_name         => $data->{'first_name'},
                                 last_name          => $data->{'last_name'},
                                 valid_till         => $data->{'valid_till'}  || undef,
-                                valid_since        => $data->{'valid_since'} || \'NOW()',
+                                valid_from         => $data->{'valid_from'} || \'NOW()',
                                 language_id        => $data->{'language_id'},
                                 datetime_format_id => $data->{'datetime_format_id'},
                                 timezone           => $data->{'timezone'},
@@ -249,12 +251,12 @@ method form_add {
                         for my $item ( @{ $snippet->{'person_x_email'} } ){
                             $self
                                 ->hm_schema
-                                ->resultset( $snippet_link->{'person_x_email'} )
+                                ->resultset( $snippet_link->{'person_x_email'}->{'table'} )
                                 ->create({
                                     person_id   => $rs_data->id,
                                     email       => $item->{'email'},
                                     valid_till  => $item->{'valid_till'}  || undef,
-                                    valid_since => $item->{'valid_since'} || \'NOW()',
+                                    valid_from  => $item->{'valid_from'} || \'NOW()',
                                 });
                             
                         }
@@ -262,21 +264,23 @@ method form_add {
                         for my $item ( @{ $snippet->{'person_x_phone'} } ){
                             $self
                                 ->hm_schema
-                                ->resultset( $snippet_link->{'person_x_phone'} )
+                                ->resultset( $snippet_link->{'person_x_phone'}->{'table'} )
                                 ->create({
                                     person_id   => $rs_data->id,
                                     phone       => $item->{'phone'},
                                     valid_till  => $item->{'valid_till'}  || undef,
-                                    valid_since => $item->{'valid_since'} || \'NOW()',
+                                    valid_from  => $item->{'valid_from'} || \'NOW()',
                                 });
                             
                         }
+                        
+                        die "Not param Password" unless $data->{'password'};
                         
                         $self
                             ->hm_schema
                             ->resultset('PersonPassword')
                             ->create({
-                                valid_since => \'NOW()',
+                                valid_from  => \'NOW()',
                                 valid_till  => undef,
                                 removed     => undef,
                                 password    => $data->{'password'},
@@ -287,7 +291,7 @@ method form_add {
                             ->hm_schema
                             ->resultset('PersonXPerson')
                             ->create({
-                                valid_since      => \'NOW()',
+                                valid_from       => \'NOW()',
                                 valid_till       => undef,
                                 removed          => undef,
                                 parent_person_id => $self->stash->{'authorized_person_result'}->id,
@@ -319,11 +323,17 @@ method form_add {
 }
 
 method form_update {
-    my $data = $self->datatable_params()->{'origin_data'};
+    my $data          = $self->datatable_params()->{'origin_data'};
     my $snippet       = {};
     my $snippet_link  = {
-        'person_x_email' => 'PersonEmail',
-        'person_x_phone' => 'PersonPhone',
+        'person_x_email' => {
+            table          => 'PersonEmail',
+            col_not_empty  => ['email'],
+        },
+        'person_x_phone' => {
+            table => 'PersonPhone',
+            col_not_empty  => ['phone'],
+        },
     };    
 
     my $json = {
@@ -339,21 +349,10 @@ method form_update {
             ;
     }
     
-    for my $key ( keys %{ $snippet_link }) {
-        if ( $data->{ $key } ) {
-            $snippet->{ $key } = decode_json( $data->{ $key } );
-            delete $data->{ $key };
-        }
-        
-        if( ref $data->{ $key } eq "ARRAY" && @{ $data->{ $key } } ) {
-            $snippet->{ $key } = $data->{ $key };
-        }
-        
-    }    
+    ($snippet, $data) = $self->snippet( $snippet_link, $data );
     
     if( $data->{'id'} ){
         
-        #print Dumper( $data );
         if( ref $snippet->{'person_x_email'} eq "ARRAY"  ){
         
             try {
@@ -368,6 +367,11 @@ method form_update {
                         $self
                             ->hm_schema
                             ->resultset('Person')
+                            ->filter_permission(
+                                person_id => $self->stash->{'authorized_person_result'}->id,
+                                id        => $data->{'id'},
+                                action    => 'update',
+                            )
                             ->find( { 'me.id' => $data->{'id'} } );
                     
                     if( $rs_find ){
@@ -375,7 +379,7 @@ method form_update {
                             first_name         => $data->{'first_name'}  || $rs_find->first_name,
                             last_name          => $data->{'last_name'}   || $rs_find->last_name,
                             valid_till         => $data->{'valid_till'}  || undef,
-                            valid_since        => $data->{'valid_since'} || undef,
+                            valid_from         => $data->{'valid_from'}  || undef,
                             language_id        => $data->{'language_id'},
                             datetime_format_id => $data->{'datetime_format_id'},
                             timezone           => $data->{'timezone'},
@@ -400,7 +404,7 @@ method form_update {
         
                         if( $rs_find && $data->{'password'} ){
                             $rs_find->update({
-                                valid_since => $data->{'valid_since'} || undef,
+                                valid_from  => $data->{'valid_from'}  || undef,
                                 valid_till  => $data->{'valid_till'}  || undef,
                                 removed     => undef,
                                 password    => $data->{'password'},
@@ -412,7 +416,7 @@ method form_update {
                                 ->hm_schema
                                 ->resultset('PersonPassword')
                                 ->create({
-                                    valid_since => \'NOW()',
+                                    valid_from  => \'NOW()',
                                     valid_till  => undef,
                                     removed     => undef,
                                     password    => $data->{'password'},
@@ -443,7 +447,7 @@ method form_update {
                         $rs_find = 
                             $self
                                 ->hm_schema
-                                ->resultset( $snippet_link->{'person_x_phone'} )
+                                ->resultset( $snippet_link->{'person_x_phone'}->{'table'} )
                                 ->search({
                                     person_id   => $data->{'id'},
                                     id          => {
@@ -462,14 +466,14 @@ method form_update {
                             $rs_find = 
                                 $self
                                     ->hm_schema
-                                    ->resultset( $snippet_link->{'person_x_phone'} )
+                                    ->resultset( $snippet_link->{'person_x_phone'}->{'table'} )
                                     ->find({                                        
                                         'me.id' => $item->{'id'}
                                     });
 
                             if( $rs_find ){
                                 $rs_find->update({
-                                    valid_since => $item->{'valid_since'} || undef,
+                                    valid_from  => $item->{'valid_from'}  || undef,
                                     valid_till  => $item->{'valid_till'}  || undef,
                                     phone       => $item->{'phone'},
                                 });
@@ -480,7 +484,7 @@ method form_update {
                             $rs_find = 
                                 $self
                                     ->hm_schema
-                                    ->resultset( $snippet_link->{'person_x_phone'} )
+                                    ->resultset( $snippet_link->{'person_x_phone'}->{'table'} )
                                     ->search({
                                         'me.person_id' => $data->{'id'},
                                         'me.phone'     => $item->{'phone'}
@@ -499,9 +503,9 @@ method form_update {
                             else {
                                 $self
                                     ->hm_schema
-                                    ->resultset( $snippet_link->{'person_x_phone'} )
+                                    ->resultset( $snippet_link->{'person_x_phone'}->{'table'} )
                                     ->create({
-                                        valid_since => $item->{'valid_since'} || undef,
+                                        valid_from  => $item->{'valid_from'}  || undef,
                                         valid_till  => $item->{'valid_till'}  || undef,
                                         phone       => $item->{'phone'},
                                         person_id   => $data->{'id'},
@@ -516,7 +520,7 @@ method form_update {
                         $rs_find = 
                             $self
                                 ->hm_schema
-                                ->resultset( $snippet_link->{'person_x_phone'} )
+                                ->resultset( $snippet_link->{'person_x_phone'}->{'table'} )
                                 ->search({
                                     'me.person_id' => $data->{'id'},
                                 });
@@ -547,7 +551,7 @@ method form_update {
                         $rs_find = 
                             $self
                                 ->hm_schema
-                                ->resultset( $snippet_link->{'person_x_email'} )
+                                ->resultset( $snippet_link->{'person_x_email'}->{'table'} )
                                 ->search({
                                     'me.person_id' => $data->{'id'},
                                     'me.id'        => {
@@ -568,7 +572,7 @@ method form_update {
                             $rs_find = 
                                 $self
                                     ->hm_schema
-                                    ->resultset( $snippet_link->{'person_x_email'} )
+                                    ->resultset( $snippet_link->{'person_x_email'}->{'table'} )
                                     ->find({
                                         'me.email'=> $item->{'email'}
                                     });
@@ -584,15 +588,15 @@ method form_update {
                             $rs_find = 
                                 $self
                                     ->hm_schema
-                                    ->resultset( $snippet_link->{'person_x_email'} )
+                                    ->resultset( $snippet_link->{'person_x_email'}->{'table'} )
                                     ->find({
                                         'me.id' => $item->{'id'}
                                     });
 
                             if( $rs_find ){
                                 $rs_find->update({
-                                    valid_since => $item->{'valid_since'} || undef,
-                                    valid_till  => $item->{'valid_till'}  || undef,
+                                    valid_from  => $item->{'valid_from'} || undef,
+                                    valid_till  => $item->{'valid_till'} || undef,
                                     email       => $item->{'email'},
                                 });
                             }                            
@@ -603,7 +607,7 @@ method form_update {
                             $rs_find = 
                                 $self
                                     ->hm_schema
-                                    ->resultset( $snippet_link->{'person_x_email'} )
+                                    ->resultset( $snippet_link->{'person_x_email'}->{'table'} )
                                     ->find({
                                         'me.email'=> $item->{'email'}
                                     });
@@ -618,12 +622,12 @@ method form_update {
                             else{
                                 $self
                                     ->hm_schema
-                                    ->resultset( $snippet_link->{'person_x_email'} )
+                                    ->resultset( $snippet_link->{'person_x_email'}->{'table'} )
                                     ->create({
                                         email       => $item->{'email'},
                                         person_id   => $data->{'id'},
-                                        valid_since => $item->{'valid_since'} || \'NOW()',
-                                        valid_till  => $item->{'valid_till'}  || undef,
+                                        valid_from  => $item->{'valid_from'} || \'NOW()',
+                                        valid_till  => $item->{'valid_till'} || undef,
                                         removed     => undef,
                                     });
                                 
@@ -681,6 +685,11 @@ method form_remove {
             $self
                 ->hm_schema
                 ->resultset('Person')
+                ->filter_permission(
+                    person_id => $self->stash->{'authorized_person_result'}->id,
+                    action    => 'remove',
+                    id        => $id,
+                )
                 ->find( { 'me.id' => $id } );
         
         if( $rs_find ){

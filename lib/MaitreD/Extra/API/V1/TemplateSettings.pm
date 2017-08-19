@@ -30,7 +30,7 @@ our $settings = {
                         sprintf("%s", shift->last_name);
                     },
                 },
-                'Valid Since' => {
+                'Valid From' => {
                     'order'    => 4,
                     'db_name'  => 'valid_from',
                     'db_value' => sub {
@@ -41,7 +41,7 @@ our $settings = {
                     'order'    => 5,
                     'db_name'  => 'valid_till',
                     'db_value' => sub {
-                        shift->datetime_display( shift->valid_till, 2);
+                        shift->datetime_display( shift->valid_till, 2) || '∞';
                     },
                 },
                 'Action' => {
@@ -106,7 +106,7 @@ our $settings = {
                         sprintf( "%s", shift->name );
                     },
                 },
-                'Valid Since' => {
+                'Valid From' => {
                     'order'    => 3,
                     'db_name'  => 'valid_from',
                     'db_value' => sub {
@@ -117,7 +117,7 @@ our $settings = {
                     'order'    => 4,
                     'db_name'  => 'valid_till',
                     'db_value' => sub {
-                        shift->datetime_display( shift->valid_till, 2);
+                        shift->datetime_display( shift->valid_till, 2) || '∞';
                     },
                 },
                 'Action' => {
@@ -181,7 +181,7 @@ our $settings = {
                         sprintf( "%s", shift->name );
                     },
                 },
-                'Valid Since' => {
+                'Valid From' => {
                     'order'    => 3,
                     'db_name'  => 'valid_from',
                     'db_value' => sub {
@@ -192,7 +192,7 @@ our $settings = {
                     'order'    => 4,
                     'db_name'  => 'valid_till',
                     'db_value' => sub {
-                        shift->datetime_display( shift->valid_till, 2);
+                        shift->datetime_display( shift->valid_till, 2) || '∞';
                     },
                 },
                 'Action' => {
@@ -256,7 +256,7 @@ our $settings = {
                         shift->client_contractor->name;
                     }
                 },
-                'Valid Since' => {
+                'Valid From' => {
                     'order'    => 3,
                     'db_name'  => 'valid_from',
                     'db_value' => sub { shift->datetime_display(shift->valid_from, 2); }
@@ -341,7 +341,7 @@ our $settings = {
                         sprintf("%s", shift->id);
                     },
                 },
-                'Valid Since' => {
+                'Valid From' => {
                     'order'    => 2,
                     'db_name'  => 'valid_from',
                     'db_value' => sub { shift->datetime_display(shift->valid_from, 2); }
@@ -422,7 +422,7 @@ our $settings = {
                         sprintf("%s", shift->id);
                     },
                 },
-                'Valid Since' => {
+                'Valid From' => {
                     'order'    => 2,
                     'db_name'  => 'valid_from',
                     'db_value' => sub { shift->datetime_display(shift->valid_from, 2); }

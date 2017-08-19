@@ -364,16 +364,16 @@ function Components (){
                         fillspace: true
                     },
                     {
-                        id       : "valid_since",
-                        header   : webix.i18n.datatable.valid_since,
-                        footer   : webix.i18n.datatable.valid_since,
+                        id       : "valid_from",
+                        header   : webix.i18n.datatable.valid_from,
+                        footer   : webix.i18n.datatable.valid_from,
                         sort     : "server",
                         format   : webix.i18n.dateFormatStr,
                         fillspace: true,
                         template : function(obj, common){
                             //console.log( "no more than "+ webix.i18n.datatable.id, obj, common );
                             //return webix.i18n.dateFormat;
-                            return obj.valid_since;
+                            return obj.valid_from;
                         }                        
                     },
                     {
@@ -382,7 +382,7 @@ function Components (){
                         footer   : webix.i18n.datatable.valid_till,
                         sort     : "server",
                         fillspace: true,
-                        format   : webix.i18n.dateFormatStr
+                        //format   : webix.i18n.dateFormatStr
                     }
                 ],
                 pager:"datatable_pager"
@@ -489,12 +489,12 @@ function Components (){
                         editor   : "text"
                     },
                     {
-                        id       : "valid_since",
+                        id       : "valid_from",
                         sort     : "server",
                         fillspace: true,
                         editor   : "date",
-                        header   : webix.i18n.datatable.valid_since,
-                        footer   : webix.i18n.datatable.valid_since
+                        header   : webix.i18n.datatable.valid_from,
+                        footer   : webix.i18n.datatable.valid_from
                     },
                     {
                         id       : "valid_till",
@@ -607,12 +607,12 @@ function Components (){
                         
                     },
                     {
-                        id       : "valid_since",
+                        id       : "valid_from",
                         sort     : "server",
                         fillspace: true,
                         editor   : "date",
-                        header   : webix.i18n.datatable.valid_since,
-                        footer   : webix.i18n.datatable.valid_since,
+                        header   : webix.i18n.datatable.valid_from,
+                        footer   : webix.i18n.datatable.valid_from,
                     },
                     {
                         id       : "valid_till",
@@ -844,18 +844,18 @@ function Components (){
                         sort     :"server"
                     },
                     {
-                        id       : "valid_since",
+                        id       : "valid_from",
                         sort     : "server",
                         fillspace: true,
                         editor   : "date",
-                        header   : webix.i18n.datatable.valid_since,
-                        footer   : webix.i18n.datatable.valid_since,
+                        header   : webix.i18n.datatable.valid_from,
+                        footer   : webix.i18n.datatable.valid_from,
                     },
                     {
                         id       : "valid_till",
                         sort     : "server",
                         fillspace: true,
-                        editor   : "date",
+                        //editor   : "date",
                         header   : webix.i18n.datatable.valid_till,
                         footer   : webix.i18n.datatable.valid_till,
                     },                    
@@ -965,18 +965,18 @@ function Components (){
                         sort     :"server"
                     },
                     {
-                        id       : "valid_since",
+                        id       : "valid_from",
                         sort     : "server",
                         fillspace: true,
                         editor   : "date",
-                        header   : webix.i18n.datatable.valid_since,
-                        footer   : webix.i18n.datatable.valid_since,
+                        header   : webix.i18n.datatable.valid_from,
+                        footer   : webix.i18n.datatable.valid_from,
                     },
                     {
                         id       : "valid_till",
                         sort     : "server",
                         fillspace: true,
-                        editor   : "date",
+                        //editor   : "date",
                         header   : webix.i18n.datatable.valid_till,
                         footer   : webix.i18n.datatable.valid_till,
                     },
@@ -1165,9 +1165,9 @@ function Components (){
                                             cols:[
                                                 {
                                                     view : "datepicker",
-                                                    label: webix.i18n.datatable.valid_since,
+                                                    label: webix.i18n.datatable.valid_from,
                                                     timepicker: false,
-                                                    name : 'valid_since',
+                                                    name : 'valid_from',
                                                     labelPosition:"left",
                                                     labelAlign   :"right"
                                                 },
@@ -1300,9 +1300,9 @@ function Components (){
                                             cols:[
                                                 {
                                                     view : "datepicker",
-                                                    label: webix.i18n.datatable.valid_since,
+                                                    label: webix.i18n.datatable.valid_from,
                                                     timepicker: false,
-                                                    name : 'valid_since',
+                                                    name : 'valid_from',
                                                     labelPosition:"left",
                                                     labelAlign   :"right"
                                                 },
@@ -1333,7 +1333,7 @@ function Components (){
                             }                             
                         ],
                         rules:{
-                            //"valid_since":webix.rules.isNotEmpty,
+                            //"valid_from":webix.rules.isNotEmpty,
                             "name" :webix.rules.isNotEmpty
                         },                          
                     },
@@ -1388,9 +1388,9 @@ function Components (){
                                             cols:[
                                                 {
                                                     view : "datepicker",
-                                                    label: webix.i18n.datatable.valid_since,
+                                                    label: webix.i18n.datatable.valid_from,
                                                     timepicker: false,
-                                                    name : 'valid_since',
+                                                    name : 'valid_from',
                                                     labelPosition:"left",
                                                     labelAlign   :"right"
                                                 },
@@ -1421,7 +1421,7 @@ function Components (){
                             } 
                         ],
                         rules:{
-                            //"valid_since":webix.rules.isNotEmpty,
+                            //"valid_from":webix.rules.isNotEmpty,
                             "name" :webix.rules.isNotEmpty
                         } 
                     },  
@@ -1493,7 +1493,7 @@ function Components (){
                                             cols:[
                                                 {
                                                     view : "datepicker",
-                                                    label: webix.i18n.datatable.valid_since,
+                                                    label: webix.i18n.datatable.valid_from,
                                                     timepicker: false,
                                                     name : 'valid_from',
                                                     labelPosition:"left",
@@ -1526,7 +1526,7 @@ function Components (){
                             } 
                         ],
                         rules:{
-                            //"valid_since":webix.rules.isNotEmpty,
+                            //"valid_from":webix.rules.isNotEmpty,
                             "name" :webix.rules.isNotEmpty
                         } 
                     },  

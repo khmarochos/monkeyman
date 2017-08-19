@@ -576,6 +576,7 @@ function Form ( components ){
         }
     };
     
+    /*
     this.ajax = function ( url, callback, spinner ){
         if ( spinner && $$(spinner) ) controller.ProgressShow( spinner );
         webix.ajax().post( url ,{
@@ -589,7 +590,7 @@ function Form ( components ){
                     callback.call( this, data );
                 }
                 else{
-                    webix.message( "Error load data:" + data.message );
+                    webix.message({ type: 'error', text:"Error load data:" + data.message });
                     console.log( "Error load data:" + data.message );
                 }
                 if ( spinner && $$(spinner) ) controller.ProgressHide( spinner );
@@ -597,6 +598,7 @@ function Form ( components ){
             
         });
     };
+    */
     /*
         Загрузка данных формы 
     */    

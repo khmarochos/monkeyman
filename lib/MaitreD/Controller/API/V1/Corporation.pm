@@ -14,7 +14,6 @@ use TryCatch;
 use Switch;
 use Data::Dumper;
 use MaitreD::Extra::API::V1::TemplateSettings;
-use JSON::XS;
 
 method list {
     my $settings         = $MaitreD::Extra::API::V1::TemplateSettings::settings;
@@ -113,7 +112,7 @@ method list {
         
         }
         else {
-            print Dumper( $self->stash->{'authorized_person_result'}->id );
+
             $tmpl_rs = 
                 $self
                     ->hm_schema
@@ -127,7 +126,7 @@ method list {
                         search_permissions_default => $mask_permitted_d,
                         search_validations_default => $mask_validated_d,
                         #callout => [ person_TO_corporation_FULL => { } ]
-                        callout => [ '@Person->-@Corporation' => { } ]
+                        callout => [ '@Person > @Corporation' => { } ]
                     );
         }
         
@@ -164,7 +163,7 @@ method list {
 }
 
 method form_load {
-    my $data = $self->datatable_params();
+    my $data = $self->datatable_params()->{'origin_data'};
     
     my $json = { success =>\1 };
     
@@ -185,8 +184,14 @@ method form_add {
     my $data          = $self->datatable_params()->{'origin_data'};
     my $snippet       = {};
     my $snippet_link  = {
-        'person_x_corporation'     => 'PersonXCorporation',
-        'corporation_x_contractor' => 'CorporationXContractor',
+        'person_x_corporation'     => {
+            table          => 'PersonXCorporation',
+            col_not_empty  => ['person_id'],
+        },
+        'corporation_x_contractor' => {
+            table          => 'CorporationXContractor',
+            col_not_empty  => ['contractor_id'],
+        }
     };
 
     my $json = {
@@ -194,18 +199,8 @@ method form_add {
         redirect => "/corporation/list/all"
     };
     
-    for my $key ( keys %{ $snippet_link }) {
-        if ( $data->{ $key } ) {
-            $snippet->{ $key } = decode_json( $data->{ $key } );
-            delete $data->{ $key };
-        }
+    ( $snippet, $data ) = $self->snippet( $snippet_link, $data );
         
-        if( ref $data->{ $key } eq "ARRAY" && @{ $data->{ $key } } ) {
-            $snippet->{ $key } = $data->{ $key };
-        }
-        
-    }
-    
     try {
         
         $self->hm_schema->txn_do( sub {
@@ -223,7 +218,7 @@ method form_add {
             for my $item ( @{ $snippet->{'person_x_corporation'} } ){
                 $self
                     ->hm_schema
-                    ->resultset( $snippet_link->{'person_x_corporation'} )
+                    ->resultset( $snippet_link->{'person_x_corporation'}->{'table'} )
                     ->create({
                         person_id      => $item->{'person_id'},
                         corporation_id => $rs_data->id,
@@ -238,7 +233,7 @@ method form_add {
             for my $item ( @{ $snippet->{'corporation_x_contractor'} } ){
                 $self
                     ->hm_schema
-                    ->resultset( $snippet_link->{'corporation_x_contractor'} )
+                    ->resultset( $snippet_link->{'corporation_x_contractor'}->{'table'} )
                     ->create({
                         contractor_id  => $item->{'contractor_id'},
                         corporation_id => $rs_data->id,
@@ -264,8 +259,14 @@ method form_update {
     my $data          = $self->datatable_params()->{'origin_data'};
     my $snippet       = {};
     my $snippet_link  = {
-        'person_x_corporation'     => 'PersonXCorporation',
-        'corporation_x_contractor' => 'CorporationXContractor',
+        'person_x_corporation'     => {
+            table          => 'PersonXCorporation',
+            col_not_empty  => ['person_id'],
+        },
+        'corporation_x_contractor' => {
+            table          => 'CorporationXContractor',
+            col_not_empty  => ['contractor_id'],
+        }
     };
 
     my $json = {
@@ -273,16 +274,7 @@ method form_update {
         redirect => "/corporation/list/all"
     };
     
-    for my $key ( keys %{ $snippet_link }) {
-        if ( $data->{ $key } ) {
-            $snippet->{ $key } = decode_json( $data->{ $key } );
-            delete $data->{ $key };
-        }
-        
-        if( ref $data->{ $key } eq "ARRAY" && @{ $data->{ $key } } ) {
-            $snippet->{ $key } = $data->{ $key };
-        }        
-    }
+    ( $snippet, $data ) = $self->snippet( $snippet_link, $data );
     
     try {
         
@@ -305,7 +297,7 @@ method form_update {
                 my $rs_find =
                     $self
                         ->hm_schema
-                        ->resultset( $snippet_link->{'person_x_corporation'} )
+                        ->resultset( $snippet_link->{'person_x_corporation'}->{'table'} )
                         ->search({ 'me.contractor_id' => $data->{'id'} });
                 
                 if( $rs_find ){
@@ -315,7 +307,7 @@ method form_update {
                 for my $item ( @{ $snippet->{'person_x_corporation'} } ){
                     $self
                         ->hm_schema
-                        ->resultset( $snippet_link->{'person_x_corporation'} )
+                        ->resultset( $snippet_link->{'person_x_corporation'}->{'table'} )
                         ->create({
                             person_id      => $item->{'person_id'},
                             corporation_id => $data->{'id'},
@@ -330,7 +322,7 @@ method form_update {
                 $rs_find =
                     $self
                         ->hm_schema
-                        ->resultset( $snippet_link->{'corporation_x_contractor'} )
+                        ->resultset( $snippet_link->{'corporation_x_contractor'}->{'table'} )
                         ->search({ 'me.corporation_id' => $data->{'id'} });
                 
                 if( $rs_find ){
@@ -340,7 +332,7 @@ method form_update {
                 for my $item ( @{ $snippet->{'corporation_x_contractor'} } ){
                     $self
                         ->hm_schema
-                        ->resultset( $snippet_link->{'corporation_x_contractor'} )
+                        ->resultset( $snippet_link->{'corporation_x_contractor'}->{'table'} )
                         ->create({
                             contractor_id  => $item->{'contractor_id'},
                             corporation_id => $data->{'id'},
