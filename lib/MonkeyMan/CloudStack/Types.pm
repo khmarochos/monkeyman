@@ -30,6 +30,7 @@ our @_ElementType_values = qw(
     Host
     StoragePool
     Network
+    UsageRecord
 );
 subtype ElementType,
     as Str,
