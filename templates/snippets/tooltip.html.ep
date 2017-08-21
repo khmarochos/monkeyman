@@ -1,7 +1,0 @@
-%   snippet_register('js_snippet', 'tooltip', { }, begin
-<script>
-    $(document).ready(function() {
-        $('[data-toggle="tooltip"]').tooltip()
-    })
-</script>
-%   end);
