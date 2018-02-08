@@ -66,8 +66,9 @@ if(defined($parameters->get_conditions)) {
                 $conditions{$condition}
             );
         } elsif($condition =~ /^has_ipaddress$/i) {
-            $xpath_to_apply = sprintf("%s[nic/ipaddress = '%s']",
+            $xpath_to_apply = sprintf("%s[nic/ipaddress = '%s' or nic/secondaryip/ipaddress = '%s']",
                 $xpath_base,
+                $conditions{$condition},
                 $conditions{$condition}
             );
         } elsif($condition =~ /^has_domain$/i) {

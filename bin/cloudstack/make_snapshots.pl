@@ -638,7 +638,9 @@ func configure_component (
     $component->{'element'} = $element;
     # Fetch the component's configuration
     my $component_configuration = dig(1, $component, 'configuration');
+
     while(my($index_type, $index_value_query) = each(%{ $components_indices->{ $element_type } })) {
+
         my $index_value = $element->get_value($index_value_query);
         # Start configuring the component
         # Are there any pattern-defined settings to be applied?
@@ -650,19 +652,26 @@ func configure_component (
                 );
             }
         }
+
+	# warn("debug-4-0-3: $element_type $index_type $index_value $component_configuration");
         # Are there any configuration settings for this exact component to be applied?
         if(defined($configuration->{ $element_type }->{ "$index_type:$index_value" })) {
+	# warn("debug-4-0-3-0: $element_type $index_type $index_value $component_configuration");
             %{ $component_configuration } = (
                 %{ $component_configuration },
                 %{ $configuration->{ $element_type }->{ "$index_type:$index_value" } }
             );
+	# warn("debug-4-0-3-1: $element_type $index_type $index_value $component_configuration");
         }
+	# warn('debug-4-0-4');
+
         # OK, the component is configured, update the configuration add the component to the global catalog...
         $components
             ->{ $element_type }
                 ->{ $index_type }
                     ->{ $index_value }
                         = $component;
+
         # ...as well as to the master component's related elements' list!
         $components
             ->{ $master_element_type }
@@ -675,6 +684,7 @@ func configure_component (
                                         = $component
                                             unless($master_element_type eq $element_type);
     }
+
     # Shall we inherit any configuration from this component parameters to the component of the master element?
     my $inherited_parameters;
     if(
