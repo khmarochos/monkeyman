@@ -4,6 +4,8 @@ Things To Do
 Bugs
 ----
 
+ - [ ] Make `HyperMouse` see the exceptions of `MonkeyMan`.
+        - suggested on `2017.05.31` by `melnik13`
  - [x] Fix `MonkeyMan::CloudStack::API::Vocabulary::interpret_response`.
         - suggested on `2016.07.25` by `melnik13`
         - completed on `2016.07.25`
@@ -11,13 +13,21 @@ Bugs
 Code
 ----
 
+ - [ ] Make all the lists' templates (templates/*/list.html.ep) using
+       the same approach as templates/provisioning_agreement/list.html.ep
+       does when it calls the snippet/table.html.ep: passing an ArrayRef
+       with to the list of the tables to be displayed
+        - suggested on `2017.05.30` by `melnik13`
+ - [ ] Make all the buttons on the /list/* pages working properly and
+       displaying the tables of the related stuff
+        - suggested on `2017.05.30` by `melnik13`
  - [ ] Translate the vocabularies to YAML.
         - suggested on `2017.01.30` by `melnik13`
  - [ ] Get rid of the `is_dom_expired()` method and the `dom_updated` and
        `dom_best_before` attributes of the
        `MonkeyMan::CloudStack::API::Roles::Element` class.
  - [ ] Make sure that the `best_before` parameter works fine for all methods.
- 	- suggested on `2017.01.10` by `melnik13`
+        - suggested on `2017.01.10` by `melnik13`
  - [ ] Encapsulate all the shit!
         - suggested on `2016.11.06` by `melnik13`
  - [ ] Make the `MonkeyMan`'s `plug` method checking if the plugin has been
@@ -95,6 +105,8 @@ Functionality
 Documentation
 -------------
 
+ - [ ] Just describe some shit for the god's sake...
+        - suggested on `2017.05.30` by `melnik13`
  - [ ] Present brand new `parameters_to_get_validated` attribute of
        `MonkeyMan::Parameters`, it's really worth to be mentioned
         - suggested on `2016.04.17` by `melnik13`

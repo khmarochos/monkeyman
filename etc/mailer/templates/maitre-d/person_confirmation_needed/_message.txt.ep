@@ -1,0 +1,18 @@
+Dear <% $first_name %>,
+
+We're glad to welcome you to the customers' portal.
+
+We would like to make sure to get a confirmation from you, so, please, use
+the following code to confirm your account:
+
+    <% $confirmation_code %>
+
+You're welcome to confirm your account by clicking to the reference:
+
+    <% $confirmation_href %>
+
+We're excited to start providing you with our services as soon as possible!
+
+-- 
+Best regards,
+Garden Gnomes

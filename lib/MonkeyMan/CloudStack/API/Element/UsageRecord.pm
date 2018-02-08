@@ -1,4 +1,4 @@
-package MonkeyMan::CloudStack::API::Element::Volume;
+package MonkeyMan::CloudStack::API::Element::UsageRecord;
 
 use strict;
 use warnings;
@@ -12,45 +12,42 @@ use Method::Signatures;
 
 
 
+
 our %vocabulary_tree = (
-    type => 'Volume',
-    name => 'volume',
-    entity_node => 'volume',
-    information => {
-        id      => '/id',
-        name    => '/name'
-    },
+    type => 'UsageRecord',
+    name => 'usage record',
+    entity_node => 'usagerecord',
     actions => {
         list => {
             request => {
-                command             => 'listVolumes',
+                command             => 'listUsageRecords',
                 async               => 0,
                 paged               => 1,
                 parameters          => {
-                    all => {
-                        required            => 0,
-                        command_parameters  => { 'listall' => 'true' },
+                    start_date => {
+                        required            => 1,
+                        command_parameters  => { 'startdate' => '<%VALUE%>' }
                     },
-                    filter_by_id => {
-                        required            => 0,
-                        command_parameters  => { 'id' => '<%VALUE%>' },
+                    end_date => {
+                        required            => 1,
+                        command_parameters  => { 'enddate' => '<%VALUE%>' }
                     },
-                    filter_by_virtual_machine_id => {
+                    type => {
                         required            => 0,
-                        command_parameters  => { 'virtualmachineid' => '<%VALUE%>' },
+                        command_parameters  => { 'type' => '<%VALUE%>' }
                     },
                     filter_by_domain_id => {
                         required            => 0,
-                        command_parameters  => { 'domainid' => '<%VALUE%>' },
+                        command_parameters  => { 'domainid' => '<%VALUE%>' }
                     },
-                    filter_by_zone_id => {
+                    filter_by_account_id => {
                         required            => 0,
-                        command_parameters  => { 'zoneid' => '<%VALUE%>' },
-                    },
+                        command_parameters  => { 'accountid' => '<%VALUE%>' }
+                    }
                 }
             },
             response => {
-                response_node   => 'listvolumesresponse',
+                response_node   => 'listusagerecordsresponse',
                 results         => {
                     element         => {
                         return_as       => [ qw( dom element id ) ],
@@ -69,31 +66,10 @@ our %vocabulary_tree = (
         }
     },
     related => {
-        our_snapshots => {
-            type    => 'Snapshot',
+        our_accounts => {
+            type    => 'Account',
             keys    => {
-                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/id' ] },
-                foreign => { parameters => { filter_by_volume_id => '<%OWN_KEY_VALUE%>', all => 1 } },
-            }
-        },
-        our_storage_pools => {
-            type    => 'StoragePool',
-            keys    => {
-                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/storageid' ] },
-                foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
-            }
-        },
-        our_storage_pools_old_ACS => {
-            type    => 'StoragePool',
-            keys    => {
-                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/storage' ] },
-                foreign => { parameters => { filter_by_name => '<%OWN_KEY_VALUE%>' } },
-            }
-        },
-        our_virtual_machines => {
-            type    => 'VirtualMachine',
-            keys    => {
-                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/virtualmachineid' ] },
+                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/accountid' ] },
                 foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
             }
         },
@@ -101,6 +77,13 @@ our %vocabulary_tree = (
             type    => 'Domain',
             keys    => {
                 own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/domainid' ] },
+                foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
+            }
+        },
+        our_virtual_machines => {
+            type    => 'VirtualMachine',
+            keys    => {
+                own     => { queries    => [ '/<%OUR_ENTITY_NODE%>/virtualmachineid' ] },
                 foreign => { parameters => { filter_by_id => '<%OWN_KEY_VALUE%>' } },
             }
         }

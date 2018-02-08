@@ -1,0 +1,17 @@
+<p>Dear <% $first_name %>,</p>
+
+<p>We're glad to welcome you to the customers' portal.</p>
+
+<p>We would like to make sure to get a confirmation from you, so, please, use the following code to confirm your account:
+
+    <ul><pre><% $confirmation_code %></pre></ul></p>
+
+<p>Alternatively, you're welcome to confirm your account by clicking to the following reference:
+
+    <ul><a href="<% $confirmation_href %>"><% $confirmation_href %></a></ul></p>
+
+<p>We're excited to start providing you with our services as soon as possible!</p>
+
+<p>--&nbsp;<br/>
+Best regards,<br/>
+Garden Gnomes</p>

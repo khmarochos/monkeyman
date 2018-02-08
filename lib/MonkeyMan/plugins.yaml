@@ -21,7 +21,19 @@ cloudstack:
     configuration_index_branch:   cloudstack
     parameter_key:                default-cloudstack
     parameter_name:               mm_default_cloudstack
-    parameter_help:               The default Apache CloudStack actor to be used
+    parameter_help:               The default CloudStack actor to be used
+
+mailer:
+    plugin_name:                  mailer
+    actor_class:                  MonkeyMan::Mailer
+    actor_default_parameter:      get_mm_default_mailer
+    actor_default_actor:          PRIMARY
+    actor_handle:                 mailer
+    plug_handle:                  mailer_plug
+    configuration_index_branch:   mailer
+    parameter_key:                default-mailer
+    parameter_name:               mm_default_mailer
+    parameter_help:               The default Mailer actor to be used
 
 password_generator:
     plugin_name:                  password_generator
@@ -33,4 +45,4 @@ password_generator:
     configuration_index_branch:   password_generator
     parameter_key:                default-password-generator
     parameter_name:               mm_default_password_generator
-    parameter_help:               The default Password Generator actor to be used
+    parameter_help:               The default PasswordGenerator actor to be used

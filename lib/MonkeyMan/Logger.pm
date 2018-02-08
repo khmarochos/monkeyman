@@ -454,11 +454,10 @@ func _sprintf(
                 )
             )
         /xg) {
-            if($1 eq 's') {
-                $shall_be_colored{$parameter_number} = 1;
-            } elsif($1 eq '%') {
-                next;
-            }
+            next
+                if($1 eq '%');
+            $shall_be_colored{$parameter_number} = 1
+                if($1 eq 's');
             $parameter_number++;
         }
     }
@@ -473,6 +472,16 @@ func _sprintf(
             $value_new = $shall_be_colored{$i} ?
                 '[' . $self->colorify('WARNING', 'UNDEF', 1) . ']' :
                 '[UNDEF]'
+#        } elsif(ref($values_new[$i]) eq 'ARRAY') {
+#            $value_new = '(' . join(', ', map {
+#                _sprintf(
+#                    self        => $self,
+#                    format      => '%s',
+#                    values      => [$_],
+#                    colored     => $colored,
+#                    colorscheme => $colorscheme
+#                )
+#            } (@{ $values_new[$i] })) . ')';
         } elsif(ref($values_new[$i])) {
             $value_new = defined($self) ?
                 $self->mm_showref($values_new[$i]) :
@@ -519,9 +528,10 @@ func _sprintf(
                 $value_new = '[' . $value_new . ']';
             }
         } else {
-            $value_new = $shall_be_colored{$i} ?
-                $self->colorify('PARAMETER', $values_new[$i], 1) :
-                $values_new[$i];
+            $value_new = $values_new[$i];
+#            $value_new = $shall_be_colored{$i} ?
+#                $self->colorify('PARAMETER', $values_new[$i], 1) :
+#                $values_new[$i];
         }
 
         $values_new[$i] = $value_new;
@@ -598,7 +608,7 @@ func mm_showref(...) {
                         $dumpfile,
                         $!
                 );
-            print({$filehandle} $dump);
+            print({ $filehandle } $dump);
             close($filehandle) ||
                 MonkeyMan::Exception->throwf(
                     "Can't close the %s file: %s",

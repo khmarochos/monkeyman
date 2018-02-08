@@ -21,18 +21,23 @@ func import (@exceptions) {
 
     foreach(@exceptions) {
         if($_ =~ /^::/) {
-            _register_exception($_);
+            __PACKAGE__->_register_exception_class($_);
+        } elsif($_ eq '.') {
+            __PACKAGE__->_register_exception_class((caller)[0] . '::Exception');
         } else {
-            _register_exception((caller)[0] . '::Exception::' . $_);
+            __PACKAGE__->_register_exception_class((caller)[0] . '::Exception::' . $_);
         }
     }
 
 }
 
-func _register_exception(Str $exception!) {
-    unless ( $exception->DOES(__PACKAGE__) ) {
+func _register_exception_class(
+    Str $package!,
+    Str $class!
+) {
+    unless($class->DOES($package)) {
         Moose::Meta::Class->create(
-            $exception => (superclasses => [__PACKAGE__])
+            $class => (superclasses => [ $package ])
         );
     }
 }
@@ -166,11 +171,22 @@ method as_string(...) {
     return(
         MonkeyMan::Logger::mm_sprintf(
             "[!] %s\n" .
-            "^^^ The exception had been thrown at %s\n" .
+            "^^^ The %s exception had been thrown at %s\n" .
             "^^^ %s",
                 $self->get_message,
+                blessed($self),
                 $self->get_timestamp_formatted,
                 $self->get_stack_trace->as_string
+        )
+     );
+}
+
+method as_string_short(...) {
+    return(
+        MonkeyMan::Logger::mm_sprintf(
+            "%s [%s]",
+                $self->get_message,
+                blessed($self)
         )
      );
 }

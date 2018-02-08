@@ -14,7 +14,7 @@ use FindBin qw($Bin);
 use constant MM_DEFAULT_ACTOR   => 'PRIMARY';
 use constant MM_VERSION         => '1.0.0-alpha'; # See http://semver.org/
 
-my @mm_constants_miscellaneous = qw(
+my @mm_miscellaneous = qw(
     MM_DEFAULT_ACTOR
     MM_VERSION
 );
@@ -28,7 +28,7 @@ sub MM_DIRECTORY_ROOT {
         die("Can't find the root directory");
     }
 }
-my @mm_constants_directories = qw(
+my @mm_directories = qw(
     MM_DIRECTORY_ROOT
 );
 
@@ -37,20 +37,20 @@ my @mm_constants_directories = qw(
 
 # :ALL
 
-my @mm_constants_all = (
-    @mm_constants_miscellaneous,
-    @mm_constants_directories,
+my  @mm_all = (
+    @mm_miscellaneous,
+    @mm_directories,
 );
 
 
 
 @ISA                = qw(Exporter);
 @EXPORT             = qw();
-@EXPORT_OK          = @mm_constants_all;
+@EXPORT_OK          = @mm_all;
 %EXPORT_TAGS        = (
-    ALL                 => \@mm_constants_all,
-    miscellaneous       => \@mm_constants_miscellaneous,
-    directories         => \@mm_constants_directories
+    ALL                 => \@mm_all,
+    miscellaneous       => \@mm_miscellaneous,
+    directories         => \@mm_directories
 );
 
 

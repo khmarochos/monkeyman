@@ -14,7 +14,6 @@ use MonkeyMan::Exception qw(
     ParameterNameReserved
     MultipleParameterNames
     NoParameterNames
-    InvalidValidationRule
     ParameterValidationFailed
 );
 
@@ -105,7 +104,13 @@ method parse_everything(Bool :$strict? = 0) {
     # overriding everything without any warnings as it's documented.
     my $parameters_to_get_validated;
     if($self->_has_parameters_to_get_validated) {
-        $parameters_to_get_validated = Load($self->_get_parameters_to_get_validated);
+        try {
+            $parameters_to_get_validated = Load($self->_get_parameters_to_get_validated);
+        } catch($e) {
+            (__PACKAGE__ . '::Exception::ParameterValidationFailed')->throwf(
+                'The command-line parameter validation failed: %s', $e
+            );
+        }
         while(
             my(
                 $parameter_keys,
