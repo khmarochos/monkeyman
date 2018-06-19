@@ -811,6 +811,10 @@ func suitable (
                     $component_configuration->{'flows_backing_up'}  <= $snapshots_active->{'backing_up'}
         );
 
+    # Doen't it have the tag?
+    return($element, 'nosnapshot', 'TRUE')
+        if($element->get_value('/tags[key="nosnapshot"]/value'));
+
     # Is the component unavailable at this moment?
     return($element, 'available', $monkeyman->format_time($time_now))
         if(
